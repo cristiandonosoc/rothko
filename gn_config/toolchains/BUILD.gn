@@ -1,0 +1,87 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+# MSVC
+# ------------------------------------------------------------------------------
+
+toolchain("msvc") {
+  tool("cc") {
+    depsformat = "msvc"
+    pdbname = "{{output}}_c.pdb"
+    command = "cl.exe /nologo {{defines}} /showIncludes /FC /FS /Fd$pdbname {{include_dirs}} {{cflags}} /TC /c {{source}} /Fo{{output}}"
+    outputs = [
+      "{{source_out_dir}}/{{source_name_part}}.o" ,
+    ]
+    description = "CC {{output}}"
+  }
+  tool("cxx") {
+    depsformat = "msvc"
+    pdbname = "{{output}}_cc.pdb"
+    command = "cl.exe /nologo {{defines}} /showIncludes /FC /FS /Fd$pdbname {{include_dirs}} {{cflags}} {{cflags_cc}} /TP /c {{source}} /Fo{{output}}"
+    outputs = [
+      "{{source_out_dir}}/{{source_name_part}}.o" ,
+    ]
+    description = "CXX {{output}}"
+  }
+
+  tool("link") {
+    command = "link.exe /nologo {{ldflags}} /OUT:{{output}} /PDB:{{output}}.pdb {{inputs}} {{solibs}} {{libs}}"
+    outputs = [
+      "{{root_out_dir}}/{{target_output_name}}.exe"
+    ]
+    description = "LINK {{output}}"
+  }
+
+  stamp_path = rebase_path("//gn_config/toolchains/msvc_stamp.py", root_build_dir)
+  tool("stamp") {
+    command = "$python_path $stamp_path {{output}}"
+    description = "STAMP {{output}}"
+  }
+
+  tool("copy") {
+    command = "copy {{source}} {{output}}"
+    description = "COPY {{source}} -> {{output}}"
+  }
+}
+
+# Clang
+# ------------------------------------------------------------------------------
+
+toolchain("clang") {
+  tool("cc") {
+    depfile = "{{output}}.d"
+    depsformat = "gcc"
+    command = "clang++ -xc -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_c}} -c {{source}} -o {{output}}"
+    outputs = [
+      "{{source_out_dir}}/{{source_name_part}}.o" ,
+    ]
+    description = "CC {{output}}"
+  }
+  tool("cxx") {
+    depfile = "{{output}}.d"
+    depsformat = "gcc"
+    command = "clang++ -xc++ -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} -c {{source}} -o {{output}}"
+    outputs = [
+      "{{source_out_dir}}/{{source_name_part}}.o" ,
+    ]
+    description = "CXX {{output}}"
+  }
+
+  tool("link") {
+    command = "clang++ {{inputs}} {{solibs}} {{ldflags}} {{libs}} -o {{output}}"
+    outputs = [
+      "{{root_out_dir}}/{{target_output_name}}"
+    ]
+    description = "LINK {{output}}"
+  }
+
+  tool("stamp") {
+    command = "touch {{output}}"
+    description = "STAMP {{output}}"
+  }
+
+  tool("copy") {
+    command = "cp {{source}} {{output}}"
+    description = "COPY {{source}} -> {{output}}"
+  }
+}

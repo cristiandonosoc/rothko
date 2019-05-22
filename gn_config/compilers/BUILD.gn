@@ -1,0 +1,84 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+# MSVC
+#-------------------------------------------------------------------------------
+
+if (compiler == "msvc") {
+  config("compiler") {
+    defines = [
+      "NOMINMAX",
+    ]
+
+    cflags = [
+      "/W4",
+      "/WX",
+      # Warning ignores
+      "/wd4267",    # size_t to int.
+      "/wd4244",    # int to boolean.
+      "/wd4700",    # Un-initialized variable.
+      "/wd4702",    # Un-reachable code.
+      "/wd4996",    # fopen.
+      "/wd4201",    # Anonymouse structs within union.
+    ]
+
+    cflags_cc = [
+      "/std:c++latest",
+      "/EHsc",
+      "/GR-",
+    ]
+
+    ldflags = [
+      "/SUBSYSTEM:CONSOLE",
+    ]
+  }
+
+  config("debug") {
+    cflags = [
+      "/Od",
+      "/Zi",
+    ]
+
+    ldflags = [
+      "/DEBUG",
+    ]
+  }
+
+  config("release") {
+      cflags = [
+        "/O2",
+      ]
+  }
+}
+
+# clang
+#-------------------------------------------------------------------------------
+
+if (compiler == "clang") {
+  config("compiler") {
+    cflags = [
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-Wno-unused-function",
+      "-Wmissing-prototypes",
+    ]
+
+    cflags_cc = [
+      "-std=c++1z",
+    ]
+  }
+
+  config("debug") {
+    cflags = [
+      "-g",
+      "-O0",
+    ]
+  }
+
+  config("release") {
+    cflags = [
+      "-O2",
+    ]
+  }
+}

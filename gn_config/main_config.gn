@@ -1,0 +1,85 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+declare_args() {
+  is_debug = true
+  is_linux = false
+  is_osx = false
+  is_windows = false
+
+  opengl_enabled = false
+  vulkan_enabled = false
+  sdl_enabled = false
+}
+
+# OS/Compiler Targets
+# ------------------------------------------------------------------------------
+
+# If we don't explicitly define a target, we're compiling for the host.
+if (target_os == "") {
+  target_os = host_os
+}
+
+# Host to compiler mapping
+compiler = ""
+if (target_os == "win") {
+  is_windows = true
+  compiler = "msvc"
+  set_default_toolchain("//gn_config/toolchains:msvc")
+}
+
+if (target_os == "linux") {
+  is_linux = true
+  compiler = "clang"
+  set_default_toolchain("//gn_config/toolchains:clang")
+}
+
+if (target_os == "mac") {
+  is_osx = true
+  compiler = "clang"
+  set_default_toolchain("//gn_config/toolchains:clang")
+}
+
+assert(compiler != "", "Unsupported OS $target_os")
+
+# Configs
+# ------------------------------------------------------------------------------
+
+config("default_include_dirs") {
+  include_dirs = [
+    "${root_build_dir}",
+    "//",
+    "//third_party/include",
+    root_gen_dir,
+  ]
+
+  if (target_os == "linux") {
+    include_dirs += [
+      "/usr/include",
+    ]
+  }
+}
+
+# Default configs for every build (cased by OS target)
+_configs = [
+  "//:default_include_dirs",
+  "//gn_config/compilers:compiler",
+]
+
+if (is_debug) {
+  _configs += [
+    "//gn_config/config/compilers:debug",
+  ]
+} else {
+  _configs += [
+    "//gn_config/config/compilers:release",
+  ]
+}
+
+set_defaults("executable") {
+  configs = _configs
+}
+
+set_defaults("source_set") {
+  configs = _configs
+}
