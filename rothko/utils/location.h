@@ -5,7 +5,7 @@
 
 #include "rothko/utils/macros.h"
 
-#define FROM_HERE ::warhol::Location{__FILE__, __LINE__, __FUNCTION__}
+#define FROM_HERE ::rothko::Location{__FILE__, __LINE__, __FUNCTION__}
 
 namespace rothko {
 

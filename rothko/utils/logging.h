@@ -32,7 +32,7 @@ void DoLogging(int32_t category, Location, const char *fmt, ...)
 ::rothko::DoLogging(kLogCategory_##level, FROM_HERE VA_ARGS(__VA_ARGS__));
 
 #define ASSERT(condition)                                                      \
-  if (!condition) {                                                            \
+  if (!(condition)) {                                                          \
     LOG(ASSERT, "Condition failed: %s", #condition);                           \
   }
 

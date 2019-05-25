@@ -1,0 +1,24 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+source_set("utils") {
+  public = [
+    "clear_on_move.h",
+    "file.h",
+    "location.h",
+    "logging.h",
+    "macros.h",
+  ]
+
+  sources = [
+    "debug.cc",
+    "file.cc",
+    "location.cc",
+    "logging.cc",
+  ]
+
+  deps = [
+    "//warhol/platform",
+    "//third_party/stb",
+  ]
+}
