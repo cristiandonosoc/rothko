@@ -1,0 +1,10 @@
+out/*
+imgui.ini
+examples/*
+.DS_Store
+doom_vulkan
+sdl_source
+*.log
+.vscode/ipch
+
+ycm_extra_conf_local.py

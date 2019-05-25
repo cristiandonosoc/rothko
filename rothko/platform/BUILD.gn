@@ -1,0 +1,27 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+# Platform is the a base level library, it has no dependencies.
+source_set("platform") {
+  public = [
+    "platform.h",
+    "paths.h"
+  ]
+
+  sources = [
+    "paths.cc"
+  ]
+
+  # Platform specific sources --------------------------------------------------
+
+  if (is_windows) {
+    sources += [ "platform_windows.cc" ]
+  } else if (is_linux) {
+    sources += [ "platform_linux.cc" ]
+  } else if (is_osx) {
+    sources += [ "platform_macos.cc" ]
+  } else {
+    assert(false, "Unhandled OS: $target_os")
+  }
+}
+

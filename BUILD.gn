@@ -1,0 +1,29 @@
+declare_args() {
+  extra_includes = []
+  extra_libs = []
+}
+
+config("default_include_dirs") {
+  include_dirs = extra_includes
+  include_dirs += [
+    "${root_build_dir}",
+    "//",
+    "//third_party/include",
+    root_gen_dir,
+  ]
+  libs = extra_libs
+
+  if (target_os == "linux") {
+    include_dirs += [
+      "/usr/include",
+    ]
+  }
+}
+
+group("tests") {
+  testonly = true
+
+  deps = [
+    "//tests",
+  ]
+}

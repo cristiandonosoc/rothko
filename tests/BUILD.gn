@@ -1,0 +1,25 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+# Put all the tests to be run here.
+source_set("tests_lib") {
+  testonly = true
+  sources = [
+    "strings.cc",
+  ]
+
+  public_deps = [
+    "//third_party/catch2",
+    "//rothko/utils",
+  ]
+}
+
+executable("tests") {
+  testonly = true
+  sources = [
+    "test_main.cc",
+  ]
+  deps = [
+    ":tests_lib",
+  ]
+}

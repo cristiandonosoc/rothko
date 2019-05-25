@@ -20,8 +20,6 @@ flags = [
 
     '-I', os.path.join(os.getcwd()),
 
-    '-I', os.path.join(os.getcwd(), '..', 'GNTest'),
-
     '-D', 'WARHOL_SDL_ENABLED',
     '-D', 'WARHOL_VULKAN_ENABLED',
     '-D', 'WARHOL_OPENGL_ENABLED',

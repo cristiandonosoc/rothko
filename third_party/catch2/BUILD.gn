@@ -1,0 +1,15 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+source_set("catch2") {
+  testonly = true
+  sources = [
+    "catch.hpp",
+  ]
+
+  include_dirs = [ "//third_party/catch2" ]
+
+  # We don't care about the warnings of this library.
+  configs -= [ "//gn_config/compilers:default_warnings" ]
+}
+

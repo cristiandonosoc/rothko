@@ -3,6 +3,8 @@
 
 #include "rothko/utils/logging.h"
 
+#include "rothko/utils/strings.h"
+
 namespace rothko {
 
 const char* LogCategoryToString(int32_t category) {
@@ -17,6 +19,20 @@ const char* LogCategoryToString(int32_t category) {
 
   NOT_REACHED();
   return "<unknown>";
+}
+
+// DoLogging -------------------------------------------------------------------
+
+void DoLogging(int32_t category, Location location, const char* fmt, ...) {
+  va_list va;
+  va_start(va, fmt);
+  auto msg = StringPrintfV(fmt, va);
+  va_end(va);
+
+  // TODO(Cristian): Add time.
+  fprintf(stderr, "[%s][%s:%d] %s\n", LogCategoryToString(category),
+          location.file, location.line, msg.c_str());
+  fflush(stderr);
 }
 
 }  // namespace rothko

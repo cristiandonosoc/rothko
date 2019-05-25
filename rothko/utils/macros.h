@@ -92,7 +92,7 @@
 // This macros are ways of shorthanding the annoying C++ constructos syntax into
 // something quicker to write and (hopefully) easier to understand.
 
-// Most resource holder objects within warhol have this constructor format,
+// Most resource holder objects have this constructor format,
 // so a macro here make sense.
 #define RAII_CONSTRUCTORS(class_name) \
   class_name() = default;             \

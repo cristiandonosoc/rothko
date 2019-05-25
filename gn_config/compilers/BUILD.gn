@@ -5,11 +5,10 @@
 #-------------------------------------------------------------------------------
 
 if (compiler == "msvc") {
-  config("compiler") {
+  config("default_warnings") {
     defines = [
       "NOMINMAX",
     ]
-
     cflags = [
       "/W4",
       "/WX",
@@ -20,6 +19,12 @@ if (compiler == "msvc") {
       "/wd4702",    # Un-reachable code.
       "/wd4996",    # fopen.
       "/wd4201",    # Anonymouse structs within union.
+    ]
+  }
+
+  config("compiler") {
+    defines = [
+      "NOMINMAX",
     ]
 
     cflags_cc = [
@@ -55,7 +60,7 @@ if (compiler == "msvc") {
 #-------------------------------------------------------------------------------
 
 if (compiler == "clang") {
-  config("compiler") {
+  config("default_warnings") {
     cflags = [
       "-Wall",
       "-Wextra",
@@ -63,7 +68,9 @@ if (compiler == "clang") {
       "-Wno-unused-function",
       "-Wmissing-prototypes",
     ]
+  }
 
+  config("compiler") {
     cflags_cc = [
       "-std=c++1z",
     ]

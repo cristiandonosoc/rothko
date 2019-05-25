@@ -1,0 +1,21 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+# These are the libraries corresponding to STB.
+# See: https://github.com/nothings/stb
+
+source_set("stb") {
+  public = [
+    "stb_image.h",
+    "stb_sprintf.h",
+  ]
+
+  sources = [
+    # The STB libraries are header-only: the implementation is guarded by a
+    # macro define. The implentation .cc makes all the implementation includes.
+    "implementations.cc",
+  ]
+
+  # We don't care about the warnings of this library.
+  configs -= [ "//gn_config/compilers:default_warnings" ]
+}

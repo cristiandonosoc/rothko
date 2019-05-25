@@ -8,17 +8,17 @@ source_set("utils") {
     "location.h",
     "logging.h",
     "macros.h",
+    "strings.cc",
   ]
 
   sources = [
-    "debug.cc",
     "file.cc",
-    "location.cc",
     "logging.cc",
+    "strings.cc",
   ]
 
   deps = [
-    "//warhol/platform",
+    "//rothko/platform",
     "//third_party/stb",
   ]
 }

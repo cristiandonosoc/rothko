@@ -28,12 +28,13 @@ void DoLogging(int32_t category, Location, const char *fmt, ...)
 
 #if DEBUG_MODE
 
-#define LOG(level, ...) \
-::rothko::DoLogging(kLogCategory_##level, FROM_HERE VA_ARGS(__VA_ARGS__));
+#define LOG(level, ...)                                                        \
+  ::rothko::DoLogging(kLogCategory_##level, FROM_HERE VA_ARGS(__VA_ARGS__));
 
 #define ASSERT(condition)                                                      \
   if (!(condition)) {                                                          \
     LOG(ASSERT, "Condition failed: %s", #condition);                           \
+    SEGFAULT();                                                                \
   }
 
 #define NOT_REACHED(...)                                                       \
