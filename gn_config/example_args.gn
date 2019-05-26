@@ -1,3 +1,6 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
 # This is a sample args.gn file shows what kind of options are normal to set.
 # This would be the common setup for linux.
 
