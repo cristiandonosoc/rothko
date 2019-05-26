@@ -1,0 +1,30 @@
+# Defaults from Google
+BasedOnStyle: Google
+---
+Language: Cpp
+# AlignConsecutiveAssignments: true
+# AlignEscapedNewlines: Right
+
+AlignOperands: true
+AlignAfterOpenBracket: Align
+AlignTrailingComments: true
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Inline
+# AlwaysBreakAfterReturnType: TopLevel
+AllowShortIfStatementsOnASingleLine: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+# FixNamespaceComments: true
+# IncludeBlocks: Preserve
+BinPackParameters: false
+BinPackArguments: false
+IndentWrappedFunctionNames: false
+ReflowComments: true
+SortIncludes: true
+# SortUsingDeclarations: true
+# SpaceAfterTemplateKeyword: true
+DerivePointerAlignment: false
+PointerAlignment: Left
+ColumnLimit: 80
+---
+

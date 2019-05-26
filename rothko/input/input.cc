@@ -9,7 +9,7 @@
 
 namespace rothko {
 
-void StartFrame(Input* input) {
+void NewFrame(Input* input) {
   // Move the down buttons over.
   std::memcpy(input->down_last_frame, input->down_this_frame,
               sizeof(input->down_this_frame));

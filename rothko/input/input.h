@@ -10,6 +10,8 @@
 
 namespace rothko {
 
+#define GET_KEY(key) ((uint8_t)::rothko::Key::k##key)
+
 enum class Key : uint32_t {
   kUp, kDown, kLeft, kRight,
   kA, kB, kC, kD, kE, kF, kG, kH, kI, kJ, kK, kL, kM, kN, kEnhe /* Ñ */, kO, kP,
@@ -53,7 +55,8 @@ struct Input {
   Int2 mouse_offset;
 };
 
-void StartFrame(Input*);
+void NewFrame(Input*);
+
 bool KeyDown(Input* input, Key key);
 bool KeyDownThisFrame(Input* input, Key key);
 bool KeyUpThisFrame(Input* input, Key key);
