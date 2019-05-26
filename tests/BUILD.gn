@@ -6,6 +6,7 @@ source_set("tests_lib") {
   testonly = true
   sources = [
     "math.cc",
+    "memory.cc",
     "strings.cc",
   ]
 
