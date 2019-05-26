@@ -8,6 +8,7 @@ source_set("tests_lib") {
     "math.cc",
     "memory.cc",
     "strings.cc",
+    "vector.cc",
   ]
 
   public_deps = [
@@ -15,6 +16,7 @@ source_set("tests_lib") {
   ]
 
   deps = [
+    "//rothko/containers",
     "//rothko/memory",
     "//rothko/utils",
   ]

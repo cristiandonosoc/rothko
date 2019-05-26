@@ -3,11 +3,12 @@
 
 #pragma once
 
-#include <stdint.h>
 #include <inttypes.h>
+#include <stdint.h>
 
 #include <mutex>
 
+#include "rothko/memory/memory_block.h"
 #include "rothko/utils/intrinsics.h"
 #include "rothko/utils/logging.h"
 #include "rothko/utils/macros.h"
@@ -26,22 +27,6 @@ namespace rothko {
 // -> Returns an invalid block if no more space.
 //
 // void Deallocate(SizedBlockAllocator*);
-
-struct BlockAllocator;
-
-struct MemoryBlock {
-  MemoryBlock() = default;
-  ~MemoryBlock();
-  DELETE_COPY_AND_ASSIGN(MemoryBlock);
-  DECLARE_MOVE_AND_ASSIGN(MemoryBlock);
-
-  BlockAllocator* allocator = nullptr;
-  int32_t index = -1;
-  uint32_t size = 0;
-};
-
-bool Valid(MemoryBlock*);
-uint8_t* Data(MemoryBlock*);
 
 struct BlockAllocator {
   virtual MemoryBlock Allocate() = 0;

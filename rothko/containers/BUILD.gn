@@ -1,14 +1,9 @@
 # Copyright 2019, Cristián Donoso.
 # This code has a BSD license. See LICENSE.
 
-source_set("memory") {
+source_set("containers") {
   public = [
-    "block_allocator.h",
-    "memory_block.h",
-  ]
-
-  sources = [
-    "memory_block.cc",
+    "vector.h",
   ]
 
   deps = [
