@@ -1,0 +1,73 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+declare_args() {
+  sdl_include_path = ""
+  sdl_lib_path = ""
+}
+
+config("sdl2_config") {
+  handled = false
+  if ("$sdl_include_path" != "") {
+    include_dirs = [ "$sdl_include_path" ]
+  }
+  if (target_os == "win" && compiler == "msvc") {
+    if ("$sdl_lib_path" != "") {
+      libs = [ "${sdl_lib_path}/SDL2/SDL2.lib" ]
+    }
+    handled = true
+  } else if (target_os == "mac" && compiler == "clang") {
+    # NOTE: In OSX, the headers nornally are in:
+    # /Library/Frameworks/SDL2.framework/Headers/
+    # TODO(Cristian): Should this be enforced always here?
+    # NOTE: SDL2 should be installed as a framework in /Library/Frameworks
+    ldflags = [ "-framework", "SDL2", "-F/Library/Frameworks", ]
+    handled = true
+  } else if (target_os == "linux") {
+    if (compiler == "clang") {
+      libs = [ "-lSDL2" ]
+      if ("$sdl_lib_path" != "") {
+        ldflags = [ "-L${sdl_lib_path}" ]
+      }
+      handled = true
+    }
+  }
+
+  if (!handled) {
+    assert(false, "SDL2: Unhandled OS/Compiler combo: $target_os/$compiler")
+  }
+}
+
+source_set("sdl_common") {
+  sources = [
+    "sdl_input.cc",
+    "sdl_input.h",
+  ]
+
+  public_configs = [
+    ":sdl2_config",
+  ]
+
+  deps = [
+    "//rothko/input",
+    "//rothko/utils",
+  ]
+
+}
+
+source_set("sdl_opengl") {
+  sources = [
+    "sdl_opengl.cc",
+    "sdl_opengl.h",
+  ]
+
+  public_configs = [
+    ":sdl2_config",
+  ]
+
+  deps = [
+    ":sdl_common",
+    "//rothko/utils",
+    "//rothko/window/common",
+  ]
+}

@@ -1,0 +1,24 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+group("examples") {
+  deps = []
+
+  if (sdl_enabled && opengl_enabled) {
+    deps += [
+      ":sdl_plain_window",
+    ]
+  }
+}
+
+if (sdl_enabled && opengl_enabled) {
+  executable("sdl_plain_window") {
+    sources = [
+      "sdl_plain_window.cc",
+    ]
+
+    deps = [
+      "//rothko/window:sdl_opengl",
+    ]
+  }
+}

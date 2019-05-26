@@ -1,0 +1,8 @@
+# This is a sample args.gn file shows what kind of options are normal to set.
+# This would be the common setup for linux.
+
+opengl_enabled = true
+
+sdl_enabled = true
+sdl_include_path = "/usr/local/include"
+sdl_lib_path = "/usr/local/lib"

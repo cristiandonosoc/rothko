@@ -112,7 +112,6 @@ bool WindowCreateVulkanSurface(Window* window, void* vk_instance,
 const char* ToString(WindowBackendType type) {
   switch (type) {
     case WindowBackendType::kSDLOpenGL: return "SDLOpenGL";
-    case WindowBackendType::kSDLVulkan: return "SDLVulkan";
     case WindowBackendType::kLast: return "Last";
   }
 

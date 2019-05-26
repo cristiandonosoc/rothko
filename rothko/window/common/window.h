@@ -36,7 +36,7 @@ struct WindowBackend;
 
 enum class WindowBackendType {
   kSDLOpenGL,
-  kSDLVulkan,
+  // kSDLVulkan,  TODO(Cristian): Implement back!
   kLast,
 };
 const char* ToString(WindowBackendType);

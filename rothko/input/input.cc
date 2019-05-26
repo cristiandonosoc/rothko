@@ -24,19 +24,19 @@ void NewFrame(Input* input) {
   input->mouse = {};
   input->mouse_offset = {};
 }
-inline bool KeyDown(Input* input, Key key) {
+bool KeyDown(Input* input, Key key) {
   int val = (int)key;
   ASSERT(val < (int)Key::kLast);
   return input->down_this_frame[val];
 }
 
-inline bool KeyDownThisFrame(Input* input, Key key) {
+bool KeyDownThisFrame(Input* input, Key key) {
   int val = (int)key;
   ASSERT(val < (int)Key::kLast);
   return input->down_this_frame[val] && !input->down_last_frame[val];
 }
 
-inline bool KeyUpThisFrame(Input* input, Key key) {
+bool KeyUpThisFrame(Input* input, Key key) {
   int val = (int)key;
   ASSERT(val < (int)Key::kLast);
   return !input->down_this_frame[val] && input->down_last_frame[val];

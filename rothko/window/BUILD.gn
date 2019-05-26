@@ -1,0 +1,28 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+# See the buildconfig file (set in .gn) for then *_enabled variables.
+
+if (sdl_enabled) {
+  if (opengl_enabled) {
+    source_set("sdl_opengl") {
+
+      public_configs = [
+        ":window_macros",
+      ]
+
+      public_deps = [
+        "//rothko/input",
+        "//rothko/window/common",
+        "//rothko/window/sdl:sdl_opengl",
+      ]
+    }
+  }
+}
+
+config("window_macros") {
+  defines = []
+  if (sdl_enabled) {
+    defines += [ "ROTHKO_SDL_ENABLED" ]
+  }
+}
