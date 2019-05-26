@@ -12,6 +12,10 @@ source_set("tests_lib") {
 
   public_deps = [
     "//third_party/catch2",
+  ]
+
+  deps = [
+    "//rothko/memory",
     "//rothko/utils",
   ]
 }

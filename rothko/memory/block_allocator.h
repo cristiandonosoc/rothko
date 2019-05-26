@@ -22,35 +22,47 @@ namespace rothko {
 // bool MemoryBlock::valid()
 // uint8_t MemoryBlock::data();
 //
-// MemoryBlock Allocate(BlockAllocator*);
+// MemoryBlock Allocate(SizedBlockAllocator*);
 // -> Returns an invalid block if no more space.
 //
-// void Deallocate(BlockAllocator*);
+// void Deallocate(SizedBlockAllocator*);
+
+struct BlockAllocator;
+
+struct MemoryBlock {
+  MemoryBlock() = default;
+  ~MemoryBlock();
+  DELETE_COPY_AND_ASSIGN(MemoryBlock);
+  DECLARE_MOVE_AND_ASSIGN(MemoryBlock);
+
+  BlockAllocator* allocator = nullptr;
+  int32_t index = -1;
+  uint32_t size = 0;
+};
+
+bool Valid(MemoryBlock*);
+uint8_t* Data(MemoryBlock*);
+
+struct BlockAllocator {
+  virtual MemoryBlock Allocate() = 0;
+  virtual void Deallocate(int index) = 0;
+  virtual uint8_t* GetBlockMemory(int index) = 0;
+};
 
 template <uint64_t BlockSize>
-struct BlockAllocator {
+struct SizedBlockAllocator : public BlockAllocator {
   static constexpr uint64_t kBlockSize = BlockSize;
   static constexpr uint64_t kBlockCount = 64u;
 
   // Block Allocators do not move.
-  BlockAllocator();
-  DELETE_COPY_AND_ASSIGN(BlockAllocator);
-  DELETE_MOVE_AND_ASSIGN(BlockAllocator);
+  SizedBlockAllocator();
+  DELETE_COPY_AND_ASSIGN(SizedBlockAllocator);
+  DELETE_MOVE_AND_ASSIGN(SizedBlockAllocator);
 
-  struct MemoryBlock {
-    static constexpr uint64_t kSize = BlockSize;
-
-    MemoryBlock() = default;
-    ~MemoryBlock();
-    DELETE_COPY_AND_ASSIGN(MemoryBlock);
-    DECLARE_MOVE_AND_ASSIGN(MemoryBlock);
-
-    bool valid() const;
-    uint8_t* data();
-
-    BlockAllocator* allocator = nullptr;
-    int32_t index = -1;
-  };
+  // BlockAllocator interface.
+  MemoryBlock Allocate() override;
+  void Deallocate(int index) override;
+  uint8_t* GetBlockMemory(int index) override;
 
   // Fields.
   uint8_t memory[kBlockSize * kBlockCount];
@@ -64,17 +76,14 @@ struct BlockAllocator {
 
 // Implementations -------------------------------------------------------------
 
-#define MEMORY_BLOCK(BlockSize) typename BlockAllocator<BlockSize>::MemoryBlock
-
-constexpr uint64_t kAllOnes = -1;
+static constexpr uint64_t kAllOnes = -1;
 
 template <uint64_t BlockSize>
-BlockAllocator<BlockSize>::BlockAllocator()
+SizedBlockAllocator<BlockSize>::SizedBlockAllocator()
     : block_bitset(kAllOnes), used_blocks(0) {}
 
 template <uint64_t BlockSize>
-MEMORY_BLOCK(BlockSize)
-Allocate(BlockAllocator<BlockSize>* allocator) {
+MemoryBlock Allocate(SizedBlockAllocator<BlockSize>* allocator) {
   int free_block_index = 0;
   {
     std::lock_guard<std::mutex>(allocator->mutex);
@@ -93,15 +102,21 @@ Allocate(BlockAllocator<BlockSize>* allocator) {
 
   ASSERT(free_block_index > 0);
 
-  typename BlockAllocator<BlockSize>::MemoryBlock block = {};
+  MemoryBlock block = {};
   block.allocator = allocator;
   block.index = free_block_index - 1;
+  block.size = allocator->kBlockSize;
 
   return block;
 }
 
 template <uint64_t BlockSize>
-void Deallocate(BlockAllocator<BlockSize>* allocator, int index) {
+MemoryBlock SizedBlockAllocator<BlockSize>::Allocate() {
+  return ::rothko::Allocate(this);
+}
+
+template <uint64_t BlockSize>
+void Deallocate(SizedBlockAllocator<BlockSize>* allocator, int index) {
   ASSERT(index >= 0 && index < 64);
 
   /* static int dealloc_count = 0; */
@@ -120,61 +135,15 @@ void Deallocate(BlockAllocator<BlockSize>* allocator, int index) {
   ASSERT(was_set);
 }
 
-// MemoryBlock -----------------------------------------------------------------
-
-namespace {
-
 template <uint64_t BlockSize>
-void Clear(MEMORY_BLOCK(BlockSize)* block) {
-  block->allocator = nullptr;
-  block->index = -1;
+void SizedBlockAllocator<BlockSize>::Deallocate(int index) {
+  ::rothko::Deallocate(this, index);
 }
 
 template <uint64_t BlockSize>
-void Move(MEMORY_BLOCK(BlockSize)* from, MEMORY_BLOCK(BlockSize)* to) {
-  to->allocator = from->allocator;
-  to->index = from->index;
-  Clear<BlockSize>(from);
-}
-
-}  // namespace
-
-template <uint64_t BlockSize>
-BlockAllocator<BlockSize>::MemoryBlock::~MemoryBlock() {
-  if (!this->valid())
-    return;
-  Deallocate<BlockSize>(this->allocator, this->index);
-}
-
-template <uint64_t BlockSize>
-BlockAllocator<BlockSize>::MemoryBlock::MemoryBlock(MemoryBlock&& other) {
-  Move<BlockSize>(&other, this);
-}
-
-template <uint64_t BlockSize>
-MEMORY_BLOCK(BlockSize)&
-BlockAllocator<BlockSize>::MemoryBlock::operator=(MemoryBlock&& other) {
-  if (this == &other)
-    return *this;
-  if (this->valid()) {
-    Deallocate<BlockSize>(this->allocator, this->index);
-    Clear<BlockSize>(this);
-  }
-
-  Move<BlockSize>(&other, this);
-  return *this;
-}
-
-template <uint64_t BlockSize>
-bool BlockAllocator<BlockSize>::MemoryBlock::valid() const {
-  return !!this->allocator && this->index >= 0;
-}
-
-template <uint64_t BlockSize>
-uint8_t* BlockAllocator<BlockSize>::MemoryBlock::data() {
-  ASSERT(this->valid());
-  uint8_t* base_ptr = (uint8_t*)this->allocator;
-  return base_ptr + (this->index * this->size);
+uint8_t* SizedBlockAllocator<BlockSize>::GetBlockMemory(int index) {
+  ASSERT(index >= 0 && index < 64);
+  return memory + index * kBlockSize;
 }
 
 }  // namespace rothko

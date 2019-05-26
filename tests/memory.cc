@@ -11,26 +11,26 @@ namespace test {
 constexpr uint64_t BlockSize = 64u;
 
 TEST_CASE("BlockAllocator") {
-  BlockAllocator<BlockSize> allocator;
+  SizedBlockAllocator<BlockSize> allocator;
 
   {
     // Allocate 64 blocks.
-    BlockAllocator<BlockSize>::MemoryBlock blocks[allocator.kBlockCount] = {};
+    MemoryBlock blocks[allocator.kBlockCount] = {};
     for (int i = 0; i < (int)allocator.kBlockCount; i++) {
       auto block = Allocate(&allocator);
       REQUIRE(allocator.used_blocks == i + 1);
 
-      REQUIRE(block.valid());
+      REQUIRE(Valid(&block));
       blocks[i] = std::move(block);
 
-      REQUIRE(!block.valid());
-      REQUIRE(blocks[i].valid());
+      REQUIRE(!Valid(&block));
+      REQUIRE(Valid(&blocks[i]));
     }
 
     // Allocating another should fail.
     {
       auto block = Allocate(&allocator);
-      REQUIRE(!block.valid());
+      REQUIRE(!Valid(&block));
       REQUIRE(allocator.used_blocks == allocator.kBlockCount);
     }
 
@@ -41,9 +41,9 @@ TEST_CASE("BlockAllocator") {
     int deallocs = 0;
     int current_allocs = allocator.used_blocks;
     for (int i = 26; i < 34; i++) {
-      REQUIRE(blocks[i].valid());
+      REQUIRE(Valid(&blocks[i]));
       blocks[i] = {};
-      REQUIRE(!blocks[i].valid());
+      REQUIRE(!Valid(&blocks[i]));
 
       deallocs++;
       REQUIRE(allocator.used_blocks == current_allocs - deallocs);
@@ -56,22 +56,20 @@ TEST_CASE("BlockAllocator") {
       auto block = Allocate(&allocator);
 
       allocs++;
-      REQUIRE(block.valid());
+      REQUIRE(Valid(&block));
       REQUIRE(allocator.used_blocks == current_allocs + allocs);
 
-      REQUIRE(!blocks[i].valid());
+      REQUIRE(!Valid(&blocks[i]));
       blocks[i] = std::move(block);
-      REQUIRE(!block.valid());
-      REQUIRE(blocks[i].valid());
+      REQUIRE(!Valid(&block));
+      REQUIRE(Valid(&blocks[i]));
       REQUIRE(allocator.used_blocks == current_allocs + allocs);
     }
-
-
 
     // Allocating another should fail.
     {
       auto block = Allocate(&allocator);
-      REQUIRE(!block.valid());
+      REQUIRE(!Valid(&block));
       REQUIRE(allocator.used_blocks == allocator.kBlockCount);
     }
 
