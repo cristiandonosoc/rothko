@@ -42,19 +42,6 @@
     b = tmp;       \
   }
 
-// This macro is meant to to create a scope that will only run once:
-//
-// ONCE() {
-//   ...
-//   <LOGIC THAT WILL ONLY RUN ONCE>
-//   ...
-// }
-#define ONCE()                                         \
-  static bool STRINGIFY(__once_test, __LINE__) = true; \
-  if (STRINGIFY(__once_test, __LINE__)) {              \
-    STRINGIFY(__once_test, __LINE__) = false;          \
-  }
-
 // Combine permits to stringify arguments like __LINE__
 #define COMBINE_INTERNAL(x, y) x##y
 #define COMBINE(x, y) COMBINE_INTERNAL(x, y)

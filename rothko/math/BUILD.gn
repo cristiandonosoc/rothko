@@ -1,0 +1,16 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+source_set("math") {
+  public = [
+    "vec.h",
+  ]
+
+  # TODO(Cristian): This dependency is only for printing.
+  #                 In the future might be nice to have a clean math library
+  #                 with no dependencies and have a nice wrapper that has more
+  #                 dependencies.
+  deps = [
+    "//rothko/utils",
+  ]
+}

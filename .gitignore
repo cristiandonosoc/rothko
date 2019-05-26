@@ -6,5 +6,6 @@ doom_vulkan
 sdl_source
 *.log
 .vscode/ipch
+warhol
 
 ycm_extra_conf_local.py
