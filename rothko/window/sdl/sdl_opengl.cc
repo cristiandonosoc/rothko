@@ -208,8 +208,8 @@ SDLOpenGLNewFrame(SDLOpenGLWindow *sdl, Window *window, Input *input) {
 }  // namespace
 
 std::vector<WindowEvent>
-SDLOpenGLWindow::NewFrame(Window* window, Input* input) {
-  return SDLOpenGLNewFrame(this, window, input);
+SDLOpenGLWindow::NewFrame(Window* w, Input* input) {
+  return SDLOpenGLNewFrame(this, w, input);
 }
 
 // SwapBuffers -----------------------------------------------------------------

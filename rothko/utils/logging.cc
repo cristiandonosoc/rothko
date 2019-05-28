@@ -3,6 +3,8 @@
 
 #include "rothko/utils/logging.h"
 
+#include <stdarg.h>
+
 #include "rothko/utils/strings.h"
 
 namespace rothko {

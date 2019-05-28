@@ -61,7 +61,7 @@ struct SizedBlockAllocator : public BlockAllocator {
 
 // Implementations -------------------------------------------------------------
 
-static constexpr uint64_t kAllOnes = -1;
+static constexpr uint64_t kAllOnes = 0xffff'ffff'ffff'fffflu;
 
 template <uint64_t BlockSize>
 SizedBlockAllocator<BlockSize>::SizedBlockAllocator()
@@ -75,7 +75,7 @@ MemoryBlock Allocate(SizedBlockAllocator<BlockSize>* allocator) {
     if (allocator->used_blocks == allocator->kBlockCount)
       return {};  // Invalid block;
 
-    free_block_index = FIND_FIRST_SET(allocator->block_bitset);
+    free_block_index = FindFirstSet(allocator->block_bitset);
     allocator->block_bitset &= ~(((uint64_t)1u) << (free_block_index - 1));
     allocator->used_blocks++;
   }
@@ -112,8 +112,8 @@ void Deallocate(SizedBlockAllocator<BlockSize>* allocator, int index) {
   bool was_set = false;
   {
     std::lock_guard<std::mutex>(allocator->mutex);
-    was_set = ((allocator->block_bitset & (1lu << index)) == 0);
-    allocator->block_bitset |= (((uint64_t)1lu) << index);
+    was_set = ((allocator->block_bitset & (1llu << index)) == 0);
+    allocator->block_bitset |= (((uint64_t)1llu) << index);
     allocator->used_blocks--;
   }
 

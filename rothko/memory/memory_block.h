@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-#include "warhol/utils/macros.h"
+#include "rothko/utils/macros.h"
 
 namespace rothko {
 
@@ -24,7 +24,5 @@ struct MemoryBlock {
 
 bool Valid(MemoryBlock*);
 uint8_t* Data(MemoryBlock*);
-
-
 
 }  // namespace rothko

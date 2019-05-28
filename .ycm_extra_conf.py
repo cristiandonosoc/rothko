@@ -29,8 +29,9 @@ flags = [
     '-isystem', os.path.join(os.getcwd(), 'third_party', 'imgui'),
     '-isystem', os.path.join(os.getcwd(), 'third_party', 'imgui', 'examples'),
     '-isystem', os.path.join(os.getcwd(), 'third_party', 'catch2'),
-
 ]
+
+flags += local_flags
 
 ################################################################################
 # YCM Classic Implementation
