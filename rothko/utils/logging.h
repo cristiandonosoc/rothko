@@ -37,8 +37,12 @@ void DoLogging(int32_t category, Location, const char *fmt, ...)
     SEGFAULT();                                                                \
   }
 
-#define NOT_REACHED(...)                                                       \
+#define NOT_REACHED() \
   LOG(ASSERT, "Invalid path");                                                 \
+  SEGFAULT()
+
+#define NOT_REACHED_MSG(...) \
+  LOG(ASSERT, __VA_ARGS__)   \
   SEGFAULT()
 
 #else

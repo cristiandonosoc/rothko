@@ -115,7 +115,7 @@ const char* ToString(WindowBackendType type) {
     case WindowBackendType::kLast: return "Last";
   }
 
-  NOT_REACHED("Unknown backend type: %u", (uint32_t)type);
+  NOT_REACHED_MSG("Unknown backend type: %u", (uint32_t)type);
   return "<unknown>";
 }
 

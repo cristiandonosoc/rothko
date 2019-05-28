@@ -9,12 +9,12 @@ namespace rothko {
 
 std::vector<const char*>
 WindowBackend::GetVulkanInstanceExtensions() {
-  NOT_REACHED("This function must be subclassed or not called at all!");
+  NOT_REACHED_MSG("This function must be subclassed or not called at all!");
   return {};
 }
 
 bool WindowBackend::CreateVulkanSurface(void*, void*) {
-  NOT_REACHED("This function must be subclassed or not called at all!");
+  NOT_REACHED_MSG("This function must be subclassed or not called at all!");
   return false;
 }
 

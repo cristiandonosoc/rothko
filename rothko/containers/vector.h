@@ -9,19 +9,25 @@
 #include <utility>
 
 #include "rothko/memory/memory_block.h"
+#include "rothko/utils/logging.h"
 #include "rothko/utils/macros.h"
 
 namespace rothko {
 
 template <typename T, typename Allocator>
 struct Vector {
-  Vector(int size = 4);
+  static constexpr uint32_t kDefaultSize = 4;
+
+  Vector(uint32_t size = kDefaultSize);
   ~Vector() = default;
   DELETE_COPY_AND_ASSIGN(Vector);
   DECLARE_MOVE_AND_ASSIGN(Vector);
 
-  T& operator[](int index);
-  T& at(int index);
+  T& operator[](uint32_t index);
+  T& at(uint32_t index);
+
+  void push_back(T);
+  T pop_back();
 
   MemoryBlock memory_block;
   T* data = nullptr;
@@ -35,14 +41,12 @@ struct Vector {
 #define VECTOR Vector<T, Allocator>
 
 PREAMBLE bool Valid(VECTOR*);
-PREAMBLE void PushBack(VECTOR*);
-PREAMBLE T PopBack(VECTOR*);
 
 // Implementation --------------------------------------------------------------
 
 namespace internal {
 
-PREAMBLE void Resize(VECTOR* vector, int size_needed) {
+PREAMBLE void Resize(VECTOR* vector, uint32_t size_needed) {
   // We need to allocate more space.
   int bytes_needed = size_needed * sizeof(T);
 
@@ -56,7 +60,7 @@ PREAMBLE void Resize(VECTOR* vector, int size_needed) {
 
   // Replace the block (will deallocate the old one).
   vector->memory_block = std::move(new_block);
-  vector->data = new_data;
+  vector->data = (T*)new_data;
 }
 
 PREAMBLE void Clear(VECTOR* vector) {
@@ -76,8 +80,8 @@ PREAMBLE void Move(VECTOR* from, VECTOR* to) {
 
 }  // namespace internal
 
-PREAMBLE VECTOR::Vector(int size) : size(size) {
-  Resize(this, size);
+PREAMBLE VECTOR::Vector(uint32_t size) : size(size) {
+  ::rothko::internal::Resize(this, size);
 }
 
 PREAMBLE VECTOR::Vector(Vector&& other) {
@@ -99,37 +103,38 @@ PREAMBLE bool Valid(VECTOR* vector) {
   return !!vector->data;
 }
 
-PREAMBLE void PushBack(VECTOR* vector, T t) {
-  ASSERT(Valid(vector));
-  if (vector->size == vector->count) {
+PREAMBLE void VECTOR::push_back(T t) {
+  ASSERT(Valid(this));
+  if (this->size == this->count) {
     // Double the vector each time.
-    int size_needed = 2 * vector->size;
-    Resize(vector, size_needed);
+    int size_needed = 2 * this->size;
+    ::rothko::internal::Resize(this, size_needed);
   }
 
   // We now can push the object in.
-  vector->data[vector->count] = std::move(t);
-  vector->count++;
+  this->data[this->count] = std::move(t);
+  this->count++;
 }
 
-PREAMBLE T PopBack(VECTOR* vector) {
-  ASSERT(Valid(vector));
-  ASSERT(vector->count > 0);
-  T t = std::move(vector->data[vector->count]);
-  vector->count--;
+PREAMBLE T VECTOR::pop_back() {
+  ASSERT(Valid(this));
+  ASSERT(this->count > 0);
+  T t = std::move(this->data[this->count]);
+  this->count--;
   return t;
 }
 
-PREAMBLE T& VECTOR::operator[](int index) {
+PREAMBLE T& VECTOR::operator[](uint32_t index) {
   return this->at(index);
 }
 
-PREAMBLE T& VECTOR::at(int index) {
+PREAMBLE T& VECTOR::at(uint32_t index) {
   ASSERT(Valid(this));
   ASSERT(index >= 0 && index < this->count);
   return this->data[index];
 }
 
 #undef PREAMBLE
+#undef VECTOR
 
 }  // namespace rothko

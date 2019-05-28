@@ -58,4 +58,14 @@ uint8_t* Data(MemoryBlock* block) {
   return block->allocator->GetBlockMemory(block->index);
 }
 
+bool MemoryBlock::operator==(const MemoryBlock& other) const {
+  return this->allocator == other.allocator &&
+         this->index == other.index &&
+         this->size == other.size;
+}
+
+bool MemoryBlock::operator!=(const MemoryBlock& other) const {
+  return !(this->operator==(other));
+}
+
 }  // namespace rothko
