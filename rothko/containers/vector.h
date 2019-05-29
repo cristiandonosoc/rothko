@@ -26,6 +26,10 @@ struct Vector {
   T& operator[](uint32_t index);
   T& at(uint32_t index);
 
+  struct Iterator;
+  Iterator begin();
+  Iterator end();
+
   void push_back(T);
   T pop_back();
 
@@ -132,6 +136,57 @@ PREAMBLE T& VECTOR::at(uint32_t index) {
   ASSERT(Valid(this));
   ASSERT(index >= 0 && index < this->count);
   return this->data[index];
+}
+
+// Iterator --------------------------------------------------------------------
+
+PREAMBLE struct VECTOR::Iterator {
+  Iterator(VECTOR* parent, uint32_t index) : parent(parent), index(index) {}
+
+  DEFAULT_COPY_AND_ASSIGN(Iterator);
+  DEFAULT_MOVE_AND_ASSIGN(Iterator);
+
+  bool operator==(const Iterator& rhs) const {
+    return this->parent == rhs.parent && this->index == rhs.index;
+  }
+  bool operator!=(const Iterator& rhs) const { return !this->operator==(rhs); }
+
+  Iterator& operator++() {
+    this->index++;
+    return *this;
+  }
+
+  Iterator operator++(int) {
+    int prev = this->index++;
+    return Iterator(this->parent, prev);
+  }
+
+  void operator+=(int i) {
+    this->index += i;
+  }
+
+  T* operator->() {
+    ASSERT(parent);
+    ASSERT(index >= 0);
+    return &parent->at(index);
+  }
+
+  T& operator*() {
+    ASSERT(parent);
+    ASSERT(index >= 0);
+    return parent->at(index);
+  }
+
+  VECTOR* parent = nullptr;
+  uint32_t index = 0;
+};
+
+PREAMBLE typename VECTOR::Iterator VECTOR::begin() {
+  return Iterator(this, 0);
+}
+
+PREAMBLE typename VECTOR::Iterator VECTOR::end() {
+  return Iterator(this, this->count);
 }
 
 #undef PREAMBLE

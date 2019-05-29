@@ -13,6 +13,8 @@ struct BlockAllocator;
 
 struct MemoryBlock {
   MemoryBlock() = default;
+  MemoryBlock(BlockAllocator* allocator, int32_t index, uint32_t size)
+      : allocator(allocator), index(index), size(size) {}
   ~MemoryBlock();
   DELETE_COPY_AND_ASSIGN(MemoryBlock);
   DECLARE_MOVE_AND_ASSIGN(MemoryBlock);

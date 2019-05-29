@@ -12,6 +12,15 @@ namespace test {
 
 namespace {
 
+struct TestMemoryBlock {
+  TestMemoryBlock(BlockAllocator* allocator, uint32_t size, int index)
+      : block(allocator, index, size),
+        memory(std::make_unique<uint8_t[]>(size)) {}
+
+  MemoryBlock block;
+  std::unique_ptr<uint8_t[]> memory;
+};
+
 struct TestAllocator : public BlockAllocator {
   static MemoryBlock SmallestBlock(uint32_t size);
 
@@ -19,8 +28,18 @@ struct TestAllocator : public BlockAllocator {
   void Deallocate(int index) override;
   uint8_t* GetBlockMemory(int index) override;
 
+  TestMemoryBlock gMemoryBlocks[5] = {
+    TestMemoryBlock(this,  4 * sizeof(uint64_t) /*  32 */, 0),
+    TestMemoryBlock(this,  8 * sizeof(uint64_t) /*  64 */, 1),
+    TestMemoryBlock(this, 16 * sizeof(uint64_t) /* 128 */, 2),
+    TestMemoryBlock(this, 32 * sizeof(uint64_t) /* 256 */, 3),
+    TestMemoryBlock(this, 64 * sizeof(uint64_t) /* 512 */, 4),
+  };
+
   int new_block_count = 0;
   int dealloc_count = 0;
+  int total_new = 0;
+  int total_dealloc = 0;
 };
 
 // Reset the counters.
@@ -31,29 +50,6 @@ TestAllocator* GetTestAllocator() {
   return &allocator;
 }
 
-struct TestMemoryBlock {
-  MemoryBlock block;
-  std::unique_ptr<uint8_t[]> memory;
-};
-
-TestMemoryBlock CreateMemoryBlock(uint32_t size, int index) {
-  TestMemoryBlock test_block;
-  test_block.block.allocator = GetTestAllocator();
-  test_block.block.index = index;
-  test_block.block.size = size;
-  test_block.memory = std::make_unique<uint8_t[]>(size);
-
-  return test_block;
-}
-
-TestMemoryBlock gMemoryBlocks[] = {
-  CreateMemoryBlock( 4 * sizeof(uint64_t) /*  32 */, 0),
-  CreateMemoryBlock( 8 * sizeof(uint64_t) /*  64 */, 1),
-  CreateMemoryBlock(16 * sizeof(uint64_t) /* 128 */, 2),
-  CreateMemoryBlock(32 * sizeof(uint64_t) /* 256 */, 3),
-  CreateMemoryBlock(64 * sizeof(uint64_t) /* 512 */, 4),
-};
-
 void Reset(TestMemoryBlock*);
 MemoryBlock Clone(MemoryBlock*);
 
@@ -63,7 +59,11 @@ MemoryBlock Clone(MemoryBlock*);
 
 TEST_CASE("Vector") {
   TestAllocator* test_allocator = GetTestAllocator();
+  for (auto& block : test_allocator->gMemoryBlocks) {
+    ASSERT(block.memory);
+  }
 
+  // Default case.
   {
     Reset(test_allocator);
 
@@ -71,11 +71,12 @@ TEST_CASE("Vector") {
     REQUIRE(test_allocator->new_block_count == 1);
     REQUIRE(vector.size == VECTOR::kDefaultSize);
     REQUIRE(vector.count == 0);
-    REQUIRE(vector.memory_block == gMemoryBlocks[0].block);
+    REQUIRE(vector.memory_block == test_allocator->gMemoryBlocks[0].block);
   }
   // Vectors deallocate their block upon destruction.
   REQUIRE(test_allocator->dealloc_count == 1);
 
+  // Big initial allocation.
   {
     Reset(test_allocator);
 
@@ -83,10 +84,11 @@ TEST_CASE("Vector") {
     REQUIRE(test_allocator->new_block_count == 1);
     REQUIRE(vector.size == 16);
     REQUIRE(vector.count == 0);
-    REQUIRE(vector.memory_block == gMemoryBlocks[2].block);
+    REQUIRE(vector.memory_block == test_allocator->gMemoryBlocks[2].block);
   }
   REQUIRE(test_allocator->dealloc_count == 1);
 
+  // Push back into the vector.
   {
     Reset(test_allocator);
 
@@ -94,7 +96,7 @@ TEST_CASE("Vector") {
     REQUIRE(test_allocator->new_block_count == 1);
     REQUIRE(vector.size == VECTOR::kDefaultSize);
     REQUIRE(vector.count == 0);
-    REQUIRE(vector.memory_block == gMemoryBlocks[0].block);
+    REQUIRE(vector.memory_block == test_allocator->gMemoryBlocks[0].block);
 
     // Add 4 entries.
     vector.push_back(1);
@@ -104,7 +106,7 @@ TEST_CASE("Vector") {
 
     REQUIRE(vector.size == VECTOR::kDefaultSize);
     REQUIRE(vector.count == 4);
-    REQUIRE(vector.memory_block == gMemoryBlocks[0].block);
+    REQUIRE(vector.memory_block == test_allocator->gMemoryBlocks[0].block);
 
     REQUIRE(vector[0] == 1);
     REQUIRE(vector[1] == 2);
@@ -112,7 +114,7 @@ TEST_CASE("Vector") {
     REQUIRE(vector[3] == 4);
 
     // Verify directly at the memory block.
-    uint64_t* ptr = (uint64_t*)gMemoryBlocks[0].memory.get();
+    uint64_t* ptr = (uint64_t*)test_allocator->gMemoryBlocks[0].memory.get();
     REQUIRE(ptr[0] == 1);
     REQUIRE(ptr[1] == 2);
     REQUIRE(ptr[2] == 3);
@@ -122,6 +124,7 @@ TEST_CASE("Vector") {
   }
   REQUIRE(test_allocator->dealloc_count == 1);
 
+  // Grow the vector many times.
   {
     Reset(test_allocator);
 
@@ -129,7 +132,7 @@ TEST_CASE("Vector") {
     REQUIRE(test_allocator->new_block_count == 1);
     REQUIRE(vector.size == VECTOR::kDefaultSize);
     REQUIRE(vector.count == 0);
-    REQUIRE(vector.memory_block == gMemoryBlocks[0].block);
+    REQUIRE(vector.memory_block == test_allocator->gMemoryBlocks[0].block);
 
     // Add 4 entries.
     vector.push_back(1);
@@ -139,7 +142,7 @@ TEST_CASE("Vector") {
 
     REQUIRE(vector.size == VECTOR::kDefaultSize);
     REQUIRE(vector.count == 4);
-    REQUIRE(vector.memory_block == gMemoryBlocks[0].block);
+    REQUIRE(vector.memory_block == test_allocator->gMemoryBlocks[0].block);
     REQUIRE(test_allocator->new_block_count == 1);
 
     // Adding one more should've changed the block.
@@ -147,7 +150,7 @@ TEST_CASE("Vector") {
 
     REQUIRE(vector.size == 8);
     REQUIRE(vector.count == 5);
-    REQUIRE(vector.memory_block == gMemoryBlocks[1].block);
+    REQUIRE(vector.memory_block == test_allocator->gMemoryBlocks[1].block);
 
     // The change should've deallocated the previous one.
     REQUIRE(test_allocator->dealloc_count == 1);
@@ -161,7 +164,7 @@ TEST_CASE("Vector") {
     REQUIRE(vector[4] == 5);
 
     // From the pointer it should work too.
-    uint64_t* ptr = (uint64_t*)gMemoryBlocks[1].memory.get();
+    uint64_t* ptr = (uint64_t*)test_allocator->gMemoryBlocks[1].memory.get();
     REQUIRE(ptr[0] == 1);
     REQUIRE(ptr[1] == 2);
     REQUIRE(ptr[2] == 3);
@@ -173,24 +176,108 @@ TEST_CASE("Vector") {
       vector.push_back(i);
     }
 
-
     // We should've crossed three blocks over.
     REQUIRE(test_allocator->dealloc_count == 4);
     REQUIRE(test_allocator->new_block_count == 5);
 
     REQUIRE(vector.size == 64);
     REQUIRE(vector.count == 40);
-    REQUIRE(vector.memory_block == gMemoryBlocks[4].block);
+    REQUIRE(vector.memory_block == test_allocator->gMemoryBlocks[4].block);
 
     // All elements should be there.
-    ptr = (uint64_t*)gMemoryBlocks[4].memory.get();
+    ptr = (uint64_t*)test_allocator->gMemoryBlocks[4].memory.get();
     for (uint32_t i = 0; i < 40; i++) {
       REQUIRE(vector.at(i) == i + 1);
       REQUIRE(ptr[i] == i + 1);
     }
   }
 
+  // Modify elements.
+  {
+    Reset(test_allocator);
+
+    VECTOR vector;
+
+    // Add 4 entries.
+    vector.push_back(1);
+    vector.push_back(2);
+    vector.push_back(3);
+    vector.push_back(4);
+
+    // Verify directly at the memory block.
+    REQUIRE(vector.memory_block == test_allocator->gMemoryBlocks[0].block);
+    uint64_t* ptr = (uint64_t*)test_allocator->gMemoryBlocks[0].memory.get();
+    REQUIRE(ptr[0] == 1);
+    REQUIRE(ptr[1] == 2);
+    REQUIRE(ptr[2] == 3);
+    REQUIRE(ptr[3] == 4);
+
+    // Modify some elements.
+    vector[1] = 18;
+    vector[3] = 7;
+
+    // Verify the change.
+    REQUIRE(vector.memory_block == test_allocator->gMemoryBlocks[0].block);
+    REQUIRE(ptr[0] == 1);
+    REQUIRE(ptr[1] == 18);
+    REQUIRE(ptr[2] == 3);
+    REQUIRE(ptr[3] == 7);
+  }
+
+  // Iterators.
+  {
+    Reset(test_allocator);
+
+    VECTOR vector(10);
+    REQUIRE(test_allocator->new_block_count == 1);
+    REQUIRE(test_allocator->dealloc_count == 0);
+    for (int i = 0; i < 10; i++) {
+      vector.push_back(i);
+    }
+    REQUIRE(test_allocator->new_block_count == 1);
+    REQUIRE(test_allocator->dealloc_count == 0);
+
+    // Verify iterator.
+    int i = 0;
+    for (auto& elem : vector) {
+      REQUIRE(elem == i);
+      i++;
+    }
+
+    // Other kind of iterator.
+    i = 0;
+    for (auto it = vector.begin(); it != vector.end(); it++, i++) {
+      REQUIRE(*it == i);
+    }
+
+    // Modification.
+    auto it = vector.begin();
+    it += 3;
+    *it = 22;
+    it += 3;
+    *it = 44;
+    it += 3;
+    *it = 66;
+
+    REQUIRE(vector[0] == 0);
+    REQUIRE(vector[1] == 1);
+    REQUIRE(vector[2] == 2);
+    REQUIRE(vector[3] == 22);
+    REQUIRE(vector[4] == 4);
+    REQUIRE(vector[5] == 5);
+    REQUIRE(vector[6] == 44);
+    REQUIRE(vector[7] == 7);
+    REQUIRE(vector[8] == 8);
+    REQUIRE(vector[9] == 66);
+  }
+
   Reset(test_allocator);
+  // Everything allocated should be freed after all vectors are gone.
+  REQUIRE(test_allocator->total_new == test_allocator->total_dealloc);
+
+  for (auto& block : test_allocator->gMemoryBlocks) {
+    ASSERT(block.memory);
+  }
 }
 
 // TestAllocator Implementation ------------------------------------------------
@@ -200,8 +287,9 @@ namespace {
 MemoryBlock TestAllocator::SmallestBlock(uint32_t size) {
   TestAllocator* test_allocator = GetTestAllocator();
   test_allocator->new_block_count++;
+  test_allocator->total_new++;
 
-  for (TestMemoryBlock& test_block : gMemoryBlocks) {
+  for (TestMemoryBlock& test_block : test_allocator->gMemoryBlocks) {
     if (test_block.block.size >= size)
       return Clone(&test_block.block);
   }
@@ -219,6 +307,7 @@ void TestAllocator::Deallocate(int index) {
   ASSERT(index >= 0 && index < ARRAY_SIZE(gMemoryBlocks));
   Reset(gMemoryBlocks + index);
   this->dealloc_count++;
+  this->total_dealloc++;
 }
 
 uint8_t* TestAllocator::GetBlockMemory(int index) {
@@ -226,16 +315,17 @@ uint8_t* TestAllocator::GetBlockMemory(int index) {
   return gMemoryBlocks[index].memory.get();
 }
 
-void Reset(TestAllocator* allocator) {
-  allocator->new_block_count = 0;
-  allocator->dealloc_count = 0;
+void Reset(TestAllocator* test_allocator) {
+  test_allocator->new_block_count = 0;
+  test_allocator->dealloc_count = 0;
 
-  for (TestMemoryBlock& test_block : gMemoryBlocks) {
+  for (TestMemoryBlock& test_block : test_allocator->gMemoryBlocks) {
     Reset(&test_block);
   }
 }
 
 void Reset(TestMemoryBlock* test_block) {
+  ASSERT(test_block->memory);
   std::memset(test_block->memory.get(), 0, test_block->block.size);
 }
 
