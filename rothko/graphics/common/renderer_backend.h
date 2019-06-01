@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "rothko/utils/macros.h"
+
 namespace rothko {
 
 // RendererBackend
@@ -20,11 +22,16 @@ namespace rothko {
 // the called.
 
 struct InitRendererConfig;
+struct Renderer;
 
 struct RendererBackend {
+  RendererBackend() = default;
   virtual ~RendererBackend() = default;
+  // Renderer backends don't move!
+  DELETE_COPY_AND_ASSIGN(RendererBackend);
+  DELETE_MOVE_AND_ASSIGN(RendererBackend);
 
-  virtual bool Init(InitRendererConfig*);
+  virtual bool Init(Renderer*, InitRendererConfig*) = 0;
 };
 
 }  // namespace rothko

@@ -28,8 +28,8 @@ void DoLogging(int32_t category, Location, const char *fmt, ...)
 
 #if DEBUG_MODE
 
-#define LOG(level, ...)                                                        \
-  ::rothko::DoLogging(kLogCategory_##level, FROM_HERE VA_ARGS(__VA_ARGS__));
+#define LOG(level, ...) \
+  ::rothko::DoLogging(::kLogCategory_##level, FROM_HERE VA_ARGS(__VA_ARGS__));
 
 #define ASSERT(condition)                                                      \
   if (!(condition)) {                                                          \
@@ -49,6 +49,7 @@ void DoLogging(int32_t category, Location, const char *fmt, ...)
   SEGFAULT()
 
 #define NOT_REACHED_MSG(...) \
+  LOG(ASSERT, "Invalid path");                                                 \
   LOG(ASSERT, __VA_ARGS__)   \
   SEGFAULT()
 
@@ -57,6 +58,7 @@ void DoLogging(int32_t category, Location, const char *fmt, ...)
 #define LOG(level, ...) do {} while (false);
 #define ASSERT(condition) do {} while (false);
 #define NOT_REACHED(...) do {} while (false);
+#define NOT_REACHED_MSG(...) do {} while(false);
 
 #endif
 

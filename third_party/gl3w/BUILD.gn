@@ -1,0 +1,24 @@
+# Copyright 2018, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+config("gl3w_config") {
+  # So includes like <GL/gl3w.h> works.
+  include_dirs = [ "//third_party/include" ]
+}
+
+source_set("gl3w") {
+  sources = [
+    "gl3w.c",
+  ]
+
+  if (target_os == "linux") {
+    libs = [ "-ldl" ]
+  }
+
+  configs += [
+    ":gl3w_config",
+  ]
+
+  # We don't care about the warnings of this library.
+  configs -= [ "//gn_config/compilers:default_warnings" ]
+}
