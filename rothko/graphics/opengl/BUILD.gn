@@ -1,0 +1,14 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+source_set("opengl") {
+  sources = [
+    "renderer_backend.cc",
+    "renderer_backend.h",
+  ]
+
+  deps = [
+    "//rothko/graphics/common",
+    "//third_party/gl3w",
+  ]
+}

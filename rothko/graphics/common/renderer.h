@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "rothko/utils/macros.h"
+#include "rothko/graphics/common/renderer_backend.h"
 
 // Renderer
 // =============================================================================
@@ -25,7 +26,6 @@
 
 namespace rothko {
 
-struct RendererBackend;
 struct Window;
 
 enum class RendererType {
@@ -49,15 +49,16 @@ struct Renderer {
 
   RendererType type = RendererType::kLast;
   std::unique_ptr<RendererBackend> backend = nullptr;
+  bool frame_started = false;
 };
 
-inline bool Valid(Renderer* r) { return !!r->backend; }
+bool Valid(Renderer* r);
 
 struct InitRendererConfig {
   RendererType type = RendererType::kLast;  // Required.
   Window* window = nullptr;                 // Required. Must outlive renderer.
 };
 
-bool Init(Renderer*, InitRendererConfig*);
+bool InitRenderer(Renderer*, InitRendererConfig*);
 
 }  // namespace rothko

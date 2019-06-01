@@ -1,0 +1,33 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+# See the buildconfig file (set in .gn) for then *_enabled variables.
+
+if (opengl_enabled) {
+  group("opengl") {
+    public_configs = [
+      ":graphics_macros",
+    ]
+
+    deps = [
+      ":graphics_common",
+      "//rothko/graphics/opengl",
+    ]
+  }
+}
+
+source_set("graphics_common") {
+  public = [
+    "graphics.h",
+  ]
+}
+
+config("graphics_macros") {
+  defines = []
+
+  if (opengl_enabled) {
+    defines += [ "ROTHKO_OPENGL_ENABLED" ]
+  }
+}
+
+

@@ -5,6 +5,7 @@
 
 #include <map>
 
+#include "rothko/graphics/common/renderer_backend.h"
 #include "rothko/utils/logging.h"
 
 namespace rothko {
@@ -47,8 +48,35 @@ void SuscribeRendererBackendFactory(RendererType type,
   factory_map->insert({type, factory});
 }
 
+// Init ------------------------------------------------------------------------
+
+bool InitRenderer(Renderer* renderer, InitRendererConfig* config) {
+  ASSERT(!Valid(renderer));
+  ASSERT(config->type != RendererType::kLast);
+  ASSERT(config->window);
+
+  renderer->type = config->type;
+  renderer->window = config->window;
+
+  renderer->backend = CreateRendererBackend(renderer->type);
+  if (!renderer->backend) {
+    NOT_REACHED();
+    LOG(ERROR, "Could not create backend for: %s", ToString(renderer->type));
+    return false;
+  }
+
+  return renderer->backend->Init(renderer, config);
+}
+
+// Shutdown --------------------------------------------------------------------
+
+Renderer::~Renderer() = default;
 
 // Extras ----------------------------------------------------------------------
+
+bool Valid(Renderer* renderer) {
+  return renderer->type != RendererType::kLast && !!renderer->backend;
+}
 
 const char* ToString(RendererType type) {
   switch (type) {

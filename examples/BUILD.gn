@@ -21,4 +21,15 @@ if (sdl_enabled && opengl_enabled) {
       "//rothko/window:sdl_opengl",
     ]
   }
+
+  executable("sdl_opengl") {
+    sources = [
+      "sdl_opengl.cc",
+    ]
+
+    deps = [
+      "//rothko/graphics:opengl",
+      "//rothko/window:sdl_opengl",
+    ]
+  }
 }
