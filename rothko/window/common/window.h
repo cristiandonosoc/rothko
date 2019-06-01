@@ -10,6 +10,8 @@
 
 #include "rothko/utils/macros.h"
 
+namespace rothko {
+
 // Window
 // =============================================================================
 //
@@ -28,8 +30,6 @@
 // function in order to work. See the definitions of the functions below.
 //
 // See also rothko/window/common/window_backend.h for more details.
-
-namespace rothko {
 
 struct Input;
 struct WindowBackend;
