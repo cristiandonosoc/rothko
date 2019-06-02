@@ -16,7 +16,25 @@
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "msvc-x64"
-        }
+        },
+        {
+          "name": "OSX",
+          "includePath": [
+              "${workspaceFolder}/**",
+              "${env.HOME}/homebrew/include",
+              "${env.HOME}/Development/glm/glm"
+          ],
+          "defines": [],
+          "macFrameworkPath": [
+              "/System/Library/Frameworks",
+              "/Library/Frameworks",
+              "${env.HOME}/homebrew/bin"
+          ],
+          "compilerPath": "/usr/bin/clang",
+          "cStandard": "c11",
+          "cppStandard": "c++17",
+          "intelliSenseMode": "clang-x64"
+      }
     ],
     "version": 4
 }
