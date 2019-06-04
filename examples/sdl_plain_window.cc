@@ -11,7 +11,8 @@ using namespace rothko;
 int main() {
   Window window = {};
   InitWindowConfig window_config = {};
-  if (!InitWindow(&window, WindowBackendType::kSDLOpenGL, &window_config)) {
+  window_config.type = WindowType::kSDLOpenGL;
+  if (!InitWindow(&window, &window_config)) {
     LOG(ERROR, "Could not initialize window. Exiting.");
     return 1;
   }

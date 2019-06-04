@@ -7,6 +7,7 @@
 
 #include "rothko/graphics/common/renderer_backend.h"
 #include "rothko/utils/logging.h"
+#include "rothko/window/window.h"
 
 namespace rothko {
 
@@ -71,6 +72,19 @@ bool InitRenderer(Renderer* renderer, InitRendererConfig* config) {
 // Shutdown --------------------------------------------------------------------
 
 Renderer::~Renderer() = default;
+
+// Frame -----------------------------------------------------------------------
+
+void StartFrame(Renderer* renderer) {
+  ASSERT(Valid(renderer));
+  renderer->backend->StartFrame();
+}
+
+void EndFrame(Renderer* renderer) {
+  ASSERT(Valid(renderer));
+  renderer->backend->EndFrame();
+  WindowSwapBuffers(renderer->window);
+}
 
 // Extras ----------------------------------------------------------------------
 

@@ -20,7 +20,7 @@ Window::~Window() {
 namespace {
 
 using FactoryMap =
-    std::unordered_map<WindowBackendType, WindowBackendFactoryFunction>;
+    std::unordered_map<WindowType, WindowBackendFactoryFunction>;
 
 FactoryMap* GetFactoryMap() {
   static FactoryMap factory_map;
@@ -28,7 +28,7 @@ FactoryMap* GetFactoryMap() {
 }
 
 std::unique_ptr<WindowBackend>
-CreateWindowBackend(WindowBackendType type) {
+CreateWindowBackend(WindowType type) {
   FactoryMap* factory_map = GetFactoryMap();
   auto it = factory_map->find(type);
   ASSERT(it != factory_map->end());
@@ -40,7 +40,7 @@ CreateWindowBackend(WindowBackendType type) {
 }  // namespace
 
 void SuscribeWindowBackendFactoryFunction(
-    WindowBackendType type, WindowBackendFactoryFunction factory) {
+    WindowType type, WindowBackendFactoryFunction factory) {
   FactoryMap* factory_map = GetFactoryMap();
   ASSERT(factory_map->find(type) == factory_map->end());
   factory_map->insert({type, factory});
@@ -51,17 +51,16 @@ void SuscribeWindowBackendFactoryFunction(
 namespace {
 
 void Reset(Window* window) {
-  window->backend_type = WindowBackendType::kLast;
+  window->backend_type = WindowType::kLast;
   window->backend.reset();
 }
 
 }  // namespace
 
-bool InitWindow(Window* window, WindowBackendType type,
-                InitWindowConfig* config) {
-  ASSERT(type != WindowBackendType::kLast);
+bool InitWindow(Window* window, InitWindowConfig* config) {
+  ASSERT(config->type != WindowType::kLast);
 
-  window->backend = CreateWindowBackend(type);
+  window->backend = CreateWindowBackend(config->type);
   bool success = window->backend->Init(window, config);
   if (!success)
     Reset(window);
@@ -109,10 +108,10 @@ bool WindowCreateVulkanSurface(Window* window, void* vk_instance,
 
 // Misc ------------------------------------------------------------------------
 
-const char* ToString(WindowBackendType type) {
+const char* ToString(WindowType type) {
   switch (type) {
-    case WindowBackendType::kSDLOpenGL: return "SDLOpenGL";
-    case WindowBackendType::kLast: return "Last";
+    case WindowType::kSDLOpenGL: return "SDLOpenGL";
+    case WindowType::kLast: return "Last";
   }
 
   NOT_REACHED_MSG("Unknown backend type: %u", (uint32_t)type);

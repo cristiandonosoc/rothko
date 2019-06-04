@@ -23,8 +23,7 @@ std::unique_ptr<WindowBackend> CreateWindow() {
 
 struct BackendSuscriptor {
   BackendSuscriptor() {
-    SuscribeWindowBackendFactoryFunction(WindowBackendType::kSDLOpenGL,
-                                         CreateWindow);
+    SuscribeWindowBackendFactoryFunction(WindowType::kSDLOpenGL, CreateWindow);
   }
 };
 
@@ -116,6 +115,7 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window,
 
   /* SDL_GL_SetSwapInterval(1);  // Enable v-sync. */
   SDL_GetWindowSize(sdl->sdl_window.value, &window->width, &window->height);
+  LOG(DEBUG, "Window size: %d, %d", window->width, window->height);
 
   sdl->window = window;
   return true;

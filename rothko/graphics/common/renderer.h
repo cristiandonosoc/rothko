@@ -61,4 +61,7 @@ struct InitRendererConfig {
 
 bool InitRenderer(Renderer*, InitRendererConfig*);
 
+void StartFrame(Renderer*);
+void EndFrame(Renderer*);
+
 }  // namespace rothko
