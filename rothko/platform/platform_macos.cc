@@ -49,4 +49,5 @@ uint64_t GetNanoseconds() {
   clock_gettime(CLOCK_MONOTONIC, &now);
   return now.tv_sec * 1000000000 + now.tv_nsec;
 }
-}  // namespace warhol
+
+}  // namespace rothko
