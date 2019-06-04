@@ -23,6 +23,8 @@ struct OpenGLRendererBackend : public RendererBackend {
 
   void StartFrame() override;
   void EndFrame() override;
+
+  void UnstageShader(Shader*) override;
 };
 
 bool Valid(OpenGLRendererBackend*);

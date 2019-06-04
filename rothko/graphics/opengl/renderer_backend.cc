@@ -158,6 +158,12 @@ void OpenGLRendererBackend::EndFrame() {
   // No op.
 }
 
+// Shaders ---------------------------------------------------------------------
+
+void OpenGLRendererBackend::UnstageShader(Shader*) {
+  NOT_IMPLEMENTED();
+}
+
 // Extras ----------------------------------------------------------------------
 
 bool Valid(OpenGLRendererBackend* opengl) {

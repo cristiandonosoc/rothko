@@ -23,6 +23,7 @@ namespace rothko {
 
 struct InitRendererConfig;
 struct Renderer;
+struct Shader;
 
 struct RendererBackend {
   RendererBackend() = default;
@@ -35,6 +36,8 @@ struct RendererBackend {
 
   virtual void StartFrame() = 0;
   virtual void EndFrame() = 0;
+
+  virtual void UnstageShader(Shader*) = 0;
 };
 
 }  // namespace rothko
