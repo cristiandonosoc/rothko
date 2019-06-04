@@ -13,7 +13,8 @@ int main() {
   // Window.
   Window window = {};
   InitWindowConfig window_config = {};
-  if (!InitWindow(&window, WindowBackendType::kSDLOpenGL, &window_config)) {
+  window_config.type = WindowType::kSDLOpenGL;
+  if (!InitWindow(&window, &window_config)) {
     LOG(ERROR, "Could not initialize window. Exiting.");
     return 1;
   }
@@ -41,6 +42,10 @@ int main() {
       }
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    StartFrame(&renderer);
+
+    EndFrame(&renderer);
+
+    /* std::this_thread::sleep_for(std::chrono::milliseconds(16)); */
   }
 }

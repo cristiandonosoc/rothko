@@ -37,8 +37,6 @@ BackendSuscriptor backend_suscriptor;
 
 namespace {
 
-// OpenGL Debug Callback -------------------------------------------------------
-
 #ifdef DEBUG_MODE
 
 void APIENTRY OpenGLDebugCallback(GLenum source, GLenum type, GLuint id,
@@ -112,6 +110,8 @@ bool OpenGLInit(OpenGLRendererBackend* opengl) {
     return false;
   }
 
+  LOG(DEBUG, "Init gl3w");
+
 #if DEBUG_MODE
   // Suscribe the debug messaging.
   if (glDebugMessageCallback) {
@@ -121,6 +121,8 @@ bool OpenGLInit(OpenGLRendererBackend* opengl) {
     GLuint unused_ids = 0;
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
                           &unused_ids, true);
+
+    LOG(DEBUG, "Suscribed debug messaging.");
   }
 #endif
 
@@ -139,6 +141,21 @@ bool OpenGLRendererBackend::Init(Renderer*, InitRendererConfig*) {
 OpenGLRendererBackend::~OpenGLRendererBackend() {
   if (!Valid(this))
     return;
+}
+
+// StartFrame ------------------------------------------------------------------
+
+void OpenGLRendererBackend::StartFrame() {
+  ASSERT(Valid(this));
+
+  glClearColor(0.3f, 0.4f, 0.8f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+// EndFrame --------------------------------------------------------------------
+
+void OpenGLRendererBackend::EndFrame() {
+  // No op.
 }
 
 // Extras ----------------------------------------------------------------------

@@ -22,7 +22,7 @@ namespace rothko {
 // This abstraction is done by the usage of WindowBackends, which define a
 // common interface of what a particular window manager has to provide. Each
 // implementation backend (SDL, GLFW, Windows, etc.) must implement that
-// interface and add itself to the WindowBackendType below.
+// interface and add itself to the WindowType below.
 //
 // The way the code gets an instace of a particular backend is by using factory
 // functions. Rothko will maintain a map of functions it can use to create an
@@ -34,19 +34,19 @@ namespace rothko {
 struct Input;
 struct WindowBackend;
 
-enum class WindowBackendType {
+enum class WindowType {
   kSDLOpenGL,
   // kSDLVulkan,  TODO(Cristian): Implement back!
   kLast,
 };
-const char* ToString(WindowBackendType);
+const char* ToString(WindowType);
 
 // Backend Suscription ---------------------------------------------------------
 
 // Each backend, upon application startup, must suscribe a function that will
 // be called to create a that particular WindowBackend.
 using WindowBackendFactoryFunction = std::unique_ptr<WindowBackend> (*)();
-void SuscribeWindowBackendFactoryFunction(WindowBackendType,
+void SuscribeWindowBackendFactoryFunction(WindowType,
                                           WindowBackendFactoryFunction);
 
 struct Window {
@@ -59,7 +59,7 @@ struct Window {
   char utf8_chars_inputted[kMaxUtf8Chars + 1];  // For the extra zero.
   int utf8_index = 0;
 
-  WindowBackendType backend_type = WindowBackendType::kLast;
+  WindowType backend_type = WindowType::kLast;
   std::unique_ptr<WindowBackend> backend;
 };
 
@@ -68,6 +68,8 @@ struct Window {
 inline bool Valid(Window* wm) { return !!wm->backend; }
 
 struct InitWindowConfig {
+  WindowType type = WindowType::kLast;
+
   bool borderless = false;
   bool fullscreen = false;
   bool hidden = false;
@@ -77,7 +79,7 @@ struct InitWindowConfig {
   bool minimized = false;
   bool maximized = false;
 };
-bool InitWindow(Window*, WindowBackendType, InitWindowConfig*);
+bool InitWindow(Window*, InitWindowConfig*);
 
 // Will be called on destructor if window manager is valid.
 void ShutdownWindow(Window*);

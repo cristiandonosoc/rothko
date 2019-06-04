@@ -20,6 +20,9 @@ struct OpenGLRendererBackend : public RendererBackend {
   // Virtual Interface ---------------------------------------------------------
 
   bool Init(Renderer*, InitRendererConfig*) override;
+
+  void StartFrame() override;
+  void EndFrame() override;
 };
 
 bool Valid(OpenGLRendererBackend*);

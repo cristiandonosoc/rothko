@@ -32,6 +32,9 @@ struct RendererBackend {
   DELETE_MOVE_AND_ASSIGN(RendererBackend);
 
   virtual bool Init(Renderer*, InitRendererConfig*) = 0;
+
+  virtual void StartFrame() = 0;
+  virtual void EndFrame() = 0;
 };
 
 }  // namespace rothko
