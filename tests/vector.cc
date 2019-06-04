@@ -14,11 +14,11 @@ namespace {
 
 struct TestMemoryBlock {
   TestMemoryBlock(BlockAllocator* allocator, uint32_t size, int index)
-      : block(allocator, index, size),
-        memory(std::make_unique<uint8_t[]>(size)) {}
+      : memory(std::make_unique<uint8_t[]>(size)),
+      block(allocator, index, size) {}
 
-  MemoryBlock block;
   std::unique_ptr<uint8_t[]> memory;
+  MemoryBlock block;
 };
 
 struct TestAllocator : public BlockAllocator {
