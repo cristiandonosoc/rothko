@@ -9,6 +9,7 @@
 #include <sstream>
 
 #include "rothko/graphics/common/renderer.h"
+#include "rothko/graphics/opengl/shader.h"
 #include "rothko/utils/logging.h"
 
 namespace rothko {
@@ -159,6 +160,12 @@ void OpenGLRendererBackend::EndFrame() {
 }
 
 // Shaders ---------------------------------------------------------------------
+
+bool OpenGLRendererBackend::ParseShader(const std::string& vert_source,
+                                        const std::string& frag_source,
+                                        Shader* out) {
+  return OpenGLParseShader(vert_source, frag_source, out);
+}
 
 void OpenGLRendererBackend::UnstageShader(Shader*) {
   NOT_IMPLEMENTED();

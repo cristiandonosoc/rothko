@@ -5,9 +5,14 @@
 
 #include "rothko/graphics/common/renderer_backend.h"
 
+#include <string>
+
 #include "rothko/utils/macros.h"
 
 namespace rothko {
+
+struct Shader;
+
 namespace opengl {
 
 
@@ -24,6 +29,10 @@ struct OpenGLRendererBackend : public RendererBackend {
   void StartFrame() override;
   void EndFrame() override;
 
+  // Shader.
+
+  bool ParseShader(const std::string& vert_path, const std::string& frag_path,
+                   Shader* out) override;
   void UnstageShader(Shader*) override;
 };
 

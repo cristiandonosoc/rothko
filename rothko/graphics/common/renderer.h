@@ -65,6 +65,10 @@ void StartFrame(Renderer*);
 void EndFrame(Renderer*);
 
 // Shader.
+bool RendererParseShader(Renderer*,
+                         const std::string& vert_path,
+                         const std::string& frag_path,
+                         Shader* out);
 void RendererUnstageShader(Renderer*, Shader*);
 
 }  // namespace rothko

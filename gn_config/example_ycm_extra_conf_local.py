@@ -6,6 +6,12 @@
 # It is ignored by git.
 
 local_flags = [
+  # Freakishly important for when using modern headers!!!!
+  "-nostdinc++",
+
+  "-isystem",
+  "/home/cdc/Source/fuchsia/buildtools/linux-x64/clang/lib/clang/9.0.0/include/c++/v1",
+  "-isystem", "/mnt/c/Code/include",
   "-isystem", "/mnt/c/Code/include/fake-windows-headers-for-ycm",
 ]
 

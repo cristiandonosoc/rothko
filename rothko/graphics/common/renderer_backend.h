@@ -5,6 +5,8 @@
 
 #include "rothko/utils/macros.h"
 
+#include <string>
+
 namespace rothko {
 
 // RendererBackend
@@ -37,6 +39,10 @@ struct RendererBackend {
   virtual void StartFrame() = 0;
   virtual void EndFrame() = 0;
 
+  // Shader.
+  virtual bool ParseShader(const std::string& vert_path,
+                           const std::string& frag_path,
+                           Shader* out) = 0;
   virtual void UnstageShader(Shader*) = 0;
 };
 

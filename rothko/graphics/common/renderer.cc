@@ -88,6 +88,14 @@ void EndFrame(Renderer* renderer) {
 
 // Shaders ---------------------------------------------------------------------
 
+bool RendererParseShader(Renderer* renderer,
+                         const std::string& vert_path,
+                         const std::string& frag_path,
+                         Shader* out) {
+  ASSERT(Valid(renderer));
+  return renderer->backend->ParseShader(vert_path, frag_path, out);
+}
+
 void RendererUnstageShader(Renderer* renderer, Shader* shader) {
   ASSERT(Valid(renderer));
   renderer->backend->UnstageShader(shader);
