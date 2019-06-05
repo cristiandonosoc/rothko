@@ -5,10 +5,12 @@ source_set("common") {
   public = [
     "renderer.h",
     "renderer_backend.h",
+    "shader.h",
   ]
 
   sources = [
     "renderer.cc",
+    "shader.cc",
   ]
 
   deps = [

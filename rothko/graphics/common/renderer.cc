@@ -86,6 +86,13 @@ void EndFrame(Renderer* renderer) {
   WindowSwapBuffers(renderer->window);
 }
 
+// Shaders ---------------------------------------------------------------------
+
+void RendererUnstageShader(Renderer* renderer, Shader* shader) {
+  ASSERT(Valid(renderer));
+  renderer->backend->UnstageShader(shader);
+}
+
 // Extras ----------------------------------------------------------------------
 
 bool Valid(Renderer* renderer) {

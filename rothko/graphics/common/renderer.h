@@ -26,6 +26,7 @@
 
 namespace rothko {
 
+struct Shader;
 struct Window;
 
 enum class RendererType {
@@ -58,10 +59,12 @@ struct InitRendererConfig {
   RendererType type = RendererType::kLast;  // Required.
   Window* window = nullptr;                 // Required. Must outlive renderer.
 };
-
 bool InitRenderer(Renderer*, InitRendererConfig*);
 
 void StartFrame(Renderer*);
 void EndFrame(Renderer*);
+
+// Shader.
+void RendererUnstageShader(Renderer*, Shader*);
 
 }  // namespace rothko
