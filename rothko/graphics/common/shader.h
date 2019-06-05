@@ -35,6 +35,6 @@ struct Shader {
   std::string frag_src;
 };
 
-inline bool Staged(Shader* s) { return !!s->renderer && s->uuid.has_value(); }
+inline bool Staged(Shader* s) { return s->renderer && s->uuid.has_value(); }
 
 }  // namespace rothko
