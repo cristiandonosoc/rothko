@@ -24,12 +24,6 @@ struct OpenGLShader {
   uint32_t frag_ubo_handle = 0;
 };
 
-// Mostly exposed for testing.
-struct SubShaderParseResult {
-  std::vector<UniformBufferObject> ubos;
-};
-bool ParseSubShader(const std::string& source, SubShaderParseResult* out);
-
 bool OpenGLParseShader(const std::string& vert_path,
                        const std::string& frag_path,
                        Shader* out);

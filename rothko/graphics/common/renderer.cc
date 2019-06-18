@@ -83,7 +83,6 @@ void StartFrame(Renderer* renderer) {
 void EndFrame(Renderer* renderer) {
   ASSERT(Valid(renderer));
   renderer->backend->EndFrame();
-  WindowSwapBuffers(renderer->window);
 }
 
 // Shaders ---------------------------------------------------------------------

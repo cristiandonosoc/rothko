@@ -11,13 +11,6 @@
 namespace rothko {
 namespace opengl {
 
-bool ParseSubShader(const std::string& source, SubShaderParseResult* out) {
-  (void)source;
-  (void)out;
-  // TODO(Cristian): Do uniform parsing.
-  return true;
-}
-
 bool OpenGLParseShader(const std::string& vert_path,
                        const std::string& frag_path,
                        Shader* out) {

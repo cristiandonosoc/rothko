@@ -7,6 +7,7 @@ source_set("tests_lib") {
   sources = [
     "math.cc",
     "memory.cc",
+    "shader_parsing.cc",
     "strings.cc",
     "vector.cc",
   ]
@@ -17,6 +18,7 @@ source_set("tests_lib") {
 
   deps = [
     "//rothko/containers",
+    "//rothko/graphics/common",
     "//rothko/memory",
     "//rothko/utils",
   ]
