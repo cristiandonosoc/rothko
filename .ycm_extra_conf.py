@@ -16,8 +16,12 @@ flags = [
     '-Wextra',
     '-Wmissing-prototypes',
     '-x', 'c++',
-    '-std=c++17',
+    '--std=c++17',
+]
 
+flags += local_flags
+
+flags += [
     '-I', os.path.join(os.getcwd()),
 
     '-D', 'WARHOL_SDL_ENABLED',
@@ -31,7 +35,6 @@ flags = [
     '-isystem', os.path.join(os.getcwd(), 'third_party', 'catch2'),
 ]
 
-flags += local_flags
 
 ################################################################################
 # YCM Classic Implementation

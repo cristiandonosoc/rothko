@@ -20,7 +20,6 @@ source_set("utils") {
   ]
 
   deps = [
-    "//rothko/platform",
     "//third_party/stb",
   ]
 }

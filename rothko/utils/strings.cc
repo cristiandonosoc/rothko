@@ -9,6 +9,20 @@
 
 namespace rothko {
 
+bool BeginsWith(const std::string_view& str, const std::string_view& b) {
+  if (str.size() < b.size())
+    return false;
+  std::string_view beginning = str.substr(0, b.size());
+  return beginning == b;
+}
+
+bool EndsWith(const std::string_view& str, const std::string_view& e) {
+  if (str.size() < e.size())
+    return false;
+  std::string_view end = str.substr(str.size() - e.size(), e.size());
+  return end == e;
+}
+
 std::string StringPrintf(const char* fmt, ...) {
   va_list va;
   va_start(va, fmt);

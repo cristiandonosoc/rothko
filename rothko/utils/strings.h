@@ -10,6 +10,10 @@
 
 namespace rothko {
 
+bool BeginsWith(const std::string_view& input, const std::string_view& b);
+
+bool EndsWith(const std::string_view& input, const std::string_view& e);
+
 std::string StringPrintf(const char *fmt, ...) PRINTF_FORMAT(1, 2);
 std::string StringPrintfV(const char *fmt, va_list);
 

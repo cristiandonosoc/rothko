@@ -8,23 +8,48 @@
 namespace rothko {
 namespace test {
 
+TEST_CASE("BeginsWith") {
+  CHECK(BeginsWith("hola", ""));
+
+  CHECK(BeginsWith("hola", "h"));
+  CHECK(BeginsWith("hola", "ho"));
+  CHECK(BeginsWith("hola", "hol"));
+  CHECK(BeginsWith("hola", "hola"));
+
+  CHECK(!BeginsWith("hola", "holaa"));
+  CHECK(!BeginsWith("hola", "a"));
+}
+
+TEST_CASE("EndsWith") {
+  CHECK(EndsWith("hola", ""));
+
+  CHECK(EndsWith("hola", "a"));
+  CHECK(EndsWith("hola", "la"));
+  CHECK(EndsWith("hola", "ola"));
+  CHECK(EndsWith("hola", "hola"));
+
+
+  CHECK(!EndsWith("hola", "ahola"));
+  CHECK(!EndsWith("hola", "o"));
+}
+
 TEST_CASE("Trim") {
   std::string result;
 
-  /* result = Trim(""); */
-  /* CHECK(result.empty()); */
+  result = Trim("");
+  CHECK(result.empty());
 
-  /* result = Trim("AAAA", "A"); */
-  /* CHECK(result.empty()); */
+  result = Trim("AAAA", "A");
+  CHECK(result.empty());
 
-  /* result = Trim("AAAA aaa bbb AAAAA", "A"); */
-  /* CHECK(result == " aaa bbb "); */
+  result = Trim("AAAA aaa bbb AAAAA", "A");
+  CHECK(result == " aaa bbb ");
 
   result = Trim("    Some string with spaces    ");
   CHECK(result == "Some string with spaces");
 
-  /* result = Trim("\t\r\n another string ABCD \t\r\n", "\t\r\nABCD "); */
-  /* CHECK(result == "another string"); */
+  result = Trim("\t\r\n another string ABCD \t\r\n", "\t\r\nABCD ");
+  CHECK(result == "another string");
 }
 
 namespace {

@@ -1,10 +1,13 @@
 # Copyright 2019, Cristián Donoso.
 # This code has a BSD license. See LICENSE.
 
+# Separated for testability (don't bring in graphics dependencies).
 source_set("opengl") {
   sources = [
     "renderer_backend.cc",
     "renderer_backend.h",
+    "shader.cc",
+    "shader.h",
   ]
 
   deps = [
