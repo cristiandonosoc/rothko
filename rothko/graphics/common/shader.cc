@@ -54,9 +54,8 @@ std::optional<Uniform> ParseUniform(const std::vector<std::string>& elements) {
 
 }  // namespace
 
+// TODO(donosoc): This should be loaded from the assets.
 bool ParseSubShader(const std::string& source, SubShaderParseResult* out) {
-  (void)source;
-
   std::map<std::string, UniformBufferObject> ubo_map;
   auto lines = SplitToLines(source);
   for (auto it = lines.begin(); it != lines.end(); it++) {

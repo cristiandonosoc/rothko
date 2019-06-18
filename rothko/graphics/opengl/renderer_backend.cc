@@ -159,6 +159,17 @@ void OpenGLRendererBackend::EndFrame() {
   // No op.
 }
 
+// Meshes ----------------------------------------------------------------------
+
+bool OpenGLRendererBackend::StageMesh(Mesh*) {
+  NOT_IMPLEMENTED();
+  return false;
+}
+
+void OpenGLRendererBackend::UnstageMesh(Mesh*) {
+  NOT_IMPLEMENTED();
+}
+
 // Shaders ---------------------------------------------------------------------
 
 bool OpenGLRendererBackend::ParseShader(const std::string& vert_source,
@@ -170,6 +181,15 @@ bool OpenGLRendererBackend::ParseShader(const std::string& vert_source,
 void OpenGLRendererBackend::UnstageShader(Shader*) {
   NOT_IMPLEMENTED();
 }
+
+// Textures --------------------------------------------------------------------
+
+bool OpenGLRendererBackend::StageTexture(Texture*) {
+  NOT_IMPLEMENTED();
+  return false;
+}
+
+void OpenGLRendererBackend::UnstageTexture(Texture*) { NOT_IMPLEMENTED(); }
 
 // Extras ----------------------------------------------------------------------
 

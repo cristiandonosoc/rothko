@@ -5,7 +5,9 @@
 
 #include <map>
 
+#include "rothko/graphics/common/mesh.h"
 #include "rothko/graphics/common/renderer_backend.h"
+#include "rothko/graphics/common/texture.h"
 #include "rothko/utils/logging.h"
 #include "rothko/window/window.h"
 
@@ -98,6 +100,33 @@ bool RendererParseShader(Renderer* renderer,
 void RendererUnstageShader(Renderer* renderer, Shader* shader) {
   ASSERT(Valid(renderer));
   renderer->backend->UnstageShader(shader);
+}
+
+// Meshes ----------------------------------------------------------------------
+
+bool RendererStageMesh(Renderer* renderer, Mesh* mesh) {
+  ASSERT(Valid(renderer));
+  ASSERT(!Staged(mesh));
+  return renderer->backend->StageMesh(mesh);
+}
+
+void RendererUnstageMesh(Renderer* renderer, Mesh* mesh) {
+  ASSERT(Valid(renderer));
+  ASSERT(Staged(mesh));
+  renderer->backend->UnstageMesh(mesh);
+}
+
+// Textures --------------------------------------------------------------------
+
+bool RendererStageTexture(Renderer* renderer, Texture* texture) {
+  ASSERT(Valid(renderer));
+  ASSERT(!Staged(texture));
+  return renderer->backend->StageTexture(texture);
+}
+void RendererUnstageTexture(Renderer* renderer, Texture* texture) {
+  ASSERT(Valid(renderer));
+  ASSERT(Staged(texture));
+  renderer->backend->UnstageTexture(texture);
 }
 
 // Extras ----------------------------------------------------------------------

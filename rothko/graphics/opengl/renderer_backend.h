@@ -29,11 +29,18 @@ struct OpenGLRendererBackend : public RendererBackend {
   void StartFrame() override;
   void EndFrame() override;
 
-  // Shader.
+  // Meshes.
+  bool StageMesh(Mesh*) override;
+  void UnstageMesh(Mesh*) override;
 
+  // Shaders.
   bool ParseShader(const std::string& vert_path, const std::string& frag_path,
                    Shader* out) override;
   void UnstageShader(Shader*) override;
+
+  // Textures.
+  bool StageTexture(Texture*) override;
+  void UnstageTexture(Texture*) override;
 };
 
 bool Valid(OpenGLRendererBackend*);

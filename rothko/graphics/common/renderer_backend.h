@@ -24,8 +24,10 @@ namespace rothko {
 // the called.
 
 struct InitRendererConfig;
+struct Mesh;
 struct Renderer;
 struct Shader;
+struct Texture;
 
 struct RendererBackend {
   RendererBackend() = default;
@@ -39,11 +41,19 @@ struct RendererBackend {
   virtual void StartFrame() = 0;
   virtual void EndFrame() = 0;
 
-  // Shader.
+  // Shaders.
   virtual bool ParseShader(const std::string& vert_path,
                            const std::string& frag_path,
                            Shader* out) = 0;
   virtual void UnstageShader(Shader*) = 0;
+
+  // Meshes.
+  virtual bool StageMesh(Mesh*) = 0;
+  virtual void UnstageMesh(Mesh*) = 0;
+
+  // Textures.
+  virtual bool StageTexture(Texture*) = 0;
+  virtual void UnstageTexture(Texture*) = 0;
 };
 
 }  // namespace rothko

@@ -26,7 +26,9 @@
 
 namespace rothko {
 
+struct Mesh;
 struct Shader;
+struct Texture;
 struct Window;
 
 enum class RendererType {
@@ -64,11 +66,19 @@ bool InitRenderer(Renderer*, InitRendererConfig*);
 void StartFrame(Renderer*);
 void EndFrame(Renderer*);
 
-// Shader.
+// Meshes.
+bool RendererStageMesh(Renderer*, Mesh*);
+void RendererUnstageMesh(Renderer*, Mesh*);
+
+// Shaders.
 bool RendererParseShader(Renderer*,
                          const std::string& vert_path,
                          const std::string& frag_path,
                          Shader* out);
 void RendererUnstageShader(Renderer*, Shader*);
+
+// Textures.
+bool RendererStageTexture(Renderer*, Texture*);
+void RendererUnstageTexture(Renderer*, Texture*);
 
 }  // namespace rothko
