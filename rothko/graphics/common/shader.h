@@ -32,6 +32,9 @@ UniformType FromString(const std::string&);
 uint32_t GetSize(UniformType);
 uint32_t GetAlignment(UniformType);
 
+// |offset| represents the offset in memory where this uniform is from the
+// beginning of the uniform block. This can be calculated calling into
+// CalculateUniformLayout with a set of uniforms that have been loaded.
 struct Uniform {
   std::string name;
   UniformType type = UniformType::kLast;
@@ -40,6 +43,7 @@ struct Uniform {
   uint32_t size = 0;        // In bytes.
   // TODO(Cristian): Support arrays.
 };
+inline bool Valid(Uniform* u) { return u->type != UniformType::kLast; }
 
 // A UniformBufferObject is a group of uniforms grouped in a struct-ish
 // configuration within the shader. The advantage of those is that they can be
@@ -50,6 +54,12 @@ struct UniformBufferObject {
   int size = -1;  // In bytes.
   std::vector<Uniform> uniforms;
 };
+
+// This is using the std140 uniform block layout rules:
+//
+// https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL (Uniform block layout).
+// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_uniform_buffer_object.txt
+bool CalculateUBOLayout(UniformBufferObject*);
 
 // Mostly exposed for testing.
 struct SubShaderParseResult {

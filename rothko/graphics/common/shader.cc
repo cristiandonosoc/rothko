@@ -57,9 +57,7 @@ std::optional<Uniform> ParseUniform(const std::vector<std::string>& elements) {
 bool ParseSubShader(const std::string& source, SubShaderParseResult* out) {
   (void)source;
 
-  out->ubos.clear();
-
-  std::map<std::string, UniformBufferObject> ubos;
+  std::map<std::string, UniformBufferObject> ubo_map;
   auto lines = SplitToLines(source);
   for (auto it = lines.begin(); it != lines.end(); it++) {
     auto& line = *it;
@@ -77,22 +75,69 @@ bool ParseSubShader(const std::string& source, SubShaderParseResult* out) {
     if (!uniform_opt)
       return false;
 
-    auto& ubo = ubos[elements[0]];
+    auto& ubo = ubo_map[elements[0]];
     ubo.uniforms.push_back(std::move(*uniform_opt));
   }
 
-  out->ubos.clear();
-  out->ubos.reserve(ubos.size());
-  for (auto& [ubo_name, ubo] : ubos) {
+
+  std::vector<UniformBufferObject> ubos;
+  ubos.reserve(ubos.size());
+  for (auto& [ubo_name, ubo] : ubo_map) {
     ubo.name = ubo_name;
-    out->ubos.emplace_back(std::move(ubo));
+    ubos.emplace_back(std::move(ubo));
   }
 
-  // TODO(Cristian): Do uniform parsing.
+  for (auto& ubo : ubos) {
+    if (!CalculateUBOLayout(&ubo)) {
+      LOG(ERROR, "Could not calculate UBO layout for %s", ubo.name.c_str());
+      return false;
+    }
+  }
+
+  out->ubos = std::move(ubos);
+
   return true;
 }
 
+// CalculateUniformLayout ------------------------------------------------------
 
+namespace {
+
+struct UniformLayout {
+  uint32_t size = 0;
+  uint32_t alignment = 0;
+};
+
+uint32_t NextMultiple(uint32_t val, uint32_t multiple) {
+  if (multiple == 0)
+    return val;
+
+  uint32_t remainder = val % multiple;
+  if (remainder == 0)
+    return val;
+  return val + multiple - remainder;
+}
+
+}  // namespace
+
+bool CalculateUBOLayout(UniformBufferObject* ubo) {
+  uint32_t current_offset = 0;
+  for (Uniform& uniform : ubo->uniforms) {
+    if (!Valid(&uniform)) {
+      LOG(ERROR, "Uniform %s is not valid.", uniform.name.c_str());
+      return false;
+    }
+
+    uniform.size = GetSize(uniform.type);
+    uniform.alignment = GetAlignment(uniform.type);
+
+    uint32_t next_start = NextMultiple(current_offset, uniform.alignment);
+    uniform.offset = next_start;
+    current_offset = uniform.offset + uniform.size;
+  }
+
+  return true;
+}
 
 // Uniforms Utils --------------------------------------------------------------
 
