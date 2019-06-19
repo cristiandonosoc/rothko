@@ -11,6 +11,7 @@
 #include "rothko/graphics/common/renderer.h"
 #include "rothko/graphics/opengl/mesh.h"
 #include "rothko/graphics/opengl/shader.h"
+#include "rothko/graphics/opengl/texture.h"
 #include "rothko/utils/logging.h"
 #include "rothko/window/window.h"
 
@@ -186,12 +187,14 @@ void OpenGLRendererBackend::UnstageShader(Shader*) {
 
 // Textures --------------------------------------------------------------------
 
-bool OpenGLRendererBackend::StageTexture(Texture*) {
-  NOT_IMPLEMENTED();
-  return false;
+bool OpenGLRendererBackend::StageTexture(Texture* texture,
+                                         const StageTextureConfig& config) {
+  return OpenGLStageTexture(this, texture, config);
 }
 
-void OpenGLRendererBackend::UnstageTexture(Texture*) { NOT_IMPLEMENTED(); }
+void OpenGLRendererBackend::UnstageTexture(Texture* texture) {
+  OpenGLUnstageTexture(this, texture);
+}
 
 // Extras ----------------------------------------------------------------------
 

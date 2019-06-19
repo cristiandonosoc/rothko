@@ -23,10 +23,15 @@ struct MeshHandles {
   uint32_t vao = 0;
 };
 
+struct TextureHandles {
+  uint32_t tex_handle = 0;
+};
+
 struct OpenGLRendererBackend : public RendererBackend {
   ~OpenGLRendererBackend();
 
   std::map<uint32_t, MeshHandles> loaded_meshes;
+  std::map<uint32_t, TextureHandles> loaded_textures;
 
   Window* window = nullptr;
   bool loaded = false;
@@ -48,7 +53,7 @@ struct OpenGLRendererBackend : public RendererBackend {
   void UnstageShader(Shader*) override;
 
   // Textures.
-  bool StageTexture(Texture*) override;
+  bool StageTexture(Texture*, const StageTextureConfig&) override;
   void UnstageTexture(Texture*) override;
 };
 

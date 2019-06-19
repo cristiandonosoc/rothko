@@ -78,7 +78,31 @@ bool RendererParseShader(Renderer*,
 void RendererUnstageShader(Renderer*, Shader*);
 
 // Textures.
-bool RendererStageTexture(Renderer*, Texture*);
+struct StageTextureConfig {
+  enum class Wrap {
+    kClampToEdge,
+    kMirroredRepeat,
+    kRepeat,
+  };
+
+  enum class Filter {
+    kNearest,
+    kLinear,
+    kNearestMipmapNearest,
+    kNearestMipmapLinear,
+    kLinearMipmapNearest,
+    kLinearMipampLinear,
+  };
+
+  bool generate_mipmaps = true;
+
+  Wrap wrap_u = Wrap::kRepeat;
+  Wrap wrap_v = Wrap::kRepeat;
+
+  Filter min_filter = Filter::kLinear;
+  Filter max_filter = Filter::kLinear;
+};
+bool RendererStageTexture(Renderer*, const StageTextureConfig&, Texture*);
 void RendererUnstageTexture(Renderer*, Texture*);
 
 }  // namespace rothko

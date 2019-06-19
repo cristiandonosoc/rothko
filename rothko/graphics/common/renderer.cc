@@ -118,10 +118,11 @@ void RendererUnstageMesh(Renderer* renderer, Mesh* mesh) {
 
 // Textures --------------------------------------------------------------------
 
-bool RendererStageTexture(Renderer* renderer, Texture* texture) {
+bool RendererStageTexture(Renderer* renderer, const StageTextureConfig& config,
+                          Texture* texture) {
   ASSERT(Valid(renderer));
   ASSERT(!Staged(texture));
-  return renderer->backend->StageTexture(texture);
+  return renderer->backend->StageTexture(texture, config);
 }
 void RendererUnstageTexture(Renderer* renderer, Texture* texture) {
   ASSERT(Valid(renderer));

@@ -38,9 +38,6 @@ struct Texture {
   ClearOnMove<uint8_t*> data = nullptr;
 };
 
-// Thread safe. Will advance the UUID;
-uint32_t GetNextTextureUUID();
-
 inline bool Staged(Texture* t) { return t->uuid.has_value(); }
 
 bool STBLoadTexture(const std::string& path, TextureType, Texture* out);

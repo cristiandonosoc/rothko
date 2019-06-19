@@ -49,17 +49,7 @@ bool STBLoadTexture(const std::string& path,
 
   *out= std::move(tmp);
   out->free_function = stbi_image_free;
-  out->uuid = GetNextTextureUUID();
   return true;
-}
-
-// GetNextTextureUUID ----------------------------------------------------------
-
-static std::atomic<uint32_t> kNextTextureUUID = 1;
-uint32_t GetNextTextureUUID() {
-  uint32_t id = kNextTextureUUID++;
-  ASSERT(id < UINT32_MAX);
-  return id;
 }
 
 }  // namespace rothko

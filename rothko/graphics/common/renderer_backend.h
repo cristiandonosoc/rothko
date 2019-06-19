@@ -27,6 +27,7 @@ struct InitRendererConfig;
 struct Mesh;
 struct Renderer;
 struct Shader;
+struct StageTextureConfig;
 struct Texture;
 
 struct RendererBackend {
@@ -52,7 +53,7 @@ struct RendererBackend {
   virtual void UnstageMesh(Mesh*) = 0;
 
   // Textures.
-  virtual bool StageTexture(Texture*) = 0;
+  virtual bool StageTexture(Texture*, const StageTextureConfig&) = 0;
   virtual void UnstageTexture(Texture*) = 0;
 };
 

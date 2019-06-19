@@ -10,6 +10,8 @@ source_set("opengl") {
     "renderer_backend.h",
     "shader.cc",
     "shader.h",
+    "texture.cc",
+    "texture.h",
   ]
 
   deps = [
