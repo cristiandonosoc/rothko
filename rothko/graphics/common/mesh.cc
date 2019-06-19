@@ -12,5 +12,14 @@ Mesh::~Mesh() {
     RendererUnstageMesh(this->renderer, this);
 }
 
-}  // namespace rothko
+const char* ToString(VertexType type) {
+  switch (type) {
+    case VertexType::kDefault: return "Default";
+    case VertexType::kLast: return "Last";
+  }
 
+  NOT_REACHED();
+  return "<unknown>";
+}
+
+}  // namespace rothko

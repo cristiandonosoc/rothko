@@ -9,8 +9,10 @@
 #include <sstream>
 
 #include "rothko/graphics/common/renderer.h"
+#include "rothko/graphics/opengl/mesh.h"
 #include "rothko/graphics/opengl/shader.h"
 #include "rothko/utils/logging.h"
+#include "rothko/window/window.h"
 
 namespace rothko {
 namespace opengl {
@@ -156,14 +158,14 @@ void OpenGLRendererBackend::StartFrame() {
 // EndFrame --------------------------------------------------------------------
 
 void OpenGLRendererBackend::EndFrame() {
-  // No op.
+  ASSERT(Valid(this));
+  WindowSwapBuffers(this->window);
 }
 
 // Meshes ----------------------------------------------------------------------
 
-bool OpenGLRendererBackend::StageMesh(Mesh*) {
-  NOT_IMPLEMENTED();
-  return false;
+bool OpenGLRendererBackend::StageMesh(Mesh* mesh) {
+  return OpenGLStageMesh(this, mesh);
 }
 
 void OpenGLRendererBackend::UnstageMesh(Mesh*) {

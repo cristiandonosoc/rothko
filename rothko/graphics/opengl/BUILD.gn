@@ -4,6 +4,8 @@
 # Separated for testability (don't bring in graphics dependencies).
 source_set("opengl") {
   sources = [
+    "mesh.cc",
+    "mesh.h",
     "renderer_backend.cc",
     "renderer_backend.h",
     "shader.cc",
@@ -13,5 +15,6 @@ source_set("opengl") {
   deps = [
     "//rothko/graphics/common",
     "//third_party/gl3w",
+    "//rothko/window/common",
   ]
 }

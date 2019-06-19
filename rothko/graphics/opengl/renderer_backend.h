@@ -6,20 +6,29 @@
 #include "rothko/graphics/common/renderer_backend.h"
 
 #include <string>
+#include <map>
 
 #include "rothko/utils/macros.h"
 
 namespace rothko {
 
 struct Shader;
+struct Window;
 
 namespace opengl {
 
+struct MeshHandles {
+  uint32_t vbo = 0;
+  uint32_t ebo = 0;
+  uint32_t vao = 0;
+};
 
 struct OpenGLRendererBackend : public RendererBackend {
   ~OpenGLRendererBackend();
 
+  std::map<uint32_t, MeshHandles> loaded_meshes;
 
+  Window* window = nullptr;
   bool loaded = false;
 
   // Virtual Interface ---------------------------------------------------------

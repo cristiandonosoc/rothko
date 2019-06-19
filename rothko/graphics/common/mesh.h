@@ -21,6 +21,7 @@ enum class VertexType : uint32_t {
   kDefault,   // VertexDefault.
   kLast,
 };
+const char* ToString(VertexType);
 
 struct VertexDefault {
   static constexpr VertexType kVertexType = VertexType::kDefault;
@@ -34,6 +35,8 @@ struct VertexDefault {
 
 struct Mesh {
   RAII_CONSTRUCTORS(Mesh);
+
+  std::string name;
 
   Renderer* renderer = nullptr;
   ClearOnMove<uint32_t> uuid = 0;
