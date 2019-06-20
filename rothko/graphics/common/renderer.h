@@ -52,7 +52,6 @@ struct Renderer {
 
   RendererType type = RendererType::kLast;
   std::unique_ptr<RendererBackend> backend = nullptr;
-  bool frame_started = false;
 };
 
 bool Valid(Renderer* r);
@@ -71,10 +70,7 @@ bool RendererStageMesh(Renderer*, Mesh*);
 void RendererUnstageMesh(Renderer*, Mesh*);
 
 // Shaders.
-bool RendererParseShader(Renderer*,
-                         const std::string& vert_path,
-                         const std::string& frag_path,
-                         Shader* out);
+bool RendererStageShader(Renderer*, Shader*);
 void RendererUnstageShader(Renderer*, Shader*);
 
 // Textures.
@@ -102,7 +98,7 @@ struct StageTextureConfig {
   Filter min_filter = Filter::kLinear;
   Filter max_filter = Filter::kLinear;
 };
-bool RendererStageTexture(Renderer*, const StageTextureConfig&, Texture*);
+bool RendererStageTexture(const StageTextureConfig&, Renderer*, Texture*);
 void RendererUnstageTexture(Renderer*, Texture*);
 
 }  // namespace rothko

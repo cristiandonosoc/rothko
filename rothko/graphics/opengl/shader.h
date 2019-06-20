@@ -15,18 +15,10 @@ struct Shader;
 
 namespace opengl {
 
-// These is all the information OpenGL needs to keep track of a loaded shader
-// within the driver/GPU.
-struct OpenGLShader {
-  // These are the buffer/program handles.
-  uint32_t program_handle = 0;
-  uint32_t vert_ubo_handle = 0;
-  uint32_t frag_ubo_handle = 0;
-};
+struct OpenGLRendererBackend;
 
-bool OpenGLParseShader(const std::string& vert_path,
-                       const std::string& frag_path,
-                       Shader* out);
+bool OpenGLStageShader(OpenGLRendererBackend*, Shader*);
+void OpenGLUnstageShader(OpenGLRendererBackend*, Shader*);
 
 }  // namespace opengl
 }  // namespace rothko

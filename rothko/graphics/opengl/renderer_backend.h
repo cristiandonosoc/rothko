@@ -23,18 +23,26 @@ struct MeshHandles {
   uint32_t vao = 0;
 };
 
+
+struct ShaderHandles {
+  uint32_t program_handle;
+};
+
 struct TextureHandles {
   uint32_t tex_handle = 0;
 };
 
 struct OpenGLRendererBackend : public RendererBackend {
+  OpenGLRendererBackend();
   ~OpenGLRendererBackend();
+  DELETE_COPY_AND_ASSIGN(OpenGLRendererBackend);
+  DELETE_MOVE_AND_ASSIGN(OpenGLRendererBackend);
 
   std::map<uint32_t, MeshHandles> loaded_meshes;
+  std::map<uint32_t, ShaderHandles> loaded_shaders;
   std::map<uint32_t, TextureHandles> loaded_textures;
 
   Window* window = nullptr;
-  bool loaded = false;
 
   // Virtual Interface ---------------------------------------------------------
 
@@ -48,16 +56,15 @@ struct OpenGLRendererBackend : public RendererBackend {
   void UnstageMesh(Mesh*) override;
 
   // Shaders.
-  bool ParseShader(const std::string& vert_path, const std::string& frag_path,
-                   Shader* out) override;
+  bool StageShader(Shader*) override;
   void UnstageShader(Shader*) override;
 
   // Textures.
-  bool StageTexture(Texture*, const StageTextureConfig&) override;
+  bool StageTexture(const StageTextureConfig&, Texture*) override;
   void UnstageTexture(Texture*) override;
 };
 
-bool Valid(OpenGLRendererBackend*);
+inline bool Valid(const OpenGLRendererBackend& o) { return !!o.window; }
 
 }  // namespace opengl
 }  // namespace rothko

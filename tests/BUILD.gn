@@ -5,9 +5,9 @@
 source_set("tests_lib") {
   testonly = true
   sources = [
+    "defer.cc",
     "math.cc",
     "memory.cc",
-    "shader_parsing.cc",
     "strings.cc",
     "vector.cc",
   ]

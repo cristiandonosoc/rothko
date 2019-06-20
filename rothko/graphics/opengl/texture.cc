@@ -5,6 +5,8 @@
 
 #include <GL/gl3w.h>
 
+#include <atomic>
+
 #include "rothko/graphics/common/renderer.h"
 #include "rothko/graphics/common/texture.h"
 #include "rothko/graphics/opengl/renderer_backend.h"
@@ -55,12 +57,13 @@ GLenum FilterToGL(StageTextureConfig::Filter filter) {
 
 }  // namespace
 
-bool OpenGLStageTexture(OpenGLRendererBackend* opengl, Texture* texture,
-                        const StageTextureConfig& config) {
+bool OpenGLStageTexture(const StageTextureConfig& config,
+                        OpenGLRendererBackend* opengl,
+                        Texture* texture) {
   uint32_t uuid = GetNextTextureUUID();
   auto it = opengl->loaded_textures.find(uuid);
   if (it != opengl->loaded_textures.end()) {
-    LOG(ERROR, "Shader %s is already loaded.", texture->name.c_str());
+    LOG(ERROR, "Texture %s is already loaded.", texture->name.c_str());
     return false;
   }
 

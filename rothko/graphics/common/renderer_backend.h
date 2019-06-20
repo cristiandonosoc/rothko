@@ -42,18 +42,16 @@ struct RendererBackend {
   virtual void StartFrame() = 0;
   virtual void EndFrame() = 0;
 
-  // Shaders.
-  virtual bool ParseShader(const std::string& vert_path,
-                           const std::string& frag_path,
-                           Shader* out) = 0;
-  virtual void UnstageShader(Shader*) = 0;
-
   // Meshes.
   virtual bool StageMesh(Mesh*) = 0;
   virtual void UnstageMesh(Mesh*) = 0;
 
+  // Shaders.
+  virtual bool StageShader(Shader*) = 0;
+  virtual void UnstageShader(Shader*) = 0;
+
   // Textures.
-  virtual bool StageTexture(Texture*, const StageTextureConfig&) = 0;
+  virtual bool StageTexture(const StageTextureConfig&, Texture*) = 0;
   virtual void UnstageTexture(Texture*) = 0;
 };
 

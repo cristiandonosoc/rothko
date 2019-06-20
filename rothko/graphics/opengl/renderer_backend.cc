@@ -37,6 +37,8 @@ BackendSuscriptor backend_suscriptor;
 
 } // namespace
 
+OpenGLRendererBackend::OpenGLRendererBackend() = default;
+
 // Init ------------------------------------------------------------------------
 
 namespace {
@@ -102,8 +104,8 @@ Gl3wInitResultToString(int res) {
   return "<unknown>";
 }
 
-bool OpenGLInit(OpenGLRendererBackend* opengl) {
-  if (opengl->loaded) {
+bool OpenGLInit(OpenGLRendererBackend* opengl, InitRendererConfig* config) {
+  if (Valid(*opengl)) {
     NOT_REACHED_MSG("Backend should not be initialized twice.");
     return false;
   }
@@ -130,27 +132,24 @@ bool OpenGLInit(OpenGLRendererBackend* opengl) {
   }
 #endif
 
-  opengl->loaded = true;
+  opengl->window = config->window;
   return true;
 }
 
 }  // namespace
 
-bool OpenGLRendererBackend::Init(Renderer*, InitRendererConfig*) {
-  return OpenGLInit(this);
+bool OpenGLRendererBackend::Init(Renderer*, InitRendererConfig* config) {
+  return OpenGLInit(this, config);
 }
 
 // Shutdown --------------------------------------------------------------------
 
-OpenGLRendererBackend::~OpenGLRendererBackend() {
-  if (!Valid(this))
-    return;
-}
+OpenGLRendererBackend::~OpenGLRendererBackend() = default;
 
 // StartFrame ------------------------------------------------------------------
 
 void OpenGLRendererBackend::StartFrame() {
-  ASSERT(Valid(this));
+  ASSERT(Valid(*this));
 
   glClearColor(0.3f, 0.4f, 0.8f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -159,7 +158,7 @@ void OpenGLRendererBackend::StartFrame() {
 // EndFrame --------------------------------------------------------------------
 
 void OpenGLRendererBackend::EndFrame() {
-  ASSERT(Valid(this));
+  ASSERT(Valid(*this));
   WindowSwapBuffers(this->window);
 }
 
@@ -175,10 +174,8 @@ void OpenGLRendererBackend::UnstageMesh(Mesh*) {
 
 // Shaders ---------------------------------------------------------------------
 
-bool OpenGLRendererBackend::ParseShader(const std::string& vert_source,
-                                        const std::string& frag_source,
-                                        Shader* out) {
-  return OpenGLParseShader(vert_source, frag_source, out);
+bool OpenGLRendererBackend::StageShader(Shader* shader) {
+  return OpenGLStageShader(shader);
 }
 
 void OpenGLRendererBackend::UnstageShader(Shader*) {
@@ -187,19 +184,13 @@ void OpenGLRendererBackend::UnstageShader(Shader*) {
 
 // Textures --------------------------------------------------------------------
 
-bool OpenGLRendererBackend::StageTexture(Texture* texture,
-                                         const StageTextureConfig& config) {
-  return OpenGLStageTexture(this, texture, config);
+bool OpenGLRendererBackend::StageTexture(const StageTextureConfig& config,
+                                         Texture* texture) {
+  return OpenGLStageTexture(config, this, texture);
 }
 
 void OpenGLRendererBackend::UnstageTexture(Texture* texture) {
   OpenGLUnstageTexture(this, texture);
-}
-
-// Extras ----------------------------------------------------------------------
-
-bool Valid(OpenGLRendererBackend* opengl) {
-  return opengl->loaded;
 }
 
 }  // namespace opengl
