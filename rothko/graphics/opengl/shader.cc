@@ -115,7 +115,40 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
   uint32_t prog_handle = LinkProgram(vert_handle, frag_handle);
   if (prog_handle == 0)
     return false;
-  handles->program_handle = prog_handle;
+  handles->program = prog_handle;
+
+  // TODO(Cristian): Separate for vert and frag.
+  uint32_t current_binding = 0;
+  for (auto& ubo : shader->vert_ubos) {
+
+    // Obtain the block index.
+    uint32_t index = glGetUniformBlockIndex(prog_handle, ubo.name.c_str());
+    if (index == GL_INVALID_INDEX)
+      return false;
+
+    glUniformBlockBinding(prog_handle, index, current_binding);
+
+    // Generate the buffer that will hold the uniforms.
+    uint32_t buffer_handle = 0;
+    glGenBuffers(1, &buffer_handle);
+    glBindBuffer(GL_UNIFORM_BUFFER, buffer_handle);
+    ASSERT(ubo.size > 0);
+    glBufferData(GL_UNIFORM_BUFFER, ubo.size, NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, NULL);
+
+    // Store the binding data.
+    UBOBinding binding;
+    binding.binding_index = current_binding;
+    binding.buffer_handle = buffer_handle;
+
+    handles->vert_ubos.push_back(std::move(binding));
+
+    current_binding++;
+  }
+
+
+
+
 
   /* // Get the UBO bindings. */
   /* if (!BindUBOs(shader->vert_ubos, prog_handle, handles) || */

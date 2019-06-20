@@ -19,7 +19,7 @@ struct Renderer;
 // through glUniform1v kind of calls.
 struct UniformBufferObject {
   std::string name;
-  int size = -1;  // In bytes.
+  uint32_t size = 0;  // In bytes.
 };
 
 struct Shader {

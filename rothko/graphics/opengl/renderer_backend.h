@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include "rothko/graphics/common/renderer_backend.h"
-
-#include <string>
 #include <map>
+#include <string>
 
+#include "rothko/graphics/common/renderer_backend.h"
+#include "rothko/graphics/opengl/shader.h"
 #include "rothko/utils/macros.h"
 
 namespace rothko {
@@ -21,11 +21,6 @@ struct MeshHandles {
   uint32_t vbo = 0;
   uint32_t ebo = 0;
   uint32_t vao = 0;
-};
-
-
-struct ShaderHandles {
-  uint32_t program_handle;
 };
 
 struct TextureHandles {
