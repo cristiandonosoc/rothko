@@ -12,6 +12,8 @@ source_set("opengl") {
     "shader.h",
     "texture.cc",
     "texture.h",
+    "utils.cc",
+    "utils.h",
   ]
 
   deps = [

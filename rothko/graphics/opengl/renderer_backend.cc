@@ -175,11 +175,11 @@ void OpenGLRendererBackend::UnstageMesh(Mesh*) {
 // Shaders ---------------------------------------------------------------------
 
 bool OpenGLRendererBackend::StageShader(Shader* shader) {
-  return OpenGLStageShader(shader);
+  return OpenGLStageShader(this, shader);
 }
 
-void OpenGLRendererBackend::UnstageShader(Shader*) {
-  NOT_IMPLEMENTED();
+void OpenGLRendererBackend::UnstageShader(Shader* shader) {
+  OpenGLUnstageShader(this, shader);
 }
 
 // Textures --------------------------------------------------------------------

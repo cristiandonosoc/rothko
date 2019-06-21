@@ -1,0 +1,13 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+executable("cube") {
+  sources = [
+    "main.cc",
+  ]
+
+  deps = [
+    "//rothko/graphics:opengl",
+    "//rothko/window:sdl_opengl",
+  ]
+}

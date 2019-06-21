@@ -98,6 +98,44 @@ uint32_t LinkProgram(uint32_t vert_handle, uint32_t frag_handle) {
   return prog_handle;
 }
 
+bool BindUBOs(const std::vector<UniformBufferObject>& ubos,
+              uint32_t prog_handle,
+              std::vector<UBOBinding>* bindings) {
+  bindings->clear();
+  bindings->reserve(ubos.size());
+  uint32_t current_binding = 0;
+  for (auto& ubo : ubos) {
+
+    // Obtain the block index.
+    uint32_t index = glGetUniformBlockIndex(prog_handle, ubo.name.c_str());
+    if (index == GL_INVALID_INDEX) {
+      LOG(ERROR, "Could not find UBO index for %s", ubo.name.c_str());
+      return false;
+    }
+
+    glUniformBlockBinding(prog_handle, index, current_binding);
+
+    // Generate the buffer that will hold the uniforms.
+    uint32_t buffer_handle = 0;
+    glGenBuffers(1, &buffer_handle);
+    glBindBuffer(GL_UNIFORM_BUFFER, buffer_handle);
+    ASSERT(ubo.size > 0);
+    glBufferData(GL_UNIFORM_BUFFER, ubo.size, NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, NULL);
+
+    // Store the binding data.
+    UBOBinding binding;
+    binding.binding_index = current_binding;
+    binding.buffer_handle = buffer_handle;
+
+    bindings->push_back(std::move(binding));
+
+    current_binding++;
+  }
+
+  return true;
+}
+
 bool UploadShader(Shader* shader, ShaderHandles* handles) {
   *handles = {};
 
@@ -117,50 +155,24 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
     return false;
   handles->program = prog_handle;
 
-  // TODO(Cristian): Separate for vert and frag.
-  uint32_t current_binding = 0;
-  for (auto& ubo : shader->vert_ubos) {
-
-    // Obtain the block index.
-    uint32_t index = glGetUniformBlockIndex(prog_handle, ubo.name.c_str());
-    if (index == GL_INVALID_INDEX)
-      return false;
-
-    glUniformBlockBinding(prog_handle, index, current_binding);
-
-    // Generate the buffer that will hold the uniforms.
-    uint32_t buffer_handle = 0;
-    glGenBuffers(1, &buffer_handle);
-    glBindBuffer(GL_UNIFORM_BUFFER, buffer_handle);
-    ASSERT(ubo.size > 0);
-    glBufferData(GL_UNIFORM_BUFFER, ubo.size, NULL, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, NULL);
-
-    // Store the binding data.
-    UBOBinding binding;
-    binding.binding_index = current_binding;
-    binding.buffer_handle = buffer_handle;
-
-    handles->vert_ubos.push_back(std::move(binding));
-
-    current_binding++;
+  if (!BindUBOs(shader->vert_ubos, prog_handle, &handles->vert_ubos) ||
+      !BindUBOs(shader->frag_ubos, prog_handle, &handles->frag_ubos)) {
+    return false;
   }
 
-
-
-
-
-  /* // Get the UBO bindings. */
-  /* if (!BindUBOs(shader->vert_ubos, prog_handle, handles) || */
-  /*     !BindUBOs(shader->farg_ubos, prog_handle, handles)) { */
-  /*   return false; */
-  /* } */
   return true;
 }
 
 void FreeHandles(ShaderHandles* handles) {
-  (void)handles;
-  NOT_IMPLEMENTED();
+  glDeleteProgram(handles->program);
+
+  for (auto& ubo : handles->vert_ubos) {
+    glDeleteBuffers(1, &ubo.buffer_handle);
+  }
+
+  for (auto& ubo : handles->frag_ubos) {
+    glDeleteBuffers(1, &ubo.buffer_handle);
+  }
 }
 
 }  // namespace
@@ -183,31 +195,21 @@ bool OpenGLStageShader(OpenGLRendererBackend* opengl, Shader* shader) {
 
   opengl->loaded_shaders[uuid] = std::move(handles);
   shader->uuid = uuid;
+
   return true;
+}
 
+// Unstage Shader --------------------------------------------------------------
 
-  /* // Vertex shader. */
-  /* std::string vert_source; */
-  /* SubShaderParseResult vert_parse; */
-  /* if (!ReadWholeFile(vert_path, &vert_source) || */
-  /*     !ParseSubShader(vert_source, &vert_parse)) { */
-  /*   return false; */
-  /* } */
+void OpenGLUnstageShader(OpenGLRendererBackend* opengl, Shader* shader) {
+  uint32_t uuid = shader->uuid.value;
+  LOG(DEBUG, "Unstaging shader %s (uuid %u).", shader->name.c_str(), uuid);
+  auto it = opengl->loaded_shaders.find(uuid);
+  ASSERT(it != opengl->loaded_shaders.end());
 
-  /* // Fragment shader. */
-  /* std::string frag_source; */
-  /* SubShaderParseResult frag_parse; */
-  /* if (!ReadWholeFile(frag_path, &frag_source) || */
-  /*     !ParseSubShader(frag_source, &frag_parse)) { */
-  /*   return false; */
-  /* } */
-
-  /* out->vert_source = std::move(vert_source); */
-  /* out->frag_source = std::move(frag_source); */
-  /* out->vert_ubos = std::move(vert_parse.ubos); */
-  /* out->frag_ubos = std::move(frag_parse.ubos); */
-
-  /* return true; */
+  FreeHandles(&it->second);
+  opengl->loaded_shaders.erase(it);
+  shader->uuid.clear();
 }
 
 }  // namespace opengl

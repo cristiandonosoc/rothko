@@ -6,6 +6,8 @@
 #include <GL/gl3w.h>
 #include <stddef.h>
 
+#include <atomic>
+
 #include "rothko/graphics/common/mesh.h"
 #include "rothko/graphics/opengl/renderer_backend.h"
 #include "rothko/utils/logging.h"
