@@ -4,6 +4,8 @@
 # Separated for testability (don't bring in graphics dependencies).
 source_set("opengl") {
   sources = [
+    "execute_commands.cc",
+    "execute_commands.h",
     "mesh.cc",
     "mesh.h",
     "renderer_backend.cc",

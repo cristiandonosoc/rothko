@@ -44,6 +44,7 @@ struct OpenGLRendererBackend : public RendererBackend {
   bool Init(Renderer*, InitRendererConfig*) override;
 
   void StartFrame() override;
+  void ExecuteCommands(const PerFrameVector<RenderCommand>&) override;
   void EndFrame() override;
 
   // Meshes.

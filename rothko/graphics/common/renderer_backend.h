@@ -3,9 +3,10 @@
 
 #pragma once
 
-#include "rothko/utils/macros.h"
-
 #include <string>
+
+#include "rothko/containers/vector.h"
+#include "rothko/utils/macros.h"
 
 namespace rothko {
 
@@ -26,6 +27,7 @@ namespace rothko {
 struct InitRendererConfig;
 struct Mesh;
 struct Renderer;
+struct RenderCommand;
 struct Shader;
 struct StageTextureConfig;
 struct Texture;
@@ -40,6 +42,7 @@ struct RendererBackend {
   virtual bool Init(Renderer*, InitRendererConfig*) = 0;
 
   virtual void StartFrame() = 0;
+  virtual void ExecuteCommands(const PerFrameVector<RenderCommand>&) = 0;
   virtual void EndFrame() = 0;
 
   // Meshes.

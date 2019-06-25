@@ -6,6 +6,7 @@ source_set("common") {
     "mesh.h",
     "renderer.h",
     "renderer_backend.h",
+    "render_commands.h",
     "shader.h",
     "texture.h",
   ]

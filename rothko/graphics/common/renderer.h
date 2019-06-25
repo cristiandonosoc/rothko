@@ -5,8 +5,10 @@
 
 #include <memory>
 
-#include "rothko/utils/macros.h"
+#include "rothko/containers/vector.h"
+#include "rothko/graphics/common/render_commands.h"
 #include "rothko/graphics/common/renderer_backend.h"
+#include "rothko/utils/macros.h"
 
 // Renderer
 // =============================================================================
@@ -62,9 +64,6 @@ struct InitRendererConfig {
 };
 bool InitRenderer(Renderer*, InitRendererConfig*);
 
-void StartFrame(Renderer*);
-void EndFrame(Renderer*);
-
 // Meshes.
 bool RendererStageMesh(Renderer*, Mesh*);
 void RendererUnstageMesh(Renderer*, Mesh*);
@@ -100,5 +99,10 @@ struct StageTextureConfig {
 };
 bool RendererStageTexture(const StageTextureConfig&, Renderer*, Texture*);
 void RendererUnstageTexture(Renderer*, Texture*);
+
+void StartFrame(Renderer*);
+void RendererExecuteCommands(const PerFrameVector<RenderCommand>&, Renderer*);
+void EndFrame(Renderer*);
+
 
 }  // namespace rothko

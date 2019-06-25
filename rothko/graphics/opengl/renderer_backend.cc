@@ -9,6 +9,7 @@
 #include <sstream>
 
 #include "rothko/graphics/common/renderer.h"
+#include "rothko/graphics/opengl/execute_commands.h"
 #include "rothko/graphics/opengl/mesh.h"
 #include "rothko/graphics/opengl/shader.h"
 #include "rothko/graphics/opengl/texture.h"
@@ -146,13 +147,17 @@ bool OpenGLRendererBackend::Init(Renderer*, InitRendererConfig* config) {
 
 OpenGLRendererBackend::~OpenGLRendererBackend() = default;
 
+// Execute Commands ------------------------------------------------------------
+
+void OpenGLRendererBackend::ExecuteCommands(
+    const PerFrameVector<RenderCommand>& commands) {
+  OpenGLExecuteCommands(commands, this);
+}
+
 // StartFrame ------------------------------------------------------------------
 
 void OpenGLRendererBackend::StartFrame() {
   ASSERT(Valid(*this));
-
-  glClearColor(0.3f, 0.4f, 0.8f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 // EndFrame --------------------------------------------------------------------

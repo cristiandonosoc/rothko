@@ -128,6 +128,14 @@ void RendererUnstageTexture(Renderer* renderer, Texture* texture) {
   renderer->backend->UnstageTexture(texture);
 }
 
+// Execute Commands ------------------------------------------------------------
+
+void RendererExecuteCommands(const PerFrameVector<RenderCommand>& commands,
+                             Renderer* renderer) {
+  ASSERT(Valid(renderer));
+  return renderer->backend->ExecuteCommands(commands);
+}
+
 // Extras ----------------------------------------------------------------------
 
 bool Valid(Renderer* renderer) {
