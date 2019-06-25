@@ -9,7 +9,6 @@ source_set("tests_lib") {
     "math.cc",
     "memory.cc",
     "strings.cc",
-    "vector.cc",
   ]
 
   public_deps = [
