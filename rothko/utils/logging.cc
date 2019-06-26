@@ -32,8 +32,11 @@ void DoLogging(int32_t category, Location location, const char* fmt, ...) {
   va_end(va);
 
   // TODO(Cristian): Add time.
-  fprintf(stderr, "[%s][%s:%d] %s\n", LogCategoryToString(category),
-          location.file, location.line, msg.c_str());
+  fprintf(stderr, "[%s][%s:%d][%s] %s\n", LogCategoryToString(category),
+                                          location.file,
+                                          location.line,
+                                          location.function,
+                                          msg.c_str());
   fflush(stderr);
 }
 

@@ -2,16 +2,26 @@
 // This code has a BSD license. See LICENSE.
 
 #include <rothko/graphics/graphics.h>
+#include <rothko/scene/camera.h>
 #include <rothko/utils/logging.h>
+#include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
 
-#include <rothko/window/sdl/sdl_definitions.h>
+#include <thread>
 
 using namespace rothko;
 
 namespace {
 
 bool Setup(Window*, Renderer*);
+
+Mesh CreateMesh();
+Shader CreateShader();
+Camera CreateCamera();
+
+PerFrameVector<RenderCommand> GetRenderCommand(Camera* camera,
+                                               Mesh* mesh,
+                                               Shader* shader);
 
 }  // namespace
 
@@ -24,9 +34,12 @@ int main() {
 
   Input input = {};
 
-  // We load a texture.
-  Texture texture;
-  if (!STBLoadTexture("out/wall.jpg", TextureType::kRGBA, &texture))
+  Mesh mesh = CreateMesh();
+  if (!RendererStageMesh(&renderer, &mesh))
+    return 1;
+
+  Shader shader = CreateShader();
+  if (!RendererStageShader(&renderer, &shader))
     return 1;
 
   // Sample game loop.
@@ -44,7 +57,7 @@ int main() {
 
     EndFrame(&renderer);
 
-    /* std::this_thread::sleep_for(std::chrono::milliseconds(16)); */
+    std::this_thread::sleep_for(std::chrono::milliseconds(16));
   }
 }
 
@@ -69,6 +82,58 @@ bool Setup(Window* window, Renderer* renderer) {
   }
 
   return true;
+}
+
+struct Colors {
+  static constexpr uint32_t kBlack=   0xff'00'00'00;
+  static constexpr uint32_t kBlue=    0xff'ff'00'00;
+  static constexpr uint32_t kGreen =  0xff'00'ff'00;
+  static constexpr uint32_t kRed =    0xff'00'00'ff;
+  static constexpr uint32_t kWhite =  0xff'ff'ff'ff;
+  static constexpr uint32_t kTeal =   0xff'f9'f0'ea;
+  static constexpr uint32_t kGray =   0xff'99'99'99;
+};
+
+Mesh CreateMesh() {
+  Mesh mesh = {};
+  mesh.name = "cube";
+  mesh.vertex_type = VertexType::kColor;
+
+  VertexColor vertices[] = {
+    {{-1, -1, 0}, Colors::kBlue},
+    {{ 1, -1, 0}, Colors::kGreen},
+    {{ 1,  1, 0}, Colors::kWhite},
+    {{-1,  1, 0}, Colors::kRed},
+  };
+
+  Mesh::IndexType indices[] = {
+    0, 1, 2,
+    2, 3, 0,
+  };
+
+  PushVertices(&mesh, vertices, ARRAY_SIZE(vertices));
+  PushIndices(&mesh, indices, ARRAY_SIZE(indices));
+
+  ASSERT(mesh.vertices_count == 4);
+  ASSERT(mesh.vertices.size() == sizeof(vertices));
+
+  ASSERT_MSG(mesh.indices_count == 6, "Count: %u", mesh.indices_count);
+  ASSERT(mesh.indices.size() == sizeof(indices));
+
+  return mesh;
+}
+
+Shader CreateShader() {
+  Shader shader = {};
+  shader.name = "cube";
+
+  shader.vert_ubos.push_back({"Camera", 128});
+
+  ASSERT(LoadShaderSources("examples/cube/shader.vert",
+                           "examples/cube/shader.frag",
+                           &shader));
+
+  return shader;
 }
 
 }  // namespace

@@ -48,14 +48,27 @@ void UnbindMeshHandles() {
 }
 
 void StageAttributes(Mesh* mesh) {
-  if (mesh->vertex_type == VertexType::kDefault) {
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vec3),
-                          (void*)offsetof(VertexDefault, pos));
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vec3),
-                          (void*)offsetof(VertexDefault, normal));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2),
-                          (void*)offsetof(VertexDefault, uv));
-    return;
+  switch (mesh->vertex_type) {
+    case VertexType::kDefault: {
+      GLsizei stride = sizeof(VertexDefault);
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
+                            (void*)offsetof(VertexDefault, pos));
+      glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
+                            (void*)offsetof(VertexDefault, normal));
+      glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride,
+                            (void*)offsetof(VertexDefault, uv));
+      return;
+    }
+    case VertexType::kColor: {
+      GLsizei stride = sizeof(VertexColor);
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
+                            (void*)offsetof(VertexColor, pos));
+      glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride,
+                            (void*)offsetof(VertexColor, color));
+      return;
+    }
+    case VertexType::kLast:
+      break;
   }
 
   NOT_REACHED_MSG("Invalid vertex type: %s", ToString(mesh->vertex_type));

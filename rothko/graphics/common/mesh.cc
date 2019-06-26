@@ -15,6 +15,7 @@ Mesh::~Mesh() {
 const char* ToString(VertexType type) {
   switch (type) {
     case VertexType::kDefault: return "Default";
+    case VertexType::kColor: return "Color";
     case VertexType::kLast: return "Last";
   }
 

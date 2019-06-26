@@ -142,7 +142,7 @@ inline float Sum(const _v4<T>& v) {
 
 template <typename T>
 union _mat2 {
-  _v2<T> columns[2];
+  _v2<T> columns[2] = {};
 
   // Operators -----------------------------------------------------------------
 
@@ -176,5 +176,23 @@ std::array<T, 4> ToRowArray(_mat2<T>* mat) {
 
 using IntMat2 = _mat2<int>;
 using Mat2 = _mat2<float>;
+
+// Mat4 ------------------------------------------------------------------------
+
+template <typename T>
+struct _mat4 {
+  _v4<T> columns[4] = {};
+
+  _mat4() = default;
+  _mat4(_v4<T> c1, _v4<T> c2, _v4<T> c3, _v4<T> c4) {
+    columns[0] = c1;
+    columns[1] = c2;
+    columns[2] = c3;
+    columns[3] = c4;
+  }
+};
+
+using IntMat4 = _mat4<int>;
+using Mat4 = _mat4<float>;
 
 }  // rothko

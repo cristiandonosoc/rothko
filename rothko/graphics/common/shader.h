@@ -45,4 +45,8 @@ inline bool Staged(const Shader& s) {
   return s.renderer && s.uuid.has_value();
 }
 
+bool LoadShaderSources(const std::string& vert_path,
+                       const std::string& frag_path,
+                       Shader* out);
+
 }  // namespace rothko
