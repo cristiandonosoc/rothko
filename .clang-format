@@ -7,10 +7,11 @@ Language: Cpp
 
 AlignOperands: true
 AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
 AlignTrailingComments: true
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: Inline
+AllowShortFunctionsOnASingleLine: All
 # AlwaysBreakAfterReturnType: TopLevel
 AllowShortIfStatementsOnASingleLine: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
@@ -25,6 +26,6 @@ SortIncludes: true
 # SpaceAfterTemplateKeyword: true
 DerivePointerAlignment: false
 PointerAlignment: Left
-ColumnLimit: 80
+ColumnLimit: 100
 ---
 
