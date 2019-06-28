@@ -7,7 +7,6 @@
 #include <string>
 
 #include "rothko/utils/logging.h"
-#include "rothko/utils/strings.h"
 
 namespace rothko {
 
@@ -16,6 +15,7 @@ namespace rothko {
 // =================================================================================================
 
 float SquareRoot(float);
+float Tan(float radian_angle);
 
 // =================================================================================================
 // Vectors
@@ -75,11 +75,10 @@ float Length(const _v2<T>& v) { return SquareRoot(LengthSq(v)); }
 Vec2 Normalize(const Vec2& v);
 
 template <typename T>
-inline std::string ToString(const _v2<T>& v) {
-  return StringPrintf("(%f, %f)", (float)v.x, (float)v.y);
-}
+inline float Sum(const _v2<T>& v) { return v.x + v.y; }
 
-
+std::string ToString(const Int2&);
+std::string ToString(const Vec2&);
 
 // Vec 3 -------------------------------------------------------------------------------------------
 
@@ -99,6 +98,9 @@ union _v3 {
 
   _v3 operator+(const _v3& o) const { return {x + o.x, y + o.y, z + o.z}; }
   void operator+=(const _v3& o) { x += o.x; y += o.y; z += o.z; }
+
+  _v3 operator-(const _v3& o) const { return {x - o.x, y - o.y, z - o.z}; }
+  void operator-=(const _v3& o) { x -= o.x; y -= o.y; z -= o.z; }
 
   void operator==(const _v3& o) const { return x == o.x && y == o.y && z == o.z; }
   void operator!=(const _v3& o) const { return x != o.x || y != o.y || z != o.z; }
@@ -133,9 +135,10 @@ float Length(const _v3<T>& v) { return SquareRoot(LengthSq(v)); }
 Vec3 Normalize(const Vec3& v);
 
 template <typename T>
-inline std::string ToString(const _v3<T>& v) {
-  return StringPrintf("(%f, %f, %f)", (float)v.x, (float)v.y, (float)v.z);
-}
+inline float Sum(const _v3<T>& v) { return v.x + v.y + v.z; }
+
+std::string ToString(const Int3&);
+std::string ToString(const Vec3&);
 
 // Vec 4 -------------------------------------------------------------------------------------------
 
@@ -152,6 +155,9 @@ struct _v4 {
 
   _v4 operator+(const _v4 &o) const { return {x + o.x, y + o.y, z + o.z, w + o.w}; }
   void operator+=(const _v4& o) { x += o.x; y += o.y; z += o.z; w += o.w; }
+
+  _v4 operator-(const _v4 &o) const { return {x - o.x, y - o.y, z - o.z, w - o.w}; }
+  void operator-=(const _v4& o) { x -= o.x; y -= o.y; z -= o.z; w -= o.w; }
 
   void operator==(const _v4& o) const { return x == o.x && y == o.y && z == o.z && w == o.w; }
   void operator!=(const _v4& o) const { return x != o.x || y != o.y || z != o.z || w != o.w; }
@@ -172,15 +178,10 @@ float Length(const _v4<T>& v) { return SquareRoot(LengthSq(v)); }
 Vec4 Normalize(const Vec4& v);
 
 template <typename T>
-inline std::string ToString(const _v4<T>& v) {
-  return StringPrintf("(%f, %f, %f, %f)", (float)v.x, (float)v.y, (float)v.z, (float)v.w);
-}
+inline float Sum(const _v4<T>& v) { return v.x + v.y + v.z + v.w; }
 
-template <typename T>
-inline float Sum(const _v4<T>& v) {
-  return v.x + v.y + v.z + v.w;
-}
-
+std::string ToString(const Int4&);
+std::string ToString(const Vec4&);
 
 // =================================================================================================
 // Matrices
@@ -240,6 +241,8 @@ union _mat4 {
     cols[3] = {r1[0], r2[0], r3[0], r4[0]};
   }
 
+  _mat4 Identity() { return {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}; }
+
   // Operators.
 
   bool operator==(const _mat4& o) const {
@@ -254,11 +257,17 @@ union _mat4 {
 using IntMat4 = _mat4<int>;
 using Mat4 = _mat4<float>;
 
+// Usually |up| points upward. Our Y vector represents up.
+Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 up = {0, 1, 0});
+
+// Returns |Perspective| after calculating the correct values.
+Mat4 Perspective(float fov, float aspect_ratio, float near, float far);
+Mat4 Perspective(float left, float right, float top, float bottom, float near, float far);
+
 template <typename T>
 void SetRowCol(_mat4<T>* m, T x, T y) {
   (*m)[y][x];
 }
 
-Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 up);
 
 }  // rothko
