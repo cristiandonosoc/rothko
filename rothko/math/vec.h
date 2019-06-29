@@ -53,6 +53,12 @@ union _v2 {
   _v2 operator-(const _v2& o) const { return {x - o.x, y - o.y}; }
   void operator-=(const _v2& o) { x -= o.x; y -= o.y; }
 
+  _v2 operator*(const _v2& o) const { return {x * o.x, y * o.y}; }
+  void operator*=(const _v2& o) { x *= o.x; y *= o.y; }
+
+  _v2 operator/(const _v2& o) const { return {x / o.x, y / o.y}; }
+  void operator/=(const _v2& o) { x /= o.x; y /= o.y; }
+
   bool operator==(const _v2& o) const { return x == o.x && y == o.y; }
   bool operator!=(const _v2& o) const { return x != o.x || y != o.y; }
 };
@@ -101,6 +107,12 @@ union _v3 {
 
   _v3 operator-(const _v3& o) const { return {x - o.x, y - o.y, z - o.z}; }
   void operator-=(const _v3& o) { x -= o.x; y -= o.y; z -= o.z; }
+
+  _v3 operator*(const _v3& o) const { return {x * o.x, y * o.y, z * o.z}; }
+  void operator*=(const _v3& o) { x *= o.x; y *= o.y; z *= o.z; }
+
+  _v3 operator/(const _v3& o) const { return {x / o.x, y / o.y, z / o.z}; }
+  void operator/=(const _v3& o) { x /= o.x; y /= o.y; z /= o.z; }
 
   void operator==(const _v3& o) const { return x == o.x && y == o.y && z == o.z; }
   void operator!=(const _v3& o) const { return x != o.x || y != o.y || z != o.z; }
@@ -158,6 +170,12 @@ struct _v4 {
 
   _v4 operator-(const _v4 &o) const { return {x - o.x, y - o.y, z - o.z, w - o.w}; }
   void operator-=(const _v4& o) { x -= o.x; y -= o.y; z -= o.z; w -= o.w; }
+
+  _v4 operator*(const _v4 &o) const { return {x * o.x, y * o.y, z * o.z, w * o.w}; }
+  void operator*=(const _v4& o) { x *= o.x; y *= o.y; z *= o.z; w *= o.w; }
+
+  _v4 operator/(const _v4 &o) const { return {x / o.x, y / o.y, z / o.z, w / o.w}; }
+  void operator/=(const _v4& o) { x /= o.x; y /= o.y; z /= o.z; w /= o.w; }
 
   void operator==(const _v4& o) const { return x == o.x && y == o.y && z == o.z && w == o.w; }
   void operator!=(const _v4& o) const { return x != o.x || y != o.y || z != o.z || w != o.w; }

@@ -7,62 +7,81 @@
 
 namespace rothko {
 
-TEST_CASE("Vectors") {
-  SECTION("v2") {
-    Int2 a = {1, 2};
-    Int2 b = {3, 4};
+namespace {
 
-    {
-      Int2 res = a + b;
-      REQUIRE(res.x == 4);
-      REQUIRE(res.y == 6);
-    }
+TEST_CASE("Vec2")
+{
+  SECTION("ADDITION") {
+    Vec2 v1{1, 2};
+    Vec2 v2{3, 4};
 
-    {
-      Int2 res = a;
-      res += b;
-      REQUIRE(res.x == 4);
-      REQUIRE(res.y == 6);
-    }
+    Vec2 res = v1 + v2;
+    REQUIRE(res.x == 4);
+    REQUIRE(res.y == 6);
 
-    {
-      Int2 res = a - b;
-      REQUIRE(res.x == -2);
-      REQUIRE(res.y == -2);
-    }
+    res += {2, 2};
+    REQUIRE(res.x == 6);
+    REQUIRE(res.y == 8);
+  }
 
-    {
-      Int2 res = a;
-      res -= b;
-      REQUIRE(res.x == -2);
-      REQUIRE(res.y == -2);
-    }
+  SECTION("SUBSTRACTION") {
+    Vec2 v1{1, 2};
+    Vec2 v2{3, 4};
 
-    {
-      int res = a * b;
-      REQUIRE(res == (3 + 8));
-    }
+    Vec2 res = v1 - v2;
+    REQUIRE(res.x == -2);
+    REQUIRE(res.y == -2);
+
+    res -= {2, 2};
+    REQUIRE(res.x == -4);
+    REQUIRE(res.y == -4);
+  }
+
+  SECTION("MULTIPLICATION") {
+    Vec2 v1{1, 2};
+    Vec2 v2{3, 4};
+
+    Vec2 res = v1 * v2;
+    REQUIRE(res.x == 3);
+    REQUIRE(res.y == 8);
+
+    res *= {2, 2};
+    REQUIRE(res.x == 6);
+    REQUIRE(res.y == 16);
+  }
+
+  SECTION("DIVIDE") {
+    Vec2 v1{1, 2};
+    Vec2 v2{3, 4};
+
+    Vec2 res = v1 / v2;
+    REQUIRE(res.x == 1.0f / 3.0f);
+    REQUIRE(res.y == 2.0f / 4.0f);
+
+    res /= {2, 2};
+    REQUIRE(res.x == 1.0f / (3.0f * 2.0f));
+    REQUIRE(res.y == 2.0f / (4.0f * 2.0f));
+  }
+
+  SECTION("MISC") {
+    Vec2 v1{2, 2};
+
+    REQUIRE(v1 == Vec2{2, 2});
+    REQUIRE(IsZero(Vec2{0, 0}));
+    REQUIRE(!IsZero(v1));
   }
 }
 
-TEST_CASE("Mat2") {
-  SECTION("Matrix vector multiplication") {
-    IntMat2 mat = {{1, 2}, {3, 4}};
-    Int2 v = {1, 1};
 
-    {
-      Int2 res = mat * v;
-      REQUIRE(res.x == 4);
-      REQUIRE(res.y == 6);
-    }
+template <typename T>
+void TestV2() {
+  using V = _v2<T>;
+  T a = 1; T b = 2; T c = 3; T d = 4;
 
-    mat = IntMat2::FromRows({1, 3}, {2, 4});
-    {
-      Int2 res = mat * v;
-      REQUIRE(res.x == 4);
-      REQUIRE(res.y == 6);
-    }
-  }
+  V v1{a, b};
+  V v2{c, d};
 }
+
+}  // namespace
 
 }  // namespace rothko

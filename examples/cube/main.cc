@@ -84,15 +84,15 @@ bool Setup(Window* window, Renderer* renderer) {
   return true;
 }
 
-struct Colors {
-  static constexpr uint32_t kBlack=   0xff'00'00'00;
-  static constexpr uint32_t kBlue=    0xff'ff'00'00;
-  static constexpr uint32_t kGreen =  0xff'00'ff'00;
-  static constexpr uint32_t kRed =    0xff'00'00'ff;
-  static constexpr uint32_t kWhite =  0xff'ff'ff'ff;
-  static constexpr uint32_t kTeal =   0xff'f9'f0'ea;
-  static constexpr uint32_t kGray =   0xff'99'99'99;
-};
+/* struct Colors { */
+/*   static constexpr uint32_t kBlack=   0xff'00'00'00; */
+/*   static constexpr uint32_t kBlue=    0xff'ff'00'00; */
+/*   static constexpr uint32_t kGreen =  0xff'00'ff'00; */
+/*   static constexpr uint32_t kRed =    0xff'00'00'ff; */
+/*   static constexpr uint32_t kWhite =  0xff'ff'ff'ff; */
+/*   static constexpr uint32_t kTeal =   0xff'f9'f0'ea; */
+/*   static constexpr uint32_t kGray =   0xff'99'99'99; */
+/* }; */
 
 Mesh CreateMesh() {
   Mesh mesh = {};
@@ -100,10 +100,10 @@ Mesh CreateMesh() {
   mesh.vertex_type = VertexType::kColor;
 
   VertexColor vertices[] = {
-    {{-1, -1, 0}, Colors::kBlue},
-    {{ 1, -1, 0}, Colors::kGreen},
-    {{ 1,  1, 0}, Colors::kWhite},
-    {{-1,  1, 0}, Colors::kRed},
+    /* {{-1, -1, 0}, Colors::kBlue}, */
+    /* {{ 1, -1, 0}, Colors::kGreen}, */
+    /* {{ 1,  1, 0}, Colors::kWhite}, */
+    /* {{-1,  1, 0}, Colors::kRed}, */
   };
 
   Mesh::IndexType indices[] = {
