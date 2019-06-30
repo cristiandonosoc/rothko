@@ -6,6 +6,7 @@
 #include <rothko/utils/logging.h>
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
+#include <rothko/math/vec.h>
 
 #include <thread>
 
@@ -19,9 +20,7 @@ Mesh CreateMesh();
 Shader CreateShader();
 Camera CreateCamera();
 
-PerFrameVector<RenderCommand> GetRenderCommand(Camera* camera,
-                                               Mesh* mesh,
-                                               Shader* shader);
+PerFrameVector<RenderCommand> GetRenderCommands(Camera* camera, Mesh* mesh, Shader* shader);
 
 }  // namespace
 
@@ -42,6 +41,10 @@ int main() {
   if (!RendererStageShader(&renderer, &shader))
     return 1;
 
+  Camera camera;
+  camera.projection = Mat4::Identity();
+  camera.view = LookAt({0, 0, 5}, {}, {0, 1, 0});
+
   // Sample game loop.
   bool running = true;
   while (running) {
@@ -54,6 +57,9 @@ int main() {
     }
 
     StartFrame(&renderer);
+
+    auto commands = GetRenderCommands(&camera, &mesh, &shader);
+    RendererExecuteCommands(commands, &renderer);
 
     EndFrame(&renderer);
 
@@ -84,15 +90,15 @@ bool Setup(Window* window, Renderer* renderer) {
   return true;
 }
 
-/* struct Colors { */
-/*   static constexpr uint32_t kBlack=   0xff'00'00'00; */
-/*   static constexpr uint32_t kBlue=    0xff'ff'00'00; */
-/*   static constexpr uint32_t kGreen =  0xff'00'ff'00; */
-/*   static constexpr uint32_t kRed =    0xff'00'00'ff; */
-/*   static constexpr uint32_t kWhite =  0xff'ff'ff'ff; */
-/*   static constexpr uint32_t kTeal =   0xff'f9'f0'ea; */
-/*   static constexpr uint32_t kGray =   0xff'99'99'99; */
-/* }; */
+struct Colors {
+  static constexpr uint32_t kBlack=   0xff'00'00'00;
+  static constexpr uint32_t kBlue=    0xff'ff'00'00;
+  static constexpr uint32_t kGreen =  0xff'00'ff'00;
+  static constexpr uint32_t kRed =    0xff'00'00'ff;
+  static constexpr uint32_t kWhite =  0xff'ff'ff'ff;
+  static constexpr uint32_t kTeal =   0xff'f9'f0'ea;
+  static constexpr uint32_t kGray =   0xff'99'99'99;
+};
 
 Mesh CreateMesh() {
   Mesh mesh = {};
@@ -100,10 +106,10 @@ Mesh CreateMesh() {
   mesh.vertex_type = VertexType::kColor;
 
   VertexColor vertices[] = {
-    /* {{-1, -1, 0}, Colors::kBlue}, */
-    /* {{ 1, -1, 0}, Colors::kGreen}, */
-    /* {{ 1,  1, 0}, Colors::kWhite}, */
-    /* {{-1,  1, 0}, Colors::kRed}, */
+    {{-1, -1, 0}, Colors::kBlue},
+    {{ 1, -1, 0}, Colors::kGreen},
+    {{ 1,  1, 0}, Colors::kWhite},
+    {{-1,  1, 0}, Colors::kRed},
   };
 
   Mesh::IndexType indices[] = {
@@ -132,8 +138,38 @@ Shader CreateShader() {
   ASSERT(LoadShaderSources("examples/cube/shader.vert",
                            "examples/cube/shader.frag",
                            &shader));
-
   return shader;
+}
+
+PerFrameVector<RenderCommand> GetRenderCommands(Camera* camera, Mesh* mesh, Shader* shader) {
+  (void)camera;
+  (void)mesh;
+  (void)shader;
+
+  PerFrameVector<RenderCommand> commands;
+
+  // Clear command.
+  RenderCommand command;
+  command.type = RenderCommandType::kClear;
+  auto& clear_action = command.ClearAction();
+  clear_action = {};
+  clear_action.color = {0.5f, 0.1f, 0.9f};
+  commands.push_back(std::move(command));
+
+  // Mesh command.
+  command = {};
+  command.type = RenderCommandType::kMesh;
+  command.shader = shader;
+
+  MeshRenderAction mesh_action;
+  mesh_action.mesh = mesh;
+  mesh_action.indices_size = mesh->indices_count;
+  mesh_action.vert_ubos.push_back((uint8_t*)&camera);
+  command.MeshActions().push_back(std::move(mesh_action));
+
+  commands.push_back(std::move(command));
+
+  return commands;
 }
 
 }  // namespace

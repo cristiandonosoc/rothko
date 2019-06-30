@@ -68,18 +68,7 @@ TEST_CASE("Vec2")
 
     REQUIRE(v1 == Vec2{2, 2});
     REQUIRE(IsZero(Vec2{0, 0}));
-    REQUIRE(!IsZero(v1));
   }
-}
-
-
-template <typename T>
-void TestV2() {
-  using V = _v2<T>;
-  T a = 1; T b = 2; T c = 3; T d = 4;
-
-  V v1{a, b};
-  V v2{c, d};
 }
 
 }  // namespace

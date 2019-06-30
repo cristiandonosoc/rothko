@@ -15,7 +15,7 @@
 namespace rothko {
 namespace opengl {
 
-// Stage Mesh ------------------------------------------------------------------
+// Stage Mesh --------------------------------------------------------------------------------------
 
 namespace {
 
@@ -51,20 +51,22 @@ void StageAttributes(Mesh* mesh) {
   switch (mesh->vertex_type) {
     case VertexType::kDefault: {
       GLsizei stride = sizeof(VertexDefault);
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
-                            (void*)offsetof(VertexDefault, pos));
-      glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
-                            (void*)offsetof(VertexDefault, normal));
-      glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride,
-                            (void*)offsetof(VertexDefault, uv));
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, pos));
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(
+          1, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, normal));
+      glEnableVertexAttribArray(1);
+      glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, uv));
+      glEnableVertexAttribArray(2);
       return;
     }
     case VertexType::kColor: {
       GLsizei stride = sizeof(VertexColor);
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
-                            (void*)offsetof(VertexColor, pos));
-      glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride,
-                            (void*)offsetof(VertexColor, color));
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexColor, pos));
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(
+          1, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offsetof(VertexColor, color));
+      glEnableVertexAttribArray(1);
       return;
     }
     case VertexType::kLast:
@@ -76,18 +78,14 @@ void StageAttributes(Mesh* mesh) {
 
 void StageVertices(Mesh* mesh, MeshHandles* handles) {
   glBindBuffer(GL_ARRAY_BUFFER, handles->vbo);
-  glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size(),
-                                mesh->vertices.data(),
-                                GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size(), mesh->vertices.data(), GL_STATIC_DRAW);
 
   StageAttributes(mesh);
 }
 
 void StageIndices(Mesh* mesh, MeshHandles* handles) {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles->ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size(),
-                                        mesh->indices.data(),
-                                        GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size(), mesh->indices.data(), GL_STATIC_DRAW);
 }
 
 }  // namespace
@@ -118,7 +116,7 @@ bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
   return true;
 }
 
-// Unstage Mesh ----------------------------------------------------------------
+// Unstage Mesh -----------------------------------------------------------------------------------
 
 namespace {
 

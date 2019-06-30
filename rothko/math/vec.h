@@ -3,10 +3,7 @@
 
 #pragma once
 
-#include <array>
 #include <string>
-
-#include "rothko/utils/logging.h"
 
 namespace rothko {
 
@@ -25,6 +22,8 @@ float Tan(float radian_angle);
 
 template <typename T>
 union _v2 {
+  // Members.
+
   struct { T x, y; };
   struct { T u, v; };
   struct { T left, right; };
@@ -32,20 +31,17 @@ union _v2 {
   struct { T width, height; };
   T elements[2];
 
-  // Operators
+  // Constructors.
 
   _v2() = default;
   _v2(T x, T y) { this->x = x; this->y = y; }
 
   static _v2 Zero() { return {0, 0}; }
 
-  T& operator[](int index) {
-    ASSERT(index >= 0 && index < 2);
-    return elements[index];
-  }
-  const T& operator[](int index) const {
-    return (*((_v2*)(this)))[index];
-  }
+  // Operators
+
+  T& operator[](int index) { return elements[index]; }
+  T operator[](int index) const { return elements[index]; }
 
   _v2 operator+(const _v2& o) const { return {x + o.x, y + o.y}; }
   void operator+=(const _v2& o) { x += o.x; y += o.y; }
@@ -90,17 +86,24 @@ std::string ToString(const Vec2&);
 
 template <typename T>
 union _v3 {
+  // Members.
+
   struct { T x, y, z; };
   struct { T u, v, w; };
   struct { T r, g, b; };
   T elements[3];
 
-  // Operators
+  // Constructors.
 
   _v3() = default;
   _v3(T x, T y, T z) { this->x = x; this->y = y; this->z = z; }
 
   static _v3 Zero() { return {0, 0, 0}; }
+
+  // Operators
+
+  T& operator[](int index) { return elements[index]; }
+  T operator[](int index) const { return elements[index]; }
 
   _v3 operator+(const _v3& o) const { return {x + o.x, y + o.y, z + o.z}; }
   void operator+=(const _v3& o) { x += o.x; y += o.y; z += o.z; }
@@ -155,15 +158,24 @@ std::string ToString(const Vec3&);
 // Vec 4 -------------------------------------------------------------------------------------------
 
 template<typename T>
-struct _v4 {
+union _v4 {
+  // Members.
+
   struct { T x, y, z, w; };
   struct { T r, g, b, a; };
   T elements[4];
 
-  // Operators
+  // Constructors.
 
   _v4() = default;
   _v4(T _x, T _y, T _z, T _w) { x = _x; y = _y; z = _z; w = _w; }
+
+  static _v4 Zero() { return {0, 0, 0, 0}; }
+
+  // Operators
+
+  T& operator[](int index) { return elements[index]; }
+  T operator[](int index) const { return elements[index]; }
 
   _v4 operator+(const _v4 &o) const { return {x + o.x, y + o.y, z + o.z, w + o.w}; }
   void operator+=(const _v4& o) { x += o.x; y += o.y; z += o.z; w += o.w; }
@@ -204,7 +216,8 @@ std::string ToString(const Vec4&);
 // =================================================================================================
 // Matrices
 //
-// Matrices are implemented as column mayor.
+// Matrices are implemented as column mayor. This means that a direct iteration over the members
+// (for int i = 0; i < 16; i++) will show the transpose matrix if you expected a list of for rows.
 // =================================================================================================
 
 // Mat 2 -------------------------------------------------------------------------------------------
@@ -224,23 +237,20 @@ union _mat2 {
     cols[1] = {r1[1], r2[1]};
   }
 
+  static _mat2 Identity() { return {{1, 0}, {0, 1}}; }
+
   // Operators
 
-  _v2<T>& operator[](int index) {
-    ASSERT(index >= 0 && index < 2);
-    return cols[index];
-  }
-
-  _v2<T> operator*(const _v2<T>& v) const {
-    return {cols[0][0] * v[0] + cols[1][0] * v[1],
-            cols[0][1] * v[0] + cols[1][1] * v[1]};
-  }
+  _v2<T>& operator[](int index) { return cols[index]; }
+  const _v2<T>& operator[](int index) const { return cols[index]; }
 };
 
 using IntMat2 = _mat2<int>;
 using Mat2 = _mat2<float>;
 
 // Mat4 ------------------------------------------------------------------------
+//
+// NOTE
 
 template <typename T>
 union _mat4 {
@@ -256,20 +266,21 @@ union _mat4 {
     cols[0] = {r1[0], r2[0], r3[0], r4[0]};
     cols[1] = {r1[1], r2[1], r3[1], r4[1]};
     cols[2] = {r1[2], r2[2], r3[2], r4[2]};
-    cols[3] = {r1[0], r2[0], r3[0], r4[0]};
+    cols[3] = {r1[3], r2[3], r3[3], r4[3]};
   }
 
-  _mat4 Identity() { return {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}; }
+  static _mat4 Identity() { return {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}; }
 
   // Operators.
+
+  float& get(int x, int y) { return elements[y][x]; }
 
   bool operator==(const _mat4& o) const {
     return cols[0] == o.cols[0] && cols[1] == o.cols[1] &&
            cols[2] == o.cols[2] && cols[3] == o.cols[3];
   }
-  bool operator!=(const _mat4& o) const {
-    return !(*this == o);
-  }
+
+  bool operator!=(const _mat4& o) const { return !(*this == o); }
 };
 
 using IntMat4 = _mat4<int>;
@@ -287,5 +298,6 @@ void SetRowCol(_mat4<T>* m, T x, T y) {
   (*m)[y][x];
 }
 
+std::string ToString(const Mat4&);
 
 }  // rothko

@@ -7,6 +7,7 @@
 
 #include "rothko/graphics/graphics.h"
 #include "rothko/graphics/opengl/renderer_backend.h"
+#include "rothko/utils/logging.h"
 #include "rothko/utils/macros.h"
 
 namespace rothko {
@@ -16,15 +17,20 @@ namespace {
 
 void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
   for (auto& command : commands) {
-    ASSERT(command.camera);
-    ASSERT(command.shader);
-    ASSERT(command.type == RenderCommandType::kMesh);
-
-    if (command.type == RenderCommandType::kMesh) {
-      for (auto& action : command.mesh_actions) {
-        ASSERT(action.mesh);
+    switch (command.type) {
+      case RenderCommandType::kClear: ASSERT(command.is_clear_action()); continue;
+      case RenderCommandType::kMesh: {
+        ASSERT(command.is_mesh_actions());
+        ASSERT(command.shader);
+        for (auto& action : command.MeshActions()) {
+          ASSERT(action.mesh);
+        }
+        continue;
       }
+      case RenderCommandType::kLast: break;
     }
+
+    NOT_REACHED();
   }
 }
 
@@ -82,9 +88,8 @@ void SetUniforms(const Shader& shader, const ShaderHandles& shader_handles,
     ASSERT(ubo_binding.buffer_handle > 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, ubo.size,
-                                    action.vert_ubos[i],
-                                    GL_STREAM_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, ubo.size, action.vert_ubos[i], GL_STREAM_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, NULL);
   }
 
   ASSERT(shader.frag_ubos.size() == action.frag_ubos.size());
@@ -98,15 +103,16 @@ void SetUniforms(const Shader& shader, const ShaderHandles& shader_handles,
     ASSERT(ubo_binding.buffer_handle > 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, ubo.size,
-                                    action.frag_ubos[i],
-                                    GL_STREAM_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, ubo.size, action.frag_ubos[i], GL_STREAM_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, NULL);
   }
 }
 
 void SetTextures(const OpenGLRendererBackend& opengl,
                  const Shader& shader,
                  const MeshRenderAction& action) {
+  if (action.textures.empty())
+    return;
   (void)opengl;
   (void)shader;
   (void)action;
@@ -115,9 +121,16 @@ void SetTextures(const OpenGLRendererBackend& opengl,
 
 void
 ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl,
-                         const RenderCommand& command,
-                         const ShaderHandles& shader_handles) {
-  for (const MeshRenderAction& action : command.mesh_actions) {
+                         const RenderCommand& command) {
+  auto shader_it = opengl.loaded_shaders.find(command.shader->uuid.value);
+  ASSERT(shader_it != opengl.loaded_shaders.end());
+  const ShaderHandles& shader_handles = shader_it->second;
+
+  // Setup the render command.
+  glUseProgram(shader_handles.program);
+  SetRenderCommandConfig(command);
+
+  for (const MeshRenderAction& action : command.MeshActions()) {
     if (action.indices_size == 0) {
       LOG(WARNING, "Received mesh render action with size 0");
       continue;
@@ -155,20 +168,12 @@ void OpenGLExecuteCommands(const PerFrameVector<RenderCommand>& commands,
 #endif
 
   for (auto& command : commands) {
-    auto shader_it = opengl->loaded_shaders.find(command.shader->uuid.value);
-    ASSERT(shader_it != opengl->loaded_shaders.end());
-    ShaderHandles& shader_handles = shader_it->second;
-
-    // Setup the render command.
-    glUseProgram(shader_handles.program);
-    SetRenderCommandConfig(command);
-
     switch (command.type) {
       case RenderCommandType::kClear:
-        ExecuteClearRenderAction(command.clear_action);
+        ExecuteClearRenderAction(command.ClearAction());
         break;
       case RenderCommandType::kMesh:
-        ExecuteMeshRenderActions(*opengl, command, shader_handles);
+        ExecuteMeshRenderActions(*opengl, command);
         break;
       case RenderCommandType::kLast:
         NOT_REACHED();

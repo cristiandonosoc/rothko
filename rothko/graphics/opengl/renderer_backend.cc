@@ -173,8 +173,8 @@ bool OpenGLRendererBackend::StageMesh(Mesh* mesh) {
   return OpenGLStageMesh(this, mesh);
 }
 
-void OpenGLRendererBackend::UnstageMesh(Mesh*) {
-  NOT_IMPLEMENTED();
+void OpenGLRendererBackend::UnstageMesh(Mesh* mesh) {
+  OpenGLUnstageMesh(this, mesh);
 }
 
 // Shaders ---------------------------------------------------------------------

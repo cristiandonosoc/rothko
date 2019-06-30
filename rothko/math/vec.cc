@@ -87,12 +87,14 @@ Mat4 Perspective(float fov, float aspect_ratio, float near, float far) {
   return Perspective(left, right, bottom, top, near, far);
 }
 
-Mat4 Perspective(float l, float r, float t, float b, float n, float f) {
-  return Mat4{{2 * n * (r - l),               0,  (r + l) / (r - l),               0},
-              {              0, 2 * n * (t - b),  (t + b) / (t - b),               0},
-              {              0,               0, -(f + n) / (f - n), 2 * f * (f - n)},
-              {              0,               0,                 -1,              0}};
+Mat4 Perspective(float l, float r, float b, float t, float n, float f) {
+  return Mat4{{2 * n / (r - l),               0,  (r + l) / (r - l),                    0},
+              {              0, 2 * n / (t - b),  (t + b) / (t - b),                    0},
+              {              0,               0, -(f + n) / (f - n), -2 * f * n / (f - n)},
+              {              0,               0,                 -1,                    0}};
 }
+
+
 
 // Printing ----------------------------------------------------------------------------------------
 
@@ -104,5 +106,14 @@ std::string ToString(const Vec3& v) { return StringPrintf("(%f, %f, %f)", v.x, v
 
 std::string ToString(const Int4& v) { return StringPrintf("(%d, %d, %d, %d)", v.x, v.y, v.z, v.w); }
 std::string ToString(const Vec4& v) { return StringPrintf("(%f, %f, %f, %f)", v.x, v.y, v.z, v.w); }
+
+std::string ToString(const Mat4& m) {
+  auto& e = m.elements;
+  return StringPrintf("(%f, %f, %f, %f), (%f, %f, %f, %f), (%f, %f, %f, %f), (%f, %f, %f, %f)",
+                      e[0][0], e[1][0], e[2][0], e[3][0],
+                      e[0][1], e[1][1], e[2][1], e[3][1],
+                      e[0][2], e[1][2], e[2][2], e[3][2],
+                      e[0][3], e[1][3], e[2][3], e[3][3]);
+}
 
 }  // namespace rothko

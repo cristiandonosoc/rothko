@@ -7,6 +7,7 @@
 
 #include "rothko/graphics/common/mesh.h"
 #include "rothko/graphics/common/renderer_backend.h"
+#include "rothko/graphics/common/shader.h"
 #include "rothko/graphics/common/texture.h"
 #include "rothko/utils/logging.h"
 #include "rothko/window/window.h"
@@ -92,39 +93,56 @@ void EndFrame(Renderer* renderer) {
 bool RendererStageMesh(Renderer* renderer, Mesh* mesh) {
   ASSERT(Valid(renderer));
   ASSERT(!Staged(mesh));
-  return renderer->backend->StageMesh(mesh);
+  if (renderer->backend->StageMesh(mesh)) {
+    mesh->renderer = renderer;
+    return true;
+  }
+  return false;
 }
 
 void RendererUnstageMesh(Renderer* renderer, Mesh* mesh) {
   ASSERT(Valid(renderer));
   ASSERT(Staged(mesh));
   renderer->backend->UnstageMesh(mesh);
+  mesh->renderer = nullptr;
 }
 
 // Shaders ---------------------------------------------------------------------
 
 bool RendererStageShader(Renderer* renderer, Shader* shader) {
   ASSERT(Valid(renderer));
-  return renderer->backend->StageShader(shader);
+  shader->renderer = nullptr;
+  if (renderer->backend->StageShader(shader)) {
+    shader->renderer = renderer;
+    return true;
+  }
+
+  return false;
 }
 
 void RendererUnstageShader(Renderer* renderer, Shader* shader) {
   ASSERT(Valid(renderer));
   renderer->backend->UnstageShader(shader);
+  shader->renderer = nullptr;
 }
 
 // Textures --------------------------------------------------------------------
 
-bool RendererStageTexture(const StageTextureConfig& config, Renderer* renderer,
-                          Texture* texture) {
+bool RendererStageTexture(const StageTextureConfig& config, Renderer* renderer, Texture* texture) {
   ASSERT(Valid(renderer));
   ASSERT(!Staged(texture));
-  return renderer->backend->StageTexture(config, texture);
+  if (renderer->backend->StageTexture(config, texture)) {
+    texture->renderer = renderer;
+    return true;
+  }
+
+  return false;
 }
 
 void RendererUnstageTexture(Renderer* renderer, Texture* texture) {
   ASSERT(Valid(renderer));
   ASSERT(Staged(texture));
+  texture->renderer = nullptr;
   renderer->backend->UnstageTexture(texture);
 }
 

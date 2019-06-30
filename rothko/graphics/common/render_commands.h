@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <variant>
+
 #include "rothko/containers/vector.h"
 #include "rothko/math/vec.h"
 
@@ -30,8 +32,8 @@ struct MeshRenderAction {
   Int2 scissor_pos = {};
   Int2 scissor_size = {};
 
-  uint32_t indices_offset;
-  uint32_t indices_size;
+  uint32_t indices_offset = 0;
+  uint32_t indices_size = 0;
 
   PerFrameVector<uint8_t*> vert_ubos;
   PerFrameVector<uint8_t*> frag_ubos;
@@ -56,11 +58,18 @@ struct RenderCommand {
   bool scissor_test = false;
   bool wireframe_mode = false;
 
-  Camera* camera = nullptr;
   Shader* shader = nullptr;
 
-  ClearRenderAction clear_action;
-  PerFrameVector<MeshRenderAction> mesh_actions;
+  std::variant<ClearRenderAction, PerFrameVector<MeshRenderAction>> data;
+
+  // Getters.
+  bool is_clear_action() const;
+  ClearRenderAction& ClearAction();
+  const ClearRenderAction& ClearAction() const;
+
+  bool is_mesh_actions() const;
+  PerFrameVector<MeshRenderAction>& MeshActions();
+  const PerFrameVector<MeshRenderAction>& MeshActions() const;
 };
 
 }  // namespace rothko

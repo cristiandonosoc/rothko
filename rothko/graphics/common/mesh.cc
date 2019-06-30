@@ -4,6 +4,7 @@
 #include "rothko/graphics/common/mesh.h"
 
 #include "rothko/graphics/common/renderer.h"
+#include "rothko/utils/logging.h"
 
 namespace rothko {
 
