@@ -17,15 +17,16 @@ namespace opengl {
 
 struct OpenGLRendererBackend;
 
-struct UBOBinding {
-  int binding_index = -1;
-  uint32_t buffer_handle = 0;
-};
-
 struct ShaderHandles {
-  uint32_t program;
-  std::vector<UBOBinding> vert_ubos;
-  std::vector<UBOBinding> frag_ubos;
+  // The Uniform Buffer Object binding.
+  struct UBO {
+    int binding_index = -1;
+    uint32_t buffer_handle = 0;
+  };
+
+  uint32_t program = 0;
+  UBO vert_ubo = {};
+  UBO frag_ubo = {};
 };
 
 bool OpenGLStageShader(OpenGLRendererBackend*, Shader*);

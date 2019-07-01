@@ -17,13 +17,12 @@ struct Texture;
 
 union RenderAction;
 
-// Render Actions --------------------------------------------------------------
+// Render Actions ----------------------------------------------------------------------------------
 
 struct ClearRenderAction {
   bool clear_depth = true;
-
   bool clear_color = true;
-  Vec3 color;
+  uint32_t color;   // One byte per color.
 };
 
 struct MeshRenderAction {
@@ -35,12 +34,15 @@ struct MeshRenderAction {
   uint32_t indices_offset = 0;
   uint32_t indices_size = 0;
 
-  PerFrameVector<uint8_t*> vert_ubos;
-  PerFrameVector<uint8_t*> frag_ubos;
+  // The size of the UBO is given by the description of the corresponding shader.
+  // It is the responsability of the caller that these buffers match.
+  uint8_t* vert_ubo_data = nullptr;
+  uint8_t* frag_ubo_data = nullptr;
+
   PerFrameVector<Texture*> textures;
 };
 
-// Render Command --------------------------------------------------------------
+// Render Command ----------------------------------------------------------------------------------
 
 enum class RenderCommandType {
   kClear,

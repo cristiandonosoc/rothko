@@ -91,13 +91,21 @@ bool Setup(Window* window, Renderer* renderer) {
 }
 
 struct Colors {
+  // abgr
+  /* static constexpr uint32_t kBlack=   0x00'00'00'ff; */
+  /* static constexpr uint32_t kBlue=    0x00'00'ff'ff; */
+  /* static constexpr uint32_t kGreen =  0x00'ff'00'ff; */
+  /* static constexpr uint32_t kRed =    0xff'00'00'ff; */
+  /* static constexpr uint32_t kWhite =  0xff'ff'ff'ff; */
+  /* static constexpr uint32_t kTeal =   0xff'f9'f0'ea; */
+  /* static constexpr uint32_t kGray =   0xff'99'99'99; */
+
   static constexpr uint32_t kBlack=   0xff'00'00'00;
   static constexpr uint32_t kBlue=    0xff'ff'00'00;
   static constexpr uint32_t kGreen =  0xff'00'ff'00;
   static constexpr uint32_t kRed =    0xff'00'00'ff;
   static constexpr uint32_t kWhite =  0xff'ff'ff'ff;
-  static constexpr uint32_t kTeal =   0xff'f9'f0'ea;
-  static constexpr uint32_t kGray =   0xff'99'99'99;
+
 };
 
 Mesh CreateMesh() {
@@ -133,7 +141,7 @@ Shader CreateShader() {
   Shader shader = {};
   shader.name = "cube";
 
-  shader.vert_ubos.push_back({"Camera", 128});
+  shader.vert_ubo = {"Camera", 128};
 
   ASSERT(LoadShaderSources("examples/cube/shader.vert",
                            "examples/cube/shader.frag",
@@ -153,7 +161,7 @@ PerFrameVector<RenderCommand> GetRenderCommands(Camera* camera, Mesh* mesh, Shad
   command.type = RenderCommandType::kClear;
   auto& clear_action = command.ClearAction();
   clear_action = {};
-  clear_action.color = {0.5f, 0.1f, 0.9f};
+  clear_action.color = Colors::kBlue;
   commands.push_back(std::move(command));
 
   // Mesh command.
@@ -164,7 +172,8 @@ PerFrameVector<RenderCommand> GetRenderCommands(Camera* camera, Mesh* mesh, Shad
   MeshRenderAction mesh_action;
   mesh_action.mesh = mesh;
   mesh_action.indices_size = mesh->indices_count;
-  mesh_action.vert_ubos.push_back((uint8_t*)&camera);
+  mesh_action.vert_ubo_data = (uint8_t*)camera;
+
   command.MeshActions().push_back(std::move(mesh_action));
 
   commands.push_back(std::move(command));

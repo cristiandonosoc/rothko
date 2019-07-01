@@ -66,7 +66,7 @@ Vec4 Normalize(const Vec4& v) {
 // Matrix ------------------------------------------------------------------------------------------
 
 Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 up) {
-    Vec3 forward = Normalize(pos - target);
+    Vec3 forward = Normalize(target - pos);
     Vec3 right = Normalize(Cross(forward, up));
     Vec3 cam_up = Cross(right, forward);
 

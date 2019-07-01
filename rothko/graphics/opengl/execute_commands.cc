@@ -57,13 +57,17 @@ void SetRenderCommandConfig(const RenderCommand& command) {
   SET_GL_CONFIG(command.scissor_test, GL_SCISSOR_TEST);
 }
 
+#define RED(c) ((float)((c >> 24) & 0xff) / 255.0f)
+#define GREEN(c) ((float)((c >> 16) & 0xff) / 255.0f)
+#define BLUE(c) ((float)((c >> 8) & 0xff) / 255.0f)
+
 void ExecuteClearRenderAction(const ClearRenderAction& clear) {
   if (!clear.clear_color && !clear.clear_depth)
     return;
 
   GLbitfield clear_mask = 0;
   if (clear.clear_color) {
-    glClearColor(clear.color.r, clear.color.g, clear.color.b, 1.0f);
+    glClearColor(RED(clear.color), GREEN(clear.color), BLUE(clear.color), 1.0f);
     clear_mask |= GL_COLOR_BUFFER_BIT;
   }
 
@@ -77,35 +81,34 @@ void ExecuteClearRenderAction(const ClearRenderAction& clear) {
 
 void SetUniforms(const Shader& shader, const ShaderHandles& shader_handles,
                  const MeshRenderAction& action) {
-  ASSERT(shader.vert_ubos.size() == action.vert_ubos.size());
-  ASSERT(shader.vert_ubos.size() == shader_handles.vert_ubos.size());
 
-  for (size_t i = 0; i < shader.vert_ubos.size(); i++) {
-    auto& ubo = shader.vert_ubos[i];
-    auto& ubo_binding = shader_handles.vert_ubos[i];
-
-    ASSERT(ubo_binding.binding_index >= 0);
-    ASSERT(ubo_binding.buffer_handle > 0);
-
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, ubo.size, action.vert_ubos[i], GL_STREAM_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, NULL);
-  }
-
-  ASSERT(shader.frag_ubos.size() == action.frag_ubos.size());
-  ASSERT(shader.frag_ubos.size() == shader_handles.frag_ubos.size());
-
-  for (size_t i = 0; i < shader.frag_ubos.size(); i++) {
-    auto& ubo = shader.frag_ubos[i];
-    auto& ubo_binding = shader_handles.frag_ubos[i];
+  // Vertex UBOs.
+  if (Valid(shader.vert_ubo)) {
+    auto& ubo = shader.vert_ubo;
+    auto& ubo_binding = shader_handles.vert_ubo;
 
     ASSERT(ubo_binding.binding_index >= 0);
     ASSERT(ubo_binding.buffer_handle > 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, ubo.size, action.frag_ubos[i], GL_STREAM_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, NULL);
+    glBufferData(GL_UNIFORM_BUFFER, ubo.size, action.vert_ubo_data, GL_STREAM_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
   }
+
+  // Fragment UBOs.
+  if (Valid(shader.frag_ubo)) {
+    auto& ubo = shader.frag_ubo;
+    auto& ubo_binding = shader_handles.frag_ubo;
+
+    ASSERT(ubo_binding.binding_index >= 0);
+    ASSERT(ubo_binding.buffer_handle > 0);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
+    glBufferData(GL_UNIFORM_BUFFER, ubo.size, action.frag_ubo_data, GL_STREAM_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
+  }
+
+  glBindBuffer(GL_UNIFORM_BUFFER, NULL);
 }
 
 void SetTextures(const OpenGLRendererBackend& opengl,

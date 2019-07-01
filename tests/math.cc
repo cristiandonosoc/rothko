@@ -71,6 +71,18 @@ TEST_CASE("Vec2")
   }
 }
 
+TEST_CASE("Vec3") {
+  SECTION("CROSS") {
+    Vec3 a = {2, 3, 4};
+    Vec3 b = {5, 6, 7};
+
+    Vec3 c = Cross(a, b);
+    REQUIRE(c.x == -3);
+    REQUIRE(c.y == 6);
+    REQUIRE(c.z == -3);
+  }
+}
+
 }  // namespace
 
 }  // namespace rothko

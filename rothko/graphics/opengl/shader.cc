@@ -98,40 +98,34 @@ uint32_t LinkProgram(uint32_t vert_handle, uint32_t frag_handle) {
   return prog_handle;
 }
 
-bool BindUBOs(const std::vector<UniformBufferObject>& ubos,
+bool BindUBOs(const Shader::UBO& ubo,
               uint32_t prog_handle,
-              std::vector<UBOBinding>* bindings) {
-  bindings->clear();
-  bindings->reserve(ubos.size());
+              ShaderHandles::UBO* binding) {
+  if (!Valid(ubo))
+    return true;
+
   uint32_t current_binding = 0;
-  for (auto& ubo : ubos) {
 
-    // Obtain the block index.
-    uint32_t index = glGetUniformBlockIndex(prog_handle, ubo.name.c_str());
-    if (index == GL_INVALID_INDEX) {
-      LOG(ERROR, "Could not find UBO index for %s", ubo.name.c_str());
-      return false;
-    }
-
-    glUniformBlockBinding(prog_handle, index, current_binding);
-
-    // Generate the buffer that will hold the uniforms.
-    uint32_t buffer_handle = 0;
-    glGenBuffers(1, &buffer_handle);
-    glBindBuffer(GL_UNIFORM_BUFFER, buffer_handle);
-    ASSERT(ubo.size > 0);
-    glBufferData(GL_UNIFORM_BUFFER, ubo.size, NULL, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, NULL);
-
-    // Store the binding data.
-    UBOBinding binding;
-    binding.binding_index = current_binding;
-    binding.buffer_handle = buffer_handle;
-
-    bindings->push_back(std::move(binding));
-
-    current_binding++;
+  // Obtain the block index.
+  uint32_t index = glGetUniformBlockIndex(prog_handle, ubo.name.c_str());
+  if (index == GL_INVALID_INDEX) {
+    LOG(ERROR, "Could not find UBO index for %s", ubo.name.c_str());
+    return false;
   }
+
+  glUniformBlockBinding(prog_handle, index, current_binding);
+
+  // Generate the buffer that will hold the uniforms.
+  uint32_t buffer_handle = 0;
+  glGenBuffers(1, &buffer_handle);
+  glBindBuffer(GL_UNIFORM_BUFFER, buffer_handle);
+  ASSERT(ubo.size > 0);
+  glBufferData(GL_UNIFORM_BUFFER, ubo.size, NULL, GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_UNIFORM_BUFFER, NULL);
+
+  // Store the binding data.
+  binding->binding_index = current_binding;
+  binding->buffer_handle = buffer_handle;
 
   return true;
 }
@@ -155,8 +149,8 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
     return false;
   handles->program = prog_handle;
 
-  if (!BindUBOs(shader->vert_ubos, prog_handle, &handles->vert_ubos) ||
-      !BindUBOs(shader->frag_ubos, prog_handle, &handles->frag_ubos)) {
+  if (!BindUBOs(shader->vert_ubo, prog_handle, &handles->vert_ubo) ||
+      !BindUBOs(shader->frag_ubo, prog_handle, &handles->frag_ubo)) {
     return false;
   }
 
@@ -165,14 +159,8 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
 
 void FreeHandles(ShaderHandles* handles) {
   glDeleteProgram(handles->program);
-
-  for (auto& ubo : handles->vert_ubos) {
-    glDeleteBuffers(1, &ubo.buffer_handle);
-  }
-
-  for (auto& ubo : handles->frag_ubos) {
-    glDeleteBuffers(1, &ubo.buffer_handle);
-  }
+  glDeleteBuffers(1, &handles->vert_ubo.buffer_handle);
+  glDeleteBuffers(1, &handles->frag_ubo.buffer_handle);
 }
 
 }  // namespace
