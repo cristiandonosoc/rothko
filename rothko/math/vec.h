@@ -11,8 +11,14 @@ namespace rothko {
 // Math Functions.
 // =================================================================================================
 
+
+constexpr float PI = 3.14159265359f;
+constexpr double PI64 = 3.14159265358979323846;
+
 float SquareRoot(float);
 float Tan(float radian_angle);
+
+inline float ToRadians(float degrees) { return degrees * (PI / 180.0f); }
 
 // =================================================================================================
 // Vectors
@@ -48,6 +54,7 @@ union _v2 {
 
   _v2 operator-(const _v2& o) const { return {x - o.x, y - o.y}; }
   void operator-=(const _v2& o) { x -= o.x; y -= o.y; }
+  _v2 operator-() { return {-x, -y}; }  // Unary minus operator.
 
   _v2 operator*(const _v2& o) const { return {x * o.x, y * o.y}; }
   void operator*=(const _v2& o) { x *= o.x; y *= o.y; }
@@ -110,6 +117,7 @@ union _v3 {
 
   _v3 operator-(const _v3& o) const { return {x - o.x, y - o.y, z - o.z}; }
   void operator-=(const _v3& o) { x -= o.x; y -= o.y; z -= o.z; }
+  _v3 operator-() { return {-x, -y, -z}; }  // Unary minus operator.
 
   _v3 operator*(const _v3& o) const { return {x * o.x, y * o.y, z * o.z}; }
   void operator*=(const _v3& o) { x *= o.x; y *= o.y; z *= o.z; }
@@ -182,6 +190,7 @@ union _v4 {
 
   _v4 operator-(const _v4 &o) const { return {x - o.x, y - o.y, z - o.z, w - o.w}; }
   void operator-=(const _v4& o) { x -= o.x; y -= o.y; z -= o.z; w -= o.w; }
+  _v4 operator-() { return {-x, -y, -z, -w}; }  // Unary minus operator.
 
   _v4 operator*(const _v4 &o) const { return {x * o.x, y * o.y, z * o.z, w * o.w}; }
   void operator*=(const _v4& o) { x *= o.x; y *= o.y; z *= o.z; w *= o.w; }
@@ -218,6 +227,8 @@ std::string ToString(const Vec4&);
 //
 // Matrices are implemented as column mayor. This means that a direct iteration over the members
 // (for int i = 0; i < 16; i++) will show the transpose matrix if you expected a list of for rows.
+//
+// This is mainly because OpenGL is column major.
 // =================================================================================================
 
 // Mat 2 -------------------------------------------------------------------------------------------
@@ -249,8 +260,6 @@ using IntMat2 = _mat2<int>;
 using Mat2 = _mat2<float>;
 
 // Mat4 ------------------------------------------------------------------------
-//
-// NOTE
 
 template <typename T>
 union _mat4 {
@@ -263,10 +272,8 @@ union _mat4 {
 
   _mat4() = default;
   _mat4(_v4<T> r1, _v4<T> r2, _v4<T> r3, _v4<T> r4) {
-    cols[0] = {r1[0], r2[0], r3[0], r4[0]};
-    cols[1] = {r1[1], r2[1], r3[1], r4[1]};
-    cols[2] = {r1[2], r2[2], r3[2], r4[2]};
-    cols[3] = {r1[3], r2[3], r3[3], r4[3]};
+    // As this is column major, each row given becomes each column.
+    cols[0] = r1; cols[1] = r2; cols[2] = r3; cols[3] = r4;
   }
 
   static _mat4 Identity() { return {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}; }

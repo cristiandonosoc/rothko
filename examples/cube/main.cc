@@ -9,7 +9,6 @@
 #include <rothko/math/vec.h>
 
 #include <thread>
-
 using namespace rothko;
 
 namespace {
@@ -23,7 +22,6 @@ Camera CreateCamera();
 PerFrameVector<RenderCommand> GetRenderCommands(Camera* camera, Mesh* mesh, Shader* shader);
 
 }  // namespace
-
 
 int main() {
   Window window;
@@ -42,7 +40,8 @@ int main() {
     return 1;
 
   Camera camera;
-  camera.projection = Mat4::Identity();
+  float aspect = (float)window.width / (float)window.height;
+  camera.projection = Perspective(ToRadians(60.0f), aspect, 0.1f, 100.0f);
   camera.view = LookAt({0, 0, 5}, {}, {0, 1, 0});
 
   // Sample game loop.
@@ -105,7 +104,6 @@ struct Colors {
   static constexpr uint32_t kGreen =  0xff'00'ff'00;
   static constexpr uint32_t kRed =    0xff'00'00'ff;
   static constexpr uint32_t kWhite =  0xff'ff'ff'ff;
-
 };
 
 Mesh CreateMesh() {
@@ -161,7 +159,7 @@ PerFrameVector<RenderCommand> GetRenderCommands(Camera* camera, Mesh* mesh, Shad
   command.type = RenderCommandType::kClear;
   auto& clear_action = command.ClearAction();
   clear_action = {};
-  clear_action.color = Colors::kBlue;
+  clear_action.color = 0x002266ff;
   commands.push_back(std::move(command));
 
   // Mesh command.
