@@ -37,12 +37,12 @@ struct Shader {
 };
 
 inline bool Valid(const Shader::UBO& ubo) { return ubo.size != 0; }
-
 inline bool Loaded(const Shader& s) { return !s.vert_src.empty() && !s.frag_src.empty(); }
 inline bool Staged(const Shader& s) { return s.renderer && s.uuid.has_value(); }
 
 bool LoadShaderSources(const std::string& vert_path,
                        const std::string& frag_path,
                        Shader* out);
+void RemoveSources(Shader* s);
 
 }  // namespace rothko

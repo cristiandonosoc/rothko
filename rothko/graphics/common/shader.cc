@@ -28,4 +28,9 @@ bool LoadShaderSources(const std::string& vert_path,
   return true;
 }
 
+void RemoveSources(Shader* shader) {
+  shader->vert_src.clear();
+  shader->frag_src.clear();
+}
+
 }  // namespace rothko

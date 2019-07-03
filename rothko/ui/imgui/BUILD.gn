@@ -1,0 +1,46 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+source_set("imgui") {
+  public = [
+    "def.h",
+    "imgui.h",
+    "helpers.h",
+  ]
+
+  sources = [
+    "imgui.cc",
+    "imgui_renderer.cc",
+    "imgui_renderer.h",
+    "imgui_shaders.cc",
+    "imgui_shaders.h",
+  ]
+
+  public_configs = [
+    ":renderer_macros",
+  ]
+
+  deps = [
+    "//warhol/window/common",
+    "//warhol/input",
+    "//warhol/utils",
+    "//warhol/graphics/common:standalone"
+  ]
+
+  public_deps = [
+    "//third_party/imgui",
+  ]
+}
+
+# Adds common config to key out functionality
+config("renderer_macros") {
+  defines = []
+
+  if (opengl_enabled) {
+    defines += [ "ROTHKO_OPENGL_ENABLED" ]
+  }
+
+  if (vulkan_enabled) {
+    defines += [ "ROTHKO_VULKAN_ENABLED" ]
+  }
+}

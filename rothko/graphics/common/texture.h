@@ -21,6 +21,10 @@ enum class TextureType : uint32_t {
 };
 
 struct Texture {
+  // The type of the function this texture should use to free the data upon shutdown.
+  // If null, means that the data memory lifetime is handled by someone else.
+  using FreeFunction = void(*)(void*);
+
   RAII_CONSTRUCTORS(Texture);
 
   Renderer* renderer = nullptr;
@@ -30,15 +34,13 @@ struct Texture {
   std::string name;
   Int2 dims;
 
-  // The type of the function this texture should use to free the data upon
-  // shutdown. If null, means that the data memory lifetime is handled by
-  // someone else.
-  using FreeFunction = void(*)(void*);
   FreeFunction free_function = nullptr;
   ClearOnMove<uint8_t*> data = nullptr;
 };
 
 inline bool Staged(Texture* t) { return t->uuid.has_value(); }
+
+void UnloadTexture(Texture* t);
 
 bool STBLoadTexture(const std::string& path, TextureType, Texture* out);
 

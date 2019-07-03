@@ -19,6 +19,7 @@ struct Renderer;
 enum class VertexType : uint32_t {
   kDefault,   // VertexDefault.
   kColor,     // VertexColor.
+  kImgui,     // VertexImgui.
   kLast,
 };
 const char* ToString(VertexType);
@@ -26,9 +27,9 @@ const char* ToString(VertexType);
 // Mesh ------------------------------------------------------------------------
 
 struct Mesh {
-  RAII_CONSTRUCTORS(Mesh);
-
   using IndexType = uint32_t;
+
+  RAII_CONSTRUCTORS(Mesh);
 
   std::string name;
 
@@ -83,6 +84,14 @@ struct VertexColor {
   static constexpr VertexType kVertexType = VertexType::kColor;
 
   Vec3 pos;
+  uint32_t color;
+};
+
+struct VertexImgui {
+  static constexpr VertexType kVertexType = VertexType::kImgui;
+
+  Vec2 pos;
+  Vec2 uv;
   uint32_t color;
 };
 

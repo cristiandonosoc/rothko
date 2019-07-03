@@ -13,6 +13,7 @@ namespace rothko {
 Texture::~Texture() {
   if (Staged(this))
     RendererUnstageTexture(this->renderer, this);
+  UnloadTexture(this);
 }
 
 // LoadTexture -----------------------------------------------------------------
@@ -31,9 +32,7 @@ int TextureTypeToChannels(TextureType type) {
 
 }  // namespace
 
-bool STBLoadTexture(const std::string& path,
-                    TextureType texture_type,
-                    Texture* out) {
+bool STBLoadTexture(const std::string& path, TextureType texture_type, Texture* out) {
   // OpenGL expects the Y axis to be inverted.
   // TODO(Cristian): Support other rendering backends.
   stbi_set_flip_vertically_on_load(true);
@@ -51,6 +50,15 @@ bool STBLoadTexture(const std::string& path,
   *out= std::move(tmp);
   out->free_function = stbi_image_free;
   return true;
+}
+
+// Unload Texture ----------------------------------------------------------------------------------
+
+void UnloadTexture(Texture* texture) {
+  if (texture->data.has_value() && texture->free_function) {
+    texture->free_function(texture->data.value);
+    texture->data.clear();
+  }
 }
 
 }  // namespace rothko
