@@ -13,14 +13,15 @@ out vec4 color;
 
 // Uniforms --------------------------------------------------------------------
 
-layout (std140) uniform Camera {
+layout (std140) uniform Uniforms {
   mat4 proj;
   mat4 view;
-} camera;
+  mat4 model;
+};
 
 // Code ------------------------------------------------------------------------
 
 void main() {
-  gl_Position = camera.proj * camera.view * vec4(in_pos, 1.0);
+  gl_Position = proj * view * model * vec4(in_pos, 1.0);
   color = in_color;
 }

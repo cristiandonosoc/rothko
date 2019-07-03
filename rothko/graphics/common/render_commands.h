@@ -6,7 +6,7 @@
 #include <variant>
 
 #include "rothko/containers/vector.h"
-#include "rothko/math/vec.h"
+#include "rothko/math/math.h"
 
 namespace rothko {
 

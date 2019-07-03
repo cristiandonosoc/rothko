@@ -3,17 +3,16 @@
 
 source_set("math") {
   public = [
-    "vec.h",
+    "math.h",
   ]
 
   sources = [
-    "vec.cc",
+    "math.cc",
   ]
 
   # TODO(Cristian): This dependency is only for printing.
-  #                 In the future might be nice to have a clean math library
-  #                 with no dependencies and have a nice wrapper that has more
-  #                 dependencies.
+  #                 In the future might be nice to have a clean math library with no dependencies
+  #                 and have a nice wrapper that has more dependencies.
   deps = [
     "//rothko/utils",
   ]

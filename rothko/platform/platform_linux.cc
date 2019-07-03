@@ -49,4 +49,9 @@ uint64_t GetNanoseconds() {
   return now.tv_sec * 1000000000 + now.tv_nsec;
 }
 
+float Seconds() {
+  GetNano
+
+}
+
 }  // namespace rothko

@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include "rothko/math/vec.h"
+#include "rothko/math/math.h"
 #include "rothko/utils/clear_on_move.h"
 #include "rothko/utils/macros.h"
 

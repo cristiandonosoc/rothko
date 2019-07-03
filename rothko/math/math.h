@@ -5,6 +5,12 @@
 
 #include <string>
 
+// This is Rothko's math definitions and functions. This includes generic math functions (sin, cos),
+// vectors and matrices, transformations and whatnot.
+//
+// NOTE: This is not meant (as of now) to be a comprehensive math library, but rather it grows
+//       according to the needs of the engine.
+
 namespace rothko {
 
 // =================================================================================================
@@ -16,6 +22,9 @@ constexpr float PI = 3.14159265359f;
 constexpr double PI64 = 3.14159265358979323846;
 
 float SquareRoot(float);
+
+float Sin(float radian_angle);
+float Cos(float radian_angle);
 float Tan(float radian_angle);
 
 inline float ToRadians(float degrees) { return degrees * (PI / 180.0f); }
@@ -259,7 +268,7 @@ union _mat2 {
 using IntMat2 = _mat2<int>;
 using Mat2 = _mat2<float>;
 
-// Mat4 ------------------------------------------------------------------------
+// Mat4 --------------------------------------------------------------------------------------------
 
 template <typename T>
 union _mat4 {
@@ -293,18 +302,29 @@ union _mat4 {
 using IntMat4 = _mat4<int>;
 using Mat4 = _mat4<float>;
 
-// Usually |up| points upward. Our Y vector represents up.
-Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 up = {0, 1, 0});
-
-// Returns |Perspective| after calculating the correct values.
-Mat4 Perspective(float fov, float aspect_ratio, float near, float far);
-Mat4 Perspective(float left, float right, float top, float bottom, float near, float far);
-
 template <typename T>
-void SetRowCol(_mat4<T>* m, T x, T y) {
-  (*m)[y][x];
-}
+void SetRowCol(_mat4<T>* m, T x, T y) { (*m)[y][x]; }
 
 std::string ToString(const Mat4&);
+
+// =================================================================================================
+// Transformation Matrices.
+// =================================================================================================
+
+Mat4 Translate(const Vec3& v);
+
+// Rotate |radian_angle| around |v|.
+Mat4 Rotate(const Vec3& v, float radian_angle);
+
+// Each coord of |v| represents the scale on that dimenstion.
+Mat4 Scale(const Vec3& v);
+
+// Usually |hint_up| points upward. Our Y vector represents up.
+Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 hint_up = {0, 1, 0});
+
+Mat4 Frustrum(float left, float right, float top, float bottom, float near, float far);
+
+// Returns |Frustrum| after calculating the values.
+Mat4 Perspective(float fov, float aspect_ratio, float near, float far);
 
 }  // rothko

@@ -1,7 +1,7 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include <rothko/math/vec.h>
+#include <rothko/math/math.h>
 
 #include <third_party/catch2/catch.hpp>
 

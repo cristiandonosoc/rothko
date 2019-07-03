@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-#include "rothko/math/vec.h"
+#include "rothko/math/math.h"
 #include "rothko/utils/logging.h"
 
 namespace rothko {

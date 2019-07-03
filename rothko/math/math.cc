@@ -1,7 +1,7 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include "rothko/math/vec.h"
+#include "rothko/math/math.h"
 
 #include <cmath>
 
@@ -11,15 +11,13 @@ namespace rothko {
 
 // Math Functions ----------------------------------------------------------------------------------
 
-float SquareRoot(float f) {
-  return std::sqrt(f);
-}
+float SquareRoot(float f) { return std::sqrt(f); }
 
-float Tan(float radian_angle) {
-  return std::tan(radian_angle);
-}
+float Sin(float radian_angle) { return std::sin(radian_angle); }
+float Cos(float radian_angle) { return std::cos(radian_angle); }
+float Tan(float radian_angle) { return std::tan(radian_angle); }
 
-//Vectors -----------------------------------------------------------------------------------------
+//Vectors ------------------------------------------------------------------------------------------
 
 Vec2 Normalize(const Vec2& v) {
   Vec2 result = {};
@@ -63,7 +61,42 @@ Vec4 Normalize(const Vec4& v) {
   return result;
 }
 
-// Matrix ------------------------------------------------------------------------------------------
+// Transformation Matrices -------------------------------------------------------------------------
+
+Mat4 Translate(const Vec3& v) {
+  // clang-format off
+  return Mat4({  0,   0,   0, v.x},
+              {  0,   0,   0, v.y},
+              {  0,   0,   0, v.z},
+              {  0,   0,   0,   1});
+  // clang-format on
+}
+
+Mat4 Rotate(const Vec3& v, float radian_angle) {
+  float sin  = Sin(radian_angle);
+  float cos  = Cos(radian_angle);
+  float cosm = (1 - cos);
+
+  // The angle has to be normalized.
+  Vec3 u = Normalize(v);
+
+  // clang-format off
+  return Mat4(
+    {      cos + u.x * u.x * cosm, u.x * u.y * cosm + u.z * sin, u.x * u.z * cosm - u.y * sin,  0},
+    {u.y * u.x * cosm - u.z * sin,       cos + u.y * u.y * cosm, u.y * u.z * cosm + u.x * sin,  0},
+    {u.z * u.x * cosm + u.y * sin, u.z * u.y * cosm - u.x * sin,       cos + u.z * u.z * cosm,  0},
+    {                           0,                            0,                            0,  1});
+  // clang-format on
+}
+
+Mat4 Scale(const Vec3& v) {
+  // clang-format on
+  return Mat4({ v.x,   0,   0,   0},
+              {   0, v.y,   0,   0},
+              {   0,   0, v.z,   0},
+              {   0,   0,   0,   1});
+  // clang-format off
+}
 
 Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 hint_up) {
   // We calculate the new axis for the coordinate system.
@@ -87,10 +120,22 @@ Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 hint_up) {
   //       NOTE2: The translation is negative because the camera Z axis *points in* the forward
   //              direction, thus making the camera *look in* it's negative -Z axis.
   //       NOTE3: f = forward, u = up, r = right, p = pos.
+
+  // clang-format off
   return Mat4({          right.x,        right.y,           right.z,     0},
               {             up.x,           up.y,              up.z,     0},
               {       -forward.x,     -forward.y,        -forward.z,     0},
               { -Dot(right, pos),  -Dot(up, pos), Dot(forward, pos),     1});
+  // clang-format on
+}
+
+Mat4 Frustrum(float l, float r, float b, float t, float n, float f) {
+  // clang-format off
+  return Mat4{{  2 * n / (r - l),                 0,                    0,       0},
+              {                0,   2 * n / (t - b),                    0,       0},
+              {(r + l) / (r - l), (t + b) / (t - b),   -(f + n) / (f - n),      -1},
+              {                0,                 0, -2 * f * n / (f - n),       0}};
+  // clang-format on
 }
 
 Mat4 Perspective(float fov, float aspect_ratio, float near, float far) {
@@ -99,19 +144,10 @@ Mat4 Perspective(float fov, float aspect_ratio, float near, float far) {
   bottom = -top;
 
   right = top * aspect_ratio;
-  left = -right;
+  left  = -right;
 
-  return Perspective(left, right, bottom, top, near, far);
+  return Frustrum(left, right, bottom, top, near, far);
 }
-
-Mat4 Perspective(float l, float r, float b, float t, float n, float f) {
-  return Mat4{{  2 * n / (r - l),                 0,                    0,       0},
-              {                0,   2 * n / (t - b),                    0,       0},
-              {(r + l) / (r - l), (t + b) / (t - b),   -(f + n) / (f - n),      -1},
-              {                0,                 0, -2 * f * n / (f - n),       0}};
-}
-
-
 
 // Printing ----------------------------------------------------------------------------------------
 
@@ -126,11 +162,13 @@ std::string ToString(const Vec4& v) { return StringPrintf("(%f, %f, %f, %f)", v.
 
 std::string ToString(const Mat4& m) {
   auto& e = m.elements;
+  // clang-format off
   return StringPrintf("(%f, %f, %f, %f), (%f, %f, %f, %f), (%f, %f, %f, %f), (%f, %f, %f, %f)",
-                      e[0][0], e[1][0], e[2][0], e[3][0],
-                      e[0][1], e[1][1], e[2][1], e[3][1],
-                      e[0][2], e[1][2], e[2][2], e[3][2],
-                      e[0][3], e[1][3], e[2][3], e[3][3]);
+                      e[0][0], e[0][1], e[0][0], e[0][1],
+                      e[1][0], e[1][1], e[1][0], e[1][1],
+                      e[2][0], e[2][1], e[2][0], e[2][1],
+                      e[3][0], e[3][1], e[3][0], e[3][1]);
+  // clang-format on
 }
 
 }  // namespace rothko

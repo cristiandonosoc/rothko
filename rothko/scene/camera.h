@@ -3,9 +3,7 @@
 
 #pragma once
 
-#include "rothko/math/vec.h"
-
-#include "rothko/math/vec.h"
+#include "rothko/math/math.h"
 
 namespace rothko {
 

@@ -6,20 +6,42 @@
 #include <rothko/utils/logging.h>
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
-#include <rothko/math/vec.h>
+#include <rothko/math/math.h>
 
+#include <sstream>
 #include <thread>
+
 using namespace rothko;
+
+/* BEGIN_IGNORE_WARNINGS() */
+
+/* #include <third_party/include/glm/gtc/matrix_transform.hpp> */
+/* #include <third_party/include/glm/gtc/type_ptr.hpp> */
+
+/* #define GLM_ENABLE_EXPERIMENTAL */
+/* #include <glm/gtx/string_cast.hpp> */
+
+/* END_IGNORE_WARNINGS() */
 
 namespace {
 
 bool Setup(Window*, Renderer*);
 
+struct CubeShader {
+  struct UBO {
+    Mat4 proj;
+    Mat4 view;
+    Mat4 model;
+  } ubo;
+
+  Shader shader;
+};
+
 Mesh CreateMesh();
-Shader CreateShader();
+CubeShader CreateShader();
 Camera CreateCamera();
 
-PerFrameVector<RenderCommand> GetRenderCommands(Camera* camera, Mesh* mesh, Shader* shader);
+PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh, CubeShader* shader);
 
 }  // namespace
 
@@ -35,14 +57,14 @@ int main() {
   if (!RendererStageMesh(&renderer, &mesh))
     return 1;
 
-  Shader shader = CreateShader();
-  if (!RendererStageShader(&renderer, &shader))
+  CubeShader cube_shader = CreateShader();
+  if (!RendererStageShader(&renderer, &cube_shader.shader))
     return 1;
 
-  Camera camera;
-  float aspect = (float)window.width / (float)window.height;
-  camera.projection = Perspective(ToRadians(60.0f), aspect, 0.1f, 100.0f);
-  camera.view = LookAt({0, 0, 5}, {}, {0, 1, 0});
+  float aspect_ratio = (float)window.width / (float)window.height;
+  cube_shader.ubo.proj= Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
+  cube_shader.ubo.view = LookAt({5, 5, 5}, {}, {0, 1, 0});
+  cube_shader.ubo.model = Mat4::Identity();
 
   // Sample game loop.
   bool running = true;
@@ -55,9 +77,11 @@ int main() {
       }
     }
 
+    float angle =
+
     StartFrame(&renderer);
 
-    auto commands = GetRenderCommands(&camera, &mesh, &shader);
+    auto commands = GetRenderCommands(&mesh, &cube_shader);
     RendererExecuteCommands(commands, &renderer);
 
     EndFrame(&renderer);
@@ -112,46 +136,73 @@ Mesh CreateMesh() {
   mesh.vertex_type = VertexType::kColor;
 
   VertexColor vertices[] = {
-    {{-1, -1, 0}, Colors::kBlue},
-    {{ 1, -1, 0}, Colors::kGreen},
-    {{ 1,  1, 0}, Colors::kWhite},
-    {{-1,  1, 0}, Colors::kRed},
+    // X
+    {{-1, -1, -1}, Colors::kBlue},
+    {{-1, -1,  1}, Colors::kGreen},
+    {{-1,  1,  1}, Colors::kWhite},
+    {{-1,  1, -1}, Colors::kRed},
+    {{-1, -1, -1}, Colors::kBlue},
+    {{-1, -1,  1}, Colors::kGreen},
+    {{-1,  1,  1}, Colors::kWhite},
+    {{-1,  1, -1}, Colors::kRed},
+
+    // Y
+    {{-1, -1, -1}, Colors::kBlue},
+    {{ 1, -1, -1}, Colors::kGreen},
+    {{ 1, -1,  1}, Colors::kWhite},
+    {{-1, -1,  1}, Colors::kRed},
+    {{-1,  1, -1}, Colors::kBlue},
+    {{ 1,  1, -1}, Colors::kGreen},
+    {{ 1,  1,  1}, Colors::kWhite},
+    {{-1,  1,  1}, Colors::kRed},
+
+    // Z
+    {{-1, -1, -1}, Colors::kBlue},
+    {{ 1, -1, -1}, Colors::kGreen},
+    {{ 1,  1, -1}, Colors::kWhite},
+    {{-1,  1, -1}, Colors::kRed},
+    {{-1, -1,  1}, Colors::kBlue},
+    {{ 1, -1,  1}, Colors::kGreen},
+    {{ 1,  1,  1}, Colors::kWhite},
+    {{-1,  1,  1}, Colors::kRed},
   };
 
   Mesh::IndexType indices[] = {
-    0, 1, 2,
-    2, 3, 0,
+    0, 1, 2, 2, 3, 0,
+    4, 5, 6, 6, 7, 4,
+
+    8, 9, 10, 10, 11, 8,
+    12, 13, 14, 14, 15, 12,
+
+    16, 17, 18, 18, 19, 16,
+    20, 21, 22, 22, 23, 20,
   };
 
   PushVertices(&mesh, vertices, ARRAY_SIZE(vertices));
   PushIndices(&mesh, indices, ARRAY_SIZE(indices));
 
-  ASSERT(mesh.vertices_count == 4);
+  ASSERT(mesh.vertices_count == 24);
   ASSERT(mesh.vertices.size() == sizeof(vertices));
 
-  ASSERT_MSG(mesh.indices_count == 6, "Count: %u", mesh.indices_count);
+  ASSERT_MSG(mesh.indices_count == 36, "Count: %u", mesh.indices_count);
   ASSERT(mesh.indices.size() == sizeof(indices));
 
   return mesh;
 }
 
-Shader CreateShader() {
-  Shader shader = {};
-  shader.name = "cube";
-
-  shader.vert_ubo = {"Camera", 128};
+CubeShader CreateShader() {
+  CubeShader shader;
+  shader.shader.name = "cube";
+  shader.shader.vert_ubo = {"Uniforms", sizeof(CubeShader::UBO)};
 
   ASSERT(LoadShaderSources("examples/cube/shader.vert",
                            "examples/cube/shader.frag",
-                           &shader));
+                           &shader.shader));
   return shader;
 }
 
-PerFrameVector<RenderCommand> GetRenderCommands(Camera* camera, Mesh* mesh, Shader* shader) {
-  (void)camera;
-  (void)mesh;
-  (void)shader;
-
+PerFrameVector<RenderCommand>
+GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
   PerFrameVector<RenderCommand> commands;
 
   // Clear command.
@@ -165,12 +216,12 @@ PerFrameVector<RenderCommand> GetRenderCommands(Camera* camera, Mesh* mesh, Shad
   // Mesh command.
   command = {};
   command.type = RenderCommandType::kMesh;
-  command.shader = shader;
+  command.shader = &cube_shader->shader;
 
   MeshRenderAction mesh_action;
   mesh_action.mesh = mesh;
   mesh_action.indices_size = mesh->indices_count;
-  mesh_action.vert_ubo_data = (uint8_t*)camera;
+  mesh_action.vert_ubo_data = (uint8_t*)&cube_shader->ubo;
 
   command.MeshActions().push_back(std::move(mesh_action));
 
