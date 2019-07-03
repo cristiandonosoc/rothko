@@ -177,6 +177,10 @@ void OpenGLRendererBackend::UnstageMesh(Mesh* mesh) {
   OpenGLUnstageMesh(this, mesh);
 }
 
+bool OpenGLRendererBackend::UploadMeshRange(Mesh* mesh, Int2 vertex_range, Int2 index_range) {
+  return OpenGLUploadMeshRange(this, mesh, vertex_range, index_range);
+}
+
 // Shaders ---------------------------------------------------------------------
 
 bool OpenGLRendererBackend::StageShader(Shader* shader) {

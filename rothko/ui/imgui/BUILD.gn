@@ -4,8 +4,8 @@
 source_set("imgui") {
   public = [
     "def.h",
-    "imgui.h",
     "helpers.h",
+    "imgui.h",
   ]
 
   sources = [
@@ -16,15 +16,14 @@ source_set("imgui") {
     "imgui_shaders.h",
   ]
 
-  public_configs = [
-    ":renderer_macros",
-  ]
+  public_configs = [ ":renderer_macros" ]
 
   deps = [
-    "//warhol/window/common",
-    "//warhol/input",
-    "//warhol/utils",
-    "//warhol/graphics/common:standalone"
+    "//rothko/graphics/common",
+    "//rothko/input",
+    "//rothko/platform",
+    "//rothko/utils",
+    "//rothko/window/common",
   ]
 
   public_deps = [

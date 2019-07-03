@@ -5,9 +5,7 @@
 
 if (opengl_enabled) {
   group("opengl") {
-    public_configs = [
-      ":graphics_macros",
-    ]
+    public_configs = [ ":graphics_macros" ]
 
     deps = [
       ":graphics_common",
@@ -29,5 +27,3 @@ config("graphics_macros") {
     defines += [ "ROTHKO_OPENGL_ENABLED" ]
   }
 }
-
-

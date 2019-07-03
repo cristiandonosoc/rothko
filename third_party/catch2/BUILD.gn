@@ -12,4 +12,3 @@ source_set("catch2") {
   # We don't care about the warnings of this library.
   configs -= [ "//gn_config/compilers:default_warnings" ]
 }
-

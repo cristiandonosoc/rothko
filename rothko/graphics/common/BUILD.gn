@@ -4,9 +4,9 @@
 source_set("common") {
   public = [
     "mesh.h",
-    "renderer_backend.h",
-    "renderer.h",
     "render_commands.h",
+    "renderer.h",
+    "renderer_backend.h",
     "shader.h",
     "texture.h",
   ]

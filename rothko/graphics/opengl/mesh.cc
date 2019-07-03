@@ -69,6 +69,17 @@ void StageAttributes(Mesh* mesh) {
       glEnableVertexAttribArray(1);
       return;
     }
+    case VertexType::kImgui: {
+      GLsizei stride = sizeof(VertexImgui);
+      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexImgui, pos));
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexImgui, uv));
+      glEnableVertexAttribArray(1);
+      glVertexAttribPointer(
+          1, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offsetof(VertexImgui, color));
+      glEnableVertexAttribArray(2);
+      return;
+    }
     case VertexType::kLast:
       break;
   }
@@ -116,7 +127,7 @@ bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
   return true;
 }
 
-// Unstage Mesh -----------------------------------------------------------------------------------
+// Unstage Mesh ------------------------------------------------------------------------------------
 
 namespace {
 
@@ -136,6 +147,50 @@ void OpenGLUnstageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
   DeleteMeshHandles(&it->second);
   opengl->loaded_meshes.erase(it);
   mesh->uuid = 0;
+}
+
+// Upload Range ------------------------------------------------------------------------------------
+
+bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
+                           Int2 vertex_range, Int2 index_range) {
+  uint64_t uuid = mesh->uuid.value;
+  auto it = opengl->loaded_meshes.find(uuid);
+  if (it == opengl->loaded_meshes.end()) {
+    LOG(ERROR, "Uploading range on non-staged mesh %s", mesh->name.c_str());
+    return false;
+  }
+
+  MeshHandles& handles = it->second;
+
+  // Vertices.
+  {
+    uint32_t offset = vertex_range.x;
+    uint32_t size = vertex_range.y;
+    if (size == 0) {
+      offset = 0;
+      size = mesh->vertices.size();
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, handles.vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, offset, size, mesh->vertices.data());
+    glBindBuffer(GL_ARRAY_BUFFER, NULL);
+  }
+
+  // Indices.
+  {
+    uint32_t offset = index_range.x;
+    uint32_t size = index_range.y;
+    if (size == 0) {
+      offset = 0;
+      size = mesh->indices.size();
+    }
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.ebo);
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, mesh->indices.data());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, NULL);
+  }
+
+  return true;
 }
 
 }  // namespace opengl

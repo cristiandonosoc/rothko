@@ -39,7 +39,7 @@ struct OpenGLRendererBackend : public RendererBackend {
 
   Window* window = nullptr;
 
-  // Virtual Interface ---------------------------------------------------------
+  // Virtual Interface -----------------------------------------------------------------------------
 
   bool Init(Renderer*, InitRendererConfig*) override;
 
@@ -50,6 +50,7 @@ struct OpenGLRendererBackend : public RendererBackend {
   // Meshes.
   bool StageMesh(Mesh*) override;
   void UnstageMesh(Mesh*) override;
+  bool UploadMeshRange(Mesh*, Int2 vertex_range, Int2 index_range) override;
 
   // Shaders.
   bool StageShader(Shader*) override;

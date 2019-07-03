@@ -8,11 +8,13 @@
 #include <rothko/utils/logging.h>
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
+#include <rothko/ui/imgui.h>
 
 #include <sstream>
 #include <thread>
 
 using namespace rothko;
+using namespace rothko::imgui;
 
 /* BEGIN_IGNORE_WARNINGS() */
 
@@ -47,6 +49,13 @@ PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh, CubeShader* shader);
 }  // namespace
 
 int main() {
+  /* auto my_ortho = Ortho(0, 600, 0, 480); */
+  /* auto ortho = glm::ortho(0.0f, 600.0f, 0.0f, 480.0f); */
+
+  /* LOG(DEBUG, "MINE: %s", ToString(my_ortho).c_str()); */
+  /* LOG(DEBUG, " GLM: %s", ToString(*(Mat4*)&ortho).c_str()); */
+  /* return 0; */
+
   Window window;
   Renderer renderer;
   if (!Setup(&window, &renderer))
@@ -64,10 +73,16 @@ int main() {
 
   float aspect_ratio = (float)window.width / (float)window.height;
   cube_shader.ubo.proj= Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
+  /* cube_shader.ubo.proj = Ortho(-10, 10, -10, 10, 0.1f, 10.0f); */
   cube_shader.ubo.view = LookAt({5, 5, 5}, {}, {0, 1, 0});
   cube_shader.ubo.model = Mat4::Identity();
 
   Time time = InitTime();
+
+  ImguiContext imgui;
+  if (!InitImgui(&renderer, &imgui))
+    return 1;
+
 
   // Sample game loop.
   bool running = true;
@@ -80,7 +95,13 @@ int main() {
       }
     }
 
+
     Update(&time);
+
+    StartFrame(&imgui, &window, &time, &input);
+
+    EndFrame(&imgui);
+
 
     float angle = time.seconds * ToRadians(50.0f);
     cube_shader.ubo.model = Rotate({1.0f, 0.3f, 0.5f}, angle);
@@ -212,23 +233,19 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
   PerFrameVector<RenderCommand> commands;
 
   // Clear command.
-  RenderCommand command;
-  command.type = RenderCommandType::kClear;
-  auto& clear_frame = command.GetClearFrame();
+  ClearFrame clear_frame;
   clear_frame = {};
   clear_frame.color = 0x002266ff;
-  commands.push_back(std::move(command));
+  commands.push_back(std::move(clear_frame));
 
   // Mesh command.
-  command = {};
-  command.type = RenderCommandType::kMesh;
-  RenderMesh& render_mesh = command.GetRenderMesh();
+  RenderMesh render_mesh;
   render_mesh.mesh = mesh;
   render_mesh.shader = &cube_shader->shader;
   render_mesh.cull_faces = false;
   render_mesh.indices_size = mesh->indices_count;
   render_mesh.vert_ubo_data = (uint8_t*)&cube_shader->ubo;
-  commands.push_back(std::move(command));
+  commands.push_back(std::move(render_mesh));
 
   return commands;
 }

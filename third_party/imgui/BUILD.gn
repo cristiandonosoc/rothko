@@ -6,9 +6,7 @@
 # the license.
 
 config("imgui_config") {
-  include_dirs = [
-    "//third_party/imgui",
-  ]
+  include_dirs = [ "//third_party/imgui" ]
 }
 
 source_set("imgui") {
@@ -24,10 +22,8 @@ source_set("imgui") {
     "imstb_textedit.h",
     "imstb_truetype.h",
   ]
-  public_configs = [
-    ":imgui_config",
-  ]
+  public_configs = [ ":imgui_config" ]
 
   # We don't care about the warnings of this library.
-  configs -= [ "//build/config/compiler:default_warnings" ]
+  configs -= [ "//gn_config/compilers:default_warnings" ]
 }

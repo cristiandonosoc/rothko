@@ -24,9 +24,9 @@ flags += local_flags
 flags += [
     '-I', os.path.join(os.getcwd()),
 
-    '-D', 'WARHOL_SDL_ENABLED',
-    '-D', 'WARHOL_VULKAN_ENABLED',
-    '-D', 'WARHOL_OPENGL_ENABLED',
+    '-D', 'ROTHKO_SDL_ENABLED',
+    '-D', 'ROTHKO_VULKAN_ENABLED',
+    '-D', 'ROTHKO_OPENGL_ENABLED',
 
     '-isystem', os.path.join(os.getcwd(), 'third_party'),
     '-isystem', os.path.join(os.getcwd(), 'third_party', 'include'),

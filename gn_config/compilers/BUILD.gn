@@ -6,26 +6,23 @@
 
 if (compiler == "msvc") {
   config("default_warnings") {
-    defines = [
-      "NOMINMAX",
-    ]
+    defines = [ "NOMINMAX" ]
     cflags = [
       "/W4",
       "/WX",
+
       # Warning ignores
-      "/wd4267",    # size_t to int.
-      "/wd4244",    # int to boolean.
-      "/wd4700",    # Un-initialized variable.
-      "/wd4702",    # Un-reachable code.
-      "/wd4996",    # fopen.
-      "/wd4201",    # Anonymouse structs within union.
+      "/wd4267",  # size_t to int.
+      "/wd4244",  # int to boolean.
+      "/wd4700",  # Un-initialized variable.
+      "/wd4702",  # Un-reachable code.
+      "/wd4996",  # fopen.
+      "/wd4201",  # Anonymouse structs within union.
     ]
   }
 
   config("compiler") {
-    defines = [
-      "NOMINMAX",
-    ]
+    defines = [ "NOMINMAX" ]
 
     cflags_cc = [
       "/std:c++latest",
@@ -33,9 +30,7 @@ if (compiler == "msvc") {
       "/GR-",
     ]
 
-    ldflags = [
-      "/SUBSYSTEM:CONSOLE",
-    ]
+    ldflags = [ "/SUBSYSTEM:CONSOLE" ]
   }
 
   config("debug") {
@@ -44,15 +39,11 @@ if (compiler == "msvc") {
       "/Zi",
     ]
 
-    ldflags = [
-      "/DEBUG",
-    ]
+    ldflags = [ "/DEBUG" ]
   }
 
   config("release") {
-      cflags = [
-        "/O2",
-      ]
+    cflags = [ "/O2" ]
   }
 }
 
@@ -71,9 +62,7 @@ if (compiler == "clang") {
   }
 
   config("compiler") {
-    cflags_cc = [
-      "-std=c++1z",
-    ]
+    cflags_cc = [ "-std=c++1z" ]
   }
 
   config("debug") {
@@ -84,8 +73,6 @@ if (compiler == "clang") {
   }
 
   config("release") {
-    cflags = [
-      "-O2",
-    ]
+    cflags = [ "-O2" ]
   }
 }

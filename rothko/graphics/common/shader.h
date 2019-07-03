@@ -32,6 +32,8 @@ struct Shader {
   UBO vert_ubo;
   UBO frag_ubo;
 
+  uint32_t texture_count = 0;
+
   std::string vert_src;
   std::string frag_src;
 };

@@ -25,6 +25,11 @@ struct ImguiRenderer {
 
   ImGuiIO* io = nullptr;
   Renderer* renderer = nullptr;  // Must outlive.
+
+  struct UBO {
+    Mat4 projection;
+    Mat4 view;
+  } ubo;
 };
 
 inline bool Valid(ImguiRenderer* r) { return !!r->renderer && !!r->io; }
@@ -32,7 +37,7 @@ inline bool Valid(ImguiRenderer* r) { return !!r->renderer && !!r->io; }
 // Requires ImGuiRenderer.io to be already set.
 bool InitImguiRenderer(ImguiRenderer*, Renderer*, ImGuiIO*);
 
-RenderCommand ImguiGetRenderCommand(ImguiRenderer*);
+PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer*);
 
 }  // namespace imgui
 }  // namespace rothko

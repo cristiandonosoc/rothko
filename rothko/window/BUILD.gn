@@ -6,10 +6,7 @@
 if (sdl_enabled) {
   if (opengl_enabled) {
     source_set("sdl_opengl") {
-
-      public_configs = [
-        ":window_macros",
-      ]
+      public_configs = [ ":window_macros" ]
 
       public_deps = [
         "//rothko/input",

@@ -7,6 +7,7 @@
 
 #include "rothko/containers/vector.h"
 #include "rothko/math/math.h"
+#include "rothko/utils/macros.h"
 
 namespace rothko {
 
@@ -19,13 +20,23 @@ union RenderAction;
 
 // Render Actions ----------------------------------------------------------------------------------
 
+enum class RenderCommandType {
+  kClear,
+  kMesh,
+  kLast,
+};
+
 struct ClearFrame {
+  static constexpr RenderCommandType kType = RenderCommandType::kClear;
+
   bool clear_depth = true;
   bool clear_color = true;
   uint32_t color;   // One byte per color.
 };
 
 struct RenderMesh {
+  static constexpr RenderCommandType kType = RenderCommandType::kMesh;
+
   Mesh* mesh = nullptr;
   Shader* shader = nullptr;
 
@@ -53,25 +64,32 @@ struct RenderMesh {
 
 // Render Command ----------------------------------------------------------------------------------
 
-enum class RenderCommandType {
-  kClear,
-  kMesh,
-  kLast,
-};
-
 struct RenderCommand {
-  RenderCommandType type = RenderCommandType::kLast;
 
-  std::variant<ClearFrame, RenderMesh> data;
+  RenderCommand() = default;
+  DEFAULT_COPY_AND_ASSIGN(RenderCommand);
+  DEFAULT_MOVE_AND_ASSIGN(RenderCommand);
+
+  RenderCommand(ClearFrame);
+  RenderCommand& operator=(ClearFrame);
+
+  RenderCommand(RenderMesh);
+  RenderCommand& operator=(RenderMesh);
+
+  RenderCommandType type() const { return type_; }
+  bool is_clear_frame() const { return type_ == RenderCommandType::kClear; }
+  bool is_render_mesh() const { return type_ == RenderCommandType::kMesh; }
 
   // Getters.
-  bool is_clear_frame() const;
   ClearFrame& GetClearFrame();
   const ClearFrame& GetClearFrame() const;
 
-  bool is_render_mesh() const;
   RenderMesh& GetRenderMesh();
   const RenderMesh& GetRenderMesh() const;
+
+  // "pseudo"-private.
+  RenderCommandType type_ = RenderCommandType::kLast;
+  std::variant<ClearFrame, RenderMesh> data_;
 };
 
 }  // namespace rothko

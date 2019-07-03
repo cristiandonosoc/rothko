@@ -68,6 +68,15 @@ bool InitRenderer(Renderer*, InitRendererConfig*);
 bool RendererStageMesh(Renderer*, Mesh*);
 void RendererUnstageMesh(Renderer*, Mesh*);
 
+// Re-uploads the contents of the mesh into the already staged buffer. Hence, the mesh needs to be
+// already staged.
+//
+// |vertex_range| represents what section of vertices to upload. X = offset, Y = size.
+// |index_range| represents what section of indices to upload. X = offset, Y = size.
+//
+// For both ranges, empty size means all.
+bool RendererUploadMeshRange(Renderer*, Mesh*, Int2 vertex_range = {}, Int2 index_range = {});
+
 // Shaders.
 bool RendererStageShader(Renderer*, Shader*);
 void RendererUnstageShader(Renderer*, Shader*);

@@ -15,9 +15,7 @@ source_set("gl3w") {
     libs = [ "-ldl" ]
   }
 
-  configs += [
-    ":gl3w_config",
-  ]
+  configs += [ ":gl3w_config" ]
 
   # We don't care about the warnings of this library.
   configs -= [ "//gn_config/compilers:default_warnings" ]

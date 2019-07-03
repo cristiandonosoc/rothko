@@ -33,10 +33,10 @@ out vec2 uv;
 layout (std140) uniform Camera {
   mat4 proj;
   mat4 view;
-} camera;
+};
 
 void main() {
-  gl_Position = camera.proj * camera.view * vec4(in_pos.xy, 0, 1.0f);
+  gl_Position = proj * view * vec4(in_pos.xy, 0, 1.0f);
   color = in_color;
   uv = in_uv;
 }
@@ -68,13 +68,12 @@ void main() {
 Shader GetOpenGLImguiShader() {
   Shader shader;
   shader.name = "Imgui Shader";
-  shader.vert_ubo_size = 0;
-  shader.frag_ubo_size = 0;
+  shader.vert_ubo.name = "Camera";
+  shader.vert_ubo.size = 128;
   shader.texture_count = 1;
 
-  shader.uuid = GetNextShaderUUID();
-  shader.vert_source = kOpenGLVertex;
-  shader.frag_source = kOpenGLFragment;
+  shader.vert_src = kOpenGLVertex;
+  shader.frag_src = kOpenGLFragment;
 
   return shader;
 }

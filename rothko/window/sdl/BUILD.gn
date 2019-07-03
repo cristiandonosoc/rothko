@@ -21,7 +21,11 @@ config("sdl2_config") {
     # /Library/Frameworks/SDL2.framework/Headers/
     # TODO(Cristian): Should this be enforced always here?
     # NOTE: SDL2 should be installed as a framework in /Library/Frameworks
-    ldflags = [ "-framework", "SDL2", "-F/Library/Frameworks", ]
+    ldflags = [
+      "-framework",
+      "SDL2",
+      "-F/Library/Frameworks",
+    ]
     handled = true
   } else if (target_os == "linux") {
     if (compiler == "clang") {
@@ -44,15 +48,12 @@ source_set("sdl_common") {
     "sdl_input.h",
   ]
 
-  public_configs = [
-    ":sdl2_config",
-  ]
+  public_configs = [ ":sdl2_config" ]
 
   deps = [
     "//rothko/input",
     "//rothko/utils",
   ]
-
 }
 
 source_set("sdl_opengl") {
@@ -61,9 +62,7 @@ source_set("sdl_opengl") {
     "sdl_opengl.h",
   ]
 
-  public_configs = [
-    ":sdl2_config",
-  ]
+  public_configs = [ ":sdl2_config" ]
 
   deps = [
     ":sdl_common",

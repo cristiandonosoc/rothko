@@ -138,6 +138,24 @@ Mat4 Frustrum(float l, float r, float b, float t, float n, float f) {
   // clang-format on
 }
 
+Mat4 Ortho(float l, float r, float b, float t) {
+  // clang-format off
+  return Mat4({       2 / (r - l),                  0,        0,        0},
+              {                 0,        2 / (t - b),        0,        0},
+              {                 0,                  0,       -1,        0},
+              {-(r + l) / (r - l), -(t + b) / (t - b),        0,        1});
+  // clang-format on
+}
+
+Mat4 Ortho(float l, float r, float b, float t, float n, float f) {
+  // clang-format off
+  return Mat4({       2 / (r - l),                  0,                 0,        0},
+              {                 0,        2 / (t - b),                 0,        0},
+              {                 0,                  0,      -2 / (f - n),        0},
+              {-(r + l) / (r - l), -(t + b) / (t - b), -(f + n) / (f- n),        1});
+  // clang-format on
+}
+
 Mat4 Perspective(float fov, float aspect_ratio, float near, float far) {
   float left, right, top, bottom = {};
   top    = near * Tan(fov / 2.0f);

@@ -322,7 +322,10 @@ Mat4 Scale(const Vec3& v);
 // Usually |hint_up| points upward. Our Y vector represents up.
 Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 hint_up = {0, 1, 0});
 
-Mat4 Frustrum(float left, float right, float top, float bottom, float near, float far);
+Mat4 Frustrum(float left, float right, float bottom, float top, float near, float far);
+
+Mat4 Ortho(float left, float right, float bottom, float top);
+Mat4 Ortho(float left, float right, float bottom, float top, float near, float far);
 
 // Returns |Frustrum| after calculating the values.
 Mat4 Perspective(float fov, float aspect_ratio, float near, float far);

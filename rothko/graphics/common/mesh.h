@@ -24,7 +24,7 @@ enum class VertexType : uint32_t {
 };
 const char* ToString(VertexType);
 
-// Mesh ------------------------------------------------------------------------
+// Mesh --------------------------------------------------------------------------------------------
 
 struct Mesh {
   using IndexType = uint32_t;
@@ -60,17 +60,12 @@ void PushVertices(Mesh* mesh, VertexType* data, uint32_t count) {
   mesh->vertices_count += count;
 }
 
-inline void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count) {
-  mesh->indices.reserve(mesh->indices_count + count);
+// Pushes an array of indices into the mesh.
+// The |offset| is a value that will be added to each element.
+void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count);
+void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t offset);
 
-  Mesh::IndexType* begin = data;
-  Mesh::IndexType* end = data + count;
-
-  mesh->indices.insert(mesh->indices.end(), (uint8_t*)begin, (uint8_t*)end);
-  mesh->indices_count += count;
-}
-
-// Vertex Definitions ----------------------------------------------------------
+// Vertex Definitions ------------------------------------------------------------------------------
 
 struct VertexDefault {
   static constexpr VertexType kVertexType = VertexType::kDefault;

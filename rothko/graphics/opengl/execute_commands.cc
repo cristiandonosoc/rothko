@@ -17,7 +17,7 @@ namespace {
 
 void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
   for (auto& command : commands) {
-    switch (command.type) {
+    switch (command.type()) {
       case RenderCommandType::kClear: ASSERT(command.is_clear_frame()); continue;
       case RenderCommandType::kMesh: {
         ASSERT(command.is_render_mesh());
@@ -160,7 +160,7 @@ void OpenGLExecuteCommands(const PerFrameVector<RenderCommand>& commands,
 #endif
 
   for (auto& command : commands) {
-    switch (command.type) {
+    switch (command.type()) {
       case RenderCommandType::kClear:
         ExecuteClearRenderAction(command.GetClearFrame());
         break;

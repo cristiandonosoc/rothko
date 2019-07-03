@@ -1,0 +1,8 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+group("imgui") {
+  deps = [
+    "//rothko/ui/imgui",
+  ]
+}

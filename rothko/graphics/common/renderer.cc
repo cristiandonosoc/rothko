@@ -107,6 +107,12 @@ void RendererUnstageMesh(Renderer* renderer, Mesh* mesh) {
   mesh->renderer = nullptr;
 }
 
+bool RendererUploadMeshRange(Renderer* renderer, Mesh* mesh, Int2 vertex_range, Int2 index_range) {
+  ASSERT(Valid(renderer));
+  ASSERT(Staged(mesh));
+  return renderer->backend->UploadMeshRange(mesh, vertex_range, index_range);
+}
+
 // Shaders ---------------------------------------------------------------------
 
 bool RendererStageShader(Renderer* renderer, Shader* shader) {
