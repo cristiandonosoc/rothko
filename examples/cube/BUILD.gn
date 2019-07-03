@@ -8,6 +8,7 @@ executable("cube") {
 
   deps = [
     "//rothko/graphics:opengl",
+    "//rothko/platform",
     "//rothko/window:sdl_opengl",
   ]
 }

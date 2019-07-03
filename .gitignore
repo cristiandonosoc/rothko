@@ -6,5 +6,6 @@ sdl_source
 *.log
 .vscode/ipch
 warhol
+third_party/include/glm
 
 ycm_extra_conf_local.py

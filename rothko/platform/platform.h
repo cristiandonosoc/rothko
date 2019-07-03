@@ -7,15 +7,13 @@
 
 namespace rothko {
 
-// The platform is meant to give an interface to OS specific functionality
-// in an uniform way. Each platform should compile its own implementation of
-// this interface. The implementations are in rothko/arch/*_platform.cc
+// The platform is meant to give an interface to OS specific functionality in an uniform way.
+// Each platform should compile its own implementation of this interface.
+// The implementations are in rothko/platform/<PLATFORM>_platform.cc.
+// (eg. rothko/platform/windows_platform.cc).
 
 std::string GetBasePath();
 std::string GetCurrentExecutablePath();
 std::string GetCurrentExecutableDirectory();
-
-// Amount of nanoseconds since the program started.
-uint64_t GetNanoseconds();
 
 }  // namespace rothko

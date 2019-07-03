@@ -19,14 +19,23 @@ union RenderAction;
 
 // Render Actions ----------------------------------------------------------------------------------
 
-struct ClearRenderAction {
+struct ClearFrame {
   bool clear_depth = true;
   bool clear_color = true;
   uint32_t color;   // One byte per color.
 };
 
-struct MeshRenderAction {
+struct RenderMesh {
   Mesh* mesh = nullptr;
+  Shader* shader = nullptr;
+
+  // Config.
+  // TODO(Cristian): This could me move to a bit-field.
+  bool blend_enabled = false;
+  bool cull_faces = true;
+  bool depth_test = true;
+  bool scissor_test = false;
+  bool wireframe_mode = false;
 
   Int2 scissor_pos = {};
   Int2 scissor_size = {};
@@ -53,25 +62,16 @@ enum class RenderCommandType {
 struct RenderCommand {
   RenderCommandType type = RenderCommandType::kLast;
 
-  // Config.
-  bool blend_enabled = false;
-  bool cull_faces = true;
-  bool depth_test = true;
-  bool scissor_test = false;
-  bool wireframe_mode = false;
-
-  Shader* shader = nullptr;
-
-  std::variant<ClearRenderAction, PerFrameVector<MeshRenderAction>> data;
+  std::variant<ClearFrame, RenderMesh> data;
 
   // Getters.
-  bool is_clear_action() const;
-  ClearRenderAction& ClearAction();
-  const ClearRenderAction& ClearAction() const;
+  bool is_clear_frame() const;
+  ClearFrame& GetClearFrame();
+  const ClearFrame& GetClearFrame() const;
 
-  bool is_mesh_actions() const;
-  PerFrameVector<MeshRenderAction>& MeshActions();
-  const PerFrameVector<MeshRenderAction>& MeshActions() const;
+  bool is_render_mesh() const;
+  RenderMesh& GetRenderMesh();
+  const RenderMesh& GetRenderMesh() const;
 };
 
 }  // namespace rothko

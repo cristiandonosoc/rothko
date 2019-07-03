@@ -2,11 +2,12 @@
 // This code has a BSD license. See LICENSE.
 
 #include <rothko/graphics/graphics.h>
+#include <rothko/math/math.h>
+#include <rothko/platform/timing.h>
 #include <rothko/scene/camera.h>
 #include <rothko/utils/logging.h>
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
-#include <rothko/math/math.h>
 
 #include <sstream>
 #include <thread>
@@ -66,6 +67,8 @@ int main() {
   cube_shader.ubo.view = LookAt({5, 5, 5}, {}, {0, 1, 0});
   cube_shader.ubo.model = Mat4::Identity();
 
+  Time time = InitTime();
+
   // Sample game loop.
   bool running = true;
   while (running) {
@@ -77,7 +80,10 @@ int main() {
       }
     }
 
-    float angle =
+    Update(&time);
+
+    float angle = time.seconds * ToRadians(50.0f);
+    cube_shader.ubo.model = Rotate({1.0f, 0.3f, 0.5f}, angle);
 
     StartFrame(&renderer);
 
@@ -86,7 +92,7 @@ int main() {
 
     EndFrame(&renderer);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    /* std::this_thread::sleep_for(std::chrono::milliseconds(16)); */
   }
 }
 
@@ -208,23 +214,20 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
   // Clear command.
   RenderCommand command;
   command.type = RenderCommandType::kClear;
-  auto& clear_action = command.ClearAction();
-  clear_action = {};
-  clear_action.color = 0x002266ff;
+  auto& clear_frame = command.GetClearFrame();
+  clear_frame = {};
+  clear_frame.color = 0x002266ff;
   commands.push_back(std::move(command));
 
   // Mesh command.
   command = {};
   command.type = RenderCommandType::kMesh;
-  command.shader = &cube_shader->shader;
-
-  MeshRenderAction mesh_action;
-  mesh_action.mesh = mesh;
-  mesh_action.indices_size = mesh->indices_count;
-  mesh_action.vert_ubo_data = (uint8_t*)&cube_shader->ubo;
-
-  command.MeshActions().push_back(std::move(mesh_action));
-
+  RenderMesh& render_mesh = command.GetRenderMesh();
+  render_mesh.mesh = mesh;
+  render_mesh.shader = &cube_shader->shader;
+  render_mesh.cull_faces = false;
+  render_mesh.indices_size = mesh->indices_count;
+  render_mesh.vert_ubo_data = (uint8_t*)&cube_shader->ubo;
   commands.push_back(std::move(command));
 
   return commands;

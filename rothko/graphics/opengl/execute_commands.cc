@@ -18,13 +18,12 @@ namespace {
 void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
   for (auto& command : commands) {
     switch (command.type) {
-      case RenderCommandType::kClear: ASSERT(command.is_clear_action()); continue;
+      case RenderCommandType::kClear: ASSERT(command.is_clear_frame()); continue;
       case RenderCommandType::kMesh: {
-        ASSERT(command.is_mesh_actions());
-        ASSERT(command.shader);
-        for (auto& action : command.MeshActions()) {
-          ASSERT(action.mesh);
-        }
+        ASSERT(command.is_render_mesh());
+        auto& render_mesh = command.GetRenderMesh();
+        ASSERT(render_mesh.mesh);
+        ASSERT(render_mesh.shader);
         continue;
       }
       case RenderCommandType::kLast: break;
@@ -41,8 +40,8 @@ void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
     glDisable(gl_name);              \
   }
 
-void SetRenderCommandConfig(const RenderCommand& command) {
-  if (command.blend_enabled) {
+void SetRenderCommandConfig(const RenderMesh& render_mesh) {
+  if (render_mesh.blend_enabled) {
     glEnable(GL_BLEND);
 
     // TODO(Cristian): Have a way of setting the blend function!!!!!
@@ -52,16 +51,16 @@ void SetRenderCommandConfig(const RenderCommand& command) {
     glDisable(GL_BLEND);
   }
 
-  SET_GL_CONFIG(command.cull_faces, GL_CULL_FACE);
-  SET_GL_CONFIG(command.depth_test, GL_DEPTH_TEST);
-  SET_GL_CONFIG(command.scissor_test, GL_SCISSOR_TEST);
+  SET_GL_CONFIG(render_mesh.cull_faces, GL_CULL_FACE);
+  SET_GL_CONFIG(render_mesh.depth_test, GL_DEPTH_TEST);
+  SET_GL_CONFIG(render_mesh.scissor_test, GL_SCISSOR_TEST);
 }
 
 #define RED(c) ((float)((c >> 24) & 0xff) / 255.0f)
 #define GREEN(c) ((float)((c >> 16) & 0xff) / 255.0f)
 #define BLUE(c) ((float)((c >> 8) & 0xff) / 255.0f)
 
-void ExecuteClearRenderAction(const ClearRenderAction& clear) {
+void ExecuteClearRenderAction(const ClearFrame& clear) {
   if (!clear.clear_color && !clear.clear_depth)
     return;
 
@@ -79,85 +78,75 @@ void ExecuteClearRenderAction(const ClearRenderAction& clear) {
 
 // Execute Mesh Render Actions -------------------------------------------------
 
-void SetUniforms(const Shader& shader, const ShaderHandles& shader_handles,
-                 const MeshRenderAction& action) {
+void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_handles) {
 
   // Vertex UBOs.
-  if (Valid(shader.vert_ubo)) {
-    auto& ubo = shader.vert_ubo;
+  if (Valid(render_mesh.shader->vert_ubo)) {
+    auto& ubo = render_mesh.shader->vert_ubo;
     auto& ubo_binding = shader_handles.vert_ubo;
 
     ASSERT(ubo_binding.binding_index >= 0);
     ASSERT(ubo_binding.buffer_handle > 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, ubo.size, action.vert_ubo_data, GL_STREAM_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, ubo.size, render_mesh.vert_ubo_data, GL_STREAM_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
   }
 
   // Fragment UBOs.
-  if (Valid(shader.frag_ubo)) {
-    auto& ubo = shader.frag_ubo;
+  if (Valid(render_mesh.shader->frag_ubo)) {
+    auto& ubo = render_mesh.shader->frag_ubo;
     auto& ubo_binding = shader_handles.frag_ubo;
 
     ASSERT(ubo_binding.binding_index >= 0);
     ASSERT(ubo_binding.buffer_handle > 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, ubo.size, action.frag_ubo_data, GL_STREAM_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, ubo.size, render_mesh.frag_ubo_data, GL_STREAM_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
   }
 
   glBindBuffer(GL_UNIFORM_BUFFER, NULL);
 }
 
-void SetTextures(const OpenGLRendererBackend& opengl,
-                 const Shader& shader,
-                 const MeshRenderAction& action) {
-  if (action.textures.empty())
+void SetTextures(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
+  if (render_mesh.textures.empty())
     return;
   (void)opengl;
-  (void)shader;
-  (void)action;
   NOT_IMPLEMENTED();
 }
 
-void
-ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl,
-                         const RenderCommand& command) {
-  auto shader_it = opengl.loaded_shaders.find(command.shader->uuid.value);
+void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
+  auto shader_it = opengl.loaded_shaders.find(render_mesh.shader->uuid.value);
   ASSERT(shader_it != opengl.loaded_shaders.end());
   const ShaderHandles& shader_handles = shader_it->second;
 
   // Setup the render command.
   glUseProgram(shader_handles.program);
-  SetRenderCommandConfig(command);
+  SetRenderCommandConfig(render_mesh);
 
-  for (const MeshRenderAction& action : command.MeshActions()) {
-    if (action.indices_size == 0) {
-      LOG(WARNING, "Received mesh render action with size 0");
-      continue;
-    }
-
-    auto mesh_it = opengl.loaded_meshes.find(action.mesh->uuid.value);
-    ASSERT(mesh_it != opengl.loaded_meshes.end());
-
-    const MeshHandles& mesh_handles = mesh_it->second;
-    glBindVertexArray(mesh_handles.vao);
-
-    SetUniforms(*command.shader, shader_handles, action);
-    SetTextures(opengl, *command.shader, action);
-
-    // Scissoring.
-    if (action.scissor_size.width != 0 && action.scissor_size.height != 0) {
-      glScissor(action.scissor_pos.x, action.scissor_pos.y,
-                action.scissor_size.width, action.scissor_size.height);
-    }
-
-    glDrawElements(GL_TRIANGLES, action.indices_size,
-                                 GL_UNSIGNED_INT,
-                                 (void*)(uint64_t)action.indices_offset);
+  if (render_mesh.indices_size == 0) {
+    LOG(WARNING, "Received mesh render mesh comman with size 0");
+    return;
   }
+
+  auto mesh_it = opengl.loaded_meshes.find(render_mesh.mesh->uuid.value);
+  ASSERT(mesh_it != opengl.loaded_meshes.end());
+
+  const MeshHandles& mesh_handles = mesh_it->second;
+  glBindVertexArray(mesh_handles.vao);
+
+  SetUniforms(render_mesh, shader_handles);
+  SetTextures(opengl, render_mesh);
+
+  // Scissoring.
+  if (render_mesh.scissor_size.width != 0 && render_mesh.scissor_size.height != 0) {
+    glScissor(render_mesh.scissor_pos.x, render_mesh.scissor_pos.y,
+              render_mesh.scissor_size.width, render_mesh.scissor_size.height);
+  }
+
+  glDrawElements(GL_TRIANGLES, render_mesh.indices_size, GL_UNSIGNED_INT,
+                 (void*)(uint64_t)render_mesh.indices_offset);
 
   glBindVertexArray(NULL);
 }
@@ -173,10 +162,10 @@ void OpenGLExecuteCommands(const PerFrameVector<RenderCommand>& commands,
   for (auto& command : commands) {
     switch (command.type) {
       case RenderCommandType::kClear:
-        ExecuteClearRenderAction(command.ClearAction());
+        ExecuteClearRenderAction(command.GetClearFrame());
         break;
       case RenderCommandType::kMesh:
-        ExecuteMeshRenderActions(*opengl, command);
+        ExecuteMeshRenderActions(*opengl, command.GetRenderMesh());
         break;
       case RenderCommandType::kLast:
         NOT_REACHED();

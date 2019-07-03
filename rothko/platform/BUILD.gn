@@ -4,15 +4,17 @@
 # Platform is the a base level library, it has no dependencies.
 source_set("platform") {
   public = [
+    "paths.h",
     "platform.h",
-    "paths.h"
+    "timing.h",
   ]
 
   sources = [
-    "paths.cc"
+    "paths.cc",
+    "timing.cc",
   ]
 
-  # Platform specific sources --------------------------------------------------
+  # Platform specific sources ----------------------------------------------------------------------
 
   if (is_windows) {
     sources += [ "platform_windows.cc" ]
@@ -24,4 +26,3 @@ source_set("platform") {
     assert(false, "Unhandled OS: $target_os")
   }
 }
-

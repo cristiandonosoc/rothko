@@ -7,36 +7,28 @@ namespace rothko {
 
 // Clear Action------------------------------------------------------------------------------------
 
-bool RenderCommand::is_clear_action() const {
-  return std::holds_alternative<ClearRenderAction>(data);
+bool RenderCommand::is_clear_frame() const { return std::holds_alternative<ClearFrame>(data); }
+
+ClearFrame& RenderCommand::GetClearFrame() {
+  if (!is_clear_frame())
+    data = ClearFrame();
+
+  return std::get<ClearFrame>(data);
 }
 
-ClearRenderAction& RenderCommand::ClearAction() {
-  if (!is_clear_action())
-    data = ClearRenderAction();
-
-  return std::get<ClearRenderAction>(data);
-}
-
-const ClearRenderAction& RenderCommand::ClearAction() const {
-  return std::get<ClearRenderAction>(data);
-}
+const ClearFrame& RenderCommand::GetClearFrame() const { return std::get<ClearFrame>(data); }
 
 // MeshActions ------------------------------------------------------------------------------------
 
-bool RenderCommand::is_mesh_actions() const {
-  return std::holds_alternative<PerFrameVector<MeshRenderAction>>(data);
+bool RenderCommand::is_render_mesh() const { return std::holds_alternative<RenderMesh>(data); }
+
+RenderMesh& RenderCommand::GetRenderMesh() {
+  if (!is_render_mesh())
+    data = RenderMesh();
+
+  return std::get<RenderMesh>(data);
 }
 
-PerFrameVector<MeshRenderAction>& RenderCommand::MeshActions() {
-  if (!is_mesh_actions())
-    data = PerFrameVector<MeshRenderAction>();
-
-  return std::get<PerFrameVector<MeshRenderAction>>(data);
-}
-
-const PerFrameVector<MeshRenderAction>& RenderCommand::MeshActions() const {
-  return std::get<PerFrameVector<MeshRenderAction>>(data);
-}
+const RenderMesh& RenderCommand::GetRenderMesh() const { return std::get<RenderMesh>(data); }
 
 }  // namespace rothko
