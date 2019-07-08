@@ -110,10 +110,20 @@ void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_hand
 }
 
 void SetTextures(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
-  if (render_mesh.textures.empty())
-    return;
-  (void)opengl;
-  NOT_IMPLEMENTED();
+  return;
+
+  /* for (Texture* texture : render_mesh.textures) { */
+  for (size_t i = 0; i < render_mesh.textures.size(); i++) {
+    Texture* texture = render_mesh.textures[i];
+    auto tex_it = opengl.loaded_textures.find(texture->uuid.value);
+    ASSERT(tex_it != opengl.loaded_textures.end());
+
+    uint32_t tex_handle = tex_it->second.tex_handle;
+    glActiveTexture(GL_TEXTURE0 + i);
+    glBindTexture(GL_TEXTURE_2D, tex_handle);
+  }
+
+  /* glActiveTexture(NULL); */
 }
 
 void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {

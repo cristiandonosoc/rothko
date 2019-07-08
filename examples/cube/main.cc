@@ -97,18 +97,28 @@ int main() {
 
 
     Update(&time);
-
+    StartFrame(&renderer);
     StartFrame(&imgui, &window, &time, &input);
 
-    EndFrame(&imgui);
+
+    /* ImGui::ShowDemoWindow(nullptr); */
+
+    ImGui::Begin("Test");
+
+    ImGui::Text("Hola");
+
+    ImGui::End();
 
 
     float angle = time.seconds * ToRadians(50.0f);
     cube_shader.ubo.model = Rotate({1.0f, 0.3f, 0.5f}, angle);
 
-    StartFrame(&renderer);
 
     auto commands = GetRenderCommands(&mesh, &cube_shader);
+
+    auto imgui_commands = EndFrame(&imgui);
+    commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
+
     RendererExecuteCommands(commands, &renderer);
 
     EndFrame(&renderer);
