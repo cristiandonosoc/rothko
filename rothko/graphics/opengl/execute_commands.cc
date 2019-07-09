@@ -114,8 +114,6 @@ void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_hand
 }
 
 void SetTextures(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
-
-  /* for (Texture* texture : render_mesh.textures) { */
   for (size_t i = 0; i < render_mesh.textures.size(); i++) {
     Texture* texture = render_mesh.textures[i];
     auto tex_it = opengl.loaded_textures.find(texture->uuid.value);
@@ -133,7 +131,11 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   ASSERT(shader_it != opengl.loaded_shaders.end());
   const ShaderHandles& shader_handles = shader_it->second;
 
-  LOG(DEBUG, "Using program %s: %u", render_mesh.shader->name.c_str(), shader_handles.program);
+  /* LOG(DEBUG, "Using program %s: %u", render_mesh.shader->name.c_str(), shader_handles.program); */
+
+  LOG(DEBUG, "---------------------------------------");
+  LOG(DEBUG, "MESH ACTION: \n%s", ToString(render_mesh).c_str());
+  LOG(DEBUG, "INDEX SIZE: %u", render_mesh.indices_size);
 
   // Setup the render command.
   glUseProgram(shader_handles.program);

@@ -51,44 +51,77 @@ struct Colors {
   static constexpr uint32_t kWhite =  0xff'ff'ff'ff;
 };
 
-
-
 Mesh CreateMesh() {
   Mesh mesh = {};
   mesh.name = "IMGUI CUBEZ";
-  mesh.vertex_type = VertexType::kImgui;
+  mesh.vertex_type = VertexType::kColor;
 
-  VertexImgui vertices[] = {
+  VertexColor vertices[] = {
     // X
-    {{-1, -1}, {0, -1}, Colors::kBlue},
-    {{-1, -1}, {0,  1}, Colors::kGreen},
-    {{-1,  1}, {0,  1}, Colors::kWhite},
-    {{-1,  1}, {0, -1}, Colors::kRed},
-    {{-1, -1}, {0, -1}, Colors::kBlue},
-    {{-1, -1}, {0,  1}, Colors::kGreen},
-    {{-1,  1}, {0,  1}, Colors::kWhite},
-    {{-1,  1}, {0, -1}, Colors::kRed},
+    {{-1, -1, -1}, Colors::kBlue},
+    {{-1, -1,  1}, Colors::kGreen},
+    {{-1,  1,  1}, Colors::kWhite},
+    {{-1,  1, -1}, Colors::kRed},
+    {{-1, -1, -1}, Colors::kBlue},
+    {{-1, -1,  1}, Colors::kGreen},
+    {{-1,  1,  1}, Colors::kWhite},
+    {{-1,  1, -1}, Colors::kRed},
 
     // Y
-    {{-1, -1}, {0, -1}, Colors::kBlue},
-    {{ 1, -1}, {0, -1}, Colors::kGreen},
-    {{ 1, -1}, {0,  1}, Colors::kWhite},
-    {{-1, -1}, {0,  1}, Colors::kRed},
-    {{-1,  1}, {0, -1}, Colors::kBlue},
-    {{ 1,  1}, {0, -1}, Colors::kGreen},
-    {{ 1,  1}, {0,  1}, Colors::kWhite},
-    {{-1,  1}, {0,  1}, Colors::kRed},
+    {{-1, -1, -1}, Colors::kBlue},
+    {{ 1, -1, -1}, Colors::kGreen},
+    {{ 1, -1,  1}, Colors::kWhite},
+    {{-1, -1,  1}, Colors::kRed},
+    {{-1,  1, -1}, Colors::kBlue},
+    {{ 1,  1, -1}, Colors::kGreen},
+    {{ 1,  1,  1}, Colors::kWhite},
+    {{-1,  1,  1}, Colors::kRed},
 
     // Z
-    {{-1, -1}, {0, -1}, Colors::kBlue},
-    {{ 1, -1}, {0, -1}, Colors::kGreen},
-    {{ 1,  1}, {0, -1}, Colors::kWhite},
-    {{-1,  1}, {0, -1}, Colors::kRed},
-    {{-1, -1}, {0,  1}, Colors::kBlue},
-    {{ 1, -1}, {0,  1}, Colors::kGreen},
-    {{ 1,  1}, {0,  1}, Colors::kWhite},
-    {{-1,  1}, {0,  1}, Colors::kRed},
+    {{-1, -1, -1}, Colors::kBlue},
+    {{ 1, -1, -1}, Colors::kGreen},
+    {{ 1,  1, -1}, Colors::kWhite},
+    {{-1,  1, -1}, Colors::kRed},
+    {{-1, -1,  1}, Colors::kBlue},
+    {{ 1, -1,  1}, Colors::kGreen},
+    {{ 1,  1,  1}, Colors::kWhite},
+    {{-1,  1,  1}, Colors::kRed},
   };
+
+
+  /* mesh.vertex_type = VertexType::kImgui; */
+
+  /* VertexImgui vertices[] = { */
+  /*   // X */
+  /*   {{-1, -1}, {0, -1}, Colors::kBlue}, */
+  /*   {{-1, -1}, {0,  1}, Colors::kGreen}, */
+  /*   {{-1,  1}, {0,  1}, Colors::kWhite}, */
+  /*   {{-1,  1}, {0, -1}, Colors::kRed}, */
+  /*   {{-1, -1}, {0, -1}, Colors::kBlue}, */
+  /*   {{-1, -1}, {0,  1}, Colors::kGreen}, */
+  /*   {{-1,  1}, {0,  1}, Colors::kWhite}, */
+  /*   {{-1,  1}, {0, -1}, Colors::kRed}, */
+
+  /*   // Y */
+  /*   {{-1, -1}, {0, -1}, Colors::kBlue}, */
+  /*   {{ 1, -1}, {0, -1}, Colors::kGreen}, */
+  /*   {{ 1, -1}, {0,  1}, Colors::kWhite}, */
+  /*   {{-1, -1}, {0,  1}, Colors::kRed}, */
+  /*   {{-1,  1}, {0, -1}, Colors::kBlue}, */
+  /*   {{ 1,  1}, {0, -1}, Colors::kGreen}, */
+  /*   {{ 1,  1}, {0,  1}, Colors::kWhite}, */
+  /*   {{-1,  1}, {0,  1}, Colors::kRed}, */
+
+  /*   // Z */
+  /*   {{-1, -1}, {0, -1}, Colors::kBlue}, */
+  /*   {{ 1, -1}, {0, -1}, Colors::kGreen}, */
+  /*   {{ 1,  1}, {0, -1}, Colors::kWhite}, */
+  /*   {{-1,  1}, {0, -1}, Colors::kRed}, */
+  /*   {{-1, -1}, {0,  1}, Colors::kBlue}, */
+  /*   {{ 1, -1}, {0,  1}, Colors::kGreen}, */
+  /*   {{ 1,  1}, {0,  1}, Colors::kWhite}, */
+  /*   {{-1,  1}, {0,  1}, Colors::kRed}, */
+  /* }; */
 
 
   Mesh::IndexType indices[] = {
@@ -152,6 +185,7 @@ bool CreateFontTexture(Renderer* renderer, ImguiRenderer* imgui) {
   imgui->io->Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
   Texture texture;
+  texture.name = "Imgui Font";
   texture.dims = {width, height};
   texture.data = pixels;
 
@@ -257,6 +291,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
       render_mesh.shader = &imgui_renderer->shader;
       render_mesh.mesh = &imgui_renderer->mesh;
       render_mesh.textures.push_back(&imgui_renderer->font_texture);
+      LOG(DEBUG, "Imgui UBO size: %zu", sizeof(imgui_renderer->ubo));
       render_mesh.vert_ubo_data = (uint8_t*)&imgui_renderer->ubo;
       /* render_mesh.blend_enabled = true; */
       /* render_mesh.cull_faces = false; */

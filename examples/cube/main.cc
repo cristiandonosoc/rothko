@@ -123,7 +123,11 @@ int main() {
     auto commands = GetRenderCommands(&mesh, &cube_shader);
 
     auto imgui_commands = EndFrame(&imgui);
-    commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
+    /* commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end()); */
+    for (RenderCommand& command : imgui_commands) {
+      command.GetRenderMesh().shader = &cube_shader.shader;
+      commands.push_back(std::move(command));
+    }
 
     RendererExecuteCommands(commands, &renderer);
 
@@ -224,10 +228,10 @@ Mesh CreateMesh() {
   PushVertices(&mesh, vertices, ARRAY_SIZE(vertices));
   PushIndices(&mesh, indices, ARRAY_SIZE(indices));
 
-  ASSERT(mesh.vertices_count == 24);
+  ASSERT_MSG(mesh.vertices_count == ARRAY_SIZE(vertices), "Count: %u", mesh.vertices_count);
   ASSERT(mesh.vertices.size() == sizeof(vertices));
 
-  ASSERT_MSG(mesh.indices_count == 36, "Count: %u", mesh.indices_count);
+  ASSERT_MSG(mesh.indices_count == ARRAY_SIZE(indices), "Count: %u", mesh.indices_count);
   ASSERT(mesh.indices.size() == sizeof(indices));
 
   return mesh;

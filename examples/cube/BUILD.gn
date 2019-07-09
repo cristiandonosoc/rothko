@@ -11,5 +11,6 @@ executable("cube") {
     "//rothko/platform",
     "//rothko/ui:imgui",
     "//rothko/window:sdl_opengl",
+    "//rothko/math",
   ]
 }
