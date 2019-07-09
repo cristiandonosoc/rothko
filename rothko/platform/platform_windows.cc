@@ -1,11 +1,11 @@
 // Copyright 2018, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include "rothko/platform/platform.h"
+#include <windows.h>
 
 #include "rothko/platform/paths.h"
-
-#include <windows.h>
+#include "rothko/platform/platform.h"
+#include "rothko/platform/timing.h"
 
 namespace rothko {
 
@@ -70,7 +70,5 @@ uint64_t GetNanoseconds() {
   ddiff *= 1000000000;
   return (uint64_t)ddiff;
 }
-
-
 
 }  // namespace rothko

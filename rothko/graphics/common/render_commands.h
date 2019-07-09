@@ -65,7 +65,6 @@ struct RenderMesh {
 // Render Command ----------------------------------------------------------------------------------
 
 struct RenderCommand {
-
   RenderCommand() = default;
   DEFAULT_COPY_AND_ASSIGN(RenderCommand);
   DEFAULT_MOVE_AND_ASSIGN(RenderCommand);

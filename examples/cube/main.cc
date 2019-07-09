@@ -30,13 +30,17 @@ namespace {
 
 bool Setup(Window*, Renderer*);
 
-struct CubeShader {
-  struct UBO {
-    Mat4 proj;
-    Mat4 view;
-    Mat4 model;
-  } ubo;
+struct UBO {
+  Mat4 proj;
+  Mat4 view;
+  Mat4 model;
+};
 
+std::vector<UBO> ubos;
+
+
+
+struct CubeShader {
   Shader shader;
 };
 
@@ -72,10 +76,14 @@ int main() {
     return 1;
 
   float aspect_ratio = (float)window.width / (float)window.height;
-  cube_shader.ubo.proj= Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
-  /* cube_shader.ubo.proj = Ortho(-10, 10, -10, 10, 0.1f, 10.0f); */
-  cube_shader.ubo.view = LookAt({5, 5, 5}, {}, {0, 1, 0});
-  cube_shader.ubo.model = Mat4::Identity();
+
+  UBO ubo;
+  ubo.proj= Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
+  ubo.view = LookAt({5, 5, 5}, {}, {0, 1, 0});
+  ubo.model = Translate({10, 0, 0});
+  ubos.push_back(ubo);
+  ubo.model = Translate({0, 0, 0});
+  ubos.push_back(ubo);
 
   Time time = InitTime();
 
@@ -101,17 +109,15 @@ int main() {
     StartFrame(&imgui, &window, &time, &input);
 
 
-    /* ImGui::ShowDemoWindow(nullptr); */
+    ImGui::ShowDemoWindow(nullptr);
 
-    ImGui::Begin("Test");
-
-    ImGui::Text("Hola");
-
-    ImGui::End();
+    /* ImGui::Begin("Test"); */
+    /* ImGui::Text("Hola"); */
+    /* ImGui::End(); */
 
 
     float angle = time.seconds * ToRadians(50.0f);
-    cube_shader.ubo.model = Rotate({1.0f, 0.3f, 0.5f}, angle);
+    ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
 
 
     auto commands = GetRenderCommands(&mesh, &cube_shader);
@@ -160,7 +166,7 @@ struct Colors {
   /* static constexpr uint32_t kTeal =   0xff'f9'f0'ea; */
   /* static constexpr uint32_t kGray =   0xff'99'99'99; */
 
-  static constexpr uint32_t kBlack=   0xff'00'00'00;
+  /* static constexpr uint32_t kBlack=   0xff'00'00'00; */
   static constexpr uint32_t kBlue=    0xff'ff'00'00;
   static constexpr uint32_t kGreen =  0xff'00'ff'00;
   static constexpr uint32_t kRed =    0xff'00'00'ff;
@@ -230,7 +236,7 @@ Mesh CreateMesh() {
 CubeShader CreateShader() {
   CubeShader shader;
   shader.shader.name = "cube";
-  shader.shader.vert_ubo = {"Uniforms", sizeof(CubeShader::UBO)};
+  shader.shader.vert_ubo = {"Uniforms", sizeof(UBO)};
 
   ASSERT(LoadShaderSources("examples/cube/shader.vert",
                            "examples/cube/shader.frag",
@@ -254,8 +260,15 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
   render_mesh.shader = &cube_shader->shader;
   render_mesh.cull_faces = false;
   render_mesh.indices_size = mesh->indices_count;
-  render_mesh.vert_ubo_data = (uint8_t*)&cube_shader->ubo;
-  commands.push_back(std::move(render_mesh));
+  render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
+  commands.push_back(render_mesh);
+
+  render_mesh.mesh = mesh;
+  render_mesh.shader = &cube_shader->shader;
+  render_mesh.cull_faces = false;
+  render_mesh.indices_size = mesh->indices_count;
+  render_mesh.vert_ubo_data = (uint8_t*)&ubos[1];
+  commands.push_back(render_mesh);
 
   return commands;
 }

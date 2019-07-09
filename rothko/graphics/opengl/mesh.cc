@@ -104,7 +104,6 @@ void StageIndices(Mesh* mesh, MeshHandles* handles) {
 bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
   uint32_t uuid = GetNextMeshUUID();
 
-  LOG(DEBUG, "Staging mesh %s (uuid %u).", mesh->name.c_str(), uuid);
   auto it = opengl->loaded_meshes.find(uuid);
   if (it != opengl->loaded_meshes.end()) {
     LOG(ERROR, "Reloading mesh %s", mesh->name.c_str());
@@ -113,6 +112,8 @@ bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
 
   // Always bind the VAO first, so that it doesn't overwrite.
   MeshHandles handles = GenerateMeshHandles();
+
+  LOG(DEBUG, "Staging mesh %s (uuid: %u, VAO: %u).", mesh->name.c_str(), uuid, handles.vao);
 
   glBindVertexArray(handles.vao);
 
@@ -171,9 +172,12 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
       size = mesh->vertices.size();
     }
 
+
     glBindBuffer(GL_ARRAY_BUFFER, handles.vbo);
     glBufferSubData(GL_ARRAY_BUFFER, offset, size, mesh->vertices.data());
     glBindBuffer(GL_ARRAY_BUFFER, NULL);
+
+    LOG(DEBUG, "Staged %u vertex bytes.", size);
   }
 
   // Indices.
@@ -188,6 +192,8 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.ebo);
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, mesh->indices.data());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, NULL);
+
+    LOG(DEBUG, "Staged %u index bytes.", size);
   }
 
   return true;

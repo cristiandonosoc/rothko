@@ -79,7 +79,6 @@ void ExecuteClearRenderAction(const ClearFrame& clear) {
 // Execute Mesh Render Actions -------------------------------------------------
 
 void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_handles) {
-
   // Vertex UBOs.
   if (Valid(render_mesh.shader->vert_ubo)) {
     auto& ubo = render_mesh.shader->vert_ubo;
@@ -88,6 +87,10 @@ void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_hand
     ASSERT(ubo_binding.binding_index >= 0);
     ASSERT(ubo_binding.buffer_handle > 0);
 
+    Mat4* mat = (Mat4*)render_mesh.vert_ubo_data;
+    LOG(DEBUG, "PROJ: %s", ToString(*mat++).c_str());
+    LOG(DEBUG, "VIEW: %s", ToString(*mat++).c_str());
+
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
     glBufferData(GL_UNIFORM_BUFFER, ubo.size, render_mesh.vert_ubo_data, GL_STREAM_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
@@ -95,6 +98,7 @@ void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_hand
 
   // Fragment UBOs.
   if (Valid(render_mesh.shader->frag_ubo)) {
+    LOG(DEBUG, "SET FRAG UBO!");
     auto& ubo = render_mesh.shader->frag_ubo;
     auto& ubo_binding = shader_handles.frag_ubo;
 
@@ -110,7 +114,6 @@ void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_hand
 }
 
 void SetTextures(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
-  return;
 
   /* for (Texture* texture : render_mesh.textures) { */
   for (size_t i = 0; i < render_mesh.textures.size(); i++) {
@@ -123,7 +126,6 @@ void SetTextures(const OpenGLRendererBackend& opengl, const RenderMesh& render_m
     glBindTexture(GL_TEXTURE_2D, tex_handle);
   }
 
-  /* glActiveTexture(NULL); */
 }
 
 void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
@@ -131,9 +133,11 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   ASSERT(shader_it != opengl.loaded_shaders.end());
   const ShaderHandles& shader_handles = shader_it->second;
 
+  LOG(DEBUG, "Using program %s: %u", render_mesh.shader->name.c_str(), shader_handles.program);
+
   // Setup the render command.
   glUseProgram(shader_handles.program);
-  SetRenderCommandConfig(render_mesh);
+  /* SetRenderCommandConfig(render_mesh); */
 
   if (render_mesh.indices_size == 0) {
     LOG(WARNING, "Received mesh render mesh comman with size 0");
@@ -144,6 +148,8 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   ASSERT(mesh_it != opengl.loaded_meshes.end());
 
   const MeshHandles& mesh_handles = mesh_it->second;
+
+  LOG(DEBUG, "Setting VAO %u", mesh_handles.vao);
   glBindVertexArray(mesh_handles.vao);
 
   SetUniforms(render_mesh, shader_handles);
@@ -154,6 +160,8 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
     glScissor(render_mesh.scissor_pos.x, render_mesh.scissor_pos.y,
               render_mesh.scissor_size.width, render_mesh.scissor_size.height);
   }
+
+  LOG(DEBUG, "Index size: %u, offset: %u", render_mesh.indices_size, render_mesh.indices_offset);
 
   glDrawElements(GL_TRIANGLES, render_mesh.indices_size, GL_UNSIGNED_INT,
                  (void*)(uint64_t)render_mesh.indices_offset);

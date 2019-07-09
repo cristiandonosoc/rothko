@@ -65,10 +65,10 @@ Vec4 Normalize(const Vec4& v) {
 
 Mat4 Translate(const Vec3& v) {
   // clang-format off
-  return Mat4({  0,   0,   0, v.x},
-              {  0,   0,   0, v.y},
-              {  0,   0,   0, v.z},
-              {  0,   0,   0,   1});
+  return Mat4({  1,   0,   0, 0},
+              {  0,   1,   0, 0},
+              {  0,   0,   1, 0},
+              { v.x, v.y, v.z,   1});
   // clang-format on
 }
 
@@ -182,10 +182,10 @@ std::string ToString(const Mat4& m) {
   auto& e = m.elements;
   // clang-format off
   return StringPrintf("(%f, %f, %f, %f), (%f, %f, %f, %f), (%f, %f, %f, %f), (%f, %f, %f, %f)",
-                      e[0][0], e[0][1], e[0][0], e[0][1],
-                      e[1][0], e[1][1], e[1][0], e[1][1],
-                      e[2][0], e[2][1], e[2][0], e[2][1],
-                      e[3][0], e[3][1], e[3][0], e[3][1]);
+                      e[0][0], e[0][1], e[0][2], e[0][3],
+                      e[1][0], e[1][1], e[1][2], e[1][3],
+                      e[2][0], e[2][1], e[2][2], e[2][3],
+                      e[3][0], e[3][1], e[3][2], e[3][3]);
   // clang-format on
 }
 
