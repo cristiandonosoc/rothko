@@ -5,7 +5,7 @@
 #include <rothko/math/math.h>
 #include <rothko/platform/timing.h>
 #include <rothko/scene/camera.h>
-#include <rothko/utils/logging.h>
+#include <rothko/logging/logging.h>
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
 #include <rothko/ui/imgui.h>
@@ -53,6 +53,7 @@ PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh, CubeShader* shader);
 }  // namespace
 
 int main() {
+  Logger logger = Logger::CreateLogger();
   /* auto my_ortho = Ortho(0, 600, 0, 480); */
   /* auto ortho = glm::ortho(0.0f, 600.0f, 0.0f, 480.0f); */
 

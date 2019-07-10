@@ -4,7 +4,7 @@
 #include "rothko/ui/imgui/imgui_shaders.h"
 
 #include "rothko/graphics/common/shader.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 
 namespace rothko {
 namespace imgui {

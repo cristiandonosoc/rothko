@@ -8,9 +8,9 @@
 
 #include <mutex>
 
+#include "rothko/logging/logging.h"
 #include "rothko/memory/memory_block.h"
 #include "rothko/utils/intrinsics.h"
-#include "rothko/utils/logging.h"
 #include "rothko/utils/macros.h"
 #include "rothko/utils/thread_annotations.h"
 

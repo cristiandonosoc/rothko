@@ -10,7 +10,7 @@
 
 #include "rothko/graphics/common/mesh.h"
 #include "rothko/graphics/opengl/renderer_backend.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 
 namespace rothko {
 namespace opengl {
@@ -76,7 +76,7 @@ void StageAttributes(Mesh* mesh) {
       glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexImgui, uv));
       glEnableVertexAttribArray(1);
       glVertexAttribPointer(
-          1, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offsetof(VertexImgui, color));
+          2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offsetof(VertexImgui, color));
       glEnableVertexAttribArray(2);
       return;
     }

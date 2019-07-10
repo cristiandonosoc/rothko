@@ -7,7 +7,7 @@
 
 #include "rothko/graphics/graphics.h"
 #include "rothko/graphics/opengl/renderer_backend.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 #include "rothko/utils/macros.h"
 
 namespace rothko {

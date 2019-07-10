@@ -3,7 +3,7 @@
 
 #include "rothko/utils/multithreading.h"
 
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 
 namespace rothko {
 

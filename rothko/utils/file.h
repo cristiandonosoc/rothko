@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 
-#include "rothko/utils/logging.h"
 #include "rothko/utils/clear_on_move.h"
 
 namespace rothko {

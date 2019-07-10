@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #include "rothko/math/math.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 
 namespace rothko {
 

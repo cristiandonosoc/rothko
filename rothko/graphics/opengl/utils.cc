@@ -3,7 +3,7 @@
 
 #include "rothko/graphics/opengl/utils.h"
 
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 
 namespace rothko {
 namespace opengl {

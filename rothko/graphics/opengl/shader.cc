@@ -11,6 +11,7 @@
 
 #include "rothko/graphics/opengl/renderer_backend.h"
 #include "rothko/graphics/opengl/utils.h"
+#include "rothko/logging/logging.h"
 #include "rothko/utils/defer.h"
 #include "rothko/utils/file.h"
 

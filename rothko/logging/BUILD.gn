@@ -1,13 +1,16 @@
 # Copyright 2019, Cristián Donoso.
 # This code has a BSD license. See LICENSE.
 
-source_set("input") {
+source_set("logging") {
+  public = [
+    "logging.h",
+  ]
+
   sources = [
-    "input.cc",
-    "input.h",
+    "logging.cc",
   ]
 
   deps = [
-    "//rothko/logging",
+    "//rothko/utils",
   ]
 }

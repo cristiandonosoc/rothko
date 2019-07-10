@@ -1,11 +1,11 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include <thread>
-
 #include <rothko/graphics/graphics.h>
-#include <rothko/utils/logging.h>
+#include <rothko/logging/logging.h>
 #include <rothko/window/window.h>
+
+#include <thread>
 
 using namespace rothko;
 

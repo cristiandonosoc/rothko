@@ -9,7 +9,7 @@
 
 #include "rothko/math/math.h"
 #include "rothko/utils/clear_on_move.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 #include "rothko/utils/macros.h"
 
 namespace rothko {

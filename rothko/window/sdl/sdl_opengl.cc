@@ -6,7 +6,7 @@
 #include <memory>
 
 #include "rothko/input/input.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 #include "rothko/window/common/window.h"
 #include "rothko/window/sdl/sdl_input.h"
 

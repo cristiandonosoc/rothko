@@ -9,7 +9,7 @@
 #include "rothko/graphics/common/renderer_backend.h"
 #include "rothko/graphics/common/shader.h"
 #include "rothko/graphics/common/texture.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 #include "rothko/window/window.h"
 
 namespace rothko {

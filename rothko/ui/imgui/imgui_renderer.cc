@@ -3,9 +3,9 @@
 
 #include "rothko/ui/imgui/imgui_renderer.h"
 
+#include "rothko/logging/logging.h"
 #include "rothko/ui/imgui/def.h"
 #include "rothko/ui/imgui/imgui_shaders.h"
-#include "rothko/utils/logging.h"
 #include "rothko/utils/types.h"
 
 namespace rothko {

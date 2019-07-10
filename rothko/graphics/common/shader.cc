@@ -7,7 +7,7 @@
 #include <optional>
 
 #include "rothko/graphics/common/renderer.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 #include "rothko/utils/strings.h"
 #include "rothko/utils/file.h"
 

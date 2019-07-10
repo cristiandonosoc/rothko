@@ -13,7 +13,7 @@
 #include "rothko/graphics/opengl/mesh.h"
 #include "rothko/graphics/opengl/shader.h"
 #include "rothko/graphics/opengl/texture.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 #include "rothko/window/window.h"
 
 namespace rothko {
