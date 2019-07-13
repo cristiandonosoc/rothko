@@ -26,6 +26,7 @@ enum class RenderCommandType {
   kLast,
 };
 const char* ToString(RenderCommandType);
+uint32_t ToSize(RenderCommandType);
 
 struct ClearFrame {
   static constexpr RenderCommandType kType = RenderCommandType::kClear;

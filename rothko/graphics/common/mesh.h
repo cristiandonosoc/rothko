@@ -23,6 +23,7 @@ enum class VertexType : uint32_t {
   kLast,
 };
 const char* ToString(VertexType);
+uint32_t ToSize(VertexType);
 
 // Mesh --------------------------------------------------------------------------------------------
 
@@ -51,7 +52,7 @@ void PushVertices(Mesh* mesh, VertexType* data, uint32_t count) {
   ASSERT(mesh->vertex_type == VertexType::kVertexType);
 
   // Have to be able to hold all the vertices.
-  mesh->vertices.reserve(mesh->vertices_count + count);
+  mesh->vertices.reserve((mesh->vertices_count + count) * ToSize(mesh->vertex_type));
 
   VertexType* begin = data;
   VertexType* end = data + count;
@@ -62,8 +63,7 @@ void PushVertices(Mesh* mesh, VertexType* data, uint32_t count) {
 
 // Pushes an array of indices into the mesh.
 // The |offset| is a value that will be added to each element.
-void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count);
-void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t offset);
+void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t offset = 0);
 
 // Vertex Definitions ------------------------------------------------------------------------------
 

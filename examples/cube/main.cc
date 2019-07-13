@@ -110,12 +110,11 @@ int main() {
     StartFrame(&imgui, &window, &time, &input);
 
 
-    ImGui::ShowDemoWindow(nullptr);
+    /* ImGui::ShowDemoWindow(nullptr); */
 
-    /* ImGui::Begin("Test"); */
-    /* ImGui::Text("Hola"); */
-    /* ImGui::End(); */
-
+    ImGui::Begin("Test");
+    ImGui::Text("Hola");
+    ImGui::End();
 
     float angle = time.seconds * ToRadians(50.0f);
     ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
@@ -124,11 +123,12 @@ int main() {
     auto commands = GetRenderCommands(&mesh, &cube_shader);
 
     auto imgui_commands = EndFrame(&imgui);
-    /* commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end()); */
-    for (RenderCommand& command : imgui_commands) {
-      command.GetRenderMesh().shader = &cube_shader.shader;
-      commands.push_back(std::move(command));
-    }
+    /* printf("Imgui commands size: %zu", imgui_commands.size()); */
+    commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
+    /* for (RenderCommand& command : imgui_commands) { */
+    /*   command.GetRenderMesh().shader = &cube_shader.shader; */
+    /*   commands.push_back(std::move(command)); */
+    /* } */
 
     RendererExecuteCommands(commands, &renderer);
 

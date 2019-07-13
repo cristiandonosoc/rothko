@@ -87,10 +87,6 @@ void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_hand
     ASSERT(ubo_binding.binding_index >= 0);
     ASSERT(ubo_binding.buffer_handle > 0);
 
-    Mat4* mat = (Mat4*)render_mesh.vert_ubo_data;
-    LOG(DEBUG, "PROJ: %s", ToString(*mat++).c_str());
-    LOG(DEBUG, "VIEW: %s", ToString(*mat++).c_str());
-
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
     glBufferData(GL_UNIFORM_BUFFER, ubo.size, render_mesh.vert_ubo_data, GL_STREAM_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
@@ -139,7 +135,7 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
 
   // Setup the render command.
   glUseProgram(shader_handles.program);
-  /* SetRenderCommandConfig(render_mesh); */
+  SetRenderCommandConfig(render_mesh);
 
   if (render_mesh.indices_size == 0) {
     LOG(WARNING, "Received mesh render mesh comman with size 0");

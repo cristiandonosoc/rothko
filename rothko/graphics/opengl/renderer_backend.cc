@@ -86,6 +86,8 @@ void APIENTRY OpenGLDebugCallback(GLenum source, GLenum type, GLuint id,
   ss << "---------------------opengl-callback-end--------------";
 
   LOG(ERROR, "%s", ss.str().c_str());
+  if (severity == GL_DEBUG_SEVERITY_HIGH)
+    exit(1);
 }
 
 #endif

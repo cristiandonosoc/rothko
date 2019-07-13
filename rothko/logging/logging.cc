@@ -44,6 +44,7 @@ struct LogMessage {
 LogMessage gLogMessages[1024] = {};
 
 void OutputLogMessage(const LogMessage& message) {
+  return;
 
   // TODO(Cristian): Add time.
   fprintf(stderr, "[%s][%s:%d][%s] %s\n", LogCategoryToString(message.log_category),
@@ -82,10 +83,20 @@ void DoLogging(int32_t category, Location location, const char* fmt, ...) {
   uint64_t writer_index = (gWriterIndex++) % ARRAY_SIZE(gLogMessages);
   auto& message = gLogMessages[writer_index];
 
-
   message.log_category = category;
   message.location = std::move(location);
   message.msg = std::move(msg);
+
+  // TODO(Cristian): Add time.
+  fprintf(stderr, "[%s][%s:%d][%s] %s\n", LogCategoryToString(message.log_category),
+                                          message.location.file,
+                                          message.location.line,
+                                          message.location.function,
+                                          message.msg.c_str());
+  fflush(stderr);
+
+
+
 }
 
 // Logger ------------------------------------------------------------------------------------------

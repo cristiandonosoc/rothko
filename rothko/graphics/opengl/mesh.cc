@@ -165,35 +165,31 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
 
   // Vertices.
   {
+    uint32_t vertex_size = ToSize(mesh->vertex_type);
     uint32_t offset = vertex_range.x;
     uint32_t size = vertex_range.y;
-    if (size == 0) {
-      offset = 0;
-      size = mesh->vertices.size();
-    }
-
+    if (size == 0)
+      size = mesh->vertices_count * vertex_size;
 
     glBindBuffer(GL_ARRAY_BUFFER, handles.vbo);
     glBufferSubData(GL_ARRAY_BUFFER, offset, size, mesh->vertices.data());
     glBindBuffer(GL_ARRAY_BUFFER, NULL);
 
-    LOG(DEBUG, "Staged %u vertex bytes.", size);
+    LOG(DEBUG, "Staged %u vertex bytes (%u vertices).", size, size / vertex_size);
   }
 
   // Indices.
   {
     uint32_t offset = index_range.x;
     uint32_t size = index_range.y;
-    if (size == 0) {
-      offset = 0;
-      size = mesh->indices.size();
-    }
+    if (size == 0)
+      size = mesh->indices_count * sizeof(Mesh::IndexType);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.ebo);
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, mesh->indices.data());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, NULL);
 
-    LOG(DEBUG, "Staged %u index bytes.", size);
+    LOG(DEBUG, "Staged %u index bytes (%zu indices)", size, size / sizeof(Mesh::IndexType));
   }
 
   return true;

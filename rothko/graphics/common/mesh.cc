@@ -25,30 +25,34 @@ const char* ToString(VertexType type) {
   return "<unknown>";
 }
 
-void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count) {
-  mesh->indices.reserve(mesh->indices_count + count);
+uint32_t ToSize(VertexType type) {
+  switch (type) {
+    case VertexType::kDefault: return sizeof(VertexDefault);
+    case VertexType::kColor: return sizeof(VertexColor);
+    case VertexType::kImgui: return sizeof(VertexImgui);
+    case VertexType::kLast: break;
+  }
 
-  Mesh::IndexType* begin = data;
-  Mesh::IndexType* end = data + count;
-
-  mesh->indices.insert(mesh->indices.end(), (uint8_t*)begin, (uint8_t*)end);
-  mesh->indices_count += count;
+  NOT_REACHED();
+  return 0;
 }
 
+
 void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t offset) {
-  mesh->indices.reserve(mesh->indices_count + count);
+  mesh->indices.reserve((mesh->indices_count + count) * sizeof(Mesh::IndexType));
 
   Mesh::IndexType* ptr = data;
   Mesh::IndexType* end = data + count;
 
   while (ptr != end) {
-    Mesh::IndexType val = *ptr++ + offset;
+    Mesh::IndexType val = *ptr + offset;
 
     // We add each byte of the index.
     uint8_t* tmp = (uint8_t*)&val;
-    for (size_t i = 0; i < sizeof(Mesh::IndexType) / sizeof(uint8_t); i++) {
-      mesh->indices.emplace_back(*tmp++);
-    }
+    uint8_t* tmp_end = (uint8_t*)(&val + 1);
+    mesh->indices.insert(mesh->indices.end(), tmp, tmp_end);
+
+    ptr++;
   }
 
   mesh->indices_count += count;

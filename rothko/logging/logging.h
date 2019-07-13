@@ -45,31 +45,41 @@ void DoLogging(int32_t category, Location, const char *fmt, ...)
 
 #define LOG(level, ...) ::rothko::DoLogging(::kLogCategory_##level, FROM_HERE VA_ARGS(__VA_ARGS__));
 
-#define ASSERT(condition)                            \
-  if (!(condition)) {                                \
-    LOG(ASSERT, "Condition failed: %s", #condition); \
-    SEGFAULT();                                      \
-  }
+#define ASSERT(condition)                              \
+  do {                                                 \
+    if (!(condition)) {                                \
+      LOG(ASSERT, "Condition failed: %s", #condition); \
+      SEGFAULT();                                      \
+    }                                                  \
+  } while (false)
 
-#define ASSERT_MSG(condition, ...)                   \
-  if (!(condition)) {                                \
-    LOG(ASSERT, "Condition failed: %s", #condition); \
-    LOG(ASSERT, __VA_ARGS__);                        \
-    SEGFAULT();                                      \
-  }
+#define ASSERT_MSG(condition, ...)                     \
+  do {                                                 \
+    if (!(condition)) {                                \
+      LOG(ASSERT, "Condition failed: %s", #condition); \
+      LOG(ASSERT, __VA_ARGS__);                        \
+      SEGFAULT();                                      \
+    }                                                  \
+  } while (false)
 
-#define NOT_REACHED()          \
-  LOG(ASSERT, "Invalid path"); \
-  SEGFAULT()
+#define NOT_REACHED()            \
+  do {                           \
+    LOG(ASSERT, "Invalid path"); \
+    SEGFAULT();                  \
+  } while (false)
 
-#define NOT_REACHED_MSG(...)   \
-  LOG(ASSERT, "Invalid path"); \
-  LOG(ASSERT, __VA_ARGS__)     \
-  SEGFAULT()
+#define NOT_REACHED_MSG(...)     \
+  do {                           \
+    LOG(ASSERT, "Invalid path"); \
+    LOG(ASSERT, __VA_ARGS__)     \
+    SEGFAULT();                  \
+  } while (false)
 
-#define NOT_IMPLEMENTED()         \
-  LOG(ASSERT, "Not implemented"); \
-  SEGFAULT()
+#define NOT_IMPLEMENTED()           \
+  do {                              \
+    LOG(ASSERT, "Not implemented"); \
+    SEGFAULT();                     \
+  } while (false)
 
 #else
 
