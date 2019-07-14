@@ -90,6 +90,7 @@ void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_hand
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
     glBufferData(GL_UNIFORM_BUFFER, ubo.size, render_mesh.vert_ubo_data, GL_STREAM_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
+    glBindBuffer(GL_UNIFORM_BUFFER, NULL);
   }
 
   // Fragment UBOs.
@@ -103,13 +104,14 @@ void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_hand
 
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
     glBufferData(GL_UNIFORM_BUFFER, ubo.size, render_mesh.frag_ubo_data, GL_STREAM_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
+    //glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
+    glBindBuffer(GL_UNIFORM_BUFFER, NULL);
   }
 
-  glBindBuffer(GL_UNIFORM_BUFFER, NULL);
 }
 
 void SetTextures(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
+  ASSERT(render_mesh.shader->texture_count == render_mesh.textures.size());
   for (size_t i = 0; i < render_mesh.textures.size(); i++) {
     Texture* texture = render_mesh.textures[i];
     auto tex_it = opengl.loaded_textures.find(texture->uuid.value);
@@ -119,7 +121,6 @@ void SetTextures(const OpenGLRendererBackend& opengl, const RenderMesh& render_m
     glActiveTexture(GL_TEXTURE0 + i);
     glBindTexture(GL_TEXTURE_2D, tex_handle);
   }
-
 }
 
 void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
@@ -146,27 +147,30 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   ASSERT(mesh_it != opengl.loaded_meshes.end());
 
   const MeshHandles& mesh_handles = mesh_it->second;
+  SetUniforms(render_mesh, shader_handles);
 
   LOG(DEBUG, "Setting VAO %u", mesh_handles.vao);
-  glBindVertexArray(mesh_handles.vao);
-  GLint name;
-  glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &name);
-  LOG(DEBUG, "Associated index: %d", name);
+  /* GLint name; */
+  /* glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &name); */
+  /* LOG(DEBUG, "Associated index: %d", name); */
 
-  SetUniforms(render_mesh, shader_handles);
-  /* SetTextures(opengl, render_mesh); */
+  SetTextures(opengl, render_mesh);
 
   // Scissoring.
-  if (render_mesh.scissor_size.width != 0 && render_mesh.scissor_size.height != 0) {
+  if (render_mesh.scissor_test &&
+      render_mesh.scissor_size.width != 0 && render_mesh.scissor_size.height != 0) {
     glScissor(render_mesh.scissor_pos.x, render_mesh.scissor_pos.y,
               render_mesh.scissor_size.width, render_mesh.scissor_size.height);
   }
 
   LOG(DEBUG, "Index size: %u, offset: %u", render_mesh.indices_size, render_mesh.indices_offset);
 
+  glBindVertexArray(mesh_handles.vao);
   glDrawElements(GL_TRIANGLES, render_mesh.indices_size, GL_UNSIGNED_INT,
                  (void*)(uint64_t)render_mesh.indices_offset);
 
+  glBindVertexArray(NULL);
+  glUseProgram(NULL);
 }
 
 }  // namespace
@@ -189,8 +193,6 @@ void OpenGLExecuteCommands(const PerFrameVector<RenderCommand>& commands,
         NOT_REACHED();
     }
 
-    glUseProgram(NULL);
-    glBindVertexArray(NULL);
   }
 }
 

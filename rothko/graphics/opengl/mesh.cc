@@ -42,7 +42,6 @@ MeshHandles GenerateMeshHandles() {
 
 void UnbindMeshHandles() {
   // Always unbind the VAO first, so that it doesn't overwrite.
-  glBindVertexArray(NULL);
   glBindBuffer(GL_ARRAY_BUFFER, NULL);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, NULL);
 }
@@ -51,33 +50,33 @@ void StageAttributes(Mesh* mesh) {
   switch (mesh->vertex_type) {
     case VertexType::kDefault: {
       GLsizei stride = sizeof(VertexDefault);
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, pos));
       glEnableVertexAttribArray(0);
-      glVertexAttribPointer(
-          1, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, normal));
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, pos));
       glEnableVertexAttribArray(1);
-      glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, uv));
+      glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
+                            (void*)offsetof(VertexDefault, normal));
       glEnableVertexAttribArray(2);
+      glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, uv));
       return;
     }
     case VertexType::kColor: {
       GLsizei stride = sizeof(VertexColor);
       glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexColor, pos));
       glEnableVertexAttribArray(0);
-      glVertexAttribPointer(
-          1, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offsetof(VertexColor, color));
+      glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride,
+                            (void*)offsetof(VertexColor, color));
       glEnableVertexAttribArray(1);
       return;
     }
     case VertexType::kImgui: {
       GLsizei stride = sizeof(VertexImgui);
-      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexImgui, pos));
       glEnableVertexAttribArray(0);
-      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexImgui, uv));
+      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexImgui, pos));
       glEnableVertexAttribArray(1);
-      glVertexAttribPointer(
-          2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offsetof(VertexImgui, color));
+      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexImgui, uv));
       glEnableVertexAttribArray(2);
+      glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride,
+                            (void*)offsetof(VertexImgui, color));
       return;
     }
     case VertexType::kLast:
@@ -90,7 +89,6 @@ void StageAttributes(Mesh* mesh) {
 void StageVertices(Mesh* mesh, MeshHandles* handles) {
   glBindBuffer(GL_ARRAY_BUFFER, handles->vbo);
   glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size(), mesh->vertices.data(), GL_STATIC_DRAW);
-
   StageAttributes(mesh);
 }
 
@@ -113,18 +111,17 @@ bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
   // Always bind the VAO first, so that it doesn't overwrite.
   MeshHandles handles = GenerateMeshHandles();
 
-
   glBindVertexArray(handles.vao);
-
   StageVertices(mesh, &handles);
   StageIndices(mesh, &handles);
+  glBindVertexArray(NULL);
+
+  UnbindMeshHandles();
 
   LOG(DEBUG,
       "Staging mesh %s (uuid: %u, VAO: %u) [%u vertices (%zu bytes)] [%u indices (%zu bytes)]",
       mesh->name.c_str(), uuid, handles.vao,
       mesh->vertices_count, mesh->vertices.size(), mesh->indices_count, mesh->indices.size());
-
-  UnbindMeshHandles();
 
   opengl->loaded_meshes[uuid] = std::move(handles);
   mesh->uuid = uuid;

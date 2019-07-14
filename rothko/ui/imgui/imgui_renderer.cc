@@ -56,92 +56,93 @@ bool CreateShader(Renderer* renderer, ImguiRenderer* imgui) {
 /*   mesh.name = "IMGUI CUBEZ"; */
 /*   mesh.vertex_type = VertexType::kColor; */
 
-/*   VertexColor vertices[] = { */
-/*     // X */
-/*     {{-1, -1, -1}, Colors::kBlue}, */
-/*     {{-1, -1,  1}, Colors::kGreen}, */
-/*     {{-1,  1,  1}, Colors::kWhite}, */
-/*     {{-1,  1, -1}, Colors::kRed}, */
-/*     {{-1, -1, -1}, Colors::kBlue}, */
-/*     {{-1, -1,  1}, Colors::kGreen}, */
-/*     {{-1,  1,  1}, Colors::kWhite}, */
-/*     {{-1,  1, -1}, Colors::kRed}, */
+/* /1*   VertexColor vertices[] = { *1/ */
+/* /1*     // X *1/ */
+/* /1*     {{-1, -1, -1}, Colors::kBlue}, *1/ */
+/* /1*     {{-1, -1,  1}, Colors::kGreen}, *1/ */
+/* /1*     {{-1,  1,  1}, Colors::kWhite}, *1/ */
+/* /1*     {{-1,  1, -1}, Colors::kRed}, *1/ */
+/* /1*     {{-1, -1, -1}, Colors::kBlue}, *1/ */
+/* /1*     {{-1, -1,  1}, Colors::kGreen}, *1/ */
+/* /1*     {{-1,  1,  1}, Colors::kWhite}, *1/ */
+/* /1*     {{-1,  1, -1}, Colors::kRed}, *1/ */
 
-/*     // Y */
-/*     {{-1, -1, -1}, Colors::kBlue}, */
-/*     {{ 1, -1, -1}, Colors::kGreen}, */
-/*     {{ 1, -1,  1}, Colors::kWhite}, */
-/*     {{-1, -1,  1}, Colors::kRed}, */
-/*     {{-1,  1, -1}, Colors::kBlue}, */
-/*     {{ 1,  1, -1}, Colors::kGreen}, */
-/*     {{ 1,  1,  1}, Colors::kWhite}, */
-/*     {{-1,  1,  1}, Colors::kRed}, */
+/* /1*     // Y *1/ */
+/* /1*     {{-1, -1, -1}, Colors::kBlue}, *1/ */
+/* /1*     {{ 1, -1, -1}, Colors::kGreen}, *1/ */
+/* /1*     {{ 1, -1,  1}, Colors::kWhite}, *1/ */
+/* /1*     {{-1, -1,  1}, Colors::kRed}, *1/ */
+/* /1*     {{-1,  1, -1}, Colors::kBlue}, *1/ */
+/* /1*     {{ 1,  1, -1}, Colors::kGreen}, *1/ */
+/* /1*     {{ 1,  1,  1}, Colors::kWhite}, *1/ */
+/* /1*     {{-1,  1,  1}, Colors::kRed}, *1/ */
+
+/* /1*     // Z *1/ */
+/* /1*     {{-1, -1, -1}, Colors::kBlue}, *1/ */
+/* /1*     {{ 1, -1, -1}, Colors::kGreen}, *1/ */
+/* /1*     {{ 1,  1, -1}, Colors::kWhite}, *1/ */
+/* /1*     {{-1,  1, -1}, Colors::kRed}, *1/ */
+/* /1*     {{-1, -1,  1}, Colors::kBlue}, *1/ */
+/* /1*     {{ 1, -1,  1}, Colors::kGreen}, *1/ */
+/* /1*     {{ 1,  1,  1}, Colors::kWhite}, *1/ */
+/* /1*     {{-1,  1,  1}, Colors::kRed}, *1/ */
+/* /1*   }; *1/ */
+
+
+/*   mesh.vertex_type = VertexType::kImgui; */
+
+/*   VertexImgui vertices[] = { */
+/*     /1* // X *1/ */
+/*     /1* {{-1, -1}, {0, -1}, Colors::kBlue}, *1/ */
+/*     /1* {{-1, -1}, {0,  1}, Colors::kGreen}, *1/ */
+/*     /1* {{-1,  1}, {0,  1}, Colors::kWhite}, *1/ */
+/*     /1* {{-1,  1}, {0, -1}, Colors::kRed}, *1/ */
+/*     /1* {{-1, -1}, {0, -1}, Colors::kBlue}, *1/ */
+/*     /1* {{-1, -1}, {0,  1}, Colors::kGreen}, *1/ */
+/*     /1* {{-1,  1}, {0,  1}, Colors::kWhite}, *1/ */
+/*     /1* {{-1,  1}, {0, -1}, Colors::kRed}, *1/ */
+
+/*     /1* // Y *1/ */
+/*     /1* {{-1, -1}, {0, -1}, Colors::kBlue}, *1/ */
+/*     /1* {{ 1, -1}, {0, -1}, Colors::kGreen}, *1/ */
+/*     /1* {{ 1, -1}, {0,  1}, Colors::kWhite}, *1/ */
+/*     /1* {{-1, -1}, {0,  1}, Colors::kRed}, *1/ */
+/*     /1* {{-1,  1}, {0, -1}, Colors::kBlue}, *1/ */
+/*     /1* {{ 1,  1}, {0, -1}, Colors::kGreen}, *1/ */
+/*     /1* {{ 1,  1}, {0,  1}, Colors::kWhite}, *1/ */
+/*     /1* {{-1,  1}, {0,  1}, Colors::kRed}, *1/ */
 
 /*     // Z */
-/*     {{-1, -1, -1}, Colors::kBlue}, */
-/*     {{ 1, -1, -1}, Colors::kGreen}, */
-/*     {{ 1,  1, -1}, Colors::kWhite}, */
-/*     {{-1,  1, -1}, Colors::kRed}, */
-/*     {{-1, -1,  1}, Colors::kBlue}, */
-/*     {{ 1, -1,  1}, Colors::kGreen}, */
-/*     {{ 1,  1,  1}, Colors::kWhite}, */
-/*     {{-1,  1,  1}, Colors::kRed}, */
+/*     {{200, 200}, {0, -1}, Colors::kBlue}, */
+/*     {{300, 200}, {0, -1}, Colors::kGreen}, */
+/*     {{300, 300}, {0, -1}, Colors::kWhite}, */
+/*     {{200, 300}, {0, -1}, Colors::kRed}, */
+/*     {{200, 200}, {0,  1}, Colors::kBlue}, */
+/*     {{300, 200}, {0,  1}, Colors::kGreen}, */
+/*     {{300, 300}, {0,  1}, Colors::kWhite}, */
+/*     {{200, 300}, {0,  1}, Colors::kRed}, */
 /*   }; */
-
-
-/*   /1* mesh.vertex_type = VertexType::kImgui; *1/ */
-
-/*   /1* VertexImgui vertices[] = { *1/ */
-/*   /1*   // X *1/ */
-/*   /1*   {{-1, -1}, {0, -1}, Colors::kBlue}, *1/ */
-/*   /1*   {{-1, -1}, {0,  1}, Colors::kGreen}, *1/ */
-/*   /1*   {{-1,  1}, {0,  1}, Colors::kWhite}, *1/ */
-/*   /1*   {{-1,  1}, {0, -1}, Colors::kRed}, *1/ */
-/*   /1*   {{-1, -1}, {0, -1}, Colors::kBlue}, *1/ */
-/*   /1*   {{-1, -1}, {0,  1}, Colors::kGreen}, *1/ */
-/*   /1*   {{-1,  1}, {0,  1}, Colors::kWhite}, *1/ */
-/*   /1*   {{-1,  1}, {0, -1}, Colors::kRed}, *1/ */
-
-/*   /1*   // Y *1/ */
-/*   /1*   {{-1, -1}, {0, -1}, Colors::kBlue}, *1/ */
-/*   /1*   {{ 1, -1}, {0, -1}, Colors::kGreen}, *1/ */
-/*   /1*   {{ 1, -1}, {0,  1}, Colors::kWhite}, *1/ */
-/*   /1*   {{-1, -1}, {0,  1}, Colors::kRed}, *1/ */
-/*   /1*   {{-1,  1}, {0, -1}, Colors::kBlue}, *1/ */
-/*   /1*   {{ 1,  1}, {0, -1}, Colors::kGreen}, *1/ */
-/*   /1*   {{ 1,  1}, {0,  1}, Colors::kWhite}, *1/ */
-/*   /1*   {{-1,  1}, {0,  1}, Colors::kRed}, *1/ */
-
-/*   /1*   // Z *1/ */
-/*   /1*   {{-1, -1}, {0, -1}, Colors::kBlue}, *1/ */
-/*   /1*   {{ 1, -1}, {0, -1}, Colors::kGreen}, *1/ */
-/*   /1*   {{ 1,  1}, {0, -1}, Colors::kWhite}, *1/ */
-/*   /1*   {{-1,  1}, {0, -1}, Colors::kRed}, *1/ */
-/*   /1*   {{-1, -1}, {0,  1}, Colors::kBlue}, *1/ */
-/*   /1*   {{ 1, -1}, {0,  1}, Colors::kGreen}, *1/ */
-/*   /1*   {{ 1,  1}, {0,  1}, Colors::kWhite}, *1/ */
-/*   /1*   {{-1,  1}, {0,  1}, Colors::kRed}, *1/ */
-/*   /1* }; *1/ */
 
 
 /*   Mesh::IndexType indices[] = { */
 /*     0, 1, 2, 2, 3, 0, */
 /*     4, 5, 6, 6, 7, 4, */
 
-/*     8, 9, 10, 10, 11, 8, */
-/*     12, 13, 14, 14, 15, 12, */
+/*     /1* 8, 9, 10, 10, 11, 8, *1/ */
+/*     /1* 12, 13, 14, 14, 15, 12, *1/ */
 
-/*     16, 17, 18, 18, 19, 16, */
-/*     20, 21, 22, 22, 23, 20, */
+/*     /1* 16, 17, 18, 18, 19, 16, *1/ */
+/*     /1* 20, 21, 22, 22, 23, 20, *1/ */
 /*   }; */
 
 /*   PushVertices(&mesh, vertices, ARRAY_SIZE(vertices)); */
 /*   PushIndices(&mesh, indices, ARRAY_SIZE(indices)); */
 
-/*   ASSERT(mesh.vertices_count == 24); */
+/*   /1* ASSERT(mesh.vertices_count == 24); *1/ */
+/*   ASSERT(mesh.vertices_count == 8); */
 /*   ASSERT(mesh.vertices.size() == sizeof(vertices)); */
 
-/*   ASSERT_MSG(mesh.indices_count == 36, "Count: %u", mesh.indices_count); */
+/*   ASSERT_MSG(mesh.indices_count == 12, "Count: %u", mesh.indices_count); */
 /*   ASSERT(mesh.indices.size() == sizeof(indices)); */
 
 /*   return mesh; */
@@ -160,7 +161,11 @@ bool CreateMesh(Renderer* renderer, ImguiRenderer* imgui) {
   // We reserve this size when staging the mesh, as we're going to re-upload pieces of this buffer
   // each time, and we don't want to be re-allocating the buffer each time.
   imgui_mesh.vertices = std::vector<uint8_t>(KILOBYTES(512));
+  imgui_mesh.vertices_count = imgui_mesh.vertices.size() / sizeof(VertexImgui);
+  ASSERT(imgui_mesh.vertices_count == 26214);
   imgui_mesh.indices  = std::vector<uint8_t>(KILOBYTES(512));
+  imgui_mesh.indices_count = imgui_mesh.indices.size() / sizeof(Mesh::IndexType);
+  ASSERT(imgui_mesh.indices_count == 131072);
 
   /* imgui->mesh = CreateMesh(); */
   /* if (!RendererStageMesh(renderer, &imgui->mesh)) */
@@ -244,7 +249,24 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
   float T = draw_data->DisplayPos.y;
   float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
   imgui_renderer->ubo.projection = Ortho(L, R, B, T);
-  /* imgui_renderer->camera.projection = glm::ortho(L, R, B, T); */
+
+  /* RenderMesh render_mesh; */
+  /* render_mesh.shader = &imgui_renderer->shader; */
+  /* render_mesh.mesh = &imgui_renderer->mesh; */
+  /* /1* render_mesh.textures.push_back(&imgui_renderer->font_texture); *1/ */
+
+  /* render_mesh.cull_faces = false; */
+
+  /* render_mesh.indices_size = imgui_renderer->mesh.indices_count; */
+  /* render_mesh.vert_ubo_data = (uint8_t*)&imgui_renderer->ubo; */
+
+
+  /* PerFrameVector<RenderCommand> commands; */
+  /* commands.push_back(render_mesh); */
+
+  /* return commands; */
+
+#ifndef CLEANUP
 
   // Each Imgui command list is considered "isolated" from the other, starting
   // they're index base from 0. In our renderer we chain them together so we
@@ -275,7 +297,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
     // index by their right place in the vertex buffer.
     static_assert(sizeof(ImDrawIdx) == sizeof(Mesh::IndexType));
     PushIndices(&imgui_renderer->mesh, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size,
-                base_vertex_offset);
+                                       base_vertex_offset);
 
     // This will start appending drawing data into the mesh buffer that's
     // already staged into the renderer.
@@ -340,6 +362,8 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
   /* render_command.mesh_actions = std::move(mesh_actions); */
 
   return render_commands;
+
+#endif
 }
 
 }  // namespace imgui

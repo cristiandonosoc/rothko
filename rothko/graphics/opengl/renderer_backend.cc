@@ -164,8 +164,17 @@ void OpenGLRendererBackend::StartFrame() {
 
 // EndFrame --------------------------------------------------------------------
 
+namespace {
+
+void ResetRendererState() {
+  glDisable(GL_SCISSOR_TEST);
+}
+
+}  // namespace
+
 void OpenGLRendererBackend::EndFrame() {
   ASSERT(Valid(*this));
+  ResetRendererState();
   WindowSwapBuffers(this->window);
 }
 
