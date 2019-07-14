@@ -311,7 +311,6 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
         render_mesh.scissor_size.height = (int)(clip_rect.w - clip_rect.y);
       }
 
-
       render_commands.push_back(std::move(render_mesh));
 
       index_offset += draw_cmd->ElemCount * sizeof(Mesh::IndexType);

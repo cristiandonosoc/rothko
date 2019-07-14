@@ -68,13 +68,13 @@ int main() {
 
   Input input = {};
 
-  Mesh mesh = CreateMesh();
-  if (!RendererStageMesh(&renderer, &mesh))
-    return 1;
+  /* Mesh mesh = CreateMesh(); */
+  /* if (!RendererStageMesh(&renderer, &mesh)) */
+  /*   return 1; */
 
-  CubeShader cube_shader = CreateShader();
-  if (!RendererStageShader(&renderer, &cube_shader.shader))
-    return 1;
+  /* CubeShader cube_shader = CreateShader(); */
+  /* if (!RendererStageShader(&renderer, &cube_shader.shader)) */
+  /*   return 1; */
 
   float aspect_ratio = (float)window.width / (float)window.height;
 
@@ -91,6 +91,14 @@ int main() {
   ImguiContext imgui;
   if (!InitImgui(&renderer, &imgui))
     return 1;
+
+  StartFrame(&imgui, &window, &time, &input);
+    ImGui::Begin("Test");
+    ImGui::Text("Hola");
+    ImGui::End();
+
+
+  EndFrame(&imgui);
 
   // Sample game loop.
   int frame_count = 0;
@@ -120,7 +128,9 @@ int main() {
     ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
 
 
-    auto commands = GetRenderCommands(&mesh, &cube_shader);
+    /* PerFrameVector<RenderCommand> commands; */
+    /* auto commands = GetRenderCommands(&mesh, &cube_shader); */
+    auto commands = GetRenderCommands(nullptr, nullptr);
 
     auto imgui_commands = EndFrame(&imgui);
     /* printf("Imgui commands size: %zu", imgui_commands.size()); */
@@ -135,8 +145,8 @@ int main() {
     EndFrame(&renderer);
 
     frame_count++;
-    if (frame_count == 2)
-      break;
+    /* if (frame_count == 2) */
+    /*   break; */
 
     /* std::this_thread::sleep_for(std::chrono::milliseconds(16)); */
   }
@@ -255,6 +265,8 @@ CubeShader CreateShader() {
 
 PerFrameVector<RenderCommand>
 GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
+  (void)mesh;
+  (void)cube_shader;
   PerFrameVector<RenderCommand> commands;
 
   // Clear command.
@@ -263,21 +275,21 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
   clear_frame.color = 0x002266ff;
   commands.push_back(std::move(clear_frame));
 
-  // Mesh command.
-  RenderMesh render_mesh;
-  render_mesh.mesh = mesh;
-  render_mesh.shader = &cube_shader->shader;
-  render_mesh.cull_faces = false;
-  render_mesh.indices_size = mesh->indices_count;
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
-  commands.push_back(render_mesh);
+  /* // Mesh command. */
+  /* RenderMesh render_mesh; */
+  /* render_mesh.mesh = mesh; */
+  /* render_mesh.shader = &cube_shader->shader; */
+  /* render_mesh.cull_faces = false; */
+  /* render_mesh.indices_size = mesh->indices_count; */
+  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[0]; */
+  /* commands.push_back(render_mesh); */
 
-  render_mesh.mesh = mesh;
-  render_mesh.shader = &cube_shader->shader;
-  render_mesh.cull_faces = false;
-  render_mesh.indices_size = mesh->indices_count;
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[1];
-  commands.push_back(render_mesh);
+  /* render_mesh.mesh = mesh; */
+  /* render_mesh.shader = &cube_shader->shader; */
+  /* render_mesh.cull_faces = false; */
+  /* render_mesh.indices_size = mesh->indices_count; */
+  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[1]; */
+  /* commands.push_back(render_mesh); */
 
   return commands;
 }

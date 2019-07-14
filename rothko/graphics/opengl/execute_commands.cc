@@ -153,10 +153,8 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &name);
   LOG(DEBUG, "Associated index: %d", name);
 
-
-
   SetUniforms(render_mesh, shader_handles);
-  SetTextures(opengl, render_mesh);
+  /* SetTextures(opengl, render_mesh); */
 
   // Scissoring.
   if (render_mesh.scissor_size.width != 0 && render_mesh.scissor_size.height != 0) {
@@ -169,7 +167,6 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   glDrawElements(GL_TRIANGLES, render_mesh.indices_size, GL_UNSIGNED_INT,
                  (void*)(uint64_t)render_mesh.indices_offset);
 
-  glBindVertexArray(NULL);
 }
 
 }  // namespace
@@ -193,6 +190,7 @@ void OpenGLExecuteCommands(const PerFrameVector<RenderCommand>& commands,
     }
 
     glUseProgram(NULL);
+    glBindVertexArray(NULL);
   }
 }
 

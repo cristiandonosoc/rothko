@@ -87,13 +87,14 @@ void DoLogging(int32_t category, Location location, const char* fmt, ...) {
   message.location = std::move(location);
   message.msg = std::move(msg);
 
-  // TODO(Cristian): Add time.
-  fprintf(stderr, "[%s][%s:%d][%s] %s\n", LogCategoryToString(message.log_category),
-                                          message.location.file,
-                                          message.location.line,
-                                          message.location.function,
-                                          message.msg.c_str());
-  fflush(stderr);
+
+  /* // TODO(Cristian): Add time. */
+  /* fprintf(stderr, "[%s][%s:%d][%s] %s\n", LogCategoryToString(message.log_category), */
+  /*                                         message.location.file, */
+  /*                                         message.location.line, */
+  /*                                         message.location.function, */
+  /*                                         message.msg.c_str()); */
+  /* fflush(stderr); */
 
 
 
