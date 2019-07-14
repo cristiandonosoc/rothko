@@ -13,6 +13,8 @@
 #include <sstream>
 #include <thread>
 
+#include "gui.h"
+
 using namespace rothko;
 using namespace rothko::imgui;
 
@@ -98,11 +100,12 @@ int main() {
     float angle = time.seconds * ToRadians(50.0f);
     ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
 
+    /* ImGui::ShowDemoWindow(); */
+
+
+    CreateGui();
+
     ImGui::ShowDemoWindow();
-
-
-
-
 
     PerFrameVector<RenderCommand> commands;
 
