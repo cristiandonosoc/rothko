@@ -23,6 +23,7 @@ union RenderAction;
 enum class RenderCommandType {
   kClear,
   kMesh,
+  kConfigRenderer,
   kLast,
 };
 const char* ToString(RenderCommandType);
@@ -33,9 +34,16 @@ struct ClearFrame {
 
   bool clear_depth = true;
   bool clear_color = true;
-  uint32_t color;   // One byte per color.
+  uint32_t color = 0;   // One byte per color.
 };
 std::string ToString(const ClearFrame&);
+
+struct ConfigRenderer {
+  static constexpr RenderCommandType kType = RenderCommandType::kConfigRenderer;
+
+  Int2 viewport = {};  // If non-zero, makes the renderer consider this the viewport size;
+};
+std::string ToString(const ConfigRenderer&);
 
 struct RenderMesh {
   static constexpr RenderCommandType kType = RenderCommandType::kMesh;
@@ -76,23 +84,30 @@ struct RenderCommand {
   RenderCommand(ClearFrame);
   RenderCommand& operator=(ClearFrame);
 
+  RenderCommand(ConfigRenderer);
+  RenderCommand& operator=(ConfigRenderer);
+
   RenderCommand(RenderMesh);
   RenderCommand& operator=(RenderMesh);
 
   RenderCommandType type() const { return type_; }
   bool is_clear_frame() const { return type_ == RenderCommandType::kClear; }
+  bool is_config_renderer() const { return type_ == RenderCommandType::kConfigRenderer; }
   bool is_render_mesh() const { return type_ == RenderCommandType::kMesh; }
 
   // Getters.
   ClearFrame& GetClearFrame();
   const ClearFrame& GetClearFrame() const;
 
+  ConfigRenderer& GetConfigRenderer();
+  const ConfigRenderer& GetConfigRenderer() const;
+
   RenderMesh& GetRenderMesh();
   const RenderMesh& GetRenderMesh() const;
 
   // "pseudo"-private.
   RenderCommandType type_ = RenderCommandType::kLast;
-  std::variant<ClearFrame, RenderMesh> data_;
+  std::variant<ClearFrame, ConfigRenderer, RenderMesh> data_;
 };
 std::string ToString(const RenderCommand&);
 

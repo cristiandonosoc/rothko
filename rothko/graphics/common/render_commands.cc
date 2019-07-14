@@ -22,6 +22,7 @@ void SetRenderCommand(RenderCommand* command, T t) {
 const char* ToString(RenderCommandType type) {
   switch (type) {
     case RenderCommandType::kClear: return "Clear";
+    case RenderCommandType::kConfigRenderer: return "Config Renderer";
     case RenderCommandType::kMesh: return "Mesh";
     case RenderCommandType::kLast: return "Last";
   }
@@ -60,6 +61,34 @@ std::string ToString(const ClearFrame& clear_frame) {
   return ss.str();
 }
 
+// Config Renderer ---------------------------------------------------------------------------------
+
+RenderCommand::RenderCommand(ConfigRenderer config_renderer) {
+  SetRenderCommand(this, std::move(config_renderer));
+}
+
+RenderCommand& RenderCommand::operator=(ConfigRenderer config_renderer) {
+  SetRenderCommand(this, std::move(config_renderer));
+  return *this;
+}
+
+ConfigRenderer& RenderCommand::GetConfigRenderer() {
+  if (!is_config_renderer())
+    SetRenderCommand(this, ConfigRenderer());
+  return std::get<ConfigRenderer>(data_);
+}
+
+const ConfigRenderer& RenderCommand::GetConfigRenderer() const {
+  return std::get<ConfigRenderer>(data_);
+}
+
+std::string ToString(const ConfigRenderer& config_renderer) {
+  std::stringstream ss;
+  ss << std::boolalpha;
+  ss << "Viewport size: " << ToString(config_renderer.viewport);
+  return ss.str();
+}
+
 // Render Mesh -------------------------------------------------------------------------------------
 
 RenderCommand::RenderCommand(RenderMesh render_mesh) {
@@ -78,7 +107,6 @@ RenderMesh& RenderCommand::GetRenderMesh() {
 }
 
 namespace {
-
 
 }  // namespace
 
@@ -127,6 +155,9 @@ std::string ToString(const RenderCommand& command) {
   switch (command.type_) {
     case RenderCommandType::kClear:
       ss << ToString(command.GetClearFrame());
+      break;
+    case RenderCommandType::kConfigRenderer:
+      ss << ToString(command.GetConfigRenderer());
       break;
     case RenderCommandType::kMesh:
       ss << ToString(command.GetRenderMesh());

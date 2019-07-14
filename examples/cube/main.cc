@@ -16,16 +16,6 @@
 using namespace rothko;
 using namespace rothko::imgui;
 
-/* BEGIN_IGNORE_WARNINGS() */
-
-/* #include <third_party/include/glm/gtc/matrix_transform.hpp> */
-/* #include <third_party/include/glm/gtc/type_ptr.hpp> */
-
-/* #define GLM_ENABLE_EXPERIMENTAL */
-/* #include <glm/gtx/string_cast.hpp> */
-
-/* END_IGNORE_WARNINGS() */
-
 namespace {
 
 bool Setup(Window*, Renderer*);
@@ -37,8 +27,6 @@ struct UBO {
 };
 
 std::vector<UBO> ubos;
-
-
 
 struct CubeShader {
   Shader shader;
@@ -54,12 +42,6 @@ PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh, CubeShader* shader);
 
 int main() {
   Logger logger = Logger::CreateLogger();
-  /* auto my_ortho = Ortho(0, 600, 0, 480); */
-  /* auto ortho = glm::ortho(0.0f, 600.0f, 0.0f, 480.0f); */
-
-  /* LOG(DEBUG, "MINE: %s", ToString(my_ortho).c_str()); */
-  /* LOG(DEBUG, " GLM: %s", ToString(*(Mat4*)&ortho).c_str()); */
-  /* return 0; */
 
   Window window;
   Renderer renderer;
@@ -104,20 +86,22 @@ int main() {
       }
     }
 
+    if (KeyUpThisFrame(&input, Key::kEscape)) {
+      running = false;
+      break;
+    }
 
     Update(&time);
     StartFrame(&renderer);
     StartFrame(&imgui, &window, &time, &input);
 
-
-    ImGui::ShowDemoWindow(nullptr);
-
-    ImGui::Begin("Test");
-    ImGui::Text("Hola");
-    ImGui::End();
-
     float angle = time.seconds * ToRadians(50.0f);
     ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
+
+    ImGui::ShowDemoWindow();
+
+
+
 
 
     PerFrameVector<RenderCommand> commands;
@@ -126,7 +110,6 @@ int main() {
     commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
 
     auto imgui_commands = EndFrame(&imgui);
-    (void)imgui_commands;
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
 
     RendererExecuteCommands(commands, &renderer);
@@ -134,9 +117,6 @@ int main() {
     EndFrame(&renderer);
 
     frame_count++;
-    /* if (frame_count == 2) */
-    /*   break; */
-
     /* std::this_thread::sleep_for(std::chrono::milliseconds(16)); */
   }
 }
@@ -147,6 +127,7 @@ bool Setup(Window* window, Renderer* renderer) {
   // Window.
   InitWindowConfig window_config = {};
   window_config.type = WindowType::kSDLOpenGL;
+  window_config.resizable = true;
   if (!InitWindow(window, &window_config)) {
     LOG(ERROR, "Could not initialize window. Exiting.");
     return false;

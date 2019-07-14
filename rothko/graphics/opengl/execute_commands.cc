@@ -19,6 +19,7 @@ void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
   for (auto& command : commands) {
     switch (command.type()) {
       case RenderCommandType::kClear: ASSERT(command.is_clear_frame()); continue;
+      case RenderCommandType::kConfigRenderer: ASSERT(command.is_config_renderer()); continue;
       case RenderCommandType::kMesh: {
         ASSERT(command.is_render_mesh());
         auto& render_mesh = command.GetRenderMesh();
@@ -60,6 +61,8 @@ void SetRenderCommandConfig(const RenderMesh& render_mesh) {
 #define GREEN(c) ((float)((c >> 16) & 0xff) / 255.0f)
 #define BLUE(c) ((float)((c >> 8) & 0xff) / 255.0f)
 
+// Clear Frame -------------------------------------------------------------------------------------
+
 void ExecuteClearRenderAction(const ClearFrame& clear) {
   if (!clear.clear_color && !clear.clear_depth)
     return;
@@ -76,7 +79,16 @@ void ExecuteClearRenderAction(const ClearFrame& clear) {
   glClear(clear_mask);
 }
 
-// Execute Mesh Render Actions -------------------------------------------------
+// Execute Config Renderer -------------------------------------------------------------------------
+
+void ExecuteConfigRendererAction(const ConfigRenderer& config) {
+  if (config.viewport.width != 0 && config.viewport.height != 0) {
+    glViewport(0, 0, (GLsizei)config.viewport.width, (GLsizei)config.viewport.height);
+  }
+}
+
+
+// Execute Mesh Render Actions ---------------------------------------------------------------------
 
 void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_handles) {
   // Vertex UBOs.
@@ -185,6 +197,9 @@ void OpenGLExecuteCommands(const PerFrameVector<RenderCommand>& commands,
     switch (command.type()) {
       case RenderCommandType::kClear:
         ExecuteClearRenderAction(command.GetClearFrame());
+        break;
+      case RenderCommandType::kConfigRenderer:
+        ExecuteConfigRendererAction(command.GetConfigRenderer());
         break;
       case RenderCommandType::kMesh:
         ExecuteMeshRenderActions(*opengl, command.GetRenderMesh());
