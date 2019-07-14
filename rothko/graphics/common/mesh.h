@@ -9,7 +9,7 @@
 
 #include "rothko/math/math.h"
 #include "rothko/utils/clear_on_move.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 #include "rothko/utils/macros.h"
 
 namespace rothko {
@@ -23,6 +23,7 @@ enum class VertexType : uint32_t {
   kLast,
 };
 const char* ToString(VertexType);
+uint32_t ToSize(VertexType);
 
 // Mesh --------------------------------------------------------------------------------------------
 
@@ -51,7 +52,7 @@ void PushVertices(Mesh* mesh, VertexType* data, uint32_t count) {
   ASSERT(mesh->vertex_type == VertexType::kVertexType);
 
   // Have to be able to hold all the vertices.
-  mesh->vertices.reserve(mesh->vertices_count + count);
+  mesh->vertices.reserve((mesh->vertices_count + count) * ToSize(mesh->vertex_type));
 
   VertexType* begin = data;
   VertexType* end = data + count;
@@ -62,10 +63,18 @@ void PushVertices(Mesh* mesh, VertexType* data, uint32_t count) {
 
 // Pushes an array of indices into the mesh.
 // The |offset| is a value that will be added to each element.
-void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count);
-void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t offset);
+void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t offset = 0);
 
 // Vertex Definitions ------------------------------------------------------------------------------
+
+// NOTE: pragma pack(push, <MODE>) pushes into the compiler state the way the compiler should pad
+//       in the fields of a struct. Normally the compiler will attempt to pad fields in order to
+//       align memory to a particular boundary (normally 4 or 8 bytes).
+//
+//       pack(push, 1) tells the compiler to not pad at all and leave the memory layout of the
+//       struct as it's defined. This normally is more inefficient or error-prone, but for terms of
+//       OpenGL, it is something we want in order to tightly pack the buffer sent to the GPU.
+#pragma pack(push, 1)
 
 struct VertexDefault {
   static constexpr VertexType kVertexType = VertexType::kDefault;
@@ -74,6 +83,7 @@ struct VertexDefault {
   Vec3 normal;
   Vec2 uv;
 };
+static_assert(sizeof(VertexDefault) == 32);
 
 struct VertexColor {
   static constexpr VertexType kVertexType = VertexType::kColor;
@@ -81,6 +91,7 @@ struct VertexColor {
   Vec3 pos;
   uint32_t color;
 };
+static_assert(sizeof(VertexColor) == 16);
 
 struct VertexImgui {
   static constexpr VertexType kVertexType = VertexType::kImgui;
@@ -89,5 +100,9 @@ struct VertexImgui {
   Vec2 uv;
   uint32_t color;
 };
+static_assert(sizeof(VertexImgui) == 20);
+
+#pragma pack(pop)
+
 
 }  // namespace rothko

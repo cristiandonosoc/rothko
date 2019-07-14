@@ -13,7 +13,7 @@
 #include "rothko/graphics/opengl/mesh.h"
 #include "rothko/graphics/opengl/shader.h"
 #include "rothko/graphics/opengl/texture.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 #include "rothko/window/window.h"
 
 namespace rothko {
@@ -86,6 +86,8 @@ void APIENTRY OpenGLDebugCallback(GLenum source, GLenum type, GLuint id,
   ss << "---------------------opengl-callback-end--------------";
 
   LOG(ERROR, "%s", ss.str().c_str());
+  if (severity == GL_DEBUG_SEVERITY_HIGH)
+    exit(1);
 }
 
 #endif
@@ -162,8 +164,17 @@ void OpenGLRendererBackend::StartFrame() {
 
 // EndFrame --------------------------------------------------------------------
 
+namespace {
+
+void ResetRendererState() {
+  glDisable(GL_SCISSOR_TEST);
+}
+
+}  // namespace
+
 void OpenGLRendererBackend::EndFrame() {
   ASSERT(Valid(*this));
+  ResetRendererState();
   WindowSwapBuffers(this->window);
 }
 

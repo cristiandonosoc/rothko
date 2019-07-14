@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 
 namespace rothko {
 

@@ -3,7 +3,7 @@
 
 #include "rothko/window/common/window_backend.h"
 
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 
 namespace rothko {
 

@@ -20,6 +20,8 @@ source_set("tests_lib") {
     "//rothko/graphics/common",
     "//rothko/memory",
     "//rothko/utils",
+    "//rothko/math",
+    "//rothko/logging",
   ]
 }
 

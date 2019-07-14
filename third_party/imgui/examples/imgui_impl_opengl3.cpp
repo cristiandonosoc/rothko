@@ -74,7 +74,7 @@
 #include <GLES3/gl3.h>  // Use GL ES 3
 #else
 // Regular OpenGL
-// About OpenGL function loaders: modern OpenGL doesn't have a standard header file and requires individual function pointers to be loaded manually. 
+// About OpenGL function loaders: modern OpenGL doesn't have a standard header file and requires individual function pointers to be loaded manually.
 // Helper libraries are often used for this purpose! Here we are supporting a few common ones: gl3w, glew, glad.
 // You may use another loader/header of your choice (glext, glLoadGen, etc.), or chose to manually implement your own.
 #if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
@@ -204,45 +204,65 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data)
     glEnableVertexAttribArray(g_AttribLocationUV);
     glEnableVertexAttribArray(g_AttribLocationColor);
     glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, pos));
-    glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, uv));
-    glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, col));
+    glVertexAttribPointer(g_AttribLocationUV,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(ImDrawVert),
+                          (GLvoid*)IM_OFFSETOF(ImDrawVert, uv));
+    glVertexAttribPointer(g_AttribLocationColor,
+                          4,
+                          GL_UNSIGNED_BYTE,
+                          GL_TRUE,
+                          sizeof(ImDrawVert),
+                          (GLvoid*)IM_OFFSETOF(ImDrawVert, col));
 
     // Draw
     ImVec2 pos = draw_data->DisplayPos;
-    for (int n = 0; n < draw_data->CmdListsCount; n++)
-    {
-        const ImDrawList* cmd_list = draw_data->CmdLists[n];
-        const ImDrawIdx* idx_buffer_offset = 0;
+    for (int n = 0; n < draw_data->CmdListsCount; n++) {
+      const ImDrawList* cmd_list         = draw_data->CmdLists[n];
+      const ImDrawIdx* idx_buffer_offset = 0;
 
-        glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
-        glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), (const GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW);
+      glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
+      glBufferData(GL_ARRAY_BUFFER,
+                   (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert),
+                   (const GLvoid*)cmd_list->VtxBuffer.Data,
+                   GL_STREAM_DRAW);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), (const GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW);
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle);
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                   (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx),
+                   (const GLvoid*)cmd_list->IdxBuffer.Data,
+                   GL_STREAM_DRAW);
 
-        for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
-        {
-            const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-            if (pcmd->UserCallback)
-            {
-                // User callback (registered via ImDrawList::AddCallback)
-                pcmd->UserCallback(cmd_list, pcmd);
-            }
-            else
-            {
-                ImVec4 clip_rect = ImVec4(pcmd->ClipRect.x - pos.x, pcmd->ClipRect.y - pos.y, pcmd->ClipRect.z - pos.x, pcmd->ClipRect.w - pos.y);
-                if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
-                {
-                    // Apply scissor/clipping rectangle
-                    glScissor((int)clip_rect.x, (int)(fb_height - clip_rect.w), (int)(clip_rect.z - clip_rect.x), (int)(clip_rect.w - clip_rect.y));
+      for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
+        const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+        if (pcmd->UserCallback) {
+          // User callback (registered via ImDrawList::AddCallback)
+          pcmd->UserCallback(cmd_list, pcmd);
+        } else {
+          ImVec4 clip_rect = ImVec4(pcmd->ClipRect.x - pos.x,
+                                    pcmd->ClipRect.y - pos.y,
+                                    pcmd->ClipRect.z - pos.x,
+                                    pcmd->ClipRect.w - pos.y);
+          if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f &&
+              clip_rect.w >= 0.0f) {
+            // Apply scissor/clipping rectangle
+            glScissor((int)clip_rect.x,
+                      (int)(fb_height - clip_rect.w),
+                      (int)(clip_rect.z - clip_rect.x),
+                      (int)(clip_rect.w - clip_rect.y));
 
-                    // Bind texture, Draw
-                    glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId);
-                    glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
-                }
-            }
-            idx_buffer_offset += pcmd->ElemCount;
+            // Bind texture, Draw
+            glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId);
+            glDrawElements(GL_TRIANGLES,
+                           (GLsizei)pcmd->ElemCount,
+                           sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
+                           idx_buffer_offset);
+          }
         }
+        idx_buffer_offset += pcmd->ElemCount;
+      }
     }
     glDeleteVertexArrays(1, &vao_handle);
 

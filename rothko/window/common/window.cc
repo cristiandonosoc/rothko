@@ -2,11 +2,11 @@
 // This code has a BSD license. See LICENSE.
 
 #include "rothko/window/common/window.h"
-#include "rothko/window/common/window_backend.h"
 
 #include <unordered_map>
 
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
+#include "rothko/window/common/window_backend.h"
 
 namespace rothko {
 

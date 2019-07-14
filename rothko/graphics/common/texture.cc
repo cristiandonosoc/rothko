@@ -6,7 +6,7 @@
 #include <third_party/stb/stb_image.h>
 
 #include "rothko/graphics/common/renderer.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 
 namespace rothko {
 

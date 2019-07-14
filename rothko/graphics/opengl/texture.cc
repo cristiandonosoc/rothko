@@ -10,7 +10,7 @@
 #include "rothko/graphics/common/renderer.h"
 #include "rothko/graphics/common/texture.h"
 #include "rothko/graphics/opengl/renderer_backend.h"
-#include "rothko/utils/logging.h"
+#include "rothko/logging/logging.h"
 
 namespace rothko {
 namespace opengl {

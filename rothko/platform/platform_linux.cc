@@ -1,8 +1,6 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include "rothko/platform/platform.h"
-
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,6 +8,8 @@
 #include <unistd.h>
 
 #include "rothko/platform/paths.h"
+#include "rothko/platform/platform.h"
+#include "rothko/platform/timing.h"
 
 namespace rothko {
 
@@ -47,11 +47,6 @@ uint64_t GetNanoseconds() {
   struct timespec now;
   clock_gettime(CLOCK_MONOTONIC, &now);
   return now.tv_sec * 1000000000 + now.tv_nsec;
-}
-
-float Seconds() {
-  GetNano
-
 }
 
 }  // namespace rothko

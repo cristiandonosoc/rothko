@@ -9,7 +9,7 @@
 
 namespace rothko {
 
-// Math Functions ----------------------------------------------------------------------------------
+// Math Functions ==================================================================================
 
 float SquareRoot(float f) { return std::sqrt(f); }
 
@@ -17,7 +17,9 @@ float Sin(float radian_angle) { return std::sin(radian_angle); }
 float Cos(float radian_angle) { return std::cos(radian_angle); }
 float Tan(float radian_angle) { return std::tan(radian_angle); }
 
-//Vectors ------------------------------------------------------------------------------------------
+//Vectors ==========================================================================================
+
+// Vec2 --------------------------------------------------------------------------------------------
 
 Vec2 Normalize(const Vec2& v) {
   Vec2 result = {};
@@ -32,6 +34,8 @@ Vec2 Normalize(const Vec2& v) {
   return result;
 }
 
+// Vec3 --------------------------------------------------------------------------------------------
+
 Vec3 Normalize(const Vec3& v) {
   Vec3 result = {};
 
@@ -45,6 +49,8 @@ Vec3 Normalize(const Vec3& v) {
 
   return result;
 }
+
+// Vec4 --------------------------------------------------------------------------------------------
 
 Vec4 Normalize(const Vec4& v) {
   Vec4 result = {};
@@ -61,14 +67,14 @@ Vec4 Normalize(const Vec4& v) {
   return result;
 }
 
-// Transformation Matrices -------------------------------------------------------------------------
+// Transformation Matrices =========================================================================
 
 Mat4 Translate(const Vec3& v) {
   // clang-format off
-  return Mat4({  0,   0,   0, v.x},
-              {  0,   0,   0, v.y},
-              {  0,   0,   0, v.z},
-              {  0,   0,   0,   1});
+  return Mat4({  1,   0,   0, 0},
+              {  0,   1,   0, 0},
+              {  0,   0,   1, 0},
+              { v.x, v.y, v.z,   1});
   // clang-format on
 }
 
@@ -167,7 +173,7 @@ Mat4 Perspective(float fov, float aspect_ratio, float near, float far) {
   return Frustrum(left, right, bottom, top, near, far);
 }
 
-// Printing ----------------------------------------------------------------------------------------
+// Printing ========================================================================================
 
 std::string ToString(const Int2& v) { return StringPrintf("(%d, %d)", v.x, v.y); }
 std::string ToString(const Vec2& v) { return StringPrintf("(%f, %f)", v.x, v.y); }
@@ -182,10 +188,10 @@ std::string ToString(const Mat4& m) {
   auto& e = m.elements;
   // clang-format off
   return StringPrintf("(%f, %f, %f, %f), (%f, %f, %f, %f), (%f, %f, %f, %f), (%f, %f, %f, %f)",
-                      e[0][0], e[0][1], e[0][0], e[0][1],
-                      e[1][0], e[1][1], e[1][0], e[1][1],
-                      e[2][0], e[2][1], e[2][0], e[2][1],
-                      e[3][0], e[3][1], e[3][0], e[3][1]);
+                      e[0][0], e[0][1], e[0][2], e[0][3],
+                      e[1][0], e[1][1], e[1][2], e[1][3],
+                      e[2][0], e[2][1], e[2][2], e[2][3],
+                      e[3][0], e[3][1], e[3][2], e[3][3]);
   // clang-format on
 }
 
