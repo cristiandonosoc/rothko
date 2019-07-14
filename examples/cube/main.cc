@@ -92,8 +92,8 @@ int main() {
   if (!InitImgui(&renderer, &imgui))
     return 1;
 
-
   // Sample game loop.
+  int frame_count = 0;
   bool running = true;
   while (running) {
     auto events = NewFrame(&window, &input);
@@ -133,6 +133,10 @@ int main() {
     RendererExecuteCommands(commands, &renderer);
 
     EndFrame(&renderer);
+
+    frame_count++;
+    if (frame_count == 2)
+      break;
 
     /* std::this_thread::sleep_for(std::chrono::milliseconds(16)); */
   }

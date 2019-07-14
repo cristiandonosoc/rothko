@@ -113,12 +113,16 @@ bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
   // Always bind the VAO first, so that it doesn't overwrite.
   MeshHandles handles = GenerateMeshHandles();
 
-  LOG(DEBUG, "Staging mesh %s (uuid: %u, VAO: %u).", mesh->name.c_str(), uuid, handles.vao);
 
   glBindVertexArray(handles.vao);
 
   StageVertices(mesh, &handles);
   StageIndices(mesh, &handles);
+
+  LOG(DEBUG,
+      "Staging mesh %s (uuid: %u, VAO: %u) [%u vertices (%zu bytes)] [%u indices (%zu bytes)]",
+      mesh->name.c_str(), uuid, handles.vao,
+      mesh->vertices_count, mesh->vertices.size(), mesh->indices_count, mesh->indices.size());
 
   UnbindMeshHandles();
 
@@ -152,6 +156,20 @@ void OpenGLUnstageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
 
 // Upload Range ------------------------------------------------------------------------------------
 
+namespace {
+
+void VerifyBufferSize(GLenum target, uint32_t size, uint32_t offset) {
+  GLint gl_size= 0;
+  glGetBufferParameteriv(target, GL_BUFFER_SIZE, &gl_size);
+  uint64_t buf_size = (uint64_t)gl_size;
+  uint32_t total = size + offset;
+
+  ASSERT_MSG(buf_size > (size + offset), "Buf size exceeded. %zu <= %u", buf_size, total);
+}
+
+}  // namespace
+
+
 bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
                            Int2 vertex_range, Int2 index_range) {
   uint64_t uuid = mesh->uuid.value;
@@ -172,6 +190,9 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
       size = mesh->vertices_count * vertex_size;
 
     glBindBuffer(GL_ARRAY_BUFFER, handles.vbo);
+#if DEBUG_MODE
+    VerifyBufferSize(GL_ARRAY_BUFFER, size, offset);
+#endif
     glBufferSubData(GL_ARRAY_BUFFER, offset, size, mesh->vertices.data());
     glBindBuffer(GL_ARRAY_BUFFER, NULL);
 
@@ -186,6 +207,9 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
       size = mesh->indices_count * sizeof(Mesh::IndexType);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.ebo);
+#if DEBUG_MODE
+    VerifyBufferSize(GL_ELEMENT_ARRAY_BUFFER, size, offset);
+#endif
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, mesh->indices.data());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, NULL);
 

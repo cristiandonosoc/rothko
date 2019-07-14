@@ -159,8 +159,8 @@ bool CreateMesh(Renderer* renderer, ImguiRenderer* imgui) {
   //
   // We reserve this size when staging the mesh, as we're going to re-upload pieces of this buffer
   // each time, and we don't want to be re-allocating the buffer each time.
-  imgui_mesh.vertices = std::vector<uint8_t>(KILOBYTES(512) / sizeof(VertexImgui));
-  imgui_mesh.indices  = std::vector<uint8_t>(KILOBYTES(512) / sizeof(Mesh::IndexType));
+  imgui_mesh.vertices = std::vector<uint8_t>(KILOBYTES(512));
+  imgui_mesh.indices  = std::vector<uint8_t>(KILOBYTES(512));
 
   /* imgui->mesh = CreateMesh(); */
   /* if (!RendererStageMesh(renderer, &imgui->mesh)) */
@@ -323,9 +323,11 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
     base_index_offset += index_offset;
   }
 
-  // We stage the buffers to the renderer.
-  if (!RendererUploadMeshRange(imgui_renderer->renderer, &imgui_renderer->mesh))
-    NOT_REACHED_MSG("Could not upload data to the renderer.");
+  // We stage the buffers to the renderer only if there was some new information to send.
+  if (!render_commands.empty()) {
+    if (!RendererUploadMeshRange(imgui_renderer->renderer, &imgui_renderer->mesh))
+      NOT_REACHED_MSG("Could not upload data to the renderer.");
+  }
 
   /* RenderCommand render_command; */
   /* render_command.name = "Imgui"; */

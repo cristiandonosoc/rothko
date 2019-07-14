@@ -123,6 +123,11 @@ void SetTextures(const OpenGLRendererBackend& opengl, const RenderMesh& render_m
 }
 
 void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
+  if (render_mesh.indices_size == 0) {
+    LOG(WARNING, "Received mesh render mesh comman with size 0");
+    return;
+  }
+
   auto shader_it = opengl.loaded_shaders.find(render_mesh.shader->uuid.value);
   ASSERT(shader_it != opengl.loaded_shaders.end());
   const ShaderHandles& shader_handles = shader_it->second;
@@ -137,11 +142,6 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   glUseProgram(shader_handles.program);
   SetRenderCommandConfig(render_mesh);
 
-  if (render_mesh.indices_size == 0) {
-    LOG(WARNING, "Received mesh render mesh comman with size 0");
-    return;
-  }
-
   auto mesh_it = opengl.loaded_meshes.find(render_mesh.mesh->uuid.value);
   ASSERT(mesh_it != opengl.loaded_meshes.end());
 
@@ -149,6 +149,11 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
 
   LOG(DEBUG, "Setting VAO %u", mesh_handles.vao);
   glBindVertexArray(mesh_handles.vao);
+  GLint name;
+  glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &name);
+  LOG(DEBUG, "Associated index: %d", name);
+
+
 
   SetUniforms(render_mesh, shader_handles);
   SetTextures(opengl, render_mesh);
