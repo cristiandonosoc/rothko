@@ -13,21 +13,19 @@
 namespace rothko {
 
 // Window
-// =============================================================================
+// =================================================================================================
 //
-// This is the abstraction Rothko provides for handling different window
-// managers. From the point of view of the caller, there is no knowledge of what
-// is being used to actually create/handle the windows.
+// This is the abstraction Rothko provides for handling different window managers. From the point of
+// view of the caller, there is no knowledge of what is being used to actually handle the windows.
 //
-// This abstraction is done by the usage of WindowBackends, which define a
-// common interface of what a particular window manager has to provide. Each
-// implementation backend (SDL, GLFW, Windows, etc.) must implement that
-// interface and add itself to the WindowType below.
+// This abstraction is done by the usage of WindowBackends, which define a common interface of what
+// a particular window manager has to provide. Each implementation backend (SDL, GLFW, Windows,
+// etc.) must implement that interface and add itself to the WindowType below.
 //
-// The way the code gets an instace of a particular backend is by using factory
-// functions. Rothko will maintain a map of functions it can use to create an
-// instance of a particular backend. Each backend must suscribe their factory
-// function in order to work. See the definitions of the functions below.
+// The way the code gets an instace of a particular backend is by using factory functions.
+// Rothko will maintain a map of functions it can use to create an instance of a particular backend.
+// Each backend must suscribe their factory function in order to work.
+// See the definitions of the functions below.
 //
 // See also rothko/window/common/window_backend.h for more details.
 
@@ -41,13 +39,14 @@ enum class WindowType {
 };
 const char* ToString(WindowType);
 
-// Backend Suscription ---------------------------------------------------------
+// Backend Suscription -----------------------------------------------------------------------------
 
-// Each backend, upon application startup, must suscribe a function that will
-// be called to create a that particular WindowBackend.
+// Each backend, upon application startup, must suscribe a function that will be called to create a
+// that particular WindowBackend.
 using WindowBackendFactoryFunction = std::unique_ptr<WindowBackend> (*)();
-void SuscribeWindowBackendFactoryFunction(WindowType,
-                                          WindowBackendFactoryFunction);
+void SuscribeWindowBackendFactoryFunction(WindowType, WindowBackendFactoryFunction);
+
+// Window ------------------------------------------------------------------------------------------
 
 struct Window {
   RAII_CONSTRUCTORS(Window);
@@ -63,7 +62,7 @@ struct Window {
   std::unique_ptr<WindowBackend> backend;
 };
 
-// API -------------------------------------------------------------------------
+// API ---------------------------------------------------------------------------------------------
 
 inline bool Valid(Window* wm) { return !!wm->backend; }
 

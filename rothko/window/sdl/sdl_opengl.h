@@ -23,12 +23,18 @@ struct SDLOpenGLWindow : public WindowBackend {
   int event_index = 0;
   WindowEvent events[4];
 
+  SDL_Cursor* cursors[(int)MouseCursor::kLast] = {};
+
   // Virtual Interface ---------------------------------------------------------
+
 
   bool Init(Window*, InitWindowConfig*) override;
   void Shutdown() override;
   std::vector<WindowEvent> NewFrame(Window*, Input*) override;
   void SwapBuffers() override;
+
+  void ShowCursor(bool) override;
+  void SetMouseCursor(MouseCursor) override;
 };
 
 inline bool Valid(SDLOpenGLWindow* sdl) {

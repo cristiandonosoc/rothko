@@ -48,6 +48,20 @@ void SDLOpenGLShutdown(SDLOpenGLWindow* sdl) {
   }
 
   sdl->window = nullptr;
+
+
+  if (sdl->cursors[(int)MouseCursor::kArrow])
+    SDL_SetCursor(sdl->cursors[(int)MouseCursor::kArrow]);
+
+  for (int i = 0; i < ARRAY_SIZE(sdl->cursors); i++) {
+    SDL_Cursor* cursor = sdl->cursors[i];
+    sdl->cursors[i] = NULL;
+    if (cursor == NULL)
+      continue;
+    SDL_FreeCursor(cursor);
+  }
+
+  SDL_ShowCursor(SDL_TRUE);
 }
 
 }  // namespace
@@ -116,6 +130,20 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window,
   /* SDL_GL_SetSwapInterval(1);  // Enable v-sync. */
   SDL_GetWindowSize(sdl->sdl_window.value, &window->width, &window->height);
   LOG(DEBUG, "Window size: %d, %d", window->width, window->height);
+
+  // Mouse cursors.
+  sdl->cursors[(int)MouseCursor::kArrow] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+  sdl->cursors[(int)MouseCursor::kIbeam] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+  sdl->cursors[(int)MouseCursor::kWait] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
+  sdl->cursors[(int)MouseCursor::kCrosshair] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_CROSSHAIR);
+  sdl->cursors[(int)MouseCursor::kWaitArrow] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAITARROW);
+  sdl->cursors[(int)MouseCursor::kSizeNWSE] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENWSE);
+  sdl->cursors[(int)MouseCursor::kSizeNESW] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENESW);
+  sdl->cursors[(int)MouseCursor::kSizeWE] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
+  sdl->cursors[(int)MouseCursor::kSizeNS] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
+  sdl->cursors[(int)MouseCursor::kSizeAll] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEALL);
+  sdl->cursors[(int)MouseCursor::kNo] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NO);
+  sdl->cursors[(int)MouseCursor::kHand] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
 
   sdl->window = window;
   return true;
@@ -223,6 +251,18 @@ void SDLOpenGLWindow::SwapBuffers() {
 SDLOpenGLWindow::~SDLOpenGLWindow() {
   if (Valid(this))
     SDLOpenGLShutdown(this);
+}
+
+void SDLOpenGLWindow::SetMouseCursor(MouseCursor cursor) {
+  int index = (int)cursor;
+  ASSERT(index < (int)MouseCursor::kLast);
+  SDL_Cursor* sdl_cursor = this->cursors[index];
+  ASSERT(sdl_cursor);
+  SDL_SetCursor(sdl_cursor);
+}
+
+void SDLOpenGLWindow::ShowCursor(bool show) {
+  SDL_ShowCursor(show ? SDL_TRUE : SDL_FALSE);
 }
 
 }  // namespace sdl
