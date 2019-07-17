@@ -27,7 +27,7 @@ source_set("imgui") {
   ]
 
   public_deps = [
-    "//third_party/imgui",
+    "//third_party:imgui",
   ]
 }
 

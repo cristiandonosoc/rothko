@@ -13,9 +13,9 @@
 // This is to verify that our imgui config wasn't overwritten by a imgui update.
 // Our imgui config is in rothko/ui/imgui/warhol_imgui_config.h
 // That config should be placed in third_party/imgui/imconfig.h
-#ifndef ROTHKO_IMGUI_CONFIG
-#error No warhol imgui config loaded. Is third_party/imgui/imconfig.h correct?
-#endif
+/* #ifndef ROTHKO_IMGUI_CONFIG */
+/* #error No warhol imgui config loaded. Is third_party/imgui/imconfig.h correct? */
+/* #endif */
 
 namespace rothko {
 namespace imgui {

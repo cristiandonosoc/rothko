@@ -95,9 +95,6 @@ void DoLogging(int32_t category, Location location, const char* fmt, ...) {
   /*                                         message.location.function, */
   /*                                         message.msg.c_str()); */
   /* fflush(stderr); */
-
-
-
 }
 
 // Logger ------------------------------------------------------------------------------------------
