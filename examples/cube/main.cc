@@ -76,6 +76,7 @@ int main() {
   if (!InitImgui(&renderer, &imgui))
     return 1;
 
+
   // Sample game loop.
   int frame_count = 0;
   bool running = true;
@@ -100,11 +101,7 @@ int main() {
     float angle = time.seconds * ToRadians(50.0f);
     ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
 
-    /* ImGui::ShowDemoWindow(); */
-
-
-    CreateGui();
-
+    CreateDebugGui();
     ImGui::ShowDemoWindow();
 
     PerFrameVector<RenderCommand> commands;
@@ -131,6 +128,8 @@ bool Setup(Window* window, Renderer* renderer) {
   InitWindowConfig window_config = {};
   window_config.type = WindowType::kSDLOpenGL;
   window_config.resizable = true;
+  /* window_config.fullscreen = true; */
+  window_config.screen_size = {1920, 1080};
   if (!InitWindow(window, &window_config)) {
     LOG(ERROR, "Could not initialize window. Exiting.");
     return false;
@@ -247,8 +246,6 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
   clear_frame = {};
   clear_frame.color = 0x002266ff;
   commands.push_back(std::move(clear_frame));
-
-  return commands;
 
   // Mesh command.
   RenderMesh render_mesh;

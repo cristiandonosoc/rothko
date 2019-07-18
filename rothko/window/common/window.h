@@ -8,6 +8,7 @@
 #include <memory>
 #include <vector>
 
+#include "rothko/math/math.h"
 #include "rothko/utils/macros.h"
 
 namespace rothko {
@@ -68,6 +69,8 @@ inline bool Valid(Window* wm) { return !!wm->backend; }
 
 struct InitWindowConfig {
   WindowType type = WindowType::kLast;
+
+  Int2 screen_size = {};  // Must be set.
 
   bool borderless = false;
   bool fullscreen = false;

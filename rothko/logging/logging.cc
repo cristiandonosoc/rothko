@@ -36,6 +36,7 @@ std::atomic<bool> gRunning         = false;
 std::atomic<uint64_t> gWriterIndex = 0;
 
 struct LogMessage {
+  uint64_t nanoseconds;
   uint32_t log_category;
   Location location;
   std::string msg;

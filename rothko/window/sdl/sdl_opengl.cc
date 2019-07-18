@@ -13,7 +13,7 @@
 namespace rothko {
 namespace sdl {
 
-// Backend Suscription ---------------------------------------------------------
+// Backend Suscription -----------------------------------------------------------------------------
 
 namespace {
 
@@ -32,7 +32,7 @@ BackendSuscriptor backend_suscriptor;
 
 } // namespace
 
-// Shutdown --------------------------------------------------------------------
+// Shutdown ----------------------------------------------------------------------------------------
 
 namespace {
 
@@ -70,12 +70,11 @@ void SDLOpenGLWindow::Shutdown() {
   SDLOpenGLShutdown(this);
 }
 
-// Init ------------------------------------------------------------------------
+// Init --------------------------------------------------------------------------------------------
 
 namespace {
 
-bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window,
-                   InitWindowConfig* config) {
+bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* config) {
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
     LOG(ERROR, "Error loading SDL: %s", SDL_GetError());
     return false;
@@ -103,14 +102,12 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window,
   if (config->minimized)
     window_flags |= SDL_WINDOW_MINIMIZED;
   if (config->maximized) {
-    window_flags &= ~SDL_WINDOW_MINIMIZED;    // Remove minimized.
+    window_flags &= ~SDL_WINDOW_MINIMIZED;  // Remove minimized.
     window_flags |= SDL_WINDOW_MAXIMIZED;
   }
 
-  sdl->sdl_window = SDL_CreateWindow("rothko",
-                                     SDL_WINDOWPOS_CENTERED,
-                                     SDL_WINDOWPOS_CENTERED,
-                                     1280, 720,
+  sdl->sdl_window = SDL_CreateWindow("rothko", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                     config->screen_size.x, config->screen_size.y,
                                      window_flags);
   if (!sdl->sdl_window.has_value()) {
     LOG(ERROR, "Error creating window: %s", SDL_GetError());
@@ -125,7 +122,6 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window,
     SDLOpenGLShutdown(sdl);
     return false;
   }
-
 
   /* SDL_GL_SetSwapInterval(1);  // Enable v-sync. */
   SDL_GetWindowSize(sdl->sdl_window.value, &window->width, &window->height);
@@ -155,7 +151,7 @@ bool SDLOpenGLWindow::Init(Window* w, InitWindowConfig* config) {
   return SDLOpenGLInit(this, w, config);
 }
 
-// UpdateWindow ----------------------------------------------------------------
+// UpdateWindow ------------------------------------------------------------------------------------
 
 namespace {
 
@@ -240,13 +236,13 @@ SDLOpenGLWindow::NewFrame(Window* w, Input* input) {
   return SDLOpenGLNewFrame(this, w, input);
 }
 
-// SwapBuffers -----------------------------------------------------------------
+// SwapBuffers -------------------------------------------------------------------------------------
 
 void SDLOpenGLWindow::SwapBuffers() {
   SDL_GL_SwapWindow(this->sdl_window.value);
 }
 
-// Misc ------------------------------------------------------------------------
+// Misc --------------------------------------------------------------------------------------------
 
 SDLOpenGLWindow::~SDLOpenGLWindow() {
   if (Valid(this))

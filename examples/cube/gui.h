@@ -4,6 +4,6 @@
 #pragma once
 
 // Assumes Imgui is correctly set already.
-void CreateGui();
+void CreateDebugGui();
 
 
