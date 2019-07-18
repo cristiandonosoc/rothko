@@ -8,6 +8,7 @@
 #include <atomic>
 #include <thread>
 
+#include "rothko/platform/timing.h"
 #include "rothko/utils/strings.h"
 
 namespace rothko {
@@ -22,39 +23,101 @@ const char* LogCategoryToString(int32_t category) {
     case kLogCategory_NO_FRAME: return "NO_FRAME";
   }
 
-  NOT_REACHED();
   return "<unknown>";
 }
+
+// LogContainer ------------------------------------------------------------------------------------
+
+namespace {
+
+std::atomic<bool> gLoggingActive = false;
+
+}  // namespace
+
+LogContainer::LogContainer() {
+  if (gLoggingActive) {
+    printf("%s:%d -> LOGGING SHOULD NOT BE ACTIVE ON STARTUP!\n", __FILE__, __LINE__);
+    SEGFAULT();
+  }
+
+  gLoggingActive = true;
+}
+
+LogContainer::~LogContainer() {
+  if (!gLoggingActive) {
+    printf("%s:%d -> LOGGING SHOULD BE ACTIVE ON SHUTDOWN!\n", __FILE__, __LINE__);
+    SEGFAULT();
+  }
+
+  gLoggingActive = false;
+}
+
+void LogContainer::Init() {
+  Get();
+}
+
+LogContainer* LogContainer::Get() {
+  static LogContainer logs;
+  return &logs;
+}
+
 
 // DoLogging ---------------------------------------------------------------------------------------
 
 namespace {
+
+/* void OutputLogMessage(const LogMessage& message) { */
+/*   return; */
+
+/*   // TODO(Cristian): Add time. */
+/*   fprintf(stderr, "[%s][%s:%d][%s] %s\n", LogCategoryToString(message.log_category), */
+/*                                           message.location.file, */
+/*                                           message.location.line, */
+/*                                           message.location.function, */
+/*                                           message.msg.c_str()); */
+/*   fflush(stderr); */
+/* } */
+
+}  // namespace
+
+void DoLogging(int32_t category, Location location, const char* fmt, ...) {
+  if (!gLoggingActive)
+    return;
+
+  va_list va;
+  va_start(va, fmt);
+  auto msg = StringPrintfV(fmt, va);
+  va_end(va);
+
+  auto* logs = LogContainer::Get();
+  int write_index = logs->write_index++ % LogContainer::kMaxEntries;
+
+  auto& entry = logs->entries[write_index];
+  entry.nanoseconds = GetNanoseconds();
+  entry.log_category = category;
+  entry.location = ToString(location);
+  entry.msg = std::move(msg);
+
+
+  /* // TODO(Cristian): Add time. */
+  /* fprintf(stderr, "[%s][%s:%d][%s] %s\n", LogCategoryToString(message.log_category), */
+  /*                                         message.location.file, */
+  /*                                         message.location.line, */
+  /*                                         message.location.function, */
+  /*                                         message.msg.c_str()); */
+  /* fflush(stderr); */
+}
+
+// Logger ------------------------------------------------------------------------------------------
+
+#if UPDATE_LOGGER
 
 std::atomic<bool> gLoggerExists    = false;
 uint64_t gReaderIndex              = 0;
 std::atomic<bool> gRunning         = false;
 std::atomic<uint64_t> gWriterIndex = 0;
 
-struct LogMessage {
-  uint64_t nanoseconds;
-  uint32_t log_category;
-  Location location;
-  std::string msg;
-};
 
-LogMessage gLogMessages[1024] = {};
-
-void OutputLogMessage(const LogMessage& message) {
-  return;
-
-  // TODO(Cristian): Add time.
-  fprintf(stderr, "[%s][%s:%d][%s] %s\n", LogCategoryToString(message.log_category),
-                                          message.location.file,
-                                          message.location.line,
-                                          message.location.function,
-                                          message.msg.c_str());
-  fflush(stderr);
-}
 
 void LoggingLoop() {
   while (gRunning) {
@@ -73,32 +136,7 @@ void LoggingLoop() {
   }
 };
 
-}  // namespace
 
-void DoLogging(int32_t category, Location location, const char* fmt, ...) {
-  va_list va;
-  va_start(va, fmt);
-  auto msg = StringPrintfV(fmt, va);
-  va_end(va);
-
-  uint64_t writer_index = (gWriterIndex++) % ARRAY_SIZE(gLogMessages);
-  auto& message = gLogMessages[writer_index];
-
-  message.log_category = category;
-  message.location = std::move(location);
-  message.msg = std::move(msg);
-
-
-  /* // TODO(Cristian): Add time. */
-  /* fprintf(stderr, "[%s][%s:%d][%s] %s\n", LogCategoryToString(message.log_category), */
-  /*                                         message.location.file, */
-  /*                                         message.location.line, */
-  /*                                         message.location.function, */
-  /*                                         message.msg.c_str()); */
-  /* fflush(stderr); */
-}
-
-// Logger ------------------------------------------------------------------------------------------
 
 namespace {
 
@@ -106,21 +144,22 @@ std::thread gLoggingThread;
 
 }  // namespace
 
-Logger Logger::CreateLogger() {
+std::unique_ptr<Logger> Logger::CreateLogger() {
   if (gLoggerExists) {
     fprintf(stderr, "Logger already created! Only one logger can exists!\n");
     fflush(stderr);
     exit(1);
   }
+
   gLoggerExists = true;
   gRunning = true;
 
-  Logger logger;
+  auto logger = std::make_unique<Logger>();
 
   // Create the thread.
   gLoggingThread = std::thread(LoggingLoop);
 
-  logger.valid_ = true;
+  logger->valid_ = true;
 
   return logger;
 }
@@ -149,5 +188,7 @@ Logger& Logger::operator=(Logger&& other) {
 
   return *this;
 }
+
+#endif
 
 }  // namespace rothko

@@ -43,7 +43,7 @@ PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh, CubeShader* shader);
 }  // namespace
 
 int main() {
-  Logger logger = Logger::CreateLogger();
+  LogContainer::Init();
 
   Window window;
   Renderer renderer;

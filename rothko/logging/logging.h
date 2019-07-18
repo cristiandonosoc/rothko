@@ -5,6 +5,9 @@
 
 #include <stdint.h>
 
+#include <atomic>
+#include <string>
+
 #include "rothko/utils/location.h"
 #include "rothko/utils/macros.h"
 
@@ -19,24 +22,35 @@ constexpr uint32_t kLogCategory_ERROR = 4;
 constexpr uint32_t kLogCategory_ASSERT = 5;
 constexpr uint32_t kLogCategory_NO_FRAME = 6;
 
+
 namespace rothko {
 
-struct Logger {
-  // Can only be called once.
-  static Logger CreateLogger();
+const char* LogCategoryToString(int32_t category);
 
-  ~Logger();
-
-  DELETE_COPY_AND_ASSIGN(Logger);
-  DECLARE_MOVE_AND_ASSIGN(Logger);
-
-  private:
-   Logger();
-
-   bool valid_ = false;
+struct LogEntry {
+  uint64_t nanoseconds = 0;
+  uint32_t log_category = UINT32_MAX;
+  std::string location;
+  std::string msg;
 };
 
-const char* LogCategoryToString(int32_t category);
+struct LogContainer {
+  static constexpr int kMaxEntries = 4096;
+  static void Init();
+
+  static LogContainer* Get();
+
+  std::atomic<uint64_t> write_index = 0;
+
+  LogEntry entries[kMaxEntries] = {};
+
+  DELETE_COPY_AND_ASSIGN(LogContainer);
+  DELETE_MOVE_AND_ASSIGN(LogContainer);
+
+ private:
+  LogContainer();
+  ~LogContainer();
+};
 
 void DoLogging(int32_t category, Location, const char *fmt, ...)
     PRINTF_FORMAT(3, 4);

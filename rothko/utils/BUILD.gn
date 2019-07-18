@@ -14,6 +14,7 @@ source_set("utils") {
 
   sources = [
     "file.cc",
+    "location.cc",
     "multithreading.cc",
     "strings.cc",
   ]

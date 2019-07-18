@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "rothko/utils/macros.h"
 
 #define FROM_HERE ::rothko::Location{__FILE__, __LINE__, __FUNCTION__}
@@ -15,5 +17,7 @@ struct Location {
   int line = 0;
   const char* function = nullptr;
 };
+
+std::string ToString(Location);
 
 }  // namespace rothko
