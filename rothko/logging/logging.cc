@@ -95,7 +95,7 @@ void DoLogging(int32_t category, Location location, const char* fmt, ...) {
   auto& entry = logs->entries[write_index];
   entry.nanoseconds = GetNanoseconds();
   entry.log_category = category;
-  entry.location = ToString(location);
+  entry.location = std::move(location);
   entry.msg = std::move(msg);
 
 

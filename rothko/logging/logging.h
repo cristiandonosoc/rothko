@@ -30,7 +30,7 @@ const char* LogCategoryToString(int32_t category);
 struct LogEntry {
   uint64_t nanoseconds = 0;
   uint32_t log_category = UINT32_MAX;
-  std::string location;
+  Location location = {};
   std::string msg;
 };
 

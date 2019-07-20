@@ -76,6 +76,20 @@ int main() {
   if (!InitImgui(&renderer, &imgui))
     return 1;
 
+  ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
+
+
+
+
+    bool show_demo_window = true;
+    bool show_another_window = false;
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
 
   // Sample game loop.
   int frame_count = 0;
@@ -102,12 +116,58 @@ int main() {
     ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
 
     CreateDebugGui();
-    ImGui::ShowDemoWindow();
+    /* ImGui::ShowDemoWindow(); */
 
     PerFrameVector<RenderCommand> commands;
 
     auto cube_commands = GetRenderCommands(&mesh, &cube_shader);
     commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
+
+    /* // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can */
+    /* // browse its code to learn more about Dear ImGui!). */
+    /* if (show_demo_window) */
+    /*   ImGui::ShowDemoWindow(&show_demo_window); */
+
+    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
+    // window.
+    {
+      static float f = 0.0f;
+      static int counter = 0;
+
+      ImGui::Begin("Hello, world!");  // Create a window called "Hello, world!" and append into it.
+
+      ImGui::Text(
+          "This is some useful text.");  // Display some text (you can use a format strings too)
+      ImGui::Checkbox("Demo Window",
+                      &show_demo_window);  // Edit bools storing our window open/close state
+      ImGui::Checkbox("Another Window", &show_another_window);
+
+      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);  // Edit 1 float using a slider from 0.0f to 1.0f
+      ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
+
+      if (ImGui::Button("Button"))  // Buttons return true when clicked (most widgets return true
+                                    // when edited/activated)
+        counter++;
+      ImGui::SameLine();
+      ImGui::Text("counter = %d", counter);
+
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                  1000.0f / ImGui::GetIO().Framerate,
+                  ImGui::GetIO().Framerate);
+      ImGui::End();
+    }
+
+    /* // 3. Show another simple window. */
+    /* if (show_another_window) { */
+    /*   ImGui::Begin( */
+    /*       "Another Window", */
+    /*       &show_another_window);  // Pass a pointer to our bool variable (the window will have a */
+    /*                               // closing button that will clear the bool when clicked) */
+    /*   ImGui::Text("Hello from another window!"); */
+    /*   if (ImGui::Button("Close Me")) */
+    /*     show_another_window = false; */
+    /*   ImGui::End(); */
+    /* } */
 
     auto imgui_commands = EndFrame(&imgui);
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
@@ -129,7 +189,7 @@ bool Setup(Window* window, Renderer* renderer) {
   window_config.type = WindowType::kSDLOpenGL;
   window_config.resizable = true;
   /* window_config.fullscreen = true; */
-  window_config.screen_size = {1920, 1080};
+  window_config.screen_size = {1280, 720};
   if (!InitWindow(window, &window_config)) {
     LOG(ERROR, "Could not initialize window. Exiting.");
     return false;
@@ -247,21 +307,21 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
   clear_frame.color = 0x002266ff;
   commands.push_back(std::move(clear_frame));
 
-  // Mesh command.
-  RenderMesh render_mesh;
-  render_mesh.mesh = mesh;
-  render_mesh.shader = &cube_shader->shader;
-  render_mesh.cull_faces = false;
-  render_mesh.indices_size = mesh->indices_count;
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
-  commands.push_back(render_mesh);
+  /* // Mesh command. */
+  /* RenderMesh render_mesh; */
+  /* render_mesh.mesh = mesh; */
+  /* render_mesh.shader = &cube_shader->shader; */
+  /* render_mesh.cull_faces = false; */
+  /* render_mesh.indices_size = mesh->indices_count; */
+  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[0]; */
+  /* commands.push_back(render_mesh); */
 
-  render_mesh.mesh = mesh;
-  render_mesh.shader = &cube_shader->shader;
-  render_mesh.cull_faces = false;
-  render_mesh.indices_size = mesh->indices_count;
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[1];
-  commands.push_back(render_mesh);
+  /* render_mesh.mesh = mesh; */
+  /* render_mesh.shader = &cube_shader->shader; */
+  /* render_mesh.cull_faces = false; */
+  /* render_mesh.indices_size = mesh->indices_count; */
+  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[1]; */
+  /* commands.push_back(render_mesh); */
 
   return commands;
 }

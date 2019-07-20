@@ -75,7 +75,7 @@ void SDLOpenGLWindow::Shutdown() {
 namespace {
 
 bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* config) {
-  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
     LOG(ERROR, "Error loading SDL: %s", SDL_GetError());
     return false;
   }
@@ -84,13 +84,14 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* confi
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
   // Setup SDL flags.
-  uint32_t window_flags = SDL_WINDOW_OPENGL;
+  uint32_t window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
   if (config->borderless)
     window_flags |= SDL_WINDOW_BORDERLESS;
   if (config->fullscreen)
@@ -123,7 +124,8 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* confi
     return false;
   }
 
-  /* SDL_GL_SetSwapInterval(1);  // Enable v-sync. */
+  SDL_GL_MakeCurrent(sdl->sdl_window.value, sdl->gl_context.value);
+  SDL_GL_SetSwapInterval(1);  // Enable v-sync.
   SDL_GetWindowSize(sdl->sdl_window.value, &window->width, &window->height);
   LOG(DEBUG, "Window size: %d, %d", window->width, window->height);
 

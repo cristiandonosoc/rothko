@@ -5,8 +5,43 @@
 
 #include <rothko/logging/logging.h>
 #include <rothko/ui/imgui.h>
+#include <rothko/utils/macros.h>
 
 using namespace rothko;
+
+namespace {
+
+struct LogTime {
+  int hours;
+  int minutes;
+  int seconds;
+  /* int milliseconds; */
+  int micro;
+};
+
+LogTime NanoToTime(uint64_t nanos) {
+  LogTime time = {};
+
+
+  /* uint64_t micro = nanos / 1000; */
+  /* time.microseconds = nanos - micro; */
+  /* uint64_t milli = micro / 1000; */
+  /* time.milliseconds = micro - milli; */
+  /* uint64_t secs = milli / 1000; */
+
+  uint64_t micros = nanos / 1000;
+  time.micro = micros % 1000000;
+  uint64_t secs = micros / 1000000;
+  time.seconds = secs % 60;
+  uint64_t min = secs / 60;
+  time.minutes = min % 60;
+  time.hours = min / 60;
+
+  return time;
+}
+
+
+}  // namespace
 
 void CreateDebugGui() {
 
@@ -33,10 +68,30 @@ void CreateDebugGui() {
     /* if (entry.nanoseconds > max_nanos) */
     /*   break; */
 
-    ImGui::Text("%s", LogCategoryToString(entry.log_category));
+    LogTime time = NanoToTime(entry.nanoseconds);
+
+    ImGui::Text("%02d:%02d:%02d.%06d",
+                time.hours,
+                time.minutes,
+                time.seconds,
+                time.micro);
     ImGui::SameLine();
-    ImGui::Text("%s", entry.location.c_str());
+    ImGui::Text("%8s", LogCategoryToString(entry.log_category));
     ImGui::SameLine();
+    ImGui::Text("%25s", entry.location.file);
+    ImGui::SameLine();
+    ImGui::Text("%4d", entry.location.line);
+    ImGui::SameLine();
+    ImGui::Text("%25s", entry.location.function);
+    ImGui::SameLine();
+
+    /* ImGui::Text("%s", SHORT_FILE()); */
+    /* ImGui::SameLine(); */
+    /* ImGui::Text("%s", SHORT_FUNCTION()); */
+    /* ImGui::Text("%s:%d" */
+
+    /* ImGui::Text("%30s", entry.location.c_str()); */
+    /* ImGui::SameLine(); */
     ImGui::Text("%s", entry.msg.c_str());
   }
 
