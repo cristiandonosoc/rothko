@@ -3,30 +3,11 @@
 
 #pragma once
 
-using ConstStr = const char* const;
-
-static constexpr ConstStr PastLastToken(ConstStr str, ConstStr last_slash, const char token) {
-  if (*str == 0)
-    return last_slash;
-
-  if (*str == token)
-    return PastLastToken(str + 1, str + 1, token);
-  return PastLastToken(str + 1, last_slash, token);
-}
-
 #ifdef _WIN32
 #define FILEPATH_SEPARATOR '\\'
 #else
 #define FILEPATH_SEPARATOR '/'
 #endif
-
-static constexpr ConstStr PastLastSlash(ConstStr str) {
-  return PastLastToken(str, str, FILEPATH_SEPARATOR);
-}
-static constexpr ConstStr PastLastColon(ConstStr str) { return PastLastToken(str, str, ':'); }
-
-#define SHORT_FILE() (PastLastSlash(__FILE__))
-#define SHORT_FUNCTION() (PastLastColon(__FUNCTION__))
 
 // Hack to have variadic macros work with 0 arguments.
 #define VA_ARGS(...) , ##__VA_ARGS__

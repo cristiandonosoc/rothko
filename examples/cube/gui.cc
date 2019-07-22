@@ -4,6 +4,7 @@
 #include "gui.h"
 
 #include <rothko/logging/logging.h>
+#include <rothko/platform/paths.h>
 #include <rothko/ui/imgui.h>
 #include <rothko/utils/macros.h>
 
@@ -53,6 +54,20 @@ void CreateDebugGui() {
   /* auto window_size = ImGui::GetWindowSize(); */
   /* ImGui::SetWindowPos({0, io.DisplaySize.y - window_size.y}, ImGuiCond_Once); */
 
+  static float scroll_y = 0.0f;
+  float scroll_y_prev = scroll_y;
+  static bool lock_scrolling = true;
+  /* bool before_lock = lock_scrolling; */
+
+  bool pressed = ImGui::Checkbox("Scroll to bottom", &lock_scrolling);
+  ImGui::SameLine();
+  ImGui::Text("SCROLL: %f", scroll_y);
+  ImGui::SameLine();
+  ImGui::Text("LOCK: %d", lock_scrolling);
+  ImGui::Separator();
+
+  ImGui::BeginChild("Logchild");
+
   auto* logs = LogContainer::Get();
   int write_index = logs->write_index;
   // No entry after this should be shown.
@@ -78,22 +93,44 @@ void CreateDebugGui() {
     ImGui::SameLine();
     ImGui::Text("%8s", LogCategoryToString(entry.log_category));
     ImGui::SameLine();
-    ImGui::Text("%25s", entry.location.file);
+    ImGui::Text("%25s", GetBasename(entry.location.file).c_str());
     ImGui::SameLine();
     ImGui::Text("%4d", entry.location.line);
     ImGui::SameLine();
-    ImGui::Text("%25s", entry.location.function);
+    ImGui::Text("%25s", GetBaseFunction(entry.location.function).c_str());
     ImGui::SameLine();
-
-    /* ImGui::Text("%s", SHORT_FILE()); */
-    /* ImGui::SameLine(); */
-    /* ImGui::Text("%s", SHORT_FUNCTION()); */
-    /* ImGui::Text("%s:%d" */
-
-    /* ImGui::Text("%30s", entry.location.c_str()); */
-    /* ImGui::SameLine(); */
     ImGui::Text("%s", entry.msg.c_str());
   }
+
+  scroll_y = ImGui::GetScrollY();
+
+  if (pressed) {
+    ImGui::SetScrollHereY(1.0f);
+  } else {
+    if (scroll_y < scroll_y_prev) {
+      lock_scrolling = false;
+    } else if (lock_scrolling) {
+      ImGui::SetScrollHereY(1.0f);
+    }
+
+
+    /* if (lock_scrolling) */
+    /*   ImGui::SetScrollHereX(1.0f); */
+  /* /1* if (!before_lock && lock_scrolling) { *1/ */
+  /* /1*   ImGui::SetScrollHereY(1.0f); *1/ */
+  /* /1* } else { *1/ */
+    /* float current = ImGui::GetScrollY(); */
+    /* float max = ImGui::GetScrollMaxY(); */
+    /* if (current < max) */
+    /*   lock_scrolling = false; */
+  /* /1* } *1/ */
+
+  }
+
+  ImGui::EndChild();
+
+  /* ImGui::Text("Current: %f, Max: %f", current, max); */
+
 
 
   /* auto* logs = LogContainer::Get(); */

@@ -7,6 +7,13 @@
 
 namespace rothko {
 
+std::string GetBaseFunction(const std::string& func) {
+  size_t separator = func.rfind(':');
+  if (separator == std::string::npos)
+    return func;
+  return func.substr(separator + 1);
+}
+
 std::string ToString(Location location) {
   return StringPrintf("%s:%d (%s)", location.file, location.line, location.function);
 }

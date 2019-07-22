@@ -116,7 +116,7 @@ int main() {
     ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
 
     CreateDebugGui();
-    /* ImGui::ShowDemoWindow(); */
+    ImGui::ShowDemoWindow();
 
     PerFrameVector<RenderCommand> commands;
 
