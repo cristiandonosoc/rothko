@@ -91,7 +91,7 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* confi
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
   // Setup SDL flags.
-  uint32_t window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
+  uint32_t window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
   if (config->borderless)
     window_flags |= SDL_WINDOW_BORDERLESS;
   if (config->fullscreen)
@@ -109,7 +109,7 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* confi
 
   sdl->sdl_window = SDL_CreateWindow("rothko", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                      config->screen_size.x, config->screen_size.y,
-                                     window_flags);
+                                     (SDL_WindowFlags)window_flags);
   if (!sdl->sdl_window.has_value()) {
     LOG(ERROR, "Error creating window: %s", SDL_GetError());
     SDLOpenGLShutdown(sdl);
@@ -125,7 +125,7 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* confi
   }
 
   SDL_GL_MakeCurrent(sdl->sdl_window.value, sdl->gl_context.value);
-  /* SDL_GL_SetSwapInterval(1);  // Enable v-sync. */
+  SDL_GL_SetSwapInterval(1);  // Enable v-sync.
   SDL_GetWindowSize(sdl->sdl_window.value, &window->width, &window->height);
   LOG(DEBUG, "Window size: %d, %d", window->width, window->height);
 
@@ -188,6 +188,7 @@ void HandleWindowEvent(const SDL_WindowEvent& window_event,
 
 std::vector<WindowEvent>
 SDLOpenGLNewFrame(SDLOpenGLWindow *sdl, Window *window, Input *input) {
+  (void)window;
   ASSERT(Valid(sdl));
 
   // Restart the state.
@@ -199,21 +200,22 @@ SDLOpenGLNewFrame(SDLOpenGLWindow *sdl, Window *window, Input *input) {
   // Handle events.
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
-    switch (event.type) {
-      case SDL_QUIT: PushEvent(sdl, WindowEvent::kQuit); break;
-      case SDL_KEYUP: HandleKeyUpEvent(event.key, input); break;
-      case SDL_MOUSEWHEEL: HandleMouseWheelEvent(event.wheel, input); break;
-      case SDL_WINDOWEVENT: HandleWindowEvent(event.window, sdl, window); break;
-      case SDL_TEXTINPUT: {
-        // event.text.text is a char[32].
-        for (char c : event.text.text) {
-          PushUtf8Char(sdl, c);
-          if (c == 0)
-            break;
-        }
-      }
-      default: break;
-    }
+    input->event_count++;
+    /* switch (event.type) { */
+    /*   case SDL_QUIT: PushEvent(sdl, WindowEvent::kQuit); break; */
+    /*   case SDL_KEYUP: HandleKeyUpEvent(event.key, input); break; */
+    /*   case SDL_MOUSEWHEEL: HandleMouseWheelEvent(event.wheel, input); break; */
+    /*   case SDL_WINDOWEVENT: HandleWindowEvent(event.window, sdl, window); break; */
+    /*   case SDL_TEXTINPUT: { */
+    /*     // event.text.text is a char[32]. */
+    /*     for (char c : event.text.text) { */
+    /*       PushUtf8Char(sdl, c); */
+    /*       if (c == 0) */
+    /*         break; */
+    /*     } */
+    /*   } */
+    /*   default: break; */
+    /* } */
   }
 
   HandleKeysDown(input);

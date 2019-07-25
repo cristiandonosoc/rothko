@@ -11,6 +11,9 @@ struct Timings {
   uint64_t create_imgui_commands = 0;
   uint64_t execute_commands = 0;
   uint64_t end_frame = 0;
+
+  float frame_delta = 0.0f;
+  int event_count = 0;
 };
 
 // Assumes Imgui is correctly set already.

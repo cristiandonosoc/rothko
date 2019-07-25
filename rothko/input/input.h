@@ -31,6 +31,8 @@ static_assert((uint32_t)Key::kLast < kMaxKeys);
 // Represents the input state for a frame.
 // Currently there is only support for one set of input.
 struct Input {
+  int event_count = 0;
+
   bool down_last_frame[kMaxKeys] = {};
   bool down_this_frame[kMaxKeys] = {};
   static_assert(sizeof(down_last_frame) == sizeof(down_this_frame));

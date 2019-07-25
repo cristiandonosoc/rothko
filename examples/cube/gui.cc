@@ -72,6 +72,9 @@ void CreateDebugGui(const Timings& timings) {
 
   ImGui::Separator();
 
+  ImGui::LabelText("Frame Delta", "%f", timings.frame_delta);
+  ImGui::LabelText("Event count", "%d", timings.event_count);
+
   /* ImGui::BeginChild("Logchild"); */
 
   /* auto* logs = LogContainer::Get(); */
