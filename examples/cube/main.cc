@@ -9,6 +9,7 @@
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
 #include <rothko/ui/imgui.h>
+#include <rothko/logging/timer.h>
 
 #include <sstream>
 #include <thread>
@@ -77,24 +78,24 @@ int main() {
     return 1;
 
   ImGui::StyleColorsDark();
-    ImGuiStyle& style = ImGui::GetStyle();
-    {
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    }
+  ImGuiStyle& style = ImGui::GetStyle();
+  {
+    style.WindowRounding = 0.0f;
+    style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+  }
 
+  bool show_demo_window = true;
+  bool show_another_window = false;
+  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-
-
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
+  Timings timings = {};
 
   // Sample game loop.
   int frame_count = 0;
   bool running = true;
   while (running) {
+    Timer timer = Timer::CreateAndStart();
+
     auto events = NewFrame(&window, &input);
     for (auto event : events) {
       if (event == WindowEvent::kQuit) {
@@ -112,16 +113,24 @@ int main() {
     StartFrame(&renderer);
     StartFrame(&imgui, &window, &time, &input);
 
-    float angle = time.seconds * ToRadians(50.0f);
-    ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
+    timings.start_frame = timer.End();
 
-    CreateDebugGui();
-    ImGui::ShowDemoWindow();
+    timer = Timer::CreateAndStart();
 
     PerFrameVector<RenderCommand> commands;
 
+    float angle = time.seconds * ToRadians(50.0f);
+    ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
     auto cube_commands = GetRenderCommands(&mesh, &cube_shader);
     commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
+
+    CreateDebugGui(timings);
+
+    timings.create_my_commands = timer.End();
+
+    timer = Timer::CreateAndStart();
+
+    ImGui::ShowDemoWindow();
 
     /* // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can */
     /* // browse its code to learn more about Dear ImGui!). */
@@ -172,9 +181,19 @@ int main() {
     auto imgui_commands = EndFrame(&imgui);
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
 
+    timings.create_imgui_commands = timer.End();
+
+    timer = Timer::CreateAndStart();
+
     RendererExecuteCommands(commands, &renderer);
 
+    timings.execute_commands = timer.End();
+
+    timer = Timer::CreateAndStart();
+
     EndFrame(&renderer);
+
+    timings.end_frame = timer.End();
 
     frame_count++;
     /* std::this_thread::sleep_for(std::chrono::milliseconds(16)); */

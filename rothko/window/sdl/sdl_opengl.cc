@@ -125,7 +125,7 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* confi
   }
 
   SDL_GL_MakeCurrent(sdl->sdl_window.value, sdl->gl_context.value);
-  SDL_GL_SetSwapInterval(1);  // Enable v-sync.
+  /* SDL_GL_SetSwapInterval(1);  // Enable v-sync. */
   SDL_GetWindowSize(sdl->sdl_window.value, &window->width, &window->height);
   LOG(DEBUG, "Window size: %d, %d", window->width, window->height);
 

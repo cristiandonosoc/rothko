@@ -4,6 +4,7 @@
 source_set("logging") {
   public = [
     "logging.h",
+    "timer.h",
   ]
 
   sources = [
