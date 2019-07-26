@@ -52,8 +52,10 @@ void SuscribeWindowBackendFactoryFunction(WindowType, WindowBackendFactoryFuncti
 struct Window {
   RAII_CONSTRUCTORS(Window);
 
-  int width = 0;
-  int height = 0;
+  Int2 screen_size = {};  // Must be set.
+
+  // Useful for retina display, that the resolution != size of the window.
+  Vec2 framebuffer_scale = {1.0f, 1.0f};
 
   static constexpr size_t kMaxUtf8Chars = 255;
   char utf8_chars_inputted[kMaxUtf8Chars + 1];  // For the extra zero.

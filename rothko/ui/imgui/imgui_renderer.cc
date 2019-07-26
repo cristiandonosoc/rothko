@@ -134,6 +134,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
   PerFrameVector<RenderCommand> render_commands;
   ConfigRenderer config = {};
   config.viewport = {fb_width, fb_height};
+  /* config.viewport = {(int)io->DisplaySize.x, (int)io->DisplaySize.y}; */
   render_commands.push_back(std::move(config));
 
   float L = draw_data->DisplayPos.x;

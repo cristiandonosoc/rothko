@@ -74,6 +74,16 @@ void SDLOpenGLWindow::Shutdown() {
 
 namespace {
 
+void GetWindowSize(SDLOpenGLWindow* sdl, Window* window) {
+  SDL_GetWindowSize(sdl->sdl_window.value, &window->screen_size.width, &window->screen_size.height);
+
+  // Get the actually drawable display to get the framebuffer ratio.
+  Int2 display = {};
+  SDL_GL_GetDrawableSize(sdl->sdl_window.value, &display.width, &display.height);
+  window->framebuffer_scale = {(float)display.width / (float)window->screen_size.width,
+                               (float)display.height / (float)window->screen_size.height};
+}
+
 bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* config) {
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
     LOG(ERROR, "Error loading SDL: %s", SDL_GetError());
@@ -126,8 +136,8 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* confi
 
   SDL_GL_MakeCurrent(sdl->sdl_window.value, sdl->gl_context.value);
   SDL_GL_SetSwapInterval(1);  // Enable v-sync.
-  SDL_GetWindowSize(sdl->sdl_window.value, &window->width, &window->height);
-  LOG(DEBUG, "Window size: %d, %d", window->width, window->height);
+
+  GetWindowSize(sdl, window);
 
   // Mouse cursors.
   sdl->cursors[(int)MouseCursor::kArrow] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
@@ -176,13 +186,10 @@ void ResetUtf8(Window* window) {
 }
 
 void HandleWindowEvent(const SDL_WindowEvent& window_event,
-                       SDLOpenGLWindow* sdl,
-                       Window* window) {
+                       SDLOpenGLWindow* sdl) {
   // Fow now we're interested in window changed.
   if (window_event.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
     PushEvent(sdl, WindowEvent::kWindowResize);
-    window->width = window_event.data1;
-    window->height = window_event.data2;
   }
 }
 
@@ -201,22 +208,24 @@ SDLOpenGLNewFrame(SDLOpenGLWindow *sdl, Window *window, Input *input) {
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     input->event_count++;
-    /* switch (event.type) { */
-    /*   case SDL_QUIT: PushEvent(sdl, WindowEvent::kQuit); break; */
-    /*   case SDL_KEYUP: HandleKeyUpEvent(event.key, input); break; */
-    /*   case SDL_MOUSEWHEEL: HandleMouseWheelEvent(event.wheel, input); break; */
-    /*   case SDL_WINDOWEVENT: HandleWindowEvent(event.window, sdl, window); break; */
-    /*   case SDL_TEXTINPUT: { */
-    /*     // event.text.text is a char[32]. */
-    /*     for (char c : event.text.text) { */
-    /*       PushUtf8Char(sdl, c); */
-    /*       if (c == 0) */
-    /*         break; */
-    /*     } */
-    /*   } */
-    /*   default: break; */
-    /* } */
+    switch (event.type) {
+      case SDL_QUIT: PushEvent(sdl, WindowEvent::kQuit); break;
+      case SDL_KEYUP: HandleKeyUpEvent(event.key, input); break;
+      case SDL_MOUSEWHEEL: HandleMouseWheelEvent(event.wheel, input); break;
+      case SDL_WINDOWEVENT: HandleWindowEvent(event.window, sdl); break;
+      case SDL_TEXTINPUT: {
+        // event.text.text is a char[32].
+        for (char c : event.text.text) {
+          PushUtf8Char(sdl, c);
+          if (c == 0)
+            break;
+        }
+      }
+      default: break;
+    }
   }
+
+  GetWindowSize(sdl, window);
 
   HandleKeysDown(input);
   HandleMouse(input);

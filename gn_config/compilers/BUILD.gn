@@ -76,3 +76,15 @@ if (compiler == "clang") {
     cflags = [ "-O2" ]
   }
 }
+
+# macOS --------------------------------------------------------------------------------------------
+
+# These are special frameworks we need to pass on to the compiler in order for things like clipboard
+# to work. Otherwise we get weird linker "underfined symbol" errors.
+config("osx_compiler_config") {
+  ldflags = [
+    "-framework", "Foundation",
+    "-framework", "AppKit",
+  ]
+}
+

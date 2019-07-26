@@ -13,6 +13,7 @@ int main() {
   // Window.
   Window window = {};
   InitWindowConfig window_config = {};
+  window_config.screen_size = {1024, 720};
   window_config.type = WindowType::kSDLOpenGL;
   if (!InitWindow(&window, &window_config)) {
     LOG(ERROR, "Could not initialize window. Exiting.");

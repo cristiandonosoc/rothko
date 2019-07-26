@@ -52,6 +52,12 @@ _configs = [
   "//gn_config/compilers:default_warnings",
 ]
 
+if (target_os == "mac") {
+  _configs += [
+    "//gn_config/compilers:osx_compiler_config",
+  ]
+}
+
 if (is_debug) {
   _configs += [
     "//gn_config/compilers:debug",

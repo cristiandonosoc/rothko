@@ -10,6 +10,7 @@
 #include <sys/errno.h>
 
 #include "rothko/platform/paths.h"
+#include "rothko/platform/timing.h"
 
 namespace rothko {
 

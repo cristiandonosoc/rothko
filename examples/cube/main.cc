@@ -61,7 +61,7 @@ int main() {
   if (!RendererStageShader(&renderer, &cube_shader.shader))
     return 1;
 
-  float aspect_ratio = (float)window.width / (float)window.height;
+  float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
 
   UBO ubo;
   ubo.proj= Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
@@ -167,7 +167,7 @@ int main() {
     }
 
     auto imgui_commands = EndFrame(&imgui);
-    commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
+   commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
 
     timings.create_imgui_commands = timer.End();
 

@@ -136,8 +136,9 @@ void StartFrame(ImguiContext* imgui, Window* window, Time* time, Input* input) {
   ASSERT(Valid(window));
   ASSERT(Valid(imgui));
 
-  imgui->io->DisplaySize = {(float)window->width, (float)window->height};
-  imgui->io->DisplayFramebufferScale = {1.0f, 1.0f};
+  imgui->io->DisplaySize = {(float)window->screen_size.width, (float)window->screen_size.height};
+  imgui->io->DisplayFramebufferScale = {window->framebuffer_scale.width,
+                                        window->framebuffer_scale.height};
 
   // TODO(Cristian): Obtain time delta from platform!
   imgui->io->DeltaTime = time->frame_delta;
