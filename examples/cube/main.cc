@@ -44,7 +44,11 @@ PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh, CubeShader* shader);
 }  // namespace
 
 int main() {
-  LogContainer::Init();
+  /* LogContainer::Init(); */
+  /* LogContainer::Init(); */
+
+  auto handle1 = InitLoggingSystem();
+
 
   Window window;
   Renderer renderer;
@@ -196,7 +200,7 @@ bool Setup(Window* window, Renderer* renderer) {
   window_config.type = WindowType::kSDLOpenGL;
   window_config.resizable = true;
   /* window_config.fullscreen = true; */
-  window_config.screen_size = {1280, 720};
+  window_config.screen_size = {1920, 1440};
   if (!InitWindow(window, &window_config)) {
     LOG(ERROR, "Could not initialize window. Exiting.");
     return false;
@@ -231,6 +235,15 @@ struct Colors {
   static constexpr uint32_t kWhite =  0xff'ff'ff'ff;
 };
 
+VertexColor CreateVertex(Vec3 pos, Vec2 uv, uint32_t color) {
+  VertexColor vertex = {};
+  vertex.pos = pos;
+  vertex.uv = uv;
+  vertex.color = color;
+
+  return vertex;
+}
+
 Mesh CreateMesh() {
   Mesh mesh = {};
   mesh.name = "cube";
@@ -238,34 +251,37 @@ Mesh CreateMesh() {
 
   VertexColor vertices[] = {
     // X
-    {{-1, -1, -1}, Colors::kBlue},
-    {{-1, -1,  1}, Colors::kGreen},
-    {{-1,  1,  1}, Colors::kWhite},
-    {{-1,  1, -1}, Colors::kRed},
-    {{-1, -1, -1}, Colors::kBlue},
-    {{-1, -1,  1}, Colors::kGreen},
-    {{-1,  1,  1}, Colors::kWhite},
-    {{-1,  1, -1}, Colors::kRed},
+
+    CreateVertex({-1, -1, -1},  {-1, -1}, Colors::kBlue),
+    CreateVertex({-1, -1,  1},  {-1,  1}, Colors::kGreen),
+    CreateVertex({-1,  1,  1},  { 1,  1}, Colors::kWhite),
+    CreateVertex({-1,  1, -1},  { 1, -1}, Colors::kRed),
+
+    CreateVertex({-1, -1, -1}, {-1, -1}, Colors::kBlue),
+    CreateVertex({-1, -1,  1}, {-1,  1}, Colors::kGreen),
+    CreateVertex({-1,  1,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({-1,  1, -1}, { 1, -1}, Colors::kRed),
 
     // Y
-    {{-1, -1, -1}, Colors::kBlue},
-    {{ 1, -1, -1}, Colors::kGreen},
-    {{ 1, -1,  1}, Colors::kWhite},
-    {{-1, -1,  1}, Colors::kRed},
-    {{-1,  1, -1}, Colors::kBlue},
-    {{ 1,  1, -1}, Colors::kGreen},
-    {{ 1,  1,  1}, Colors::kWhite},
-    {{-1,  1,  1}, Colors::kRed},
+    CreateVertex({-1, -1, -1}, {-1, -1}, Colors::kBlue),
+    CreateVertex({ 1, -1, -1}, {-1, -1}, Colors::kGreen),
+    CreateVertex({ 1, -1,  1}, {-1,  1}, Colors::kWhite),
+    CreateVertex({-1, -1,  1}, {-1,  1}, Colors::kRed),
+
+    CreateVertex({-1,  1, -1}, { 1, -1}, Colors::kBlue),
+    CreateVertex({ 1,  1, -1}, { 1, -1}, Colors::kGreen),
+    CreateVertex({ 1,  1,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({-1,  1,  1}, { 1,  1}, Colors::kRed),
 
     // Z
-    {{-1, -1, -1}, Colors::kBlue},
-    {{ 1, -1, -1}, Colors::kGreen},
-    {{ 1,  1, -1}, Colors::kWhite},
-    {{-1,  1, -1}, Colors::kRed},
-    {{-1, -1,  1}, Colors::kBlue},
-    {{ 1, -1,  1}, Colors::kGreen},
-    {{ 1,  1,  1}, Colors::kWhite},
-    {{-1,  1,  1}, Colors::kRed},
+    CreateVertex({-1, -1, -1}, {-1, -1}, Colors::kBlue),
+    CreateVertex({ 1, -1, -1}, {-1, -1}, Colors::kGreen),
+    CreateVertex({ 1,  1, -1}, { 1, -1}, Colors::kWhite),
+    CreateVertex({-1,  1, -1}, { 1, -1}, Colors::kRed),
+    CreateVertex({-1, -1,  1}, {-1,  1}, Colors::kBlue),
+    CreateVertex({ 1, -1,  1}, {-1,  1}, Colors::kGreen),
+    CreateVertex({ 1,  1,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({-1,  1,  1}, { 1,  1}, Colors::kRed),
   };
 
   Mesh::IndexType indices[] = {
@@ -314,21 +330,21 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
   clear_frame.color = 0x002266ff;
   commands.push_back(std::move(clear_frame));
 
-  /* // Mesh command. */
-  /* RenderMesh render_mesh; */
-  /* render_mesh.mesh = mesh; */
-  /* render_mesh.shader = &cube_shader->shader; */
-  /* render_mesh.cull_faces = false; */
-  /* render_mesh.indices_size = mesh->indices_count; */
-  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[0]; */
-  /* commands.push_back(render_mesh); */
+  // Mesh command.
+  RenderMesh render_mesh;
+  render_mesh.mesh = mesh;
+  render_mesh.shader = &cube_shader->shader;
+  render_mesh.cull_faces = false;
+  render_mesh.indices_size = mesh->indices_count;
+  render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
+  commands.push_back(render_mesh);
 
-  /* render_mesh.mesh = mesh; */
-  /* render_mesh.shader = &cube_shader->shader; */
-  /* render_mesh.cull_faces = false; */
-  /* render_mesh.indices_size = mesh->indices_count; */
-  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[1]; */
-  /* commands.push_back(render_mesh); */
+  render_mesh.mesh = mesh;
+  render_mesh.shader = &cube_shader->shader;
+  render_mesh.cull_faces = false;
+  render_mesh.indices_size = mesh->indices_count;
+  render_mesh.vert_ubo_data = (uint8_t*)&ubos[1];
+  commands.push_back(render_mesh);
 
   return commands;
 }

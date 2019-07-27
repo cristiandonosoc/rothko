@@ -9,6 +9,7 @@
 #include <thread>
 
 #include "rothko/platform/timing.h"
+#include "rothko/utils/macros.h"
 #include "rothko/utils/strings.h"
 
 namespace rothko {
@@ -27,56 +28,123 @@ const char* LogCategoryToString(int32_t category) {
 }
 
 // LogContainer ------------------------------------------------------------------------------------
+//
+// Actual struct that holds the logs for the system.
+// The system is active while there is an active LoggerHandle.
 
 namespace {
 
-std::atomic<bool> gLoggingActive = false;
+struct LogEntry {
+  uint64_t nanoseconds = 0;
+  uint32_t log_category = UINT32_MAX;
+  Location location = {};
+  std::string msg;
+};
+
+struct LogContainer {
+  static constexpr int kMaxEntries = 4096;
+
+  LogContainer() = default;
+  ~LogContainer() = default;
+  DELETE_COPY_AND_ASSIGN(LogContainer);
+  DELETE_MOVE_AND_ASSIGN(LogContainer);
+
+  std::atomic<uint64_t> write_index = 0;
+  LogEntry entries[kMaxEntries] = {};
+};
 
 }  // namespace
 
-LogContainer::LogContainer() {
-  if (gLoggingActive) {
-    printf("%s:%d -> LOGGING SHOULD NOT BE ACTIVE ON STARTUP!\n", __FILE__, __LINE__);
+// Logging Loop ------------------------------------------------------------------------------------
+//
+// Loop that runs on another thread that outputs the logs into stdout.
+// TODO(Cristian): Output to a file instead.
+
+namespace {
+
+std::unique_ptr<LogContainer> gLogs = nullptr;
+std::atomic<bool> gLoggingActive = false;
+
+// If |to_stdout| is true, it will also log into stdout.
+void OutputLogMessage(bool to_stdout, const LogEntry& entry);  // Defined further down.
+
+// Must only be changed by the logging thread.
+uint64_t gReaderIndex = 0;
+
+void LoggingLoop() {
+  while (true) {
+    // Output all messages currently not written in this logger iteration.
+    uint64_t writer_index = gLogs->write_index;
+    while (gReaderIndex < writer_index) {
+      uint64_t reader_index = gReaderIndex % LogContainer::kMaxEntries;
+
+      OutputLogMessage(false, gLogs->entries[reader_index]);
+      gReaderIndex++;
+    }
+
+    if (!gLoggingActive)
+      break;
+
+    // We sleep until the next logging iteration.
+    // Should be faster than a frame so that's hard to overflow the buffer.
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+};
+
+std::thread gLoggingThread;
+
+}  // namespace
+
+// Logger Handle -----------------------------------------------------------------------------------
+
+std::unique_ptr<LoggerHandle> InitLoggingSystem() {
+  if (gLogs) {
+    printf("%s:%d -> LOGGING SHOULD NOT BE ACTIVE ON INIT!\n", __FILE__, __LINE__);
+    fflush(stdout);
     SEGFAULT();
   }
 
+  // Start the logging loop thread.
   gLoggingActive = true;
+  gLogs.reset(new LogContainer());
+  gLoggingThread = std::thread(LoggingLoop);
+
+
+  return std::make_unique<LoggerHandle>();
 }
 
-LogContainer::~LogContainer() {
-  if (!gLoggingActive) {
+LoggerHandle::LoggerHandle() = default;
+
+LoggerHandle::~LoggerHandle() {
+  if (!gLogs) {
     printf("%s:%d -> LOGGING SHOULD BE ACTIVE ON SHUTDOWN!\n", __FILE__, __LINE__);
+    fflush(stdout);
     SEGFAULT();
   }
 
+  // Wait for the loop to end.
   gLoggingActive = false;
+  gLoggingThread.join();
+  gLogs.reset();
 }
-
-void LogContainer::Init() {
-  Get();
-}
-
-LogContainer* LogContainer::Get() {
-  static LogContainer logs;
-  return &logs;
-}
-
 
 // DoLogging ---------------------------------------------------------------------------------------
 
 namespace {
 
-/* void OutputLogMessage(const LogMessage& message) { */
-/*   return; */
-
-/*   // TODO(Cristian): Add time. */
-/*   fprintf(stderr, "[%s][%s:%d][%s] %s\n", LogCategoryToString(message.log_category), */
-/*                                           message.location.file, */
-/*                                           message.location.line, */
-/*                                           message.location.function, */
-/*                                           message.msg.c_str()); */
-/*   fflush(stderr); */
-/* } */
+void OutputLogMessage(bool to_stdout, const LogEntry& message) {
+  // TODO(Cristian): Log to file.
+  if (to_stdout) {
+    // TODO(Cristian): Add time.
+    printf("[%s][%s:%d][%s] %s\n",
+           LogCategoryToString(message.log_category),
+           message.location.file,
+           message.location.line,
+           message.location.function,
+           message.msg.c_str());
+    fflush(stdout);
+  }
+}
 
 }  // namespace
 
@@ -89,106 +157,27 @@ void DoLogging(int32_t category, Location location, const char* fmt, ...) {
   auto msg = StringPrintfV(fmt, va);
   va_end(va);
 
-  auto* logs = LogContainer::Get();
-  int write_index = logs->write_index++ % LogContainer::kMaxEntries;
+  // Assert goes to the console.
+  if (category == kLogCategory_ASSERT) {
+    LogEntry entry = {};
+    entry.nanoseconds = GetNanoseconds();
+    entry.log_category = category;
+    entry.location = location;
+    entry.msg = std::move(msg);
 
-  auto& entry = logs->entries[write_index];
+    OutputLogMessage(true, entry);
+
+    return;
+  }
+
+  // Insert the logs into the log system.
+  int write_index = gLogs->write_index++ % LogContainer::kMaxEntries;
+
+  auto& entry = gLogs->entries[write_index];
   entry.nanoseconds = GetNanoseconds();
   entry.log_category = category;
   entry.location = std::move(location);
   entry.msg = std::move(msg);
-
-
-  /* // TODO(Cristian): Add time. */
-  /* fprintf(stderr, "[%s][%s:%d][%s] %s\n", LogCategoryToString(message.log_category), */
-  /*                                         message.location.file, */
-  /*                                         message.location.line, */
-  /*                                         message.location.function, */
-  /*                                         message.msg.c_str()); */
-  /* fflush(stderr); */
 }
-
-// Logger ------------------------------------------------------------------------------------------
-
-#if UPDATE_LOGGER
-
-std::atomic<bool> gLoggerExists    = false;
-uint64_t gReaderIndex              = 0;
-std::atomic<bool> gRunning         = false;
-std::atomic<uint64_t> gWriterIndex = 0;
-
-
-
-void LoggingLoop() {
-  while (gRunning) {
-    // Output all messages currently not written in this logger iteration.
-    uint64_t writer_index = gWriterIndex;
-    while (gReaderIndex < writer_index) {
-      uint64_t reader_index = gReaderIndex % ARRAY_SIZE(gLogMessages);
-
-      OutputLogMessage(gLogMessages[reader_index]);
-
-      gReaderIndex++;
-    }
-
-    // We sleep until the next logging iteration.
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-  }
-};
-
-
-
-namespace {
-
-std::thread gLoggingThread;
-
-}  // namespace
-
-std::unique_ptr<Logger> Logger::CreateLogger() {
-  if (gLoggerExists) {
-    fprintf(stderr, "Logger already created! Only one logger can exists!\n");
-    fflush(stderr);
-    exit(1);
-  }
-
-  gLoggerExists = true;
-  gRunning = true;
-
-  auto logger = std::make_unique<Logger>();
-
-  // Create the thread.
-  gLoggingThread = std::thread(LoggingLoop);
-
-  logger->valid_ = true;
-
-  return logger;
-}
-
-Logger::Logger() = default;
-
-Logger::~Logger() {
-  if (!valid_)
-    return;
-  valid_ = false;
-
-  // Stop the other thread.
-  gRunning = false;
-  gLoggingThread.join();
-}
-
-// Move.
-Logger::Logger(Logger&& other) {
-  valid_ = other.valid_;
-  other.valid_ = false;
-}
-
-Logger& Logger::operator=(Logger&& other) {
-  valid_ = other.valid_;
-  other.valid_ = false;
-
-  return *this;
-}
-
-#endif
 
 }  // namespace rothko

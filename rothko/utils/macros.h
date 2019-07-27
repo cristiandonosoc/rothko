@@ -3,6 +3,19 @@
 
 #pragma once
 
+// Define OS
+#ifdef _WIN32
+#define WINDOWS 1
+#endif
+
+#ifdef __linux__
+#define LINUX 1
+#endif
+
+#ifdef __APPLE__
+#define MACOS 1
+#endif
+
 #ifdef _WIN32
 #define FILEPATH_SEPARATOR '\\'
 #else

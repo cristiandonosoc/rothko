@@ -89,9 +89,10 @@ struct VertexColor {
   static constexpr VertexType kVertexType = VertexType::kColor;
 
   Vec3 pos;
+  Vec2 uv;
   uint32_t color;
 };
-static_assert(sizeof(VertexColor) == 16);
+static_assert(sizeof(VertexColor) == 24);
 
 struct VertexImgui {
   static constexpr VertexType kVertexType = VertexType::kImgui;

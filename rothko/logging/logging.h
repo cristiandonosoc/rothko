@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include <atomic>
+#include <memory>
 #include <string>
 
 #include "rothko/utils/location.h"
@@ -22,35 +23,21 @@ constexpr uint32_t kLogCategory_ERROR = 4;
 constexpr uint32_t kLogCategory_ASSERT = 5;
 constexpr uint32_t kLogCategory_NO_FRAME = 6;
 
-
 namespace rothko {
 
 const char* LogCategoryToString(int32_t category);
 
-struct LogEntry {
-  uint64_t nanoseconds = 0;
-  uint32_t log_category = UINT32_MAX;
-  Location location = {};
-  std::string msg;
+// Shutdowns the logger system at destruction. There should only be one active at a time.
+struct LoggerHandle {
+  LoggerHandle();
+  ~LoggerHandle();
+
+  DELETE_COPY_AND_ASSIGN(LoggerHandle);
+  DELETE_MOVE_AND_ASSIGN(LoggerHandle);
 };
 
-struct LogContainer {
-  static constexpr int kMaxEntries = 4096;
-  static void Init();
-
-  static LogContainer* Get();
-
-  std::atomic<uint64_t> write_index = 0;
-
-  LogEntry entries[kMaxEntries] = {};
-
-  DELETE_COPY_AND_ASSIGN(LogContainer);
-  DELETE_MOVE_AND_ASSIGN(LogContainer);
-
- private:
-  LogContainer();
-  ~LogContainer();
-};
+// Keeps alive the logging system. Treat as singleton.
+std::unique_ptr<LoggerHandle> InitLoggingSystem();
 
 void DoLogging(int32_t category, Location, const char *fmt, ...)
     PRINTF_FORMAT(3, 4);

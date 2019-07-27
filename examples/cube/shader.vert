@@ -7,9 +7,11 @@
 // Attributes ------------------------------------------------------------------
 
 layout (location = 0) in vec3 in_pos;
-layout (location = 1) in vec4 in_color;
+layout (location = 1) in vec2 in_uv;
+layout (location = 2) in vec4 in_color;
 
-out vec4 color;
+out vec4 out_color;
+out vec2 out_uv;
 
 // Uniforms --------------------------------------------------------------------
 
@@ -23,5 +25,7 @@ layout (std140) uniform Uniforms {
 
 void main() {
   gl_Position = proj * view * model * vec4(in_pos, 1.0);
-  color = in_color;
+  out_uv = in_uv;
+  out_color = in_color;
+
 }
