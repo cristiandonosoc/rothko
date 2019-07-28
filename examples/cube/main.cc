@@ -39,16 +39,27 @@ Mesh CreateMesh();
 CubeShader CreateShader();
 Camera CreateCamera();
 
-PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh, CubeShader* shader, Texture* texture);
+PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh,
+                                                CubeShader* shader,
+                                                Texture* tex0,
+                                                Texture* tex1);
+
+Texture LoadTexture(Renderer* renderer, const std::string& path) {
+  Texture texture;
+  if (!STBLoadTexture(path, TextureType::kRGBA, &texture))
+    return {};
+
+  StageTextureConfig config = {};
+  if (!RendererStageTexture(config, renderer, &texture))
+    return {};
+
+  return texture;
+}
 
 }  // namespace
 
 int main() {
-  /* LogContainer::Init(); */
-  /* LogContainer::Init(); */
-
-  auto handle1 = InitLoggingSystem();
-
+  auto log_handle = InitLoggingSystem();
 
   Window window;
   Renderer renderer;
@@ -65,12 +76,12 @@ int main() {
   if (!RendererStageShader(&renderer, &cube_shader.shader))
     return 1;
 
-  Texture wall;
-  if (!STBLoadTexture("examples/cube/wall.jpg", TextureType::kRGBA, &wall))
-    return {};
+  Texture wall = LoadTexture(&renderer, "examples/cube/wall.jpg");
+  if (!Loaded(&wall))
+    return 1;
 
-  StageTextureConfig config = {};
-  if (!RendererStageTexture(config, &renderer, &wall))
+  Texture face = LoadTexture(&renderer, "examples/cube/awesomeface.png");
+  if (!Loaded(&face))
     return 1;
 
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
@@ -137,7 +148,7 @@ int main() {
 
     float angle = time.seconds * ToRadians(50.0f);
     ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
-    auto cube_commands = GetRenderCommands(&mesh, &cube_shader, &wall);
+    auto cube_commands = GetRenderCommands(&mesh, &cube_shader, &wall, &face);
     commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
 
     CreateDebugGui(timings);
@@ -146,7 +157,7 @@ int main() {
 
     timer = Timer::CreateAndStart();
 
-    /* ImGui::ShowDemoWindow(); */
+    ImGui::ShowDemoWindow();
 
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
@@ -260,36 +271,37 @@ Mesh CreateMesh() {
   VertexColor vertices[] = {
     // X
 
-    CreateVertex({-1, -1, -1},  {-1, -1}, Colors::kBlue),
-    CreateVertex({-1, -1,  1},  {-1,  1}, Colors::kGreen),
-    CreateVertex({-1,  1,  1},  { 1,  1}, Colors::kWhite),
-    CreateVertex({-1,  1, -1},  { 1, -1}, Colors::kRed),
-
-    CreateVertex({-1, -1, -1}, {-1, -1}, Colors::kBlue),
-    CreateVertex({-1, -1,  1}, {-1,  1}, Colors::kGreen),
+    CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({-1, -1,  1}, { 0,  1}, Colors::kGreen),
     CreateVertex({-1,  1,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({-1,  1, -1}, { 1, -1}, Colors::kRed),
+    CreateVertex({-1,  1, -1}, { 1,  0}, Colors::kRed),
+
+    CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({-1, -1,  1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({-1,  1,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({-1,  1, -1}, { 1,  0}, Colors::kRed),
 
     // Y
-    CreateVertex({-1, -1, -1}, {-1, -1}, Colors::kBlue),
-    CreateVertex({ 1, -1, -1}, {-1, -1}, Colors::kGreen),
-    CreateVertex({ 1, -1,  1}, {-1,  1}, Colors::kWhite),
-    CreateVertex({-1, -1,  1}, {-1,  1}, Colors::kRed),
+    CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({ 1, -1, -1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({ 1, -1,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({-1, -1,  1}, { 1,  0}, Colors::kRed),
 
-    CreateVertex({-1,  1, -1}, { 1, -1}, Colors::kBlue),
-    CreateVertex({ 1,  1, -1}, { 1, -1}, Colors::kGreen),
+    CreateVertex({-1,  1, -1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({ 1,  1, -1}, { 0,  1}, Colors::kGreen),
     CreateVertex({ 1,  1,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({-1,  1,  1}, { 1,  1}, Colors::kRed),
+    CreateVertex({-1,  1,  1}, { 1,  0}, Colors::kRed),
 
     // Z
-    CreateVertex({-1, -1, -1}, {-1, -1}, Colors::kBlue),
-    CreateVertex({ 1, -1, -1}, {-1, -1}, Colors::kGreen),
-    CreateVertex({ 1,  1, -1}, { 1, -1}, Colors::kWhite),
-    CreateVertex({-1,  1, -1}, { 1, -1}, Colors::kRed),
-    CreateVertex({-1, -1,  1}, {-1,  1}, Colors::kBlue),
-    CreateVertex({ 1, -1,  1}, {-1,  1}, Colors::kGreen),
+    CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({ 1, -1, -1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({ 1,  1, -1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({-1,  1, -1}, { 1,  0}, Colors::kRed),
+
+    CreateVertex({-1, -1,  1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({ 1, -1,  1}, { 0,  1}, Colors::kGreen),
     CreateVertex({ 1,  1,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({-1,  1,  1}, { 1,  1}, Colors::kRed),
+    CreateVertex({-1,  1,  1}, { 1,  0}, Colors::kRed),
   };
 
   Mesh::IndexType indices[] = {
@@ -319,7 +331,7 @@ CubeShader CreateShader() {
   CubeShader shader;
   shader.shader.name = "cube";
   shader.shader.vert_ubo = {"Uniforms", sizeof(UBO)};
-  shader.shader.texture_count = 1;
+  shader.shader.texture_count = 2;
 
   ASSERT(LoadShaderSources("examples/cube/shader.vert",
                            "examples/cube/shader.frag",
@@ -328,7 +340,7 @@ CubeShader CreateShader() {
 }
 
 PerFrameVector<RenderCommand>
-GetRenderCommands(Mesh* mesh, CubeShader* cube_shader, Texture* texture) {
+GetRenderCommands(Mesh* mesh, CubeShader* cube_shader, Texture* tex0, Texture* tex1) {
   (void)mesh;
   (void)cube_shader;
   PerFrameVector<RenderCommand> commands;
@@ -346,7 +358,8 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader, Texture* texture) {
   render_mesh.cull_faces = false;
   render_mesh.indices_size = mesh->indices_count;
   render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
-  render_mesh.textures.push_back(texture);
+  render_mesh.textures.push_back(tex1);
+  render_mesh.textures.push_back(tex0);
   commands.push_back(render_mesh);
 
   render_mesh.mesh = mesh;

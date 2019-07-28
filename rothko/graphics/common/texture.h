@@ -38,6 +38,7 @@ struct Texture {
   ClearOnMove<uint8_t*> data = nullptr;
 };
 
+inline bool Loaded(Texture* t) { return t->data.has_value(); }
 inline bool Staged(Texture* t) { return t->uuid.has_value(); }
 
 void UnloadTexture(Texture* t);

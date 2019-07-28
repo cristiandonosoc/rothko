@@ -6,17 +6,18 @@
 
 // Attributes --------------------------------------------------------------------------------------
 
-in vec2 in_uv;
-in vec4 in_color;
+in vec2 f_uv;
+in vec4 f_color;
 
 layout (location = 0) out vec4 out_color;
 
 // Uniforms ----------------------------------------------------------------------------------------
 
 uniform sampler2D tex0;
+uniform sampler2D tex1;
 
 // Code --------------------------------------------------------------------------------------------
 
 void main() {
-  out_color = texture(tex0, in_uv) * in_color;
+  out_color = mix(texture(tex0, f_uv), texture(tex1, f_uv), 0.5f) * f_color;
 }

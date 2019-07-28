@@ -122,16 +122,20 @@ void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_hand
 
 }
 
-void SetTextures(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
+void SetTextures(const OpenGLRendererBackend& opengl,
+                 const ShaderHandles& shader_handles,
+                 const RenderMesh& render_mesh) {
   ASSERT(render_mesh.shader->texture_count == render_mesh.textures.size());
   for (size_t i = 0; i < render_mesh.textures.size(); i++) {
     Texture* texture = render_mesh.textures[i];
     auto tex_it = opengl.loaded_textures.find(texture->uuid.value);
     ASSERT(tex_it != opengl.loaded_textures.end());
+    auto& tex_handles = tex_it->second;
 
-    uint32_t tex_handle = tex_it->second.tex_handle;
+    uint32_t tex_handle = tex_handles.tex_handle;
     glActiveTexture(GL_TEXTURE0 + i);
     glBindTexture(GL_TEXTURE_2D, tex_handle);
+    glUniform1i(shader_handles.texture_handles[i], i);
   }
 }
 
@@ -166,7 +170,7 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   /* glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &name); */
   /* LOG(DEBUG, "Associated index: %d", name); */
 
-  SetTextures(opengl, render_mesh);
+  SetTextures(opengl, shader_handles, render_mesh);
 
   // Scissoring.
   if (render_mesh.scissor_test &&

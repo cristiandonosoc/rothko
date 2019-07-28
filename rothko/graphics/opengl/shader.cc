@@ -155,6 +155,14 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
     return false;
   }
 
+  // Get the texture positions.
+  for (uint32_t i = 0; i < shader->texture_count; i++) {
+    char tex_name[] = "tex%";   // % will be replaced.
+    tex_name[3] = '0' + i;
+
+    handles->texture_handles[i] = glGetUniformLocation(handles->program, tex_name);
+  }
+
   return true;
 }
 

@@ -4,16 +4,16 @@
 #version 330 core
 #extension GL_ARB_separate_shader_objects : enable
 
-// Attributes ------------------------------------------------------------------
+// Attributes --------------------------------------------------------------------------------------
 
 layout (location = 0) in vec3 in_pos;
 layout (location = 1) in vec2 in_uv;
 layout (location = 2) in vec4 in_color;
 
-out vec4 out_color;
-out vec2 out_uv;
+out vec2 f_uv;
+out vec4 f_color;
 
-// Uniforms --------------------------------------------------------------------
+// Uniforms ----------------------------------------------------------------------------------------
 
 layout (std140) uniform Uniforms {
   mat4 proj;
@@ -21,11 +21,10 @@ layout (std140) uniform Uniforms {
   mat4 model;
 };
 
-// Code ------------------------------------------------------------------------
+// Code --------------------------------------------------------------------------------------------
 
 void main() {
   gl_Position = proj * view * model * vec4(in_pos, 1.0);
-  out_uv = in_uv;
-  out_color = in_color;
-
+  f_uv = in_uv;
+  f_color = in_color;
 }
