@@ -56,10 +56,18 @@ Texture LoadTexture(Renderer* renderer, const std::string& path) {
   return texture;
 }
 
+struct Foo {
+  static inline void Bar() {
+    LOG(DEBUG, "hola");
+  }
+};
+
+
 }  // namespace
 
 int main() {
   auto log_handle = InitLoggingSystem();
+  Foo::Bar();
 
   Window window;
   Renderer renderer;

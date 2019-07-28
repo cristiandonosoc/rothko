@@ -44,7 +44,12 @@ void DoLogging(int32_t category, Location, const char *fmt, ...)
 
 #if DEBUG_MODE
 
-#define LOG(level, ...) ::rothko::DoLogging(::kLogCategory_##level, FROM_HERE VA_ARGS(__VA_ARGS__));
+#define LOG(level, ...)                                                                           \
+  {                                                                                               \
+    constexpr Location location{                                                                  \
+        StrAfterToken(__FILE__, FILEPATH_SEPARATOR), __LINE__, StrAfterToken(__FUNCTION__, ':')}; \
+    ::rothko::DoLogging(::kLogCategory_##level, location VA_ARGS(__VA_ARGS__));                   \
+  }
 
 #define ASSERT(condition)                              \
   do {                                                 \
