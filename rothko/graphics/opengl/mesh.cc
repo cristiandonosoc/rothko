@@ -46,9 +46,11 @@ void UnbindMeshHandles() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, NULL);
 }
 
+// The static_asserts are here to ensure that if the vertices change, this code has to change too.
 void StageAttributes(Mesh* mesh) {
   switch (mesh->vertex_type) {
     case VertexType::kDefault: {
+      static_assert(sizeof(VertexDefault) == 32);
       GLsizei stride = sizeof(VertexDefault);
       glEnableVertexAttribArray(0);
       glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, pos));
@@ -60,15 +62,19 @@ void StageAttributes(Mesh* mesh) {
       return;
     }
     case VertexType::kColor: {
+      static_assert(sizeof(VertexColor) == 24);
       GLsizei stride = sizeof(VertexColor);
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexColor, pos));
       glEnableVertexAttribArray(0);
-      glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride,
-                            (void*)offsetof(VertexColor, color));
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexColor, pos));
       glEnableVertexAttribArray(1);
+      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexColor, uv));
+      glEnableVertexAttribArray(2);
+      glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride,
+                            (void*)offsetof(VertexColor, color));
       return;
     }
     case VertexType::kImgui: {
+      static_assert(sizeof(VertexImgui) == 20);
       GLsizei stride = sizeof(VertexImgui);
       glEnableVertexAttribArray(0);
       glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexImgui, pos));

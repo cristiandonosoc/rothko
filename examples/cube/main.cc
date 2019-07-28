@@ -39,7 +39,7 @@ Mesh CreateMesh();
 CubeShader CreateShader();
 Camera CreateCamera();
 
-PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh, CubeShader* shader);
+PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh, CubeShader* shader, Texture* texture);
 
 }  // namespace
 
@@ -63,6 +63,14 @@ int main() {
 
   CubeShader cube_shader = CreateShader();
   if (!RendererStageShader(&renderer, &cube_shader.shader))
+    return 1;
+
+  Texture wall;
+  if (!STBLoadTexture("examples/cube/wall.jpg", TextureType::kRGBA, &wall))
+    return {};
+
+  StageTextureConfig config = {};
+  if (!RendererStageTexture(config, &renderer, &wall))
     return 1;
 
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
@@ -129,7 +137,7 @@ int main() {
 
     float angle = time.seconds * ToRadians(50.0f);
     ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
-    auto cube_commands = GetRenderCommands(&mesh, &cube_shader);
+    auto cube_commands = GetRenderCommands(&mesh, &cube_shader, &wall);
     commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
 
     CreateDebugGui(timings);
@@ -311,6 +319,7 @@ CubeShader CreateShader() {
   CubeShader shader;
   shader.shader.name = "cube";
   shader.shader.vert_ubo = {"Uniforms", sizeof(UBO)};
+  shader.shader.texture_count = 1;
 
   ASSERT(LoadShaderSources("examples/cube/shader.vert",
                            "examples/cube/shader.frag",
@@ -319,7 +328,7 @@ CubeShader CreateShader() {
 }
 
 PerFrameVector<RenderCommand>
-GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
+GetRenderCommands(Mesh* mesh, CubeShader* cube_shader, Texture* texture) {
   (void)mesh;
   (void)cube_shader;
   PerFrameVector<RenderCommand> commands;
@@ -337,6 +346,7 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
   render_mesh.cull_faces = false;
   render_mesh.indices_size = mesh->indices_count;
   render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
+  render_mesh.textures.push_back(texture);
   commands.push_back(render_mesh);
 
   render_mesh.mesh = mesh;
