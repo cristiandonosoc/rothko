@@ -14,16 +14,29 @@
 
 namespace rothko {
 
-const char* LogCategoryToString(int32_t category) {
+const char* ToString(LogCategory category) {
   switch (category) {
-    case kLogCategory_DEBUG: return "DEBUG";
-    case kLogCategory_INFO: return "INFO";
-    case kLogCategory_WARNING: return "WARNING";
-    case kLogCategory_ERROR: return "ERROR";
-    case kLogCategory_ASSERT: return "ASSERT";
-    case kLogCategory_NO_FRAME: return "NO_FRAME";
+    case LogCategory::kApp: return "App";
+    case LogCategory::kFatal: return "Fatal";
+    case LogCategory::kImgui: return "Imgui";
+    case LogCategory::kGraphics: return "Graphics";
+    case LogCategory::kOpenGL: return "OpenGL";
+    case LogCategory::kLast: return "Last";
   }
 
+  NOT_REACHED();
+  return "<unknown>";
+}
+
+const char* ToString(LogSeverity severity) {
+  switch (severity) {
+    case LogSeverity::kInfo: return "Info";
+    case LogSeverity::kWarning: return "Warning";
+    case LogSeverity::kError: return "Error";
+    case LogSeverity::kAssert: return "Assert";
+  }
+
+  NOT_REACHED();
   return "<unknown>";
 }
 
@@ -31,29 +44,6 @@ const char* LogCategoryToString(int32_t category) {
 //
 // Actual struct that holds the logs for the system.
 // The system is active while there is an active LoggerHandle.
-
-namespace {
-
-struct LogEntry {
-  uint64_t nanoseconds = 0;
-  uint32_t log_category = UINT32_MAX;
-  Location location = {};
-  std::string msg;
-};
-
-struct LogContainer {
-  static constexpr int kMaxEntries = 4096;
-
-  LogContainer() = default;
-  ~LogContainer() = default;
-  DELETE_COPY_AND_ASSIGN(LogContainer);
-  DELETE_MOVE_AND_ASSIGN(LogContainer);
-
-  std::atomic<uint64_t> write_index = 0;
-  LogEntry entries[kMaxEntries] = {};
-};
-
-}  // namespace
 
 // Logging Loop ------------------------------------------------------------------------------------
 //
@@ -128,16 +118,41 @@ LoggerHandle::~LoggerHandle() {
   gLogs.reset();
 }
 
+const LogContainer& GetLogs() {
+  if (!gLogs)
+    SEGFAULT();
+
+  return *gLogs;
+}
+
 // DoLogging ---------------------------------------------------------------------------------------
 
 namespace {
+
+void NanoToLogTime(LogTime* time, uint64_t nanos) {
+
+  /* uint64_t micro = nanos / 1000; */
+  /* time.microseconds = nanos - micro; */
+  /* uint64_t milli = micro / 1000; */
+  /* time.milliseconds = micro - milli; */
+  /* uint64_t secs = milli / 1000; */
+
+  time->nanos = nanos;
+  uint64_t micros = nanos / 1000;
+  time->micros = micros % 1000000;
+  uint64_t secs = micros / 1000000;
+  time->seconds = secs % 60;
+  uint64_t min = secs / 60;
+  time->minutes = min % 60;
+  time->hours = min / 60;
+}
 
 void OutputLogMessage(bool to_stdout, const LogEntry& message) {
   // TODO(Cristian): Log to file.
   if (to_stdout) {
     // TODO(Cristian): Add time.
     printf("[%s][%s:%d][%s] %s\n",
-           LogCategoryToString(message.log_category),
+           ToString(message.category),
            message.location.file,
            message.location.line,
            message.location.function,
@@ -148,7 +163,8 @@ void OutputLogMessage(bool to_stdout, const LogEntry& message) {
 
 }  // namespace
 
-void DoLogging(int32_t category, Location location, const char* fmt, ...) {
+void DoLogging(
+    LogCategory category, LogSeverity severity, Location location, const char* fmt, ...) {
   if (!gLoggingActive)
     return;
 
@@ -158,10 +174,11 @@ void DoLogging(int32_t category, Location location, const char* fmt, ...) {
   va_end(va);
 
   // Assert goes to the console.
-  if (category == kLogCategory_ASSERT) {
+  if (severity == LogSeverity::kAssert) {
     LogEntry entry = {};
-    entry.nanoseconds = GetNanoseconds();
-    entry.log_category = category;
+    NanoToLogTime(&entry.log_time, GetNanoseconds());
+    entry.category = category;
+    entry.severity = severity;
     entry.location = location;
     entry.msg = std::move(msg);
 
@@ -174,8 +191,9 @@ void DoLogging(int32_t category, Location location, const char* fmt, ...) {
   int write_index = gLogs->write_index++ % LogContainer::kMaxEntries;
 
   auto& entry = gLogs->entries[write_index];
-  entry.nanoseconds = GetNanoseconds();
-  entry.log_category = category;
+  NanoToLogTime(&entry.log_time, GetNanoseconds());
+  entry.category = category;
+  entry.severity = severity;
   entry.location = std::move(location);
   entry.msg = std::move(msg);
 }

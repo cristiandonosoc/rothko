@@ -3,8 +3,6 @@
 
 #include "rothko/utils/multithreading.h"
 
-#include "rothko/logging/logging.h"
-
 namespace rothko {
 
 LockGuard::LockGuard(std::mutex* mutex) : mutex_(mutex) {

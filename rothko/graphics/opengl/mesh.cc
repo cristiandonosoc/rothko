@@ -110,7 +110,7 @@ bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
 
   auto it = opengl->loaded_meshes.find(uuid);
   if (it != opengl->loaded_meshes.end()) {
-    LOG(ERROR, "Reloading mesh %s", mesh->name.c_str());
+    ERROR(OpenGL, "Reloading mesh %s", mesh->name.c_str());
     return false;
   }
 
@@ -124,7 +124,7 @@ bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
 
   UnbindMeshHandles();
 
-  LOG(DEBUG,
+  LOG(OpenGL,
       "Staging mesh %s (uuid: %u, VAO: %u) [%u vertices (%zu bytes)] [%u indices (%zu bytes)]",
       mesh->name.c_str(), uuid, handles.vao,
       mesh->vertices_count, mesh->vertices.size(), mesh->indices_count, mesh->indices.size());
@@ -148,7 +148,6 @@ void DeleteMeshHandles(MeshHandles* handles) {
 
 void OpenGLUnstageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
   uint32_t uuid = mesh->uuid.value;
-  LOG(DEBUG, "Unstaging mesh %s (uuid %u).", mesh->name.c_str(), uuid);
   auto it = opengl->loaded_meshes.find(uuid);
   ASSERT(it != opengl->loaded_meshes.end());
 
@@ -178,7 +177,7 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
   uint64_t uuid = mesh->uuid.value;
   auto it = opengl->loaded_meshes.find(uuid);
   if (it == opengl->loaded_meshes.end()) {
-    LOG(ERROR, "Uploading range on non-staged mesh %s", mesh->name.c_str());
+    ERROR(OpenGL, "Uploading range on non-staged mesh %s", mesh->name.c_str());
     return false;
   }
 
@@ -198,8 +197,6 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
 #endif
     glBufferSubData(GL_ARRAY_BUFFER, offset, size, mesh->vertices.data());
     glBindBuffer(GL_ARRAY_BUFFER, NULL);
-
-    LOG(DEBUG, "Staged %u vertex bytes (%u vertices).", size, size / vertex_size);
   }
 
   // Indices.
@@ -215,8 +212,6 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
 #endif
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, mesh->indices.data());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, NULL);
-
-    LOG(DEBUG, "Staged %u index bytes (%zu indices)", size, size / sizeof(Mesh::IndexType));
   }
 
   return true;

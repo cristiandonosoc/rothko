@@ -65,7 +65,7 @@ void MapIO(ImGuiIO* io) {
 
 bool InitImgui(Renderer* renderer, ImguiContext* imgui) {
   if (Valid(imgui)) {
-    LOG(ERROR, "Imgui context already initialized.");
+    ERROR(Imgui, "Imgui context already initialized.");
     return false;
   }
 

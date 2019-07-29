@@ -86,7 +86,7 @@ void GetWindowSize(SDLOpenGLWindow* sdl, Window* window) {
 
 bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* config) {
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0) {
-    LOG(ERROR, "Error loading SDL: %s", SDL_GetError());
+    ERROR(OpenGL, "Error loading SDL: %s", SDL_GetError());
     return false;
   }
 
@@ -125,7 +125,7 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* confi
                                      config->screen_size.x, config->screen_size.y,
                                      (SDL_WindowFlags)window_flags);
   if (!sdl->sdl_window.has_value()) {
-    LOG(ERROR, "Error creating window: %s", SDL_GetError());
+    ERROR(OpenGL, "Error creating window: %s", SDL_GetError());
     SDLOpenGLShutdown(sdl);
     return false;
   }
@@ -133,7 +133,7 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* confi
   // Setup the OpenGL Context.
   sdl->gl_context = SDL_GL_CreateContext(sdl->sdl_window.value);
   if (!sdl->gl_context.has_value()) {
-    LOG(ERROR, "Error creating OpenGL context: %s", SDL_GetError());
+    ERROR(OpenGL, "Error creating OpenGL context: %s", SDL_GetError());
     SDLOpenGLShutdown(sdl);
     return false;
   }

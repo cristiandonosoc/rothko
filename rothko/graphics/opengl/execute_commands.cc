@@ -107,7 +107,6 @@ void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_hand
 
   // Fragment UBOs.
   if (Valid(render_mesh.shader->frag_ubo)) {
-    LOG(DEBUG, "SET FRAG UBO!");
     auto& ubo = render_mesh.shader->frag_ubo;
     auto& ubo_binding = shader_handles.frag_ubo;
 
@@ -141,19 +140,13 @@ void SetTextures(const OpenGLRendererBackend& opengl,
 
 void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
   if (render_mesh.indices_size == 0) {
-    LOG(WARNING, "Received mesh render mesh comman with size 0");
+    ERROR(OpenGL, "Received mesh render mesh comman with size 0");
     return;
   }
 
   auto shader_it = opengl.loaded_shaders.find(render_mesh.shader->uuid.value);
   ASSERT(shader_it != opengl.loaded_shaders.end());
   const ShaderHandles& shader_handles = shader_it->second;
-
-  /* LOG(DEBUG, "Using program %s: %u", render_mesh.shader->name.c_str(), shader_handles.program); */
-
-  LOG(DEBUG, "---------------------------------------");
-  LOG(DEBUG, "MESH ACTION: \n%s", ToString(render_mesh).c_str());
-  LOG(DEBUG, "INDEX SIZE: %u", render_mesh.indices_size);
 
   // Setup the render command.
   glUseProgram(shader_handles.program);
@@ -165,11 +158,6 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   const MeshHandles& mesh_handles = mesh_it->second;
   SetUniforms(render_mesh, shader_handles);
 
-  LOG(DEBUG, "Setting VAO %u", mesh_handles.vao);
-  /* GLint name; */
-  /* glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &name); */
-  /* LOG(DEBUG, "Associated index: %d", name); */
-
   SetTextures(opengl, shader_handles, render_mesh);
 
   // Scissoring.
@@ -178,8 +166,6 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
     glScissor(render_mesh.scissor_pos.x, render_mesh.scissor_pos.y,
               render_mesh.scissor_size.width, render_mesh.scissor_size.height);
   }
-
-  LOG(DEBUG, "Index size: %u, offset: %u", render_mesh.indices_size, render_mesh.indices_offset);
 
   glBindVertexArray(mesh_handles.vao);
   glDrawElements(GL_TRIANGLES, render_mesh.indices_size, GL_UNSIGNED_INT,

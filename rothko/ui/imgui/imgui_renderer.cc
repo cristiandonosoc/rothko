@@ -22,7 +22,7 @@ bool CreateShader(Renderer* renderer, ImguiRenderer* imgui) {
       shader = GetOpenGLImguiShader();
       break;
     case RendererType::kLast:
-      LOG(ERROR, "Unsupported renderer type: %s", ToString(renderer->type));
+      ERROR(Imgui, "Unsupported renderer type: %s", ToString(renderer->type));
       return false;
   }
 

@@ -65,7 +65,7 @@ bool InitRenderer(Renderer* renderer, InitRendererConfig* config) {
   renderer->backend = CreateRendererBackend(renderer->type);
   if (!renderer->backend) {
     NOT_REACHED();
-    LOG(ERROR, "Could not create backend for: %s", ToString(renderer->type));
+    ERROR(Graphics, "Could not create backend for: %s", ToString(renderer->type));
     return false;
   }
 

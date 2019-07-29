@@ -39,10 +39,8 @@ Mesh CreateMesh();
 CubeShader CreateShader();
 Camera CreateCamera();
 
-PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh,
-                                                CubeShader* shader,
-                                                Texture* tex0,
-                                                Texture* tex1);
+PerFrameVector<RenderCommand> GetRenderCommands(ImVec4 clear_color, Mesh* mesh, CubeShader* shader,
+                                                Texture* tex0, Texture* tex1);
 
 Texture LoadTexture(Renderer* renderer, const std::string& path) {
   Texture texture;
@@ -56,18 +54,13 @@ Texture LoadTexture(Renderer* renderer, const std::string& path) {
   return texture;
 }
 
-struct Foo {
-  static inline void Bar() {
-    LOG(DEBUG, "hola");
-  }
-};
-
-
 }  // namespace
 
 int main() {
   auto log_handle = InitLoggingSystem();
-  Foo::Bar();
+
+  ERROR(App, "Test error: %s", "error");
+  WARNING(OpenGL, "Test warning");
 
   Window window;
   Renderer renderer;
@@ -119,14 +112,9 @@ int main() {
   bool show_another_window = false;
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-  Timings timings = {};
-
   // Sample game loop.
-  int frame_count = 0;
   bool running = true;
   while (running) {
-    Timer timer = Timer::CreateAndStart();
-
     auto events = NewFrame(&window, &input);
     for (auto event : events) {
       if (event == WindowEvent::kQuit) {
@@ -140,33 +128,13 @@ int main() {
       break;
     }
 
-    timings.event_count = input.event_count;
-
-    timings.frame_delta = time.frame_delta;
-
     Update(&time);
     StartFrame(&renderer);
     StartFrame(&imgui, &window, &time, &input);
 
-    timings.start_frame = timer.End();
-
-    timer = Timer::CreateAndStart();
-
     PerFrameVector<RenderCommand> commands;
 
-    float angle = time.seconds * ToRadians(50.0f);
-    ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
-    auto cube_commands = GetRenderCommands(&mesh, &cube_shader, &wall, &face);
-    commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
-
-    CreateDebugGui(timings);
-
-    timings.create_my_commands = timer.End();
-
-    timer = Timer::CreateAndStart();
-
-    ImGui::ShowDemoWindow();
-
+    CreateLogWindow();
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
     // window.
@@ -197,25 +165,17 @@ int main() {
       ImGui::End();
     }
 
+    float angle = time.seconds * ToRadians(50.0f);
+    ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
+    auto cube_commands = GetRenderCommands(clear_color, &mesh, &cube_shader, &wall, &face);
+    commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
+
     auto imgui_commands = EndFrame(&imgui);
-   commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
-
-    timings.create_imgui_commands = timer.End();
-
-    timer = Timer::CreateAndStart();
+    commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
 
     RendererExecuteCommands(commands, &renderer);
 
-    timings.execute_commands = timer.End();
-
-    timer = Timer::CreateAndStart();
-
     EndFrame(&renderer);
-
-    timings.end_frame = timer.End();
-
-    frame_count++;
-    /* std::this_thread::sleep_for(std::chrono::milliseconds(16)); */
   }
 }
 
@@ -229,7 +189,7 @@ bool Setup(Window* window, Renderer* renderer) {
   /* window_config.fullscreen = true; */
   window_config.screen_size = {1920, 1440};
   if (!InitWindow(window, &window_config)) {
-    LOG(ERROR, "Could not initialize window. Exiting.");
+    ERROR(App, "Could not initialize window. Exiting.");
     return false;
   }
 
@@ -238,7 +198,7 @@ bool Setup(Window* window, Renderer* renderer) {
   renderer_config.type = RendererType::kOpenGL;
   renderer_config.window = window;
   if (!InitRenderer(renderer, &renderer_config)) {
-    LOG(ERROR, "Could not initialize the renderer. Exiting.");
+    ERROR(App, "Could not initialize the renderer. Exiting.");
     return false;
   }
 
@@ -278,7 +238,6 @@ Mesh CreateMesh() {
 
   VertexColor vertices[] = {
     // X
-
     CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
     CreateVertex({-1, -1,  1}, { 0,  1}, Colors::kGreen),
     CreateVertex({-1,  1,  1}, { 1,  1}, Colors::kWhite),
@@ -347,8 +306,20 @@ CubeShader CreateShader() {
   return shader;
 }
 
+inline uint8_t FloatToColor(float color) {
+  return (uint8_t)(color * 255.0f);
+}
+
+uint32_t VecToColor(ImVec4 color) {
+  // RGBA
+  return (FloatToColor(color.x) << 24) |
+         (FloatToColor(color.y) << 16) |
+         (FloatToColor(color.z) << 8) |
+         (FloatToColor(color.w));
+}
+
 PerFrameVector<RenderCommand>
-GetRenderCommands(Mesh* mesh, CubeShader* cube_shader, Texture* tex0, Texture* tex1) {
+GetRenderCommands(ImVec4 color, Mesh* mesh, CubeShader* cube_shader, Texture* tex0, Texture* tex1) {
   (void)mesh;
   (void)cube_shader;
   PerFrameVector<RenderCommand> commands;
@@ -356,7 +327,7 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader, Texture* tex0, Texture* t
   // Clear command.
   ClearFrame clear_frame;
   clear_frame = {};
-  clear_frame.color = 0x002266ff;
+  clear_frame.color = VecToColor(color);
   commands.push_back(std::move(clear_frame));
 
   // Mesh command.
@@ -365,17 +336,18 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader, Texture* tex0, Texture* t
   render_mesh.shader = &cube_shader->shader;
   render_mesh.cull_faces = false;
   render_mesh.indices_size = mesh->indices_count;
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
+  render_mesh.vert_ubo_data = (uint8_t*)&ubos[1];
   render_mesh.textures.push_back(tex1);
   render_mesh.textures.push_back(tex0);
   commands.push_back(render_mesh);
 
-  render_mesh.mesh = mesh;
-  render_mesh.shader = &cube_shader->shader;
-  render_mesh.cull_faces = false;
-  render_mesh.indices_size = mesh->indices_count;
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[1];
-  commands.push_back(render_mesh);
+  // Add another cube.
+  /* render_mesh.mesh = mesh; */
+  /* render_mesh.shader = &cube_shader->shader; */
+  /* render_mesh.cull_faces = false; */
+  /* render_mesh.indices_size = mesh->indices_count; */
+  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[0]; */
+  /* commands.push_back(render_mesh); */
 
   return commands;
 }
