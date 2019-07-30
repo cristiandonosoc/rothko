@@ -3,8 +3,6 @@
 
 executable("cube") {
   sources = [
-    "gui.cc",
-    "gui.h",
     "main.cc",
   ]
 

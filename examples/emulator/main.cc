@@ -52,7 +52,7 @@ int main() {
 
     StartFrame(&imgui, &game.window, &game.time, &game.input);
 
-    /* CreateLogWindow(); */
+    CreateLogWindow();
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
     // window.

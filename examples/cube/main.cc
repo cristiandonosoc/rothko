@@ -14,8 +14,6 @@
 #include <sstream>
 #include <thread>
 
-#include "gui.h"
-
 using namespace rothko;
 using namespace rothko::imgui;
 

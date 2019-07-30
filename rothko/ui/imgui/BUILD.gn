@@ -6,6 +6,7 @@ source_set("imgui") {
     "def.h",
     "helpers.h",
     "imgui.h",
+    "imgui_windows.h",
   ]
 
   sources = [
@@ -14,6 +15,7 @@ source_set("imgui") {
     "imgui_renderer.h",
     "imgui_shaders.cc",
     "imgui_shaders.h",
+    "imgui_windows.cc",
   ]
 
   public_configs = [ ":renderer_macros" ]
