@@ -41,7 +41,7 @@ std::string GetBasePath() {
   return JoinPaths({std::move(base_path), ".."});
 }
 
-// GetNanoseconds --------------------------------------------------------------
+// GetNanoseconds ----------------------------------------------------------------------------------
 
 namespace {
 

@@ -1,8 +1,7 @@
 # Copyright 2019, Cristián Donoso.
 # This code has a BSD license. See LICENSE.
 
-# MSVC
-#-------------------------------------------------------------------------------
+# MSVC ---------------------------------------------------------------------------------------------
 
 if (compiler == "msvc") {
   config("default_warnings") {
@@ -10,6 +9,8 @@ if (compiler == "msvc") {
     cflags = [
       "/W4",
       "/WX",
+
+      "/w34062",  # W4062: All switch values must be handled.
 
       # Warning ignores
       "/wd4267",  # size_t to int.
@@ -47,8 +48,7 @@ if (compiler == "msvc") {
   }
 }
 
-# clang
-#-------------------------------------------------------------------------------
+# clang --------------------------------------------------------------------------------------------
 
 if (compiler == "clang") {
   config("default_warnings") {
@@ -76,3 +76,15 @@ if (compiler == "clang") {
     cflags = [ "-O2" ]
   }
 }
+
+# macOS --------------------------------------------------------------------------------------------
+
+# These are special frameworks we need to pass on to the compiler in order for things like clipboard
+# to work. Otherwise we get weird linker "underfined symbol" errors.
+config("osx_compiler_config") {
+  ldflags = [
+    "-framework", "Foundation",
+    "-framework", "AppKit",
+  ]
+}
+

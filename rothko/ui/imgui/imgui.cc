@@ -13,9 +13,9 @@
 // This is to verify that our imgui config wasn't overwritten by a imgui update.
 // Our imgui config is in rothko/ui/imgui/warhol_imgui_config.h
 // That config should be placed in third_party/imgui/imconfig.h
-#ifndef ROTHKO_IMGUI_CONFIG
-#error No warhol imgui config loaded. Is third_party/imgui/imconfig.h correct?
-#endif
+/* #ifndef ROTHKO_IMGUI_CONFIG */
+/* #error No warhol imgui config loaded. Is third_party/imgui/imconfig.h correct? */
+/* #endif */
 
 namespace rothko {
 namespace imgui {
@@ -23,6 +23,8 @@ namespace imgui {
 // Init --------------------------------------------------------------------------------------------
 
 namespace {
+
+static MouseCursor gMouseCursors[ImGuiMouseCursor_COUNT] = {};
 
 void MapIO(ImGuiIO* io) {
   // Keyboard mapping. ImGui will use those indices to peek into the
@@ -48,13 +50,22 @@ void MapIO(ImGuiIO* io) {
   io->KeyMap[ImGuiKey_X] = GET_KEY(X);
   io->KeyMap[ImGuiKey_Y] = GET_KEY(Y);
   io->KeyMap[ImGuiKey_Z] = GET_KEY(Z);
+
+  gMouseCursors[ImGuiMouseCursor_Arrow] = MouseCursor::kArrow;
+  gMouseCursors[ImGuiMouseCursor_TextInput] = MouseCursor::kIbeam;
+  gMouseCursors[ImGuiMouseCursor_ResizeAll] = MouseCursor::kSizeAll;
+  gMouseCursors[ImGuiMouseCursor_ResizeNS] = MouseCursor::kSizeNS;
+  gMouseCursors[ImGuiMouseCursor_ResizeEW] = MouseCursor::kSizeWE;
+  gMouseCursors[ImGuiMouseCursor_ResizeNESW] = MouseCursor::kSizeNESW;
+  gMouseCursors[ImGuiMouseCursor_ResizeNWSE] = MouseCursor::kSizeNWSE;
+  gMouseCursors[ImGuiMouseCursor_Hand] = MouseCursor::kHand;
 }
 
 }  // namespace
 
 bool InitImgui(Renderer* renderer, ImguiContext* imgui) {
   if (Valid(imgui)) {
-    LOG(ERROR, "Imgui context already initialized.");
+    ERROR(Imgui, "Imgui context already initialized.");
     return false;
   }
 
@@ -87,7 +98,6 @@ void RestartKeys(Window* window, Input* input, ImGuiIO* io) {
     io->KeysDown[i] = false;
   }
 
-
   for (size_t i = 0; i < kMaxKeys; i++) {
     if (input->down_this_frame[i])
       io->KeysDown[i] = true;
@@ -110,6 +120,14 @@ void RestartKeys(Window* window, Input* input, ImGuiIO* io) {
   io->MouseWheel += input->mouse.wheel.y;
 
   // TODO(Cristian): Update cursors.
+
+  ImGuiMouseCursor imgui_cursor = ImGui::GetMouseCursor();
+  if (io->MouseDrawCursor || imgui_cursor == ImGuiMouseCursor_None) {
+    window->backend->ShowCursor(false);
+  } else {
+    window->backend->SetMouseCursor(gMouseCursors[imgui_cursor]);
+    window->backend->ShowCursor(true);
+  }
 }
 
 }  // namespace
@@ -118,8 +136,9 @@ void StartFrame(ImguiContext* imgui, Window* window, Time* time, Input* input) {
   ASSERT(Valid(window));
   ASSERT(Valid(imgui));
 
-  imgui->io->DisplaySize = {(float)window->width, (float)window->height};
-  imgui->io->DisplayFramebufferScale = {1.0f, 1.0f};
+  imgui->io->DisplaySize = {(float)window->screen_size.width, (float)window->screen_size.height};
+  imgui->io->DisplayFramebufferScale = {window->framebuffer_scale.width,
+                                        window->framebuffer_scale.height};
 
   // TODO(Cristian): Obtain time delta from platform!
   imgui->io->DeltaTime = time->frame_delta;
@@ -139,8 +158,6 @@ PerFrameVector<RenderCommand> EndFrame(ImguiContext* imgui) {
   ImGui::Render();
   return ImguiGetRenderCommands(&imgui->imgui_renderer);
 }
-
-
 
 }  // namespace imgui
 }  // namespace rothko

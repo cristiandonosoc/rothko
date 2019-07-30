@@ -3,6 +3,7 @@
 
 #include "rothko/platform/paths.h"
 
+#include "rothko/utils/macros.h"
 #include "rothko/utils/strings.h"
 
 namespace rothko {
@@ -13,7 +14,7 @@ std::string JoinPaths(const std::vector<std::string>& paths) {
 }
 
 std::string GetBasename(const std::string& path) {
-  size_t separator = path.rfind('/');
+  size_t separator = path.rfind(FILEPATH_SEPARATOR);
   if (separator == std::string::npos)
     return path;
   return path.substr(separator + 1);

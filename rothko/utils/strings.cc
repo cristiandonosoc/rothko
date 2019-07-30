@@ -5,8 +5,6 @@
 
 #include <third_party/stb/stb_sprintf.h>
 
-#include "rothko/logging/logging.h"
-
 namespace rothko {
 
 bool BeginsWith(const std::string_view& str, const std::string_view& b) {

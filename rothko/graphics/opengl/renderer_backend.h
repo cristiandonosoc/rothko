@@ -24,6 +24,7 @@ struct MeshHandles {
 };
 
 struct TextureHandles {
+
   uint32_t tex_handle = 0;
 };
 

@@ -34,7 +34,7 @@ struct ClearFrame {
 
   bool clear_depth = true;
   bool clear_color = true;
-  uint32_t color = 0;   // One byte per color.
+  uint32_t color = 0;   // One byte per color, RGBA (R = 24, G = 16, B = 8, A = 0).
 };
 std::string ToString(const ClearFrame&);
 

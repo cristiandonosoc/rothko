@@ -13,7 +13,7 @@
 namespace rothko {
 namespace sdl {
 
-// Backend Suscription ---------------------------------------------------------
+// Backend Suscription -----------------------------------------------------------------------------
 
 namespace {
 
@@ -32,7 +32,7 @@ BackendSuscriptor backend_suscriptor;
 
 } // namespace
 
-// Shutdown --------------------------------------------------------------------
+// Shutdown ----------------------------------------------------------------------------------------
 
 namespace {
 
@@ -48,6 +48,20 @@ void SDLOpenGLShutdown(SDLOpenGLWindow* sdl) {
   }
 
   sdl->window = nullptr;
+
+
+  if (sdl->cursors[(int)MouseCursor::kArrow])
+    SDL_SetCursor(sdl->cursors[(int)MouseCursor::kArrow]);
+
+  for (int i = 0; i < ARRAY_SIZE(sdl->cursors); i++) {
+    SDL_Cursor* cursor = sdl->cursors[i];
+    sdl->cursors[i] = NULL;
+    if (cursor == NULL)
+      continue;
+    SDL_FreeCursor(cursor);
+  }
+
+  SDL_ShowCursor(SDL_TRUE);
 }
 
 }  // namespace
@@ -56,14 +70,23 @@ void SDLOpenGLWindow::Shutdown() {
   SDLOpenGLShutdown(this);
 }
 
-// Init ------------------------------------------------------------------------
+// Init --------------------------------------------------------------------------------------------
 
 namespace {
 
-bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window,
-                   InitWindowConfig* config) {
-  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-    LOG(ERROR, "Error loading SDL: %s", SDL_GetError());
+void GetWindowSize(SDLOpenGLWindow* sdl, Window* window) {
+  SDL_GetWindowSize(sdl->sdl_window.value, &window->screen_size.width, &window->screen_size.height);
+
+  // Get the actually drawable display to get the framebuffer ratio.
+  Int2 display = {};
+  SDL_GL_GetDrawableSize(sdl->sdl_window.value, &display.width, &display.height);
+  window->framebuffer_scale = {(float)display.width / (float)window->screen_size.width,
+                               (float)display.height / (float)window->screen_size.height};
+}
+
+bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window, InitWindowConfig* config) {
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0) {
+    ERROR(OpenGL, "Error loading SDL: %s", SDL_GetError());
     return false;
   }
 
@@ -71,13 +94,18 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window,
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+#if __APPLE__
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS,
+                      SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);  // Always required on Mac
+#endif
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
   // Setup SDL flags.
-  uint32_t window_flags = SDL_WINDOW_OPENGL;
+  uint32_t window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
   if (config->borderless)
     window_flags |= SDL_WINDOW_BORDERLESS;
   if (config->fullscreen)
@@ -89,17 +117,15 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window,
   if (config->minimized)
     window_flags |= SDL_WINDOW_MINIMIZED;
   if (config->maximized) {
-    window_flags &= ~SDL_WINDOW_MINIMIZED;    // Remove minimized.
+    window_flags &= ~SDL_WINDOW_MINIMIZED;  // Remove minimized.
     window_flags |= SDL_WINDOW_MAXIMIZED;
   }
 
-  sdl->sdl_window = SDL_CreateWindow("rothko",
-                                     SDL_WINDOWPOS_CENTERED,
-                                     SDL_WINDOWPOS_CENTERED,
-                                     1280, 720,
-                                     window_flags);
+  sdl->sdl_window = SDL_CreateWindow("rothko", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                     config->screen_size.x, config->screen_size.y,
+                                     (SDL_WindowFlags)window_flags);
   if (!sdl->sdl_window.has_value()) {
-    LOG(ERROR, "Error creating window: %s", SDL_GetError());
+    ERROR(OpenGL, "Error creating window: %s", SDL_GetError());
     SDLOpenGLShutdown(sdl);
     return false;
   }
@@ -107,15 +133,29 @@ bool SDLOpenGLInit(SDLOpenGLWindow* sdl, Window* window,
   // Setup the OpenGL Context.
   sdl->gl_context = SDL_GL_CreateContext(sdl->sdl_window.value);
   if (!sdl->gl_context.has_value()) {
-    LOG(ERROR, "Error creating OpenGL context: %s", SDL_GetError());
+    ERROR(OpenGL, "Error creating OpenGL context: %s", SDL_GetError());
     SDLOpenGLShutdown(sdl);
     return false;
   }
 
+  SDL_GL_MakeCurrent(sdl->sdl_window.value, sdl->gl_context.value);
+  SDL_GL_SetSwapInterval(1);  // Enable v-sync.
 
-  /* SDL_GL_SetSwapInterval(1);  // Enable v-sync. */
-  SDL_GetWindowSize(sdl->sdl_window.value, &window->width, &window->height);
-  LOG(DEBUG, "Window size: %d, %d", window->width, window->height);
+  GetWindowSize(sdl, window);
+
+  // Mouse cursors.
+  sdl->cursors[(int)MouseCursor::kArrow] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+  sdl->cursors[(int)MouseCursor::kIbeam] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+  sdl->cursors[(int)MouseCursor::kWait] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
+  sdl->cursors[(int)MouseCursor::kCrosshair] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_CROSSHAIR);
+  sdl->cursors[(int)MouseCursor::kWaitArrow] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAITARROW);
+  sdl->cursors[(int)MouseCursor::kSizeNWSE] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENWSE);
+  sdl->cursors[(int)MouseCursor::kSizeNESW] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENESW);
+  sdl->cursors[(int)MouseCursor::kSizeWE] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
+  sdl->cursors[(int)MouseCursor::kSizeNS] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
+  sdl->cursors[(int)MouseCursor::kSizeAll] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEALL);
+  sdl->cursors[(int)MouseCursor::kNo] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NO);
+  sdl->cursors[(int)MouseCursor::kHand] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
 
   sdl->window = window;
   return true;
@@ -127,7 +167,7 @@ bool SDLOpenGLWindow::Init(Window* w, InitWindowConfig* config) {
   return SDLOpenGLInit(this, w, config);
 }
 
-// UpdateWindow ----------------------------------------------------------------
+// UpdateWindow ------------------------------------------------------------------------------------
 
 namespace {
 
@@ -150,18 +190,16 @@ void ResetUtf8(Window* window) {
 }
 
 void HandleWindowEvent(const SDL_WindowEvent& window_event,
-                       SDLOpenGLWindow* sdl,
-                       Window* window) {
+                       SDLOpenGLWindow* sdl) {
   // Fow now we're interested in window changed.
   if (window_event.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
     PushEvent(sdl, WindowEvent::kWindowResize);
-    window->width = window_event.data1;
-    window->height = window_event.data2;
   }
 }
 
 std::vector<WindowEvent>
 SDLOpenGLNewFrame(SDLOpenGLWindow *sdl, Window *window, Input *input) {
+  (void)window;
   ASSERT(Valid(sdl));
 
   // Restart the state.
@@ -173,11 +211,12 @@ SDLOpenGLNewFrame(SDLOpenGLWindow *sdl, Window *window, Input *input) {
   // Handle events.
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
+    input->event_count++;
     switch (event.type) {
       case SDL_QUIT: PushEvent(sdl, WindowEvent::kQuit); break;
       case SDL_KEYUP: HandleKeyUpEvent(event.key, input); break;
       case SDL_MOUSEWHEEL: HandleMouseWheelEvent(event.wheel, input); break;
-      case SDL_WINDOWEVENT: HandleWindowEvent(event.window, sdl, window); break;
+      case SDL_WINDOWEVENT: HandleWindowEvent(event.window, sdl); break;
       case SDL_TEXTINPUT: {
         // event.text.text is a char[32].
         for (char c : event.text.text) {
@@ -189,6 +228,8 @@ SDLOpenGLNewFrame(SDLOpenGLWindow *sdl, Window *window, Input *input) {
       default: break;
     }
   }
+
+  GetWindowSize(sdl, window);
 
   HandleKeysDown(input);
   HandleMouse(input);
@@ -212,17 +253,29 @@ SDLOpenGLWindow::NewFrame(Window* w, Input* input) {
   return SDLOpenGLNewFrame(this, w, input);
 }
 
-// SwapBuffers -----------------------------------------------------------------
+// SwapBuffers -------------------------------------------------------------------------------------
 
 void SDLOpenGLWindow::SwapBuffers() {
   SDL_GL_SwapWindow(this->sdl_window.value);
 }
 
-// Misc ------------------------------------------------------------------------
+// Misc --------------------------------------------------------------------------------------------
 
 SDLOpenGLWindow::~SDLOpenGLWindow() {
   if (Valid(this))
     SDLOpenGLShutdown(this);
+}
+
+void SDLOpenGLWindow::SetMouseCursor(MouseCursor cursor) {
+  int index = (int)cursor;
+  ASSERT(index < (int)MouseCursor::kLast);
+  SDL_Cursor* sdl_cursor = this->cursors[index];
+  ASSERT(sdl_cursor);
+  SDL_SetCursor(sdl_cursor);
+}
+
+void SDLOpenGLWindow::ShowCursor(bool show) {
+  SDL_ShowCursor(show ? SDL_TRUE : SDL_FALSE);
 }
 
 }  // namespace sdl

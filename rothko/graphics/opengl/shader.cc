@@ -50,9 +50,7 @@ uint32_t CompileShader(Shader* shader, const char* src, GLenum shader_kind) {
     GLchar log[2048];
     glGetShaderInfoLog(handle, sizeof(log), 0, log);
     glDeleteShader(handle);
-    LOG(ERROR, "Shader %s error %s: %s", shader->name.c_str(),
-                                         ToString(shader_kind),
-                                         log);
+    ERROR(OpenGL, "Shader %s error %s: %s", shader->name.c_str(), ToString(shader_kind), log);
     return 0;
   }
 
@@ -76,7 +74,7 @@ uint32_t LinkProgram(uint32_t vert_handle, uint32_t frag_handle) {
 
   uint32_t prog_handle = glCreateProgram();
   if (prog_handle == 0) {
-    LOG(ERROR, "glCreateProgram: could not allocate a program");
+    ERROR(OpenGL, "glCreateProgram: could not allocate a program");
     return 0;
   }
 
@@ -92,7 +90,7 @@ uint32_t LinkProgram(uint32_t vert_handle, uint32_t frag_handle) {
   if (success == GL_FALSE) {
     GLchar log[2048];
     glGetProgramInfoLog(prog_handle, sizeof(log), 0, log);
-    LOG(ERROR, "Could not link shader: %s", log);
+    ERROR(OpenGL, "Could not link shader: %s", log);
     return 0;
   }
 
@@ -110,7 +108,7 @@ bool BindUBOs(const Shader::UBO& ubo,
   // Obtain the block index.
   uint32_t index = glGetUniformBlockIndex(prog_handle, ubo.name.c_str());
   if (index == GL_INVALID_INDEX) {
-    LOG(ERROR, "Could not find UBO index for %s", ubo.name.c_str());
+    ERROR(OpenGL, "Could not find UBO index for %s", ubo.name.c_str());
     return false;
   }
 
@@ -155,6 +153,14 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
     return false;
   }
 
+  // Get the texture positions.
+  for (uint32_t i = 0; i < shader->texture_count; i++) {
+    char tex_name[] = "tex%";   // % will be replaced.
+    tex_name[3] = '0' + i;
+
+    handles->texture_handles[i] = glGetUniformLocation(handles->program, tex_name);
+  }
+
   return true;
 }
 
@@ -172,7 +178,7 @@ bool OpenGLStageShader(OpenGLRendererBackend* opengl, Shader* shader) {
   uint32_t uuid = GetNextShaderUUID();
   auto it = opengl->loaded_shaders.find(uuid);
   if (it != opengl->loaded_shaders.end()) {
-    LOG(ERROR, "Shader %s is already loaded.", shader->name.c_str());
+    ERROR(OpenGL, "Shader %s is already loaded.", shader->name.c_str());
     return false;
   }
 
@@ -192,7 +198,7 @@ bool OpenGLStageShader(OpenGLRendererBackend* opengl, Shader* shader) {
 
 void OpenGLUnstageShader(OpenGLRendererBackend* opengl, Shader* shader) {
   uint32_t uuid = shader->uuid.value;
-  LOG(DEBUG, "Unstaging shader %s (uuid %u).", shader->name.c_str(), uuid);
+  LOG(OpenGL, "Unstaging shader %s (uuid %u).", shader->name.c_str(), uuid);
   auto it = opengl->loaded_shaders.find(uuid);
   ASSERT(it != opengl->loaded_shaders.end());
 

@@ -10,6 +10,8 @@
 namespace rothko {
 
 void NewFrame(Input* input) {
+  input->event_count = 0;
+
   // Move the down buttons over.
   std::memcpy(input->down_last_frame, input->down_this_frame,
               sizeof(input->down_this_frame));

@@ -3,9 +3,8 @@
 
 #include "rothko/utils/file.h"
 
+#include <assert.h>
 #include <stdio.h>
-
-#include "rothko/logging/logging.h"
 
 namespace rothko {
 
@@ -17,7 +16,8 @@ bool ReadWholeFile(const std::string& path,
 
   file = fopen(path.data(), "rb");
   if (file == NULL) {
-    LOG(ERROR, "Could not open file: %s", path.c_str());
+    printf("Could not open file: %s", path.c_str());
+    fflush(stdout);
     return false;
   }
 
@@ -30,7 +30,8 @@ bool ReadWholeFile(const std::string& path,
   out->resize(file_size + pad);
   auto result = fread(out->data(), 1, file_size, file);
   if (result != file_size) {
-    LOG(ERROR, "Could not read file: %s", path.c_str());
+    printf("Could not read file: %s", path.c_str());
+    fflush(stdout);
     return false;
   }
 
@@ -57,10 +58,10 @@ FileHandle OpenFile(const std::string_view& path, bool append) {
 }
 
 void WriteToFile(FileHandle* handle, void* data, size_t size) {
-  ASSERT(Valid(handle));
+  assert(Valid(handle));
 
   size_t res = fwrite(data, sizeof(char), size, (FILE*)handle->hndl.value);
-  ASSERT(res == size);
+  assert(res == size);
 }
 
 void Flush(FileHandle* handle) {
@@ -68,9 +69,9 @@ void Flush(FileHandle* handle) {
 }
 
 void CloseFile(FileHandle* handle) {
-  ASSERT(Valid(handle));
+  assert(Valid(handle));
   int res = fclose((FILE*)handle->hndl.value);
-  ASSERT(res == 0);
+  assert(res == 0);
   handle->hndl.clear();
 }
 

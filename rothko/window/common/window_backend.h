@@ -11,20 +11,18 @@
 namespace rothko {
 
 // WindowBackend
-// =============================================================================
+// =================================================================================================
 //
-// Abstract interface each specific implementation of a window manager has to
-// provide in order to work with Rothko. Each particular window manager (SDL,
-// GLFW, etc.) must subclass this interface and suscribe a factory function
-// keyed by it's particular entry into the WindowBackendType defined in
-// rothko/window/common/window.h
+// Abstract interface each specific implementation of a window manager has to provide in order to
+// work with Rothko. Each particular window manager (SDL, GLFW, etc.) must subclass this interface
+// and suscribe a factory function keyed by it's particular entry into the WindowBackendType defined
+// in rothko/window/common/window.h
 //
-// At the moment of needing a particular backend, the code will call that
-// factory function to obtain an instance of that particular WindowBackend.
+// At the moment of needing a particular backend, the code will call that factory function to obtain
+// an instance of that particular WindowBackend.
 //
-// It is recommended that the suscription is done at initialization time, so
-// that the backend is assured to be there without any further work from part of
-// the called.
+// It is recommended that the suscription is done at initialization time, so that the backend is
+// assured to be there without any further work from part of the called.
 
 enum class WindowEvent : uint32_t;
 
@@ -32,10 +30,24 @@ struct Input;
 struct InitWindowConfig;
 struct Window;
 
+enum class MouseCursor {
+    kArrow,
+    kIbeam,       // "Writing" cursor.
+    kWait,
+    kCrosshair,
+    kWaitArrow,
+    kSizeNWSE,    // Double arrow pointing northwest and southeast
+    kSizeNESW,    // Double arrow pointing northeast and southwest
+    kSizeWE,      // Double arrow pointing west and east
+    kSizeNS,      // Double arrow pointing north and south
+    kSizeAll,     // Four pointed arrow pointing north, south, east, and west
+    kNo,          // Slashed circle or crossbones
+    kHand,        // Hand
+    kLast,
+};
+
 struct WindowBackend {
   virtual ~WindowBackend() = default;
-
-  // Interface -----------------------------------------------------------------
 
   virtual bool Init(Window*, InitWindowConfig*) = 0;
   virtual void Shutdown() = 0;
@@ -43,6 +55,10 @@ struct WindowBackend {
 
   // No-op if the window manager doesn't require it.
   virtual void SwapBuffers() {};
+
+  // Changes the mouse cursor (if supported).
+  virtual void ShowCursor(bool) {}
+  virtual void SetMouseCursor(MouseCursor cursor = MouseCursor::kArrow) { (void)cursor; }
 
   // *** VULKAN SPECIFIC ***
 

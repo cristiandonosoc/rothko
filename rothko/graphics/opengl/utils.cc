@@ -434,7 +434,7 @@ const char* ToString(GLenum type) {
     /* case GL_DONT_CARE: return "GL_DONT_CARE"; */
 
     default:
-      LOG(WARNING, "Uncovered GLenum type: %u", (uint32_t)type);
+      WARNING(OpenGL, "Uncovered GLenum type: %u", (uint32_t)type);
       return "<unknown>";
   }
 }

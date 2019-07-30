@@ -19,7 +19,7 @@
 namespace rothko {
 namespace opengl {
 
-// Backend suscription ---------------------------------------------------------
+// Backend suscription -----------------------------------------------------------------------------
 
 namespace {
 
@@ -58,7 +58,7 @@ void APIENTRY OpenGLDebugCallback(GLenum source, GLenum type, GLuint id,
   std::stringstream ss;
 
   ss << std::endl;
-  ss << "---------------------opengl-callback-start------------" << std::endl;
+  ss << "---------------------opengl-callback-start---------------------" << std::endl;
   // TODO(Cristian): Add GLEnumToString
   (void)source;
   // ss << "Source: " << GLEnumToString(source) << std::endl;
@@ -83,9 +83,9 @@ void APIENTRY OpenGLDebugCallback(GLenum source, GLenum type, GLuint id,
     default: ss << "<unknown>"; break;
   }
   ss << std::endl;
-  ss << "---------------------opengl-callback-end--------------";
+  ss << "---------------------opengl-callback-end-----------------------" << std::endl;
 
-  LOG(ERROR, "%s", ss.str().c_str());
+  ERROR(OpenGL, "%s", ss.str().c_str());
   if (severity == GL_DEBUG_SEVERITY_HIGH)
     exit(1);
 }
@@ -115,11 +115,11 @@ bool OpenGLInit(OpenGLRendererBackend* opengl, InitRendererConfig* config) {
 
   int res = gl3wInit();
   if (res != GL3W_OK) {
-    LOG(ERROR, "Got non-ok GL3W result: %s", Gl3wInitResultToString(res));
+    ERROR(OpenGL, "Got non-ok GL3W result: %s", Gl3wInitResultToString(res));
     return false;
   }
 
-  LOG(DEBUG, "Init gl3w");
+  LOG(OpenGL, "Init gl3w");
 
 #if DEBUG_MODE
   // Suscribe the debug messaging.
@@ -131,7 +131,7 @@ bool OpenGLInit(OpenGLRendererBackend* opengl, InitRendererConfig* config) {
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
                           &unused_ids, true);
 
-    LOG(DEBUG, "Suscribed debug messaging.");
+    LOG(OpenGL, "Suscribed debug messaging.");
   }
 #endif
 
@@ -145,24 +145,24 @@ bool OpenGLRendererBackend::Init(Renderer*, InitRendererConfig* config) {
   return OpenGLInit(this, config);
 }
 
-// Shutdown --------------------------------------------------------------------
+// Shutdown ----------------------------------------------------------------------------------------
 
 OpenGLRendererBackend::~OpenGLRendererBackend() = default;
 
-// Execute Commands ------------------------------------------------------------
+// Execute Commands --------------------------------------------------------------------------------
 
 void OpenGLRendererBackend::ExecuteCommands(
     const PerFrameVector<RenderCommand>& commands) {
   OpenGLExecuteCommands(commands, this);
 }
 
-// StartFrame ------------------------------------------------------------------
+// StartFrame --------------------------------------------------------------------------------------
 
 void OpenGLRendererBackend::StartFrame() {
   ASSERT(Valid(*this));
 }
 
-// EndFrame --------------------------------------------------------------------
+// EndFrame ----------------------------------------------------------------------------------------
 
 namespace {
 
@@ -178,7 +178,7 @@ void OpenGLRendererBackend::EndFrame() {
   WindowSwapBuffers(this->window);
 }
 
-// Meshes ----------------------------------------------------------------------
+// Meshes ------------------------------------------------------------------------------------------
 
 bool OpenGLRendererBackend::StageMesh(Mesh* mesh) {
   return OpenGLStageMesh(this, mesh);
@@ -192,7 +192,7 @@ bool OpenGLRendererBackend::UploadMeshRange(Mesh* mesh, Int2 vertex_range, Int2 
   return OpenGLUploadMeshRange(this, mesh, vertex_range, index_range);
 }
 
-// Shaders ---------------------------------------------------------------------
+// Shaders -----------------------------------------------------------------------------------------
 
 bool OpenGLRendererBackend::StageShader(Shader* shader) {
   return OpenGLStageShader(this, shader);
@@ -202,7 +202,7 @@ void OpenGLRendererBackend::UnstageShader(Shader* shader) {
   OpenGLUnstageShader(this, shader);
 }
 
-// Textures --------------------------------------------------------------------
+// Textures ----------------------------------------------------------------------------------------
 
 bool OpenGLRendererBackend::StageTexture(const StageTextureConfig& config,
                                          Texture* texture) {

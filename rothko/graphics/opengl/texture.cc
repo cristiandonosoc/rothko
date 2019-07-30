@@ -63,7 +63,7 @@ bool OpenGLStageTexture(const StageTextureConfig& config,
   uint32_t uuid = GetNextTextureUUID();
   auto it = opengl->loaded_textures.find(uuid);
   if (it != opengl->loaded_textures.end()) {
-    LOG(ERROR, "Texture %s is already loaded.", texture->name.c_str());
+    ERROR(OpenGL, "Texture %s is already loaded.", texture->name.c_str());
     return false;
   }
 

@@ -6,31 +6,8 @@ group("examples") {
 
   if (sdl_enabled && opengl_enabled) {
     deps += [
-      ":sdl_plain_window",
       "cube",
     ]
   }
 }
 
-if (sdl_enabled && opengl_enabled) {
-  executable("sdl_plain_window") {
-    sources = [
-      "sdl_plain_window.cc",
-    ]
-
-    deps = [
-      "//rothko/window:sdl_opengl",
-    ]
-  }
-
-  executable("sdl_opengl") {
-    sources = [
-      "sdl_opengl.cc",
-    ]
-
-    deps = [
-      "//rothko/graphics:opengl",
-      "//rothko/window:sdl_opengl",
-    ]
-  }
-}

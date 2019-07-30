@@ -4,6 +4,7 @@
 source_set("logging") {
   public = [
     "logging.h",
+    "timer.h",
   ]
 
   sources = [
@@ -12,5 +13,6 @@ source_set("logging") {
 
   deps = [
     "//rothko/utils",
+    "//rothko/platform",
   ]
 }

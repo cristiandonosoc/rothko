@@ -18,6 +18,8 @@ namespace opengl {
 struct OpenGLRendererBackend;
 
 struct ShaderHandles {
+  static constexpr int kMaxTextures = 4;
+
   // The Uniform Buffer Object binding.
   struct UBO {
     int binding_index = -1;
@@ -27,6 +29,8 @@ struct ShaderHandles {
   uint32_t program = 0;
   UBO vert_ubo = {};
   UBO frag_ubo = {};
+
+  int texture_handles[kMaxTextures] = {};
 };
 
 bool OpenGLStageShader(OpenGLRendererBackend*, Shader*);

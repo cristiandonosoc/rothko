@@ -22,7 +22,7 @@ bool CreateShader(Renderer* renderer, ImguiRenderer* imgui) {
       shader = GetOpenGLImguiShader();
       break;
     case RendererType::kLast:
-      LOG(ERROR, "Unsupported renderer type: %s", ToString(renderer->type));
+      ERROR(Imgui, "Unsupported renderer type: %s", ToString(renderer->type));
       return false;
   }
 
@@ -134,6 +134,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
   PerFrameVector<RenderCommand> render_commands;
   ConfigRenderer config = {};
   config.viewport = {fb_width, fb_height};
+  /* config.viewport = {(int)io->DisplaySize.x, (int)io->DisplaySize.y}; */
   render_commands.push_back(std::move(config));
 
   float L = draw_data->DisplayPos.x;
@@ -165,9 +166,22 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
 
     // Because each draw command is isolated, it's necessary to offset each
     // index by their right place in the vertex buffer.
-    static_assert(sizeof(ImDrawIdx) == sizeof(Mesh::IndexType));
-    PushIndices(&imgui_renderer->mesh, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size,
-                                       base_vertex_offset);
+    //
+    // NOTE: Imgui doesn't have a good way of changing it's index size and compile straight out of
+    //       bat. Here we do the transformation from 16-bit indexs to our 32-bit manually, but
+    //       normally PushIndices should work.
+    static_assert(sizeof(ImDrawIdx) == 2);
+    auto& mesh = imgui_renderer->mesh;
+    mesh.indices.reserve((mesh.indices_count + cmd_list->IdxBuffer.Size) * sizeof(Mesh::IndexType));
+    for (int ii = 0; ii < cmd_list->IdxBuffer.Size; ii++) {
+      // NOTE: |mesh.indices| is a uint8_t array, so we need to decompose the value into a series of
+      //       bytes that we can append to the indices.
+      Mesh::IndexType val = cmd_list->IdxBuffer[ii] + base_vertex_offset;
+      uint8_t* tmp = (uint8_t*)&val;
+      uint8_t* tmp_end = (uint8_t*)(&val + 1);
+      mesh.indices.insert(mesh.indices.end(), tmp, tmp_end);
+    }
+    mesh.indices_count += cmd_list->IdxBuffer.Size;
 
     // This will start appending drawing data into the mesh buffer that's
     // already staged into the renderer.

@@ -9,9 +9,12 @@
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
 #include <rothko/ui/imgui.h>
+#include <rothko/logging/timer.h>
 
 #include <sstream>
 #include <thread>
+
+#include "gui.h"
 
 using namespace rothko;
 using namespace rothko::imgui;
@@ -36,12 +39,28 @@ Mesh CreateMesh();
 CubeShader CreateShader();
 Camera CreateCamera();
 
-PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh, CubeShader* shader);
+PerFrameVector<RenderCommand> GetRenderCommands(ImVec4 clear_color, Mesh* mesh, CubeShader* shader,
+                                                Texture* tex0, Texture* tex1);
+
+Texture LoadTexture(Renderer* renderer, const std::string& path) {
+  Texture texture;
+  if (!STBLoadTexture(path, TextureType::kRGBA, &texture))
+    return {};
+
+  StageTextureConfig config = {};
+  if (!RendererStageTexture(config, renderer, &texture))
+    return {};
+
+  return texture;
+}
 
 }  // namespace
 
 int main() {
-  Logger logger = Logger::CreateLogger();
+  auto log_handle = InitLoggingSystem();
+
+  ERROR(App, "Test error: %s", "error");
+  WARNING(OpenGL, "Test warning");
 
   Window window;
   Renderer renderer;
@@ -58,7 +77,15 @@ int main() {
   if (!RendererStageShader(&renderer, &cube_shader.shader))
     return 1;
 
-  float aspect_ratio = (float)window.width / (float)window.height;
+  Texture wall = LoadTexture(&renderer, "examples/cube/wall.jpg");
+  if (!Loaded(&wall))
+    return 1;
+
+  Texture face = LoadTexture(&renderer, "examples/cube/awesomeface.png");
+  if (!Loaded(&face))
+    return 1;
+
+  float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
 
   UBO ubo;
   ubo.proj= Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
@@ -74,8 +101,18 @@ int main() {
   if (!InitImgui(&renderer, &imgui))
     return 1;
 
+  ImGui::StyleColorsDark();
+  ImGuiStyle& style = ImGui::GetStyle();
+  {
+    style.WindowRounding = 0.0f;
+    style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+  }
+
+  bool show_demo_window = true;
+  bool show_another_window = false;
+  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
   // Sample game loop.
-  int frame_count = 0;
   bool running = true;
   while (running) {
     auto events = NewFrame(&window, &input);
@@ -95,18 +132,42 @@ int main() {
     StartFrame(&renderer);
     StartFrame(&imgui, &window, &time, &input);
 
-    float angle = time.seconds * ToRadians(50.0f);
-    ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
-
-    ImGui::ShowDemoWindow();
-
-
-
-
-
     PerFrameVector<RenderCommand> commands;
 
-    auto cube_commands = GetRenderCommands(&mesh, &cube_shader);
+    CreateLogWindow();
+
+    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
+    // window.
+    {
+      static float f = 0.0f;
+      static int counter = 0;
+
+      ImGui::Begin("Hello, world!");  // Create a window called "Hello, world!" and append into it.
+
+      ImGui::Text(
+          "This is some useful text.");  // Display some text (you can use a format strings too)
+      ImGui::Checkbox("Demo Window",
+                      &show_demo_window);  // Edit bools storing our window open/close state
+      ImGui::Checkbox("Another Window", &show_another_window);
+
+      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);  // Edit 1 float using a slider from 0.0f to 1.0f
+      ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
+
+      if (ImGui::Button("Button"))  // Buttons return true when clicked (most widgets return true
+                                    // when edited/activated)
+        counter++;
+      ImGui::SameLine();
+      ImGui::Text("counter = %d", counter);
+
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                  1000.0f / ImGui::GetIO().Framerate,
+                  ImGui::GetIO().Framerate);
+      ImGui::End();
+    }
+
+    float angle = time.seconds * ToRadians(50.0f);
+    ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
+    auto cube_commands = GetRenderCommands(clear_color, &mesh, &cube_shader, &wall, &face);
     commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
 
     auto imgui_commands = EndFrame(&imgui);
@@ -115,9 +176,6 @@ int main() {
     RendererExecuteCommands(commands, &renderer);
 
     EndFrame(&renderer);
-
-    frame_count++;
-    /* std::this_thread::sleep_for(std::chrono::milliseconds(16)); */
   }
 }
 
@@ -128,8 +186,10 @@ bool Setup(Window* window, Renderer* renderer) {
   InitWindowConfig window_config = {};
   window_config.type = WindowType::kSDLOpenGL;
   window_config.resizable = true;
+  /* window_config.fullscreen = true; */
+  window_config.screen_size = {1920, 1440};
   if (!InitWindow(window, &window_config)) {
-    LOG(ERROR, "Could not initialize window. Exiting.");
+    ERROR(App, "Could not initialize window. Exiting.");
     return false;
   }
 
@@ -138,7 +198,7 @@ bool Setup(Window* window, Renderer* renderer) {
   renderer_config.type = RendererType::kOpenGL;
   renderer_config.window = window;
   if (!InitRenderer(renderer, &renderer_config)) {
-    LOG(ERROR, "Could not initialize the renderer. Exiting.");
+    ERROR(App, "Could not initialize the renderer. Exiting.");
     return false;
   }
 
@@ -162,6 +222,15 @@ struct Colors {
   static constexpr uint32_t kWhite =  0xff'ff'ff'ff;
 };
 
+VertexColor CreateVertex(Vec3 pos, Vec2 uv, uint32_t color) {
+  VertexColor vertex = {};
+  vertex.pos = pos;
+  vertex.uv = uv;
+  vertex.color = color;
+
+  return vertex;
+}
+
 Mesh CreateMesh() {
   Mesh mesh = {};
   mesh.name = "cube";
@@ -169,34 +238,37 @@ Mesh CreateMesh() {
 
   VertexColor vertices[] = {
     // X
-    {{-1, -1, -1}, Colors::kBlue},
-    {{-1, -1,  1}, Colors::kGreen},
-    {{-1,  1,  1}, Colors::kWhite},
-    {{-1,  1, -1}, Colors::kRed},
-    {{-1, -1, -1}, Colors::kBlue},
-    {{-1, -1,  1}, Colors::kGreen},
-    {{-1,  1,  1}, Colors::kWhite},
-    {{-1,  1, -1}, Colors::kRed},
+    CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({-1, -1,  1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({-1,  1,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({-1,  1, -1}, { 1,  0}, Colors::kRed),
+
+    CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({-1, -1,  1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({-1,  1,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({-1,  1, -1}, { 1,  0}, Colors::kRed),
 
     // Y
-    {{-1, -1, -1}, Colors::kBlue},
-    {{ 1, -1, -1}, Colors::kGreen},
-    {{ 1, -1,  1}, Colors::kWhite},
-    {{-1, -1,  1}, Colors::kRed},
-    {{-1,  1, -1}, Colors::kBlue},
-    {{ 1,  1, -1}, Colors::kGreen},
-    {{ 1,  1,  1}, Colors::kWhite},
-    {{-1,  1,  1}, Colors::kRed},
+    CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({ 1, -1, -1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({ 1, -1,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({-1, -1,  1}, { 1,  0}, Colors::kRed),
+
+    CreateVertex({-1,  1, -1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({ 1,  1, -1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({ 1,  1,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({-1,  1,  1}, { 1,  0}, Colors::kRed),
 
     // Z
-    {{-1, -1, -1}, Colors::kBlue},
-    {{ 1, -1, -1}, Colors::kGreen},
-    {{ 1,  1, -1}, Colors::kWhite},
-    {{-1,  1, -1}, Colors::kRed},
-    {{-1, -1,  1}, Colors::kBlue},
-    {{ 1, -1,  1}, Colors::kGreen},
-    {{ 1,  1,  1}, Colors::kWhite},
-    {{-1,  1,  1}, Colors::kRed},
+    CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({ 1, -1, -1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({ 1,  1, -1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({-1,  1, -1}, { 1,  0}, Colors::kRed),
+
+    CreateVertex({-1, -1,  1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({ 1, -1,  1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({ 1,  1,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({-1,  1,  1}, { 1,  0}, Colors::kRed),
   };
 
   Mesh::IndexType indices[] = {
@@ -226,6 +298,7 @@ CubeShader CreateShader() {
   CubeShader shader;
   shader.shader.name = "cube";
   shader.shader.vert_ubo = {"Uniforms", sizeof(UBO)};
+  shader.shader.texture_count = 2;
 
   ASSERT(LoadShaderSources("examples/cube/shader.vert",
                            "examples/cube/shader.frag",
@@ -233,8 +306,20 @@ CubeShader CreateShader() {
   return shader;
 }
 
+inline uint8_t FloatToColor(float color) {
+  return (uint8_t)(color * 255.0f);
+}
+
+uint32_t VecToColor(ImVec4 color) {
+  // RGBA
+  return (FloatToColor(color.x) << 24) |
+         (FloatToColor(color.y) << 16) |
+         (FloatToColor(color.z) << 8) |
+         (FloatToColor(color.w));
+}
+
 PerFrameVector<RenderCommand>
-GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
+GetRenderCommands(ImVec4 color, Mesh* mesh, CubeShader* cube_shader, Texture* tex0, Texture* tex1) {
   (void)mesh;
   (void)cube_shader;
   PerFrameVector<RenderCommand> commands;
@@ -242,10 +327,8 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
   // Clear command.
   ClearFrame clear_frame;
   clear_frame = {};
-  clear_frame.color = 0x002266ff;
+  clear_frame.color = VecToColor(color);
   commands.push_back(std::move(clear_frame));
-
-  return commands;
 
   // Mesh command.
   RenderMesh render_mesh;
@@ -253,15 +336,18 @@ GetRenderCommands(Mesh* mesh, CubeShader* cube_shader) {
   render_mesh.shader = &cube_shader->shader;
   render_mesh.cull_faces = false;
   render_mesh.indices_size = mesh->indices_count;
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
+  render_mesh.vert_ubo_data = (uint8_t*)&ubos[1];
+  render_mesh.textures.push_back(tex1);
+  render_mesh.textures.push_back(tex0);
   commands.push_back(render_mesh);
 
-  render_mesh.mesh = mesh;
-  render_mesh.shader = &cube_shader->shader;
-  render_mesh.cull_faces = false;
-  render_mesh.indices_size = mesh->indices_count;
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[1];
-  commands.push_back(render_mesh);
+  // Add another cube.
+  /* render_mesh.mesh = mesh; */
+  /* render_mesh.shader = &cube_shader->shader; */
+  /* render_mesh.cull_faces = false; */
+  /* render_mesh.indices_size = mesh->indices_count; */
+  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[0]; */
+  /* commands.push_back(render_mesh); */
 
   return commands;
 }

@@ -7,7 +7,7 @@ Language: Cpp
 
 AlignOperands: true
 AlignAfterOpenBracket: Align
-AlignConsecutiveAssignments: true
+#AlignConsecutiveAssignments: true
 AlignTrailingComments: true
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: true
