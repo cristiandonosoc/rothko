@@ -306,16 +306,13 @@ CubeShader CreateShader() {
   return shader;
 }
 
-inline uint8_t FloatToColor(float color) {
-  return (uint8_t)(color * 255.0f);
-}
 
 uint32_t VecToColor(ImVec4 color) {
   // RGBA
-  return (FloatToColor(color.x) << 24) |
-         (FloatToColor(color.y) << 16) |
-         (FloatToColor(color.z) << 8) |
-         (FloatToColor(color.w));
+  return ((uint8_t)(color.x * 255.0f) << 24) |
+         ((uint8_t)(color.y * 255.0f) << 16) |
+         ((uint8_t)(color.z * 255.0f) << 8) |
+         ((uint8_t)(color.w * 255.0f));
 }
 
 PerFrameVector<RenderCommand>

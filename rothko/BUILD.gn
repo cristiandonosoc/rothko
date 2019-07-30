@@ -1,0 +1,17 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+# NOTE: Window and renderer must be set by who is importing.
+source_set("game") {
+  sources = [
+    "game.cc",
+    "game.h",
+  ]
+
+  deps = [
+    "//rothko/platform",
+    "//rothko/math",
+    "//rothko/utils",
+    "//rothko/logging",
+  ]
+}

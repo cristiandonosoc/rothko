@@ -1,0 +1,15 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+executable("emulator") {
+  sources = [
+    "main.cc",
+  ]
+
+  deps = [
+    "//rothko:game",
+    "//rothko/graphics:opengl",
+    "//rothko/window:sdl_opengl",
+    "//rothko/ui:imgui",
+  ]
+}
