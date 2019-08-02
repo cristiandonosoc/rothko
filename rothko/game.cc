@@ -6,6 +6,8 @@
 namespace rothko {
 
 bool InitGame(Game* game, InitWindowConfig* window_config, RendererType renderer_type) {
+  game->platform_handle = InitializePlatform();
+
   game->log_handle = InitLoggingSystem();
 
   if (!InitWindow(&game->window, window_config)) {

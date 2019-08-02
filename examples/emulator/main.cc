@@ -4,6 +4,8 @@
 #include <rothko/game.h>
 #include <rothko/ui/imgui.h>
 
+#include <rothko/platform/dialogs.h>
+
 using namespace rothko;
 using namespace rothko::imgui;
 
@@ -34,6 +36,10 @@ int main() {
     return 1;
 
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+  std::string file = OpenFileDialog();
+  LOG(App, "Got file: %s", file.c_str());
+
 
   bool running = true;
   while (running) {

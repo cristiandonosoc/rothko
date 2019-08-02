@@ -12,6 +12,10 @@ namespace rothko {
 // Run a function on the end of the scope.
 // Usage:
 //
+// DEFER([]() { <SOME FUNCTION> });
+//
+// or
+//
 // auto defer = Defer([]() { <SOME FUNCTION> });
 
 struct DeferInternal {
@@ -45,5 +49,7 @@ struct DeferInternal {
 inline DeferInternal Defer(std::function<void()> f) {
   return DeferInternal(std::move(f));
 }
+
+#define DEFER(...) ::rothko::DeferInternal STRINGIFY(_defer, __LINE__) = Defer(__VA_ARGS__)
 
 }  // namespace rothko
