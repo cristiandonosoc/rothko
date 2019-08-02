@@ -58,6 +58,7 @@ toolchain("clang") {
     ]
     description = "CC {{output}}"
   }
+
   tool("cxx") {
     depfile = "{{output}}.d"
     depsformat = "gcc"
@@ -66,6 +67,16 @@ toolchain("clang") {
       "{{source_out_dir}}/{{source_name_part}}.o",
     ]
     description = "CXX {{output}}"
+  }
+
+  tool("objcxx") {
+    depfile = "{{output}}.d"
+    depsformat = "gcc"
+    command = "clang -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} -c {{source}} -o {{output}}"
+    outputs = [
+      "{{source_out_dir}}/{{source_name_part}}.o",
+    ]
+    description = "OBJ-CXX {{output}}"
   }
 
   tool("link") {

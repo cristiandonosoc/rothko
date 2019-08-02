@@ -35,6 +35,9 @@ int main() {
   if (!InitImgui(&game.renderer, &imgui))
     return 1;
 
+  std::string path = OpenFileDialog();
+  LOG(App, "Got path: %s", path.c_str());
+
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
   // Create the background texture.

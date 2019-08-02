@@ -8,19 +8,33 @@
 #include <time.h>
 #include <mach-o/dyld.h>
 #include <sys/errno.h>
+#include <AppKit/AppKit.h>
 
+#include "rothko/platform/dialogs.h"
 #include "rothko/platform/paths.h"
 #include "rothko/platform/timing.h"
 
 namespace rothko {
+
+// Initialize --------------------------------------------------------------------------------------
+
+// Initialization in macOS is a no-op.
+
+PlatformHandle::PlatformHandle() = default;
+PlatformHandle::~PlatformHandle() = default;
+
+std::unique_ptr<PlatformHandle> InitializePlatform() {
+  return std::make_unique<PlatformHandle>();
+}
+
+// Paths -------------------------------------------------------------------------------------------
 
 std::string GetCurrentExecutablePath() {
   char buf[256];
   uint32_t bufsize = sizeof(buf);
   int res = _NSGetExecutablePath(buf, &bufsize);
   if (res != 0) {
-    fprintf(stderr, "Could not get path to current executable: %s\n",
-            strerror(errno));
+    fprintf(stderr, "Could not get path to current executable: %s\n", strerror(errno));
     fflush(stderr);
     return {};
   }
@@ -49,6 +63,27 @@ uint64_t GetNanoseconds() {
   struct timespec now;
   clock_gettime(CLOCK_MONOTONIC, &now);
   return now.tv_sec * 1000000000 + now.tv_nsec;
+}
+
+// Dialogs -----------------------------------------------------------------------------------------
+
+std::string OpenFileDialog() {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
+  NSWindow *keyWindow = [[NSApplication sharedApplication] keyWindow];
+  NSOpenPanel *dialog = [NSOpenPanel openPanel];
+  [dialog setAllowsMultipleSelection:NO];
+
+  std::string result;
+  if ([dialog runModal] == NSModalResponseOK) {
+    NSURL *url = [dialog URL];
+    result = [[url path] UTF8String];
+  }
+
+  [pool release];
+  [keyWindow makeKeyAndOrderFront:nil];
+
+  return result;
 }
 
 }  // namespace rothko
