@@ -9,7 +9,7 @@ executable("emulator") {
   deps = [
     "//rothko:game",
     "//rothko/graphics:opengl",
-    "//rothko/window:sdl_opengl",
     "//rothko/ui:imgui",
+    "//rothko/window:sdl_opengl",
   ]
 }

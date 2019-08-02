@@ -32,7 +32,7 @@ if (compiler == "msvc") {
     ]
 
     ldflags = [
-      "/SUBSYSTEM:CONSOLE" ,
+      "/SUBSYSTEM:CONSOLE",
       "/opt:ref",
       "user32.lib",
       "comctl32.lib",
@@ -89,8 +89,9 @@ if (compiler == "clang") {
 # to work. Otherwise we get weird linker "underfined symbol" errors.
 config("osx_compiler_config") {
   ldflags = [
-    "-framework", "Foundation",
-    "-framework", "AppKit",
+    "-framework",
+    "Foundation",
+    "-framework",
+    "AppKit",
   ]
 }
-

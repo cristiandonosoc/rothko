@@ -37,8 +37,44 @@ int main() {
 
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-  std::string file = OpenFileDialog();
-  LOG(App, "Got file: %s", file.c_str());
+  // Create the background texture.
+  Texture texture;
+  texture.name = "background texture";
+  texture.type = TextureType::kRGBA;
+  texture.dims = {200, 200};
+
+  size_t size = sizeof(Color) * 200 * 200;
+  texture.data = (uint8_t*)malloc(size);
+  texture.free_function = free;
+
+  // Fill in the texture.
+  Color* color = (Color*)texture.data.value;
+  for (int y = 0; y < 200; y++) {
+    int tile_y = (y / 20) % 2;
+
+    for (int x = 0; x < 200; x++) {
+      int tile_x = (x / 20) % 2;
+      * color = {};
+      color->a = 0xff;
+      if ((tile_y + tile_x) % 2 == 0) {
+        color->r = 0xff;
+      } else {
+        color->g = 0xff;
+      }
+
+      color++;
+    }
+  }
+
+  uint8_t* color_end = (uint8_t*)color;
+  ASSERT(color_end == texture.data.value + size);
+
+  StageTextureConfig config = {};
+  config.generate_mipmaps = false;
+  config.min_filter = StageTextureConfig::Filter::kNearest;
+  config.max_filter = StageTextureConfig::Filter::kNearest;
+  if (!RendererStageTexture(config, &game.renderer, &texture))
+    return 1;
 
 
   bool running = true;
@@ -83,6 +119,8 @@ int main() {
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                   1000.0f / ImGui::GetIO().Framerate,
                   ImGui::GetIO().Framerate);
+
+      ImGui::Image(&texture, {(float)texture.dims.width, (float)texture.dims.height});
       ImGui::End();
     }
 

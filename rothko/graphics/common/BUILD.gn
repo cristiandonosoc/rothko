@@ -3,6 +3,7 @@
 
 source_set("common") {
   public = [
+    "color.h",
     "mesh.h",
     "render_commands.h",
     "renderer.h",

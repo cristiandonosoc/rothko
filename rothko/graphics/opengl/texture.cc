@@ -41,14 +41,10 @@ GLenum FilterToGL(StageTextureConfig::Filter filter) {
   switch (filter) {
     case StageTextureConfig::Filter::kNearest: return GL_NEAREST;
     case StageTextureConfig::Filter::kLinear: return GL_LINEAR;
-    case StageTextureConfig::Filter::kNearestMipmapNearest:
-      return GL_NEAREST_MIPMAP_NEAREST;
-    case StageTextureConfig::Filter::kNearestMipmapLinear:
-      return GL_NEAREST_MIPMAP_LINEAR;
-    case StageTextureConfig::Filter::kLinearMipmapNearest:
-      return GL_LINEAR_MIPMAP_NEAREST;
-    case StageTextureConfig::Filter::kLinearMipampLinear:
-      return GL_LINEAR_MIPMAP_LINEAR;
+    case StageTextureConfig::Filter::kNearestMipmapNearest: return GL_NEAREST_MIPMAP_NEAREST;
+    case StageTextureConfig::Filter::kNearestMipmapLinear: return GL_NEAREST_MIPMAP_LINEAR;
+    case StageTextureConfig::Filter::kLinearMipmapNearest: return GL_LINEAR_MIPMAP_NEAREST;
+    case StageTextureConfig::Filter::kLinearMipampLinear: return GL_LINEAR_MIPMAP_LINEAR;
   }
 
   NOT_REACHED();
@@ -72,24 +68,20 @@ bool OpenGLStageTexture(const StageTextureConfig& config,
   glBindTexture(GL_TEXTURE_2D, handle);
 
   // Setup wrapping/filtering options.
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                  WrapToGL(config.wrap_u));
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-                  WrapToGL(config.wrap_v));
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  FilterToGL(config.min_filter));
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-                  FilterToGL(config.max_filter));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, WrapToGL(config.wrap_u));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, WrapToGL(config.wrap_v));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, FilterToGL(config.min_filter));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, FilterToGL(config.max_filter));
 
   // Send the bits over.
-  glTexImage2D(GL_TEXTURE_2D,           // target
-               0,                       // level
-               GL_RGBA,                 // internalformat
-               texture->dims.width,     // width,
-               texture->dims.height,    // height
-               0,                       // border
-               GL_RGBA,                 // format
-               GL_UNSIGNED_BYTE,        // type,
+  glTexImage2D(GL_TEXTURE_2D,         // target
+               0,                     // level
+               GL_RGBA8,              // internalformat
+               texture->dims.width,   // width,
+               texture->dims.height,  // height
+               0,                     // border
+               GL_RGBA,               // format
+               GL_UNSIGNED_BYTE,      // type,
                texture->data.value);
 
   if (config.generate_mipmaps)

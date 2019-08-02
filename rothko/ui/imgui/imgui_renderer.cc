@@ -84,10 +84,9 @@ bool CreateFontTexture(Renderer* renderer, ImguiRenderer* imgui) {
   if (!RendererStageTexture(config, renderer, &texture))
     return false;
 
-  // Imgui wants a way of tracking the font texture id to relay it back to use
-  // on render time.
-  imgui->io->Fonts->TexID = (ImTextureID)(uintptr_t)texture.uuid.value;
+  // Imgui wants a way of tracking the font texture id to relay it back to use on render time.
   imgui->font_texture = std::move(texture);
+  imgui->io->Fonts->TexID = (ImTextureID)&imgui->font_texture;
   return true;
 }
 
@@ -151,7 +150,6 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
   imgui_renderer->mesh.indices.clear();
   imgui_renderer->mesh.indices_count = 0;
 
-
   // Create the draw list.
   ImVec2 pos = draw_data->DisplayPos;
   for (int i = 0; i < draw_data->CmdListsCount; i++) {
@@ -192,7 +190,8 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
       RenderMesh render_mesh;
       render_mesh.shader = &imgui_renderer->shader;
       render_mesh.mesh = &imgui_renderer->mesh;
-      render_mesh.textures.push_back(&imgui_renderer->font_texture);
+      /* render_mesh.textures.push_back(&imgui_renderer->font_texture); */
+      render_mesh.textures.push_back((Texture*)draw_cmd->TextureId);
 
       render_mesh.indices_offset = base_index_offset + index_offset;
       render_mesh.indices_size = draw_cmd->ElemCount;

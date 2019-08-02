@@ -12,7 +12,7 @@ source_set("logging") {
   ]
 
   deps = [
-    "//rothko/utils",
     "//rothko/platform",
+    "//rothko/utils",
   ]
 }
