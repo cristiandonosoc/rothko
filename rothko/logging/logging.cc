@@ -8,7 +8,7 @@
 #include <atomic>
 #include <thread>
 
-#include "rothko/platform/timing.h"
+#include "rothko/platform/platform.h"
 #include "rothko/utils/macros.h"
 #include "rothko/utils/strings.h"
 

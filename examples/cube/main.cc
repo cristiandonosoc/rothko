@@ -2,14 +2,14 @@
 // This code has a BSD license. See LICENSE.
 
 #include <rothko/graphics/graphics.h>
-#include <rothko/math/math.h>
-#include <rothko/platform/timing.h>
-#include <rothko/scene/camera.h>
 #include <rothko/logging/logging.h>
+#include <rothko/logging/timer.h>
+#include <rothko/math/math.h>
+#include <rothko/platform/platform.h>
+#include <rothko/scene/camera.h>
+#include <rothko/ui/imgui.h>
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
-#include <rothko/ui/imgui.h>
-#include <rothko/logging/timer.h>
 
 #include <sstream>
 #include <thread>

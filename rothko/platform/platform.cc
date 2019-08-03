@@ -1,9 +1,13 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include "rothko/platform/timing.h"
+#include "rothko/platform/platform.h"
+
+#include "rothko/utils/strings.h"
 
 namespace rothko {
+
+// Implementation of common platform functionality.
 
 Time InitTime() {
   Time time = {};
@@ -40,4 +44,17 @@ void Update(Time* time) {
   time->frame_rate = 1.0f / accum;
 }
 
-}  // namespace rothko
+// TODO(Cristian): Use std::filesystem (C++17) for this eventually.
+//                 Or use platform specific code.
+std::string JoinPaths(const std::vector<std::string>& paths) {
+  return Join(paths, "/");
+}
+
+std::string GetBasename(const std::string& path) {
+  size_t separator = path.rfind(FILEPATH_SEPARATOR);
+  if (separator == std::string::npos)
+    return path;
+  return path.substr(separator + 1);
+}
+
+}  // namespace

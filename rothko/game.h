@@ -7,7 +7,6 @@
 #include "rothko/input/input.h"
 #include "rothko/logging/logging.h"
 #include "rothko/platform/platform.h"
-#include "rothko/platform/timing.h"
 #include "rothko/window/window.h"
 
 namespace rothko {

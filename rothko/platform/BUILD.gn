@@ -4,15 +4,11 @@
 # Platform is the a base level library, it has no dependencies.
 source_set("platform") {
   public = [
-    "dialogs.h",
-    "paths.h",
     "platform.h",
-    "timing.h",
   ]
 
   sources = [
-    "paths.cc",
-    "timing.cc",
+    "platform.cc",
   ]
 
   # Platform specific sources ----------------------------------------------------------------------

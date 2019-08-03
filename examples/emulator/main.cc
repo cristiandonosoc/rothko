@@ -4,7 +4,7 @@
 #include <rothko/game.h>
 #include <rothko/ui/imgui.h>
 
-#include <rothko/platform/dialogs.h>
+#include <rothko/platform/platform.h>
 
 using namespace rothko;
 using namespace rothko::imgui;
