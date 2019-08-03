@@ -13,6 +13,7 @@ source_set("common") {
   ]
 
   sources = [
+    "color.cc",
     "mesh.cc",
     "render_commands.cc",
     "renderer.cc",

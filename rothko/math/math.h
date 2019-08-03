@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <random>
 #include <string>
 
 // This is Rothko's math definitions and functions. This includes generic math functions (sin, cos),
@@ -28,6 +29,16 @@ float Cos(float radian_angle);
 float Tan(float radian_angle);
 
 inline float ToRadians(float degrees) { return degrees * (PI / 180.0f); }
+
+#define IS_EVEN(x) ((x) % 2 == 0)
+#define IS_ODD(x) ((x) % 2 == 1)
+
+// Returns [min, max].
+// TODO(Cristian): Implement a better random.
+inline int Random(int min, int max) {
+  int diff = max - min + 1;     // rand() will return [0, diff)
+  return rand() % diff + min;   // [min, min + diff + 1) = [min, max + 1)
+}
 
 // =================================================================================================
 // Vectors
@@ -70,6 +81,9 @@ union _v2 {
 
   _v2 operator/(const _v2& o) const { return {x / o.x, y / o.y}; }
   void operator/=(const _v2& o) { x /= o.x; y /= o.y; }
+
+  _v2 operator/(T t) const { return {x / t, y / t}; }
+  void operator/=(const T t) { x /= t; y /= t; }
 
   bool operator==(const _v2& o) const { return x == o.x && y == o.y; }
   bool operator!=(const _v2& o) const { return x != o.x || y != o.y; }
@@ -133,6 +147,9 @@ union _v3 {
 
   _v3 operator/(const _v3& o) const { return {x / o.x, y / o.y, z / o.z}; }
   void operator/=(const _v3& o) { x /= o.x; y /= o.y; z /= o.z; }
+
+  _v3 operator/(T t) const { return {x / t, y / t, z / t}; }
+  void operator/=(const T t) { x /= t; y /= t; z /= t; }
 
   void operator==(const _v3& o) const { return x == o.x && y == o.y && z == o.z; }
   void operator!=(const _v3& o) const { return x != o.x || y != o.y || z != o.z; }
@@ -206,6 +223,9 @@ union _v4 {
 
   _v4 operator/(const _v4 &o) const { return {x / o.x, y / o.y, z / o.z, w / o.w}; }
   void operator/=(const _v4& o) { x /= o.x; y /= o.y; z /= o.z; w /= o.w; }
+
+  _v4 operator/(T t) const { return {x / t, y / t, z / t, w / t}; }
+  void operator/=(const T t) { x /= t; y /= t; z /= t; w /= t; }
 
   void operator==(const _v4& o) const { return x == o.x && y == o.y && z == o.z && w == o.w; }
   void operator!=(const _v4& o) const { return x != o.x || y != o.y || z != o.z || w != o.w; }

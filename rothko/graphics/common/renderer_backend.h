@@ -57,6 +57,7 @@ struct RendererBackend {
   // Textures.
   virtual bool StageTexture(const StageTextureConfig&, Texture*) = 0;
   virtual void UnstageTexture(Texture*) = 0;
+  virtual void SubTexture(Texture*, Int2 offset, Int2 range, void* data) = 0;
 };
 
 }  // namespace rothko

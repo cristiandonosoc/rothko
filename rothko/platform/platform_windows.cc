@@ -7,10 +7,7 @@
 #include <stdlib.h>
 #include <windows.h>
 
-#include "rothko/platform/dialogs.h"
-#include "rothko/platform/paths.h"
 #include "rothko/platform/platform.h"
-#include "rothko/platform/timing.h"
 #include "rothko/utils/defer.h"
 
 namespace rothko {

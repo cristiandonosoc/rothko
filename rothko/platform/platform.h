@@ -46,6 +46,16 @@ std::string GetBasename(const std::string& path);
 // See rothko/platform/platform.h for more details.
 uint64_t GetNanoseconds();
 
+// Everything is counted in nanoseconds.
+constexpr uint64_t kMicroSecond = 1000u;
+constexpr uint64_t kMilliSecond = 1000u * kMicroSecond;
+constexpr uint64_t kSecond = 1000u * kMilliSecond;
+constexpr uint64_t kMinute = 60u * kSecond;
+constexpr uint64_t kHour = 60u * kMinute;
+constexpr uint64_t kDay = 24u * kHour;
+constexpr uint64_t kWeek = 7 * kDay;
+
+// Struct that tracks how much time has passed since
 struct Time {
   // Represents the time since |Init| was called.
   uint64_t total_time = 0;    // In nanoseconds.

@@ -85,7 +85,14 @@ void APIENTRY OpenGLDebugCallback(GLenum source, GLenum type, GLuint id,
   ss << std::endl;
   ss << "---------------------opengl-callback-end-----------------------" << std::endl;
 
-  ERROR(OpenGL, "%s", ss.str().c_str());
+  printf("%s", ss.str().c_str());
+
+  // REALLY flush.
+  fflush(stdout);
+  fflush(stdout);
+  fflush(stdout);
+  fflush(stdout);
+  fflush(stdout);
   if (severity == GL_DEBUG_SEVERITY_HIGH)
     exit(1);
 }
@@ -211,6 +218,10 @@ bool OpenGLRendererBackend::StageTexture(const StageTextureConfig& config,
 
 void OpenGLRendererBackend::UnstageTexture(Texture* texture) {
   OpenGLUnstageTexture(this, texture);
+}
+
+void OpenGLRendererBackend::SubTexture(Texture* texture, Int2 offset, Int2 range, void* data) {
+  OpenGLSubTexture(this, texture, offset, range, data);
 }
 
 }  // namespace opengl

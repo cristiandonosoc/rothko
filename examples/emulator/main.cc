@@ -19,6 +19,42 @@ uint32_t VecToColor(ImVec4 color) {
          ((uint8_t)(color.w * 255.0f));
 }
 
+Color TileColor(Int2 coord) {
+  Color color{};
+  if (IS_EVEN(coord.x + coord.y)) {
+    return colors::kRed;
+  } else {
+    return colors::kGreen;
+  }
+}
+
+int kTileSize = 20;
+Int2 kTextureDim = {200, 200};
+Int2 kTileCount = kTextureDim / kTileSize;
+
+Int2 IndexToCoord(int index) {
+  return {index % kTileCount.x, (index / kTileCount.y)};
+}
+
+int CoordToIndex(Int2 coord) {
+  return coord.y * kTileCount.x + coord.x;
+}
+
+void PaintTile(Color* data, Int2 coord, Color color) {
+  int cx = coord.x * kTileSize;
+  int cy = coord.y * kTileSize;
+
+  for (int y = cy; y < cy + kTileSize; y++) {
+    for (int x = cx; x < cx + kTileSize; x++) {
+      data[y * kTextureDim.width + x] = color;
+    }
+  }
+}
+
+void PaintTile(Color* data, int index, Color color) {
+  PaintTile(data, IndexToCoord(index), color);
+}
+
 }  // namespace
 
 int main() {
@@ -35,8 +71,8 @@ int main() {
   if (!InitImgui(&game.renderer, &imgui))
     return 1;
 
-  std::string path = OpenFileDialog();
-  LOG(App, "Got path: %s", path.c_str());
+  /* std::string path = OpenFileDialog(); */
+  /* LOG(App, "Got path: %s", path.c_str()); */
 
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -44,31 +80,36 @@ int main() {
   Texture texture;
   texture.name = "background texture";
   texture.type = TextureType::kRGBA;
-  texture.dims = {200, 200};
+  texture.dims = kTextureDim;
 
-  size_t size = sizeof(Color) * 200 * 200;
+  size_t size = sizeof(Color) * kTextureDim.width * kTextureDim.height;
   texture.data = (uint8_t*)malloc(size);
   texture.free_function = free;
 
   // Fill in the texture.
-  Color* color = (Color*)texture.data.value;
-  for (int y = 0; y < 200; y++) {
-    int tile_y = (y / 20) % 2;
+  Color* base_color = (Color*)texture.data.value;
+  Color* color = base_color;
+  for (int y = 0; y < kTextureDim.height; y++) {
+    int tile_y = (y / kTileSize);
 
-    for (int x = 0; x < 200; x++) {
-      int tile_x = (x / 20) % 2;
-      * color = {};
-      color->a = 0xff;
-      if ((tile_y + tile_x) % 2 == 0) {
-        color->r = 0xff;
-      } else {
-        color->g = 0xff;
-      }
+    for (int x = 0; x < kTextureDim.width; x++) {
+      int tile_x = (x / kTileSize);
 
+      *color = TileColor({tile_x, tile_y});
       color++;
     }
   }
 
+  /* PaintTile(base_color, {0, 0}, colors::kBlue); */
+  /* PaintTile(base_color, {1, 1}, colors::kBlue); */
+  /* PaintTile(base_color, {1, 4}, colors::kBlue); */
+  /* PaintTile(base_color, {6, 6}, colors::kBlue); */
+  /* PaintTile(base_color, 0, colors::kBlue); */
+  /* PaintTile(base_color, 11, colors::kBlue); */
+  /* PaintTile(base_color, 41, colors::kBlue); */
+  /* PaintTile(base_color, 66, colors::kBlue); */
+
+  int prev_index = -1;
   uint8_t* color_end = (uint8_t*)color;
   ASSERT(color_end == texture.data.value + size);
 
@@ -79,6 +120,8 @@ int main() {
   if (!RendererStageTexture(config, &game.renderer, &texture))
     return 1;
 
+  uint64_t step = kSecond;
+  uint64_t next_time = GetNanoseconds() + step;
 
   bool running = true;
   while (running) {
@@ -88,6 +131,24 @@ int main() {
         running = false;
         break;
       }
+    }
+
+    auto frame_time = GetNanoseconds();
+    if (frame_time >= next_time) {
+      next_time = next_time + step;
+      int new_index = Random(0, 100);
+      LOG(App, "Recover index %d (%s), change index %d (%s)",
+               prev_index, ToString(IndexToCoord(prev_index)).c_str(),
+               new_index, ToString(IndexToCoord(new_index)).c_str());
+
+      if (prev_index > 0) {
+        PaintTile((Color*)texture.data.value, prev_index, TileColor(IndexToCoord(prev_index)));
+      }
+      prev_index = new_index;
+
+      PaintTile((Color*)texture.data.value, new_index, colors::kBlue);
+
+      RendererSubTexture(&game.renderer, &texture, {0, 0}, kTextureDim, texture.data.value);
     }
 
     if (KeyUpThisFrame(&game.input, Key::kEscape)) {

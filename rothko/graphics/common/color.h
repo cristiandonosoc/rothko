@@ -11,10 +11,26 @@ namespace rothko {
 
 struct Color {
   // ABGR in memory.
+  Color() : r(0), g(0), b(0), a(0xff) {}
+  Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xff) : r(r), g(g), b(b), a(a) {}
+
+  DEFAULT_COPY_AND_ASSIGN(Color);
+  DEFAULT_MOVE_AND_ASSIGN(Color);
+
   void operator=(uint32_t color) { *((uint32_t*)this) = color; }
 
   uint8_t r, g, b, a;
 };
 static_assert(sizeof(Color) == 4);
+
+// Premade colors ----------------------------------------------------------------------------------
+
+namespace colors {
+
+extern Color kBlue;
+extern Color kRed;
+extern Color kGreen;
+
+}  // namespace colors
 
 }  // namespace rothko

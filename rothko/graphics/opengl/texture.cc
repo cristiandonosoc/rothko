@@ -24,7 +24,17 @@ uint32_t GetNextTextureUUID() {
   return id;
 }
 
-// Stage Texture ---------------------------------------------------------------
+GLenum TextureTypeToGL(TextureType type) {
+  switch (type) {
+    case TextureType::kRGBA: return GL_RGBA;
+    case TextureType::kLast: break;
+  }
+
+  NOT_REACHED();
+  return 0;
+}
+
+// Stage Texture -----------------------------------------------------------------------------------
 
 GLenum WrapToGL(StageTextureConfig::Wrap wrap) {
   switch (wrap) {
@@ -97,7 +107,7 @@ bool OpenGLStageTexture(const StageTextureConfig& config,
   return true;
 }
 
-// Unstage Texture -------------------------------------------------------------
+// Unstage Texture ---------------------------------------------------------------------------------
 
 void OpenGLUnstageTexture(OpenGLRendererBackend* opengl, Texture* texture) {
   auto it = opengl->loaded_textures.find(texture->uuid.value);
@@ -107,6 +117,29 @@ void OpenGLUnstageTexture(OpenGLRendererBackend* opengl, Texture* texture) {
   opengl->loaded_textures.erase(it);
   texture->uuid = 0;
 }
+
+// Sub Tex -----------------------------------------------------------------------------------------
+
+void OpenGLSubTexture(OpenGLRendererBackend* opengl, Texture* texture, Int2 offset, Int2 range,
+                              void* data) {
+  ASSERT(offset.x + range.x <= texture->dims.x);
+  ASSERT(offset.y + range.y >= 0 && range.y <= texture->dims.y);
+
+  auto it = opengl->loaded_textures.find(texture->uuid.value);
+  ASSERT(it != opengl->loaded_textures.end());
+
+  glBindTexture(GL_TEXTURE_2D, it->second.tex_handle);
+  glTexSubImage2D(GL_TEXTURE_2D,
+                  0,
+                  offset.x,
+                  offset.y,
+                  range.width,
+                  range.height,
+                  TextureTypeToGL(texture->type),
+                  GL_UNSIGNED_BYTE,
+                  data);
+}
+
 
 }  // namespace opengl
 }  // namespace rothko
