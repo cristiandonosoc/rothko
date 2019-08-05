@@ -27,9 +27,11 @@ static_assert(sizeof(Color) == 4);
 
 namespace colors {
 
+extern Color kBlack;
 extern Color kBlue;
-extern Color kRed;
 extern Color kGreen;
+extern Color kRed;
+extern Color kWhite;
 
 }  // namespace colors
 

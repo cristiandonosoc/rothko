@@ -2,9 +2,10 @@
 // This code has a BSD license. See LICENSE.
 
 #include <rothko/game.h>
+#include <rothko/platform/platform.h>
 #include <rothko/ui/imgui.h>
 
-#include <rothko/platform/platform.h>
+#include "display.h"
 
 using namespace rothko;
 using namespace rothko::imgui;
@@ -28,9 +29,9 @@ Color TileColor(Int2 coord) {
   }
 }
 
-int kTileSize = 20;
-Int2 kTextureDim = {200, 200};
-Int2 kTileCount = kTextureDim / kTileSize;
+int kTileSize = 8;
+Int2 kTileCount =  {4, 4};
+Int2 kTextureDim = kTileCount * kTileSize;
 
 Int2 IndexToCoord(int index) {
   return {index % kTileCount.x, (index / kTileCount.y)};
@@ -53,6 +54,20 @@ void PaintTile(Color* data, Int2 coord, Color color) {
 
 void PaintTile(Color* data, int index, Color color) {
   PaintTile(data, IndexToCoord(index), color);
+}
+
+void PaintTile(Color* data, Int2 coord, const Color* tile_data) {
+  Color* tile_base = data + (coord.y * kTileSize * kTextureDim.x  + coord.x * kTileSize);
+  for (int y = 0; y < 8; y++) {
+    Color* row_base = tile_base + (y * kTextureDim.x);
+    for (int x = 0; x < 8; x++) {
+      row_base[x] = *tile_data++;
+    }
+  }
+}
+
+void PaintTile(Color* data, int index, const Color* tile_data) {
+  PaintTile(data, IndexToCoord(index), tile_data);
 }
 
 }  // namespace
@@ -90,15 +105,51 @@ int main() {
   Color* base_color = (Color*)texture.data.value;
   Color* color = base_color;
   for (int y = 0; y < kTextureDim.height; y++) {
-    int tile_y = (y / kTileSize);
+    /* int tile_y = (y / kTileSize); */
 
     for (int x = 0; x < kTextureDim.width; x++) {
-      int tile_x = (x / kTileSize);
+      /* int tile_x = (x / kTileSize); */
 
-      *color = TileColor({tile_x, tile_y});
+      /* *color = TileColor({tile_x, tile_y}); */
+      *color = 0xff000000;
       color++;
     }
   }
+
+  constexpr uint8_t kTileData[] = {
+    0b00'11'00'11,
+    0b00'00'11'11,
+    0b11'00'11'00,
+    0b11'11'00'00,
+
+    0b00'11'00'11,
+    0b00'00'11'11,
+    0b11'00'11'00,
+    0b11'11'00'00,
+
+    0b00'11'00'11,
+    0b00'00'11'11,
+    0b11'00'11'00,
+    0b11'11'00'00,
+
+    0b00'11'00'11,
+    0b00'00'11'11,
+    0b11'00'11'00,
+    0b11'11'00'00,
+  };
+  static_assert(sizeof(kTileData) == 16);
+
+  Color tile_color[64];
+  rothko::emulator::TileToTexture(kTileData, tile_color);
+
+  PaintTile(base_color, {0, 0}, tile_color);
+  PaintTile(base_color, {1, 1}, tile_color);
+  PaintTile(base_color, {0, 2}, tile_color);
+  PaintTile(base_color, {2, 3}, tile_color);
+  PaintTile(base_color, {3, 3}, tile_color);
+
+
+
 
   /* PaintTile(base_color, {0, 0}, colors::kBlue); */
   /* PaintTile(base_color, {1, 1}, colors::kBlue); */
@@ -142,13 +193,13 @@ int main() {
                new_index, ToString(IndexToCoord(new_index)).c_str());
 
       if (prev_index > 0) {
-        PaintTile((Color*)texture.data.value, prev_index, TileColor(IndexToCoord(prev_index)));
+        /* PaintTile((Color*)texture.data.value, prev_index, TileColor(IndexToCoord(prev_index))); */
       }
       prev_index = new_index;
 
-      PaintTile((Color*)texture.data.value, new_index, colors::kBlue);
+      /* PaintTile((Color*)texture.data.value, new_index, colors::kBlue); */
 
-      RendererSubTexture(&game.renderer, &texture, {0, 0}, kTextureDim, texture.data.value);
+      /* RendererSubTexture(&game.renderer, &texture, {0, 0}, kTextureDim, texture.data.value); */
     }
 
     if (KeyUpThisFrame(&game.input, Key::kEscape)) {
@@ -184,7 +235,7 @@ int main() {
                   1000.0f / ImGui::GetIO().Framerate,
                   ImGui::GetIO().Framerate);
 
-      ImGui::Image(&texture, {(float)texture.dims.width, (float)texture.dims.height});
+      ImGui::Image(&texture, {500, 500});
       ImGui::End();
     }
 

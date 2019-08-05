@@ -4,6 +4,9 @@
 executable("emulator") {
   sources = [
     "main.cc",
+    "memory.h",
+    "display.h",
+    "display.cc",
   ]
 
   deps = [
