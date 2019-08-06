@@ -10,7 +10,7 @@ namespace emulator {
 
 // |data| are 16 bytes, representing 64 pixels of 2 bits each.
 // |out| must be able to support 8x8 pixels (64).
-void TileToTexture(const uint8_t* data, Color* out);
+void TileToTexture(const void* data, Color* out);
 
 }  // namespace emulator
 }  // namespace rothko

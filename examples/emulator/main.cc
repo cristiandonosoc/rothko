@@ -4,8 +4,10 @@
 #include <rothko/game.h>
 #include <rothko/platform/platform.h>
 #include <rothko/ui/imgui.h>
+#include <rothko/utils/file.h>
 
 #include "display.h"
+#include "memory.h"
 
 using namespace rothko;
 using namespace rothko::imgui;
@@ -30,7 +32,7 @@ Color TileColor(Int2 coord) {
 }
 
 int kTileSize = 8;
-Int2 kTileCount =  {4, 4};
+Int2 kTileCount =  {16, 16 + 8};
 Int2 kTextureDim = kTileCount * kTileSize;
 
 Int2 IndexToCoord(int index) {
@@ -174,6 +176,10 @@ int main() {
   uint64_t step = kSecond;
   uint64_t next_time = GetNanoseconds() + step;
 
+
+  rothko::emulator::Memory memory;
+
+
   bool running = true;
   while (running) {
     auto events = Update(&game);
@@ -211,6 +217,37 @@ int main() {
 
     CreateLogWindow();
 
+    if (ImGui::BeginMainMenuBar()) {
+      if (ImGui::BeginMenu("File")) {
+        if (ImGui::MenuItem("Open")) {
+          std::string path = OpenFileDialog();
+          std::vector<uint8_t> data;
+          if (!ReadWholeFile(path, &data)) {
+            ERROR(App, "Could not read %s", path.c_str());
+          }
+          ASSERT_MSG(data.size() >= KILOBYTES(64), "Got size %zu", data.size());
+
+          memcpy(&memory, data.data(), KILOBYTES(64));
+
+          for (int y = 0; y < 16 + 8; y++) {
+            for (int x = 0; x < 16; x++) {
+              rothko::emulator::Tile* tile = memory.vram.tiles + (y * 16) + x;
+              rothko::emulator::TileToTexture(tile, tile_color);
+              PaintTile(base_color, {x, y}, tile_color);
+            }
+          }
+
+          RendererSubTexture(&game.renderer, &texture, {0, 0}, kTextureDim, texture.data.value);
+        }
+
+        ImGui::EndMenu();
+      }
+
+      ImGui::EndMainMenuBar();
+    }
+
+
+
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
     // window.
     {
@@ -235,7 +272,7 @@ int main() {
                   1000.0f / ImGui::GetIO().Framerate,
                   ImGui::GetIO().Framerate);
 
-      ImGui::Image(&texture, {500, 500});
+      ImGui::Image(&texture, {800, 800 + 400});
       ImGui::End();
     }
 

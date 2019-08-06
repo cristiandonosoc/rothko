@@ -6,11 +6,11 @@
 #include <assert.h>
 #include <stdio.h>
 
+#include "rothko/utils/defer.h"
+
 namespace rothko {
 
-bool ReadWholeFile(const std::string& path,
-                   std::string* out,
-                   bool add_extra_zero) {
+bool ReadWholeFile(const std::string& path, std::string* out, bool add_extra_zero) {
   FILE* file;
   size_t file_size;
 
@@ -21,6 +21,9 @@ bool ReadWholeFile(const std::string& path,
     return false;
   }
 
+  DEFER([file]() { fclose(file); });
+
+  // Get the file size.
   fseek(file, 0, SEEK_END);
   file_size = ftell(file);
   fseek(file, 0, SEEK_SET);
@@ -35,9 +38,38 @@ bool ReadWholeFile(const std::string& path,
     return false;
   }
 
-  fclose(file);
   if (add_extra_zero)
     out->back() = '\0';
+
+  return true;
+}
+
+bool ReadWholeFile(const std::string& path, std::vector<uint8_t>* out) {
+  FILE* file;
+  size_t file_size;
+
+  file = fopen(path.data(), "rb");
+  if (file == NULL) {
+    printf("Could not open file: %s", path.c_str());
+    fflush(stdout);
+    return false;
+  }
+
+  DEFER([file]() { fclose(file); });
+
+  // Get the file size.
+  fseek(file, 0, SEEK_END);
+  file_size = ftell(file);
+  fseek(file, 0, SEEK_SET);
+
+  out->clear();
+  out->resize(file_size);
+  auto result = fread(out->data(), 1, file_size, file);
+  if (result != file_size) {
+    printf("Could not read file: %s", path.c_str());
+    fflush(stdout);
+    return false;
+  }
 
   return true;
 }

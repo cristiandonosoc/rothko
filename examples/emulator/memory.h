@@ -75,8 +75,8 @@ static_assert(sizeof(OAMEntry) == 4);
 
 // VRAM = Video RAM.
 struct VRAM {
-  // 0x8000-0x8fff  Tilemap0 - Overlaps with tilemap1.
-  // 0x8800-0x97ff  Tilemap1 - Overlaps with tilemap0.
+  // 0x8000-0x8fff  Tilemap0 - Overlaps with tilemap1. (0-255)
+  // 0x8800-0x97ff  Tilemap1 - Overlaps with tilemap0. (127-383)
   Tile tiles[384];
   // 0x9800-0x9bff  Background map 0.
   uint8_t background_map0[32 * 32];

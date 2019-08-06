@@ -22,8 +22,8 @@ namespace emulator {
 //  | | |-----------> PiXel 5
 //  | |-------------> PiXel 6
 //  |---------------> PiXel 7
-void TileToTexture(const uint8_t* data, Color* out) {
-  const uint8_t* ptr = data;
+void TileToTexture(const void* data, Color* out) {
+  const uint8_t* ptr = (uint8_t*)data;
   for (int y = 0; y < 8; y++) {
     const uint8_t* lsb = ptr + 0;
     const uint8_t* msb = ptr + 1;
@@ -36,10 +36,10 @@ void TileToTexture(const uint8_t* data, Color* out) {
       ASSERT_MSG(pixel < 0b100, "Got pixel: 0x%x", pixel);
 
       switch (pixel) {
-        case 0: *out = colors::kWhite; break;
-        case 1: *out = colors::kRed; break;
-        case 2: *out = colors::kBlue; break;
-        case 3: *out = colors::kGreen; break;
+        case 0: *out = 0xffffffff; break;
+        case 1: *out = 0xbbbbbbbb; break;
+        case 2: *out = 0xff666666; break;
+        case 3: *out = 0xff000000; break;
         default: NOT_REACHED();
       }
       out++;
