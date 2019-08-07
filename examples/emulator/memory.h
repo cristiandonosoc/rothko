@@ -4,6 +4,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 
 #include <rothko/utils/types.h>
 
@@ -84,10 +85,130 @@ struct VRAM {
   uint8_t background_map1[32 * 32];
 };
 
-// IOPorts are memory mapped memory to functionality registers (sound, joystick, etc.).
-struct IOPorts {
-  // TODO(Cristian): Fill in.
+// MappedIO are memory mapped memory to functionality registers (sound, joystick, etc.).
+struct MappedIO {
+
+    uint8_t joypad;   // 0xff00: Joystick. TODO(Cristian): Do access macros.
+
+    // Serial communication registers.
+    uint8_t sb;       // 0xff01: Serial transfer data (R/W).
+    uint8_t sc;       // 0xff02: Serial transfer control. // TODO(Cristian): Do access macros.
+
+    uint8_t __pad0;
+
+    // Timer registers.
+    uint8_t div;      // 0xff04: Frequency divider; upper 8 bits of the 16 bit clock counter.
+    uint8_t tima;     // 0xff05: Timer counter.
+    uint8_t tma;      // 0xff06:  Timer modulo.
+    uint8_t tac;      // 0xff07:  Timer controller.
+
+    uint8_t __pad1[7];
+
+    uint8_t ifr;      // 0xff0f: Interrupt frag.  // TODO(Cristian): Do access macros.
+
+    // sound registers.
+    uint8_t nr10;     // 0xff10
+    uint8_t nr11;     // 0xff11
+    uint8_t nr12;     // 0xff12
+    uint8_t nr13;     // 0xff13
+    uint8_t nr14;     // 0xff14
+
+    uint8_t __pad2;
+
+    uint8_t nr21;     // 0xff16
+    uint8_t nr22;     // 0xff17
+    uint8_t nr23;     // 0xff18
+    uint8_t nr24;     // 0xff19
+
+    uint8_t nr30;     // 0xff1a
+    uint8_t nr31;     // 0xff1b
+    uint8_t nr32;     // 0xff1c
+    uint8_t nr33;     // 0xff1d
+    uint8_t nr34;     // 0xff1e
+
+    uint8_t __pad3;
+
+    uint8_t nr41;     // 0xff20
+    uint8_t nr42;     // 0xff21
+    uint8_t nr43;     // 0xff22
+    uint8_t nr44;     // 0xff23
+
+    uint8_t nr50;     // 0xff24
+    uint8_t nr51;     // 0xff25
+    uint8_t nr52;     // 0xff26
+
+    uint8_t __pad4[9];
+
+    // 0xff30 - 0xff3f: Waveform storage for arbitrary sound data.
+    //                  Holds 32 4-bit samples that are play back upper 4 bits first.
+    uint8_t wfram[16];
+
+    // LCD registers.
+    uint8_t lcdc;     // 0xff40: LCD Control. TODO(Cristian): Do access macros.
+    uint8_t stat;     // 0xff41: LCD Status. TODO(Cristian): Do access macros.
+    uint8_t scy;      // 0xff42: BG Scroll Y. Window automatically wraps borders.
+    uint8_t scx;      // 0xff43: BG Scroll X. Window automatically wraps borders.
+    uint8_t ly;       // 0xff44: LCD Y-coord. Indicates which line is being transfered.
+                      //         Values 144-153 indicate V-Blank period.
+    uint8_t lyc;      // 0xff45: LY Compare. When |ly| == |lyc|, a bit in |stat| is set.
+    uint8_t dma;      // 0xff46: DMA Transfer address.
+    uint8_t bgp;      // 0xff47: BG Palette data. Determines colors for BG and window pixels.
+
+    // For |obp0| and |obp1|, the lower 2 bits are not used, as sprite data 00 is transparent.
+    uint8_t obp0;     // 0xff48: Object Palette 0. Colors for sprite pixels in palette 0.
+    uint8_t obp1;     // 0xff49: Object Palette 1. Colors for sprite pixels in palette 1.
+
+    // Window is visible (if enable) when |wx| in [0, 166] and |wy| in [0, 143].
+    // The window is offset, so a position of (7, 0) locates the window in the upper left corner,
+    // completely covering normal background.
+    uint8_t wy;       // 0xff4a: Window Y.
+    uint8_t wx;       // 0xff4b: Window X - 7.
+
+    uint8_t __pad_final[52];
 };
+static_assert(sizeof(MappedIO) == 128);
+static_assert(0xff00 + offsetof(MappedIO, joypad) == 0xff00);
+static_assert(0xff00 + offsetof(MappedIO, sb) == 0xff01);
+static_assert(0xff00 + offsetof(MappedIO, sc) == 0xff02);
+static_assert(0xff00 + offsetof(MappedIO, div) == 0xff04);
+static_assert(0xff00 + offsetof(MappedIO, tima) == 0xff05);
+static_assert(0xff00 + offsetof(MappedIO, tma) == 0xff06);
+static_assert(0xff00 + offsetof(MappedIO, tac) == 0xff07);
+static_assert(0xff00 + offsetof(MappedIO, ifr) == 0xff0f);
+static_assert(0xff00 + offsetof(MappedIO, nr10) == 0xff10);
+static_assert(0xff00 + offsetof(MappedIO, nr11) == 0xff11);
+static_assert(0xff00 + offsetof(MappedIO, nr12) == 0xff12);
+static_assert(0xff00 + offsetof(MappedIO, nr13) == 0xff13);
+static_assert(0xff00 + offsetof(MappedIO, nr14) == 0xff14);
+static_assert(0xff00 + offsetof(MappedIO, nr21) == 0xff16);
+static_assert(0xff00 + offsetof(MappedIO, nr22) == 0xff17);
+static_assert(0xff00 + offsetof(MappedIO, nr23) == 0xff18);
+static_assert(0xff00 + offsetof(MappedIO, nr24) == 0xff19);
+static_assert(0xff00 + offsetof(MappedIO, nr30) == 0xff1a);
+static_assert(0xff00 + offsetof(MappedIO, nr31) == 0xff1b);
+static_assert(0xff00 + offsetof(MappedIO, nr32) == 0xff1c);
+static_assert(0xff00 + offsetof(MappedIO, nr33) == 0xff1d);
+static_assert(0xff00 + offsetof(MappedIO, nr34) == 0xff1e);
+static_assert(0xff00 + offsetof(MappedIO, nr41) == 0xff20);
+static_assert(0xff00 + offsetof(MappedIO, nr42) == 0xff21);
+static_assert(0xff00 + offsetof(MappedIO, nr43) == 0xff22);
+static_assert(0xff00 + offsetof(MappedIO, nr44) == 0xff23);
+static_assert(0xff00 + offsetof(MappedIO, nr50) == 0xff24);
+static_assert(0xff00 + offsetof(MappedIO, nr51) == 0xff25);
+static_assert(0xff00 + offsetof(MappedIO, nr52) == 0xff26);
+static_assert(0xff00 + offsetof(MappedIO, wfram) == 0xff30);
+static_assert(0xff00 + offsetof(MappedIO, lcdc) == 0xff40);
+static_assert(0xff00 + offsetof(MappedIO, stat) == 0xff41);
+static_assert(0xff00 + offsetof(MappedIO, scy) == 0xff42);
+static_assert(0xff00 + offsetof(MappedIO, scx) == 0xff43);
+static_assert(0xff00 + offsetof(MappedIO, ly) == 0xff44);
+static_assert(0xff00 + offsetof(MappedIO, lyc) == 0xff45);
+static_assert(0xff00 + offsetof(MappedIO, dma) == 0xff46);
+static_assert(0xff00 + offsetof(MappedIO, bgp) == 0xff47);
+static_assert(0xff00 + offsetof(MappedIO, obp0) == 0xff48);
+static_assert(0xff00 + offsetof(MappedIO, obp1) == 0xff49);
+static_assert(0xff00 + offsetof(MappedIO, wy) == 0xff4a);
+static_assert(0xff00 + offsetof(MappedIO, wx) == 0xff4b);
 
 struct Memory {
   uint8_t rom_bank0[KILOBYTES(16)];
@@ -115,11 +236,8 @@ struct Memory {
   // 0xfea0-0xfeff    Not Usable
   uint8_t unused[96];
 
-  // 0xff00-0xff7f    I/O Ports
-  union {
-    IOPorts io_ports;
-    uint8_t data[128];
-  } io_ports;
+  // 0xff00-0xff7f    I/O Ports (128 bytes).
+  MappedIO io_ports;
 
   // 0xff80-0xfffe    High RAM (HRAM)
   uint8_t hram[127];
