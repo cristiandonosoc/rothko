@@ -142,13 +142,13 @@ int main() {
   static_assert(sizeof(kTileData) == 16);
 
   Color tile_color[64];
-  rothko::emulator::TileToTexture(kTileData, tile_color);
+  /* rothko::emulator::TileToTexture(kTileData, tile_color); */
 
-  PaintTile(base_color, {0, 0}, tile_color);
-  PaintTile(base_color, {1, 1}, tile_color);
-  PaintTile(base_color, {0, 2}, tile_color);
-  PaintTile(base_color, {2, 3}, tile_color);
-  PaintTile(base_color, {3, 3}, tile_color);
+  /* PaintTile(base_color, {0, 0}, tile_color); */
+  /* PaintTile(base_color, {1, 1}, tile_color); */
+  /* PaintTile(base_color, {0, 2}, tile_color); */
+  /* PaintTile(base_color, {2, 3}, tile_color); */
+  /* PaintTile(base_color, {3, 3}, tile_color); */
 
 
 
@@ -232,7 +232,7 @@ int main() {
           for (int y = 0; y < 16 + 8; y++) {
             for (int x = 0; x < 16; x++) {
               rothko::emulator::Tile* tile = memory.vram.tiles + (y * 16) + x;
-              rothko::emulator::TileToTexture(tile, tile_color);
+              rothko::emulator::TileToTexture(memory.mapped_io.bgp, tile, tile_color);
               PaintTile(base_color, {x, y}, tile_color);
             }
           }

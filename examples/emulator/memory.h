@@ -85,7 +85,10 @@ struct VRAM {
   uint8_t background_map1[32 * 32];
 };
 
+// MappedIO ----------------------------------------------------------------------------------------
+//
 // MappedIO are memory mapped memory to functionality registers (sound, joystick, etc.).
+
 struct MappedIO {
 
     uint8_t joypad;   // 0xff00: Joystick. TODO(Cristian): Do access macros.
@@ -152,9 +155,15 @@ struct MappedIO {
                       //         Values 144-153 indicate V-Blank period.
     uint8_t lyc;      // 0xff45: LY Compare. When |ly| == |lyc|, a bit in |stat| is set.
     uint8_t dma;      // 0xff46: DMA Transfer address.
-    uint8_t bgp;      // 0xff47: BG Palette data. Determines colors for BG and window pixels.
 
-    // For |obp0| and |obp1|, the lower 2 bits are not used, as sprite data 00 is transparent.
+    uint8_t bgp;      // 0xff47: BG Palette data. Determines colors for BG and window pixels.
+                      //         Bit 0-1 - Color for shade number 0
+                      //         Bit 2-3 - Color for shade number 1
+                      //         Bit 4-5 - Color for shade number 2
+                      //         Bit 6-7 - Color for shade number 3
+
+    // For |obp0| and |obp1|, work the same as |bgp|, except the lower 2 bits are not used, as
+    // sprite data 00 is transparent.
     uint8_t obp0;     // 0xff48: Object Palette 0. Colors for sprite pixels in palette 0.
     uint8_t obp1;     // 0xff49: Object Palette 1. Colors for sprite pixels in palette 1.
 
@@ -210,6 +219,13 @@ static_assert(0xff00 + offsetof(MappedIO, obp1) == 0xff49);
 static_assert(0xff00 + offsetof(MappedIO, wy) == 0xff4a);
 static_assert(0xff00 + offsetof(MappedIO, wx) == 0xff4b);
 
+// Extracts palette colors |bgp|, |obp0| and |obp1|. Valid indices are 0-3.
+// NOTE: |obp0| and |obp1| lower 2 bits (PALLETE_COLOR(<reg>, 0) is unused, as those bits are
+//       reserved for transparent color.
+inline uint32_t PaletteColor(uint8_t reg, uint32_t index) { return reg >> (2u * index) & 0b11u; }
+
+// GB Memory Layout --------------------------------------------------------------------------------
+
 struct Memory {
   uint8_t rom_bank0[KILOBYTES(16)];
   uint8_t rom_banks[KILOBYTES(16)];
@@ -237,7 +253,7 @@ struct Memory {
   uint8_t unused[96];
 
   // 0xff00-0xff7f    I/O Ports (128 bytes).
-  MappedIO io_ports;
+  MappedIO mapped_io;
 
   // 0xff80-0xfffe    High RAM (HRAM)
   uint8_t hram[127];

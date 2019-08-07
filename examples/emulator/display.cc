@@ -9,20 +9,28 @@ namespace rothko {
 namespace emulator {
 
 // Each pixels are defined by two bytes, where one is the "upper index" of the pixel and the second
-// is the lower pixel:
+// is the lower pixel. These are shades that need to be interpreted into a color according to a
+// palette register (bgp, obp0, obp1).
 //
 // |7|6|5|4|3|2|1|0| Byte 1 (Least significant bit).
 // |7|6|5|4|3|2|1|0| Byte 2 (Most significant bit).
 //  | | | | | | | |
-//  | | | | | | | |-> Pixel 0
-//  | | | | | | |---> PiXel 1
-//  | | | | | |-----> PiXel 2
-//  | | | | |-------> PiXel 3
-//  | | | |---------> PiXel 4
-//  | | |-----------> PiXel 5
-//  | |-------------> PiXel 6
-//  |---------------> PiXel 7
-void TileToTexture(const void* data, Color* out) {
+//  | | | | | | | |-> Shade 0
+//  | | | | | | |---> Shade 1
+//  | | | | | |-----> Shade 2
+//  | | | | |-------> Shade 3
+//  | | | |---------> Shade 4
+//  | | |-----------> Shade 5
+//  | |-------------> Shade 6
+//  |---------------> Shade 7
+void TileToTexture(uint8_t palette, const void* data, Color* out) {
+  uint32_t shades[4] = {
+    PaletteColor(palette, 0),
+    PaletteColor(palette, 1),
+    PaletteColor(palette, 2),
+    PaletteColor(palette, 3),
+  };
+
   const uint8_t* ptr = (uint8_t*)data;
   for (int y = 0; y < 8; y++) {
     const uint8_t* lsb = ptr + 0;
@@ -35,13 +43,7 @@ void TileToTexture(const void* data, Color* out) {
       uint8_t pixel = msp << 1 | lsp;
       ASSERT_MSG(pixel < 0b100, "Got pixel: 0x%x", pixel);
 
-      switch (pixel) {
-        case 0: *out = 0xffffffff; break;
-        case 1: *out = 0xbbbbbbbb; break;
-        case 2: *out = 0xff666666; break;
-        case 3: *out = 0xff000000; break;
-        default: NOT_REACHED();
-      }
+      *out = ShadeToColor(shades[pixel]);
       out++;
     }
 
