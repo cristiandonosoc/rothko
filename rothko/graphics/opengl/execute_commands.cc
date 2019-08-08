@@ -93,7 +93,7 @@ void ExecuteConfigRendererAction(const ConfigRenderer& config) {
 void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_handles) {
   // Vertex UBOs.
   if (Valid(render_mesh.shader->vert_ubo)) {
-    auto& ubo = render_mesh.shader->vert_ubo;
+    Shader::UBO& ubo = render_mesh.shader->vert_ubo;
     auto& ubo_binding = shader_handles.vert_ubo;
 
     ASSERT(ubo_binding.binding_index >= 0);

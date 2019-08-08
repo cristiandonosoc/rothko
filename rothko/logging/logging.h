@@ -46,7 +46,7 @@ struct LoggerHandle {
 };
 
 // Keeps alive the logging system. Treat as singleton.
-std::unique_ptr<LoggerHandle> InitLoggingSystem();
+std::unique_ptr<LoggerHandle> InitLoggingSystem(bool log_to_stdout);
 
 struct LogTime {
   int hours;

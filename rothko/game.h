@@ -24,7 +24,7 @@ struct Game {
 };
 
 // WindowType and RendererType must be compatible (ie. both OpenGL, Vulkan, etc.).
-bool InitGame(Game*, InitWindowConfig*, RendererType);
+bool InitGame(Game*, InitWindowConfig*, RendererType, bool log_to_stdout);
 
 PerFrameVector<WindowEvent> Update(Game*);
 

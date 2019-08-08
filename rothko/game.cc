@@ -5,10 +5,11 @@
 
 namespace rothko {
 
-bool InitGame(Game* game, InitWindowConfig* window_config, RendererType renderer_type) {
+bool InitGame(Game* game, InitWindowConfig* window_config, RendererType renderer_type,
+              bool log_to_stdout) {
   game->platform_handle = InitializePlatform();
 
-  game->log_handle = InitLoggingSystem();
+  game->log_handle = InitLoggingSystem(log_to_stdout);
 
   if (!InitWindow(&game->window, window_config)) {
     ERROR(App, "Could not initialize window.");

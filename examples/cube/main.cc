@@ -55,7 +55,7 @@ Texture LoadTexture(Renderer* renderer, const std::string& path) {
 }  // namespace
 
 int main() {
-  auto log_handle = InitLoggingSystem();
+  auto log_handle = InitLoggingSystem(true);
 
   ERROR(App, "Test error: %s", "error");
   WARNING(OpenGL, "Test warning");

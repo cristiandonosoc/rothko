@@ -8,6 +8,7 @@
 
 #include "display.h"
 #include "memory.h"
+#include "shader.h"
 
 using namespace rothko;
 using namespace rothko::imgui;
@@ -74,14 +75,23 @@ void PaintTile(Color* data, int index, const Color* tile_data) {
 
 }  // namespace
 
-int main() {
+int main(int argc, char* argv[]) {
+  bool log_to_stdout = false;
+  if (argc > 1) {
+    if (strcmp(argv[1], "--stdout") == 0)
+      log_to_stdout = true;
+  }
+
+  printf("Log to stdout %d\n", log_to_stdout);
+
+
   Game game;
   InitWindowConfig window_config = {};
   window_config.type = WindowType::kSDLOpenGL;
   window_config.resizable = true;
   /* window_config.fullscreen = true; */
   window_config.screen_size = {1920, 1440};
-  if (!InitGame(&game, &window_config, RendererType::kOpenGL))
+  if (!InitGame(&game, &window_config, RendererType::kOpenGL, log_to_stdout))
     return 1;
 
   ImguiContext imgui;
@@ -92,6 +102,13 @@ int main() {
   /* LOG(App, "Got path: %s", path.c_str()); */
 
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+  // Create the painting shader.
+  auto normal_shader = rothko::emulator::CreateNormalShader(&game.renderer);
+  if (!normal_shader) {
+    ERROR(App, "Could not create shader.");
+    return 1;
+  }
 
   // Create the background texture.
   Texture texture;

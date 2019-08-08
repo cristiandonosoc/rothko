@@ -54,6 +54,7 @@ namespace {
 
 std::unique_ptr<LogContainer> gLogs = nullptr;
 std::atomic<bool> gLoggingActive = false;
+bool gLogToStdout = false;
 
 // If |to_stdout| is true, it will also log into stdout.
 void OutputLogMessage(bool to_stdout, const LogEntry& entry);  // Defined further down.
@@ -87,7 +88,7 @@ std::thread gLoggingThread;
 
 // Logger Handle -----------------------------------------------------------------------------------
 
-std::unique_ptr<LoggerHandle> InitLoggingSystem() {
+std::unique_ptr<LoggerHandle> InitLoggingSystem(bool log_to_stdout) {
   if (gLogs) {
     printf("%s:%d -> LOGGING SHOULD NOT BE ACTIVE ON INIT!\n", __FILE__, __LINE__);
     fflush(stdout);
@@ -96,9 +97,9 @@ std::unique_ptr<LoggerHandle> InitLoggingSystem() {
 
   // Start the logging loop thread.
   gLoggingActive = true;
+  gLogToStdout = log_to_stdout;
   gLogs.reset(new LogContainer());
   gLoggingThread = std::thread(LoggingLoop);
-
 
   return std::make_unique<LoggerHandle>();
 }
@@ -149,7 +150,7 @@ void NanoToLogTime(LogTime* time, uint64_t nanos) {
 
 void OutputLogMessage(bool to_stdout, const LogEntry& message) {
   // TODO(Cristian): Log to file.
-  if (to_stdout) {
+  if (to_stdout || gLogToStdout) {
     // TODO(Cristian): Add time.
     printf("[%s][%s:%d][%s] %s\n",
            ToString(message.category),
@@ -183,7 +184,6 @@ void DoLogging(
     entry.msg = std::move(msg);
 
     OutputLogMessage(true, entry);
-
     return;
   }
 
