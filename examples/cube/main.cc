@@ -86,7 +86,7 @@ int main() {
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
 
   UBO ubo;
-  ubo.proj= Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
+  ubo.proj = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
   ubo.view = LookAt({5, 5, 5}, {}, {0, 1, 0});
   ubo.model = Translate({10, 0, 0});
   ubos.push_back(ubo);

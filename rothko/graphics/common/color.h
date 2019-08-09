@@ -24,6 +24,8 @@ struct Color {
 };
 static_assert(sizeof(Color) == 4);
 
+inline uint32_t ToUint32(const Color& c) { return *(uint32_t*)&c; }
+
 // Premade colors ----------------------------------------------------------------------------------
 
 namespace colors {

@@ -5,6 +5,7 @@
 #include <rothko/platform/platform.h>
 #include <rothko/ui/imgui.h>
 #include <rothko/utils/file.h>
+#include <rothko/math/math.h>
 
 #include "display.h"
 #include "memory.h"
@@ -73,6 +74,37 @@ void PaintTile(Color* data, int index, const Color* tile_data) {
   PaintTile(data, IndexToCoord(index), tile_data);
 }
 
+VertexColor CreateVertex(Vec3 pos, Vec2 uv, Color color) {
+  VertexColor vertex = {};
+  vertex.pos = pos;
+  vertex.uv = uv;
+  vertex.color = ToUint32(color);
+
+  return vertex;
+}
+
+void PushSquare(Mesh* mesh, Vec2 base, Vec2 size) {
+  VertexColor vertices[] = {
+      CreateVertex({base.x, base.y, 0}, {0, 0}, colors::kBlue),
+      CreateVertex({base.x + size.x, base.y, 0}, {0, 1}, colors::kGreen),
+      CreateVertex({base.x + size.x, base.y + size.y, 0}, {1, 1}, colors::kWhite),
+      CreateVertex({base.x, base.y + size.y, 0}, {1, 0}, colors::kRed),
+  };
+
+  Mesh::IndexType base_index = mesh->vertices_count;
+
+  Mesh::IndexType indices[] = {
+    0, 1, 2, 2, 3, 0,
+    4, 5, 6, 6, 7, 4,
+  };
+  for (auto& index : indices) {
+    index += base_index;
+  }
+
+  PushVertices(mesh, vertices, ARRAY_SIZE(vertices));
+  PushIndices(mesh, indices, ARRAY_SIZE(indices));
+}
+
 }  // namespace
 
 int main(int argc, char* argv[]) {
@@ -98,12 +130,26 @@ int main(int argc, char* argv[]) {
   if (!InitImgui(&game.renderer, &imgui))
     return 1;
 
-  /* std::string path = OpenFileDialog(); */
-  /* LOG(App, "Got path: %s", path.c_str()); */
+  Mesh background_mesh;
+  background_mesh.name = "background";
+  background_mesh.vertex_type = VertexType::kColor;
+  PushSquare(&background_mesh, {30, 30}, {200, 100});
+  PushSquare(&background_mesh, {400, 500}, {200, 100});
+  if (!RendererStageMesh(&game.renderer, &background_mesh))
+    return 1;
+
 
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
   // Create the painting shader.
+  rothko::emulator::NormalUBO normal_ubo;
+  normal_ubo.proj = Ortho(0.0f, (float)game.window.screen_size.width,
+                          (float)game.window.screen_size.height, 0.0f);
+  /* float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height; */
+  /* normal_ubo.proj = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f); */
+  /* normal_ubo.view = LookAt({5, 5, 5}, {}, {0, 1, 0}); */
+  normal_ubo.view = Mat4::Identity();
+
   auto normal_shader = rothko::emulator::CreateNormalShader(&game.renderer);
   if (!normal_shader) {
     ERROR(App, "Could not create shader.");
@@ -300,6 +346,15 @@ int main(int argc, char* argv[]) {
     clear_frame = {};
     clear_frame.color = VecToColor(clear_color);
     commands.push_back(std::move(clear_frame));
+
+    RenderMesh render_mesh;
+    render_mesh.mesh = &background_mesh;
+    render_mesh.shader = normal_shader.get();
+    render_mesh.indices_size = background_mesh.indices_count;
+    render_mesh.vert_ubo_data = (uint8_t*)&normal_ubo;
+    render_mesh.cull_faces = false;
+    commands.push_back(std::move(render_mesh));
+
 
     auto imgui_commands = EndFrame(&imgui);
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
