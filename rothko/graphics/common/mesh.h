@@ -17,9 +17,9 @@ namespace rothko {
 struct Renderer;
 
 enum class VertexType : uint32_t {
-  kDefault,   // VertexDefault.
-  kColor,     // VertexColor.
-  kImgui,     // VertexImgui.
+  kDefault,       // VertexDefault.
+  k2dUVColor,     // Vertex2dUvColor.
+  k3dUVColor,     // Vertex3dUVColor.
   kLast,
 };
 const char* ToString(VertexType);
@@ -85,23 +85,23 @@ struct VertexDefault {
 };
 static_assert(sizeof(VertexDefault) == 32);
 
-struct VertexColor {
-  static constexpr VertexType kVertexType = VertexType::kColor;
-
-  Vec3 pos;
-  Vec2 uv;
-  uint32_t color;
-};
-static_assert(sizeof(VertexColor) == 24);
-
-struct VertexImgui {
-  static constexpr VertexType kVertexType = VertexType::kImgui;
+struct Vertex2dUVColor{
+  static constexpr VertexType kVertexType = VertexType::k2dUVColor;
 
   Vec2 pos;
   Vec2 uv;
   uint32_t color;
 };
-static_assert(sizeof(VertexImgui) == 20);
+static_assert(sizeof(Vertex2dUVColor) == 20);
+
+struct Vertex3dUVColor {
+  static constexpr VertexType kVertexType = VertexType::k3dUVColor;
+
+  Vec3 pos;
+  Vec2 uv;
+  uint32_t color;
+};
+static_assert(sizeof(Vertex3dUVColor) == 24);
 
 #pragma pack(pop)
 

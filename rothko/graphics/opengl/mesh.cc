@@ -62,28 +62,28 @@ void StageAttributes(Mesh* mesh) {
       glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, uv));
       return;
     }
-    case VertexType::kColor: {
-      static_assert(sizeof(VertexColor) == 24);
-      GLsizei stride = sizeof(VertexColor);
+    case VertexType::k2dUVColor: {
+      static_assert(sizeof(Vertex2dUVColor) == 20);
+      GLsizei stride = sizeof(Vertex2dUVColor);
       glEnableVertexAttribArray(0);
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexColor, pos));
+      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex2dUVColor, pos));
       glEnableVertexAttribArray(1);
-      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexColor, uv));
+      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex2dUVColor, uv));
       glEnableVertexAttribArray(2);
       glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride,
-                            (void*)offsetof(VertexColor, color));
+                            (void*)offsetof(Vertex2dUVColor, color));
       return;
     }
-    case VertexType::kImgui: {
-      static_assert(sizeof(VertexImgui) == 20);
-      GLsizei stride = sizeof(VertexImgui);
+    case VertexType::k3dUVColor: {
+      static_assert(sizeof(Vertex3dUVColor) == 24);
+      GLsizei stride = sizeof(Vertex3dUVColor);
       glEnableVertexAttribArray(0);
-      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexImgui, pos));
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dUVColor, pos));
       glEnableVertexAttribArray(1);
-      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexImgui, uv));
+      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dUVColor, uv));
       glEnableVertexAttribArray(2);
       glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride,
-                            (void*)offsetof(VertexImgui, color));
+                            (void*)offsetof(Vertex3dUVColor, color));
       return;
     }
     case VertexType::kLast:

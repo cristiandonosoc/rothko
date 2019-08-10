@@ -16,8 +16,8 @@ Mesh::~Mesh() {
 const char* ToString(VertexType type) {
   switch (type) {
     case VertexType::kDefault: return "Default";
-    case VertexType::kColor: return "Color";
-    case VertexType::kImgui: return "Imgui";
+    case VertexType::k2dUVColor: return "2d UV Color";
+    case VertexType::k3dUVColor: return "3D UV Color";
     case VertexType::kLast: return "Last";
   }
 
@@ -28,8 +28,8 @@ const char* ToString(VertexType type) {
 uint32_t ToSize(VertexType type) {
   switch (type) {
     case VertexType::kDefault: return sizeof(VertexDefault);
-    case VertexType::kColor: return sizeof(VertexColor);
-    case VertexType::kImgui: return sizeof(VertexImgui);
+    case VertexType::k2dUVColor: return sizeof(Vertex2dUVColor);
+    case VertexType::k3dUVColor: return sizeof(Vertex3dUVColor);
     case VertexType::kLast: break;
   }
 

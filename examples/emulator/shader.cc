@@ -59,6 +59,8 @@ std::unique_ptr<Shader> CreateNormalShader(Renderer* renderer) {
   shader->vert_src = kNormalVertex;
   shader->frag_src = kNormalFrag;
 
+  shader->texture_count = 1;
+
   if (!RendererStageShader(renderer, shader.get()))
     return nullptr;
   return shader;

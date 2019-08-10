@@ -38,7 +38,7 @@ bool CreateMesh(Renderer* renderer, ImguiRenderer* imgui) {
   // Create a Mesh for creating a buffer.
   Mesh imgui_mesh;
   imgui_mesh.name = "Imgui Mesh";
-  imgui_mesh.vertex_type = VertexType::kImgui;
+  imgui_mesh.vertex_type = VertexType::k2dUVColor;
 
   // A imgui vertex is 20 bytes. An index is 4 bytes.
   // 512 kb / 20 = 26214 vertices.
@@ -47,7 +47,7 @@ bool CreateMesh(Renderer* renderer, ImguiRenderer* imgui) {
   // We reserve this size when staging the mesh, as we're going to re-upload pieces of this buffer
   // each time, and we don't want to be re-allocating the buffer each time.
   imgui_mesh.vertices = std::vector<uint8_t>(KILOBYTES(512));
-  imgui_mesh.vertices_count = imgui_mesh.vertices.size() / sizeof(VertexImgui);
+  imgui_mesh.vertices_count = imgui_mesh.vertices.size() / sizeof(Vertex2dUVColor);
   ASSERT(imgui_mesh.vertices_count == 26214);
   imgui_mesh.indices  = std::vector<uint8_t>(KILOBYTES(512));
   imgui_mesh.indices_count = imgui_mesh.indices.size() / sizeof(Mesh::IndexType);
@@ -132,7 +132,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
 
   PerFrameVector<RenderCommand> render_commands;
   ConfigRenderer config = {};
-  config.viewport = {fb_width, fb_height};
+  config.viewport_size = {fb_width, fb_height};
   /* config.viewport = {(int)io->DisplaySize.x, (int)io->DisplaySize.y}; */
   render_commands.push_back(std::move(config));
 
@@ -159,7 +159,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
     uint64_t index_offset = 0;
 
     // We upload the data of this draw command list.
-    PushVertices(&imgui_renderer->mesh, (VertexImgui*)cmd_list->VtxBuffer.Data,
+    PushVertices(&imgui_renderer->mesh, (Vertex2dUVColor*)cmd_list->VtxBuffer.Data,
                                         cmd_list->VtxBuffer.Size);
 
     // Because each draw command is isolated, it's necessary to offset each

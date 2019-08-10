@@ -82,8 +82,9 @@ void ExecuteClearRenderAction(const ClearFrame& clear) {
 // Execute Config Renderer -------------------------------------------------------------------------
 
 void ExecuteConfigRendererAction(const ConfigRenderer& config) {
-  if (config.viewport.width != 0 && config.viewport.height != 0) {
-    glViewport(0, 0, (GLsizei)config.viewport.width, (GLsizei)config.viewport.height);
+  if (config.viewport_size.width != 0 && config.viewport_size.height != 0) {
+    glViewport((GLsizei)config.viewport_base.x, (GLsizei)config.viewport_base.y,
+               (GLsizei)config.viewport_size.width, (GLsizei)config.viewport_size.height);
   }
 }
 

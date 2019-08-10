@@ -16,6 +16,12 @@ using namespace rothko::imgui;
 
 namespace {
 
+int kTileSize = 8;
+Int2 kTileCount =  {16, 16 + 8};
+Int2 kTextureDim = kTileCount * kTileSize;
+
+Vec2 kUVOffset = {1.0f / 16.0f, 1.0f / (16.0f + 8.0f)};
+
 uint32_t VecToColor(ImVec4 color) {
   // RGBA
   return ((uint8_t)(color.x * 255.0f) << 24) |
@@ -32,10 +38,6 @@ Color TileColor(Int2 coord) {
     return colors::kGreen;
   }
 }
-
-int kTileSize = 8;
-Int2 kTileCount =  {16, 16 + 8};
-Int2 kTextureDim = kTileCount * kTileSize;
 
 Int2 IndexToCoord(int index) {
   return {index % kTileCount.x, (index / kTileCount.y)};
@@ -74,8 +76,8 @@ void PaintTile(Color* data, int index, const Color* tile_data) {
   PaintTile(data, IndexToCoord(index), tile_data);
 }
 
-VertexColor CreateVertex(Vec3 pos, Vec2 uv, Color color) {
-  VertexColor vertex = {};
+Vertex3dUVColor CreateVertex(Vec3 pos, Vec2 uv, Color color) {
+  Vertex3dUVColor vertex = {};
   vertex.pos = pos;
   vertex.uv = uv;
   vertex.color = ToUint32(color);
@@ -84,18 +86,18 @@ VertexColor CreateVertex(Vec3 pos, Vec2 uv, Color color) {
 }
 
 void PushSquare(Mesh* mesh, Vec2 base, Vec2 size) {
-  VertexColor vertices[] = {
-      CreateVertex({base.x, base.y, 0}, {0, 0}, colors::kBlue),
-      CreateVertex({base.x + size.x, base.y, 0}, {0, 1}, colors::kGreen),
-      CreateVertex({base.x + size.x, base.y + size.y, 0}, {1, 1}, colors::kWhite),
-      CreateVertex({base.x, base.y + size.y, 0}, {1, 0}, colors::kRed),
+  Vertex3dUVColor vertices[] = {
+      CreateVertex({base.x, base.y, 0}, {0, 0}, colors::kWhite),
+      CreateVertex({base.x, base.y + size.y, 0}, {kUVOffset.x, 0}, colors::kWhite),
+      CreateVertex({base.x + size.x, base.y, 0}, {0, kUVOffset.y}, colors::kWhite),
+      CreateVertex({base.x + size.x, base.y + size.y, 0}, kUVOffset, colors::kWhite),
   };
 
   Mesh::IndexType base_index = mesh->vertices_count;
 
   Mesh::IndexType indices[] = {
-    0, 1, 2, 2, 3, 0,
-    4, 5, 6, 6, 7, 4,
+    0, 1, 2, 2, 1, 3,
+    4, 5, 6, 6, 5, 7,
   };
   for (auto& index : indices) {
     index += base_index;
@@ -132,9 +134,22 @@ int main(int argc, char* argv[]) {
 
   Mesh background_mesh;
   background_mesh.name = "background";
-  background_mesh.vertex_type = VertexType::kColor;
-  PushSquare(&background_mesh, {30, 30}, {200, 100});
-  PushSquare(&background_mesh, {400, 500}, {200, 100});
+  background_mesh.vertex_type = VertexType::k3dUVColor;
+
+  constexpr int kSize = 40;
+  constexpr int kBorder = 3;
+  for (int y = 0; y < 32; y++) {
+    float offset_y = y * (kSize + kBorder);
+    for (int x = 0; x < 32; x++) {
+      float offset_x = x * (kSize + kBorder);
+      PushSquare(&background_mesh, {offset_x, offset_y}, {kSize, kSize});
+    }
+  }
+
+  /* PushSquare(&background_mesh, {30, 30}, {200, 100}); */
+  /* PushSquare(&background_mesh, {400, 500}, {200, 100}); */
+
+
   if (!RendererStageMesh(&game.renderer, &background_mesh))
     return 1;
 
@@ -157,17 +172,17 @@ int main(int argc, char* argv[]) {
   }
 
   // Create the background texture.
-  Texture texture;
-  texture.name = "background texture";
-  texture.type = TextureType::kRGBA;
-  texture.dims = kTextureDim;
+  Texture background_texture;
+  background_texture.name = "background texture";
+  background_texture.type = TextureType::kRGBA;
+  background_texture.dims = kTextureDim;
 
   size_t size = sizeof(Color) * kTextureDim.width * kTextureDim.height;
-  texture.data = (uint8_t*)malloc(size);
-  texture.free_function = free;
+  background_texture.data = (uint8_t*)malloc(size);
+  background_texture.free_function = free;
 
   // Fill in the texture.
-  Color* base_color = (Color*)texture.data.value;
+  Color* base_color = (Color*)background_texture.data.value;
   Color* color = base_color;
   for (int y = 0; y < kTextureDim.height; y++) {
     /* int tile_y = (y / kTileSize); */
@@ -227,13 +242,13 @@ int main(int argc, char* argv[]) {
 
   int prev_index = -1;
   uint8_t* color_end = (uint8_t*)color;
-  ASSERT(color_end == texture.data.value + size);
+  ASSERT(color_end == background_texture.data.value + size);
 
   StageTextureConfig config = {};
   config.generate_mipmaps = false;
   config.min_filter = StageTextureConfig::Filter::kNearest;
   config.max_filter = StageTextureConfig::Filter::kNearest;
-  if (!RendererStageTexture(config, &game.renderer, &texture))
+  if (!RendererStageTexture(config, &game.renderer, &background_texture))
     return 1;
 
   uint64_t step = kSecond;
@@ -262,13 +277,13 @@ int main(int argc, char* argv[]) {
                new_index, ToString(IndexToCoord(new_index)).c_str());
 
       if (prev_index > 0) {
-        /* PaintTile((Color*)texture.data.value, prev_index, TileColor(IndexToCoord(prev_index))); */
+        /* PaintTile((Color*)background_texture.data.value, prev_index, TileColor(IndexToCoord(prev_index))); */
       }
       prev_index = new_index;
 
-      /* PaintTile((Color*)texture.data.value, new_index, colors::kBlue); */
+      /* PaintTile((Color*)background_texture.data.value, new_index, colors::kBlue); */
 
-      /* RendererSubTexture(&game.renderer, &texture, {0, 0}, kTextureDim, texture.data.value); */
+      /* RendererSubTexture(&game.renderer, &background_texture, {0, 0}, kTextureDim, background_texture.data.value); */
     }
 
     if (KeyUpThisFrame(&game.input, Key::kEscape)) {
@@ -300,7 +315,9 @@ int main(int argc, char* argv[]) {
             }
           }
 
-          RendererSubTexture(&game.renderer, &texture, {0, 0}, kTextureDim, texture.data.value);
+          RendererSubTexture(&game.renderer, &background_texture,
+                             {0, 0}, kTextureDim,
+                             background_texture.data.value);
         }
 
         ImGui::EndMenu();
@@ -335,7 +352,7 @@ int main(int argc, char* argv[]) {
                   1000.0f / ImGui::GetIO().Framerate,
                   ImGui::GetIO().Framerate);
 
-      ImGui::Image(&texture, {800, 800 + 400});
+      ImGui::Image(&background_texture, {800, 800 + 400});
       ImGui::End();
     }
 
@@ -347,14 +364,21 @@ int main(int argc, char* argv[]) {
     clear_frame.color = VecToColor(clear_color);
     commands.push_back(std::move(clear_frame));
 
+    // Config Renderer.
+    ConfigRenderer config_renderer;
+    // TODO(Cristian): Actually find the height of the bar.
+    config_renderer.viewport_base = {0, 0};
+    config_renderer.viewport_size = game.window.screen_size - Int2{0, 20};
+    commands.push_back(std::move(config_renderer));
+
     RenderMesh render_mesh;
     render_mesh.mesh = &background_mesh;
     render_mesh.shader = normal_shader.get();
     render_mesh.indices_size = background_mesh.indices_count;
     render_mesh.vert_ubo_data = (uint8_t*)&normal_ubo;
-    render_mesh.cull_faces = false;
+    render_mesh.cull_faces = true;
+    render_mesh.textures.push_back(&background_texture);
     commands.push_back(std::move(render_mesh));
-
 
     auto imgui_commands = EndFrame(&imgui);
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());

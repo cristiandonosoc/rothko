@@ -220,8 +220,8 @@ struct Colors {
   static constexpr uint32_t kWhite =  0xff'ff'ff'ff;
 };
 
-VertexColor CreateVertex(Vec3 pos, Vec2 uv, uint32_t color) {
-  VertexColor vertex = {};
+Vertex3dUVColor CreateVertex(Vec3 pos, Vec2 uv, uint32_t color) {
+  Vertex3dUVColor vertex = {};
   vertex.pos = pos;
   vertex.uv = uv;
   vertex.color = color;
@@ -232,9 +232,9 @@ VertexColor CreateVertex(Vec3 pos, Vec2 uv, uint32_t color) {
 Mesh CreateMesh() {
   Mesh mesh = {};
   mesh.name = "cube";
-  mesh.vertex_type = VertexType::kColor;
+  mesh.vertex_type = VertexType::k3dUVColor;
 
-  VertexColor vertices[] = {
+  Vertex3dUVColor vertices[] = {
     // X
     CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
     CreateVertex({-1, -1,  1}, { 0,  1}, Colors::kGreen),
