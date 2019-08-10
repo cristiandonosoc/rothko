@@ -4,19 +4,30 @@
 #include "rothko/utils/file.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 
+#include <cstring>
+
 #include "rothko/utils/defer.h"
+#include "rothko/utils/strings.h"
 
 namespace rothko {
+
+namespace {
+
+constexpr char kCharsToTrim[] = "\t\r\n ";
+
+}  // namespace
 
 bool ReadWholeFile(const std::string& path, std::string* out, bool add_extra_zero) {
   FILE* file;
   size_t file_size;
 
-  file = fopen(path.data(), "rb");
+  auto trimmed_path = Trim(path, kCharsToTrim);
+  file = fopen(trimmed_path.c_str(), "r");
   if (file == NULL) {
-    printf("Could not open file: %s", path.c_str());
+    printf("Could not open file %s: %s\n", trimmed_path.c_str(), strerror(errno));
     fflush(stdout);
     return false;
   }
@@ -48,9 +59,10 @@ bool ReadWholeFile(const std::string& path, std::vector<uint8_t>* out) {
   FILE* file;
   size_t file_size;
 
-  file = fopen(path.data(), "rb");
+  auto trimmed_path = Trim(path, kCharsToTrim);
+  file = fopen(trimmed_path.c_str(), "r");
   if (file == NULL) {
-    printf("Could not open file: %s", path.c_str());
+    printf("Could not open file %s: %s\n", trimmed_path.c_str(), strerror(errno));
     fflush(stdout);
     return false;
   }
@@ -79,11 +91,16 @@ FileHandle::~FileHandle() {
     CloseFile(this);
 }
 
-FileHandle OpenFile(const std::string_view& path, bool append) {
+FileHandle OpenFile(const std::string& path, bool append) {
   FileHandle handle;
-  FILE* file = fopen(path.data(), append ? "a" : "w+");
-  if (file == NULL)
+
+  auto trimmed_path = Trim(path, kCharsToTrim);
+  FILE* file = fopen(trimmed_path.c_str(), append ? "a" : "w+");
+  if (file == NULL) {
+    printf("Could not open file %s: %s\n", trimmed_path.c_str(), strerror(errno));
+    fflush(stdout);
     return handle;
+  }
 
   handle.hndl = (void*)file;
   return handle;
