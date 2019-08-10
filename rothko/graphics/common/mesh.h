@@ -65,6 +65,16 @@ void PushVertices(Mesh* mesh, VertexType* data, uint32_t count) {
 // The |offset| is a value that will be added to each element.
 void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t offset = 0);
 
+inline void ClearVertices(Mesh* mesh) {
+  mesh->vertices.clear();
+  mesh->vertices_count = 0;
+}
+
+inline void ClearIndices(Mesh* mesh) {
+  mesh->indices.clear();
+  mesh->indices_count = 0;
+}
+
 // Vertex Definitions ------------------------------------------------------------------------------
 
 // NOTE: pragma pack(push, <MODE>) pushes into the compiler state the way the compiler should pad

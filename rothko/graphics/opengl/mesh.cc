@@ -167,7 +167,7 @@ void VerifyBufferSize(GLenum target, uint32_t size, uint32_t offset) {
   uint64_t buf_size = (uint64_t)gl_size;
   uint32_t total = size + offset;
 
-  ASSERT_MSG(buf_size > (size + offset), "Buf size exceeded. %" PRIu64 " <= %u", buf_size, total);
+  ASSERT_MSG(buf_size >= (size + offset), "Buf size exceeded. %" PRIu64 " <= %u", buf_size, total);
 }
 
 }  // namespace

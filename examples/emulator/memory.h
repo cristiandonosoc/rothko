@@ -90,7 +90,6 @@ struct VRAM {
 // MappedIO are memory mapped memory to functionality registers (sound, joystick, etc.).
 
 struct MappedIO {
-
     uint8_t joypad;   // 0xff00: Joystick. TODO(Cristian): Do access macros.
 
     // Serial communication registers.

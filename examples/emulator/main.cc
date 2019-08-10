@@ -76,37 +76,6 @@ void PaintTile(Color* data, int index, const Color* tile_data) {
   PaintTile(data, IndexToCoord(index), tile_data);
 }
 
-Vertex3dUVColor CreateVertex(Vec3 pos, Vec2 uv, Color color) {
-  Vertex3dUVColor vertex = {};
-  vertex.pos = pos;
-  vertex.uv = uv;
-  vertex.color = ToUint32(color);
-
-  return vertex;
-}
-
-void PushSquare(Mesh* mesh, Vec2 base, Vec2 size) {
-  Vertex3dUVColor vertices[] = {
-      CreateVertex({base.x, base.y, 0}, {0, 0}, colors::kWhite),
-      CreateVertex({base.x, base.y + size.y, 0}, {kUVOffset.x, 0}, colors::kWhite),
-      CreateVertex({base.x + size.x, base.y, 0}, {0, kUVOffset.y}, colors::kWhite),
-      CreateVertex({base.x + size.x, base.y + size.y, 0}, kUVOffset, colors::kWhite),
-  };
-
-  Mesh::IndexType base_index = mesh->vertices_count;
-
-  Mesh::IndexType indices[] = {
-    0, 1, 2, 2, 1, 3,
-    4, 5, 6, 6, 5, 7,
-  };
-  for (auto& index : indices) {
-    index += base_index;
-  }
-
-  PushVertices(mesh, vertices, ARRAY_SIZE(vertices));
-  PushIndices(mesh, indices, ARRAY_SIZE(indices));
-}
-
 }  // namespace
 
 int main(int argc, char* argv[]) {
@@ -132,27 +101,9 @@ int main(int argc, char* argv[]) {
   if (!InitImgui(&game.renderer, &imgui))
     return 1;
 
-  Mesh background_mesh;
-  background_mesh.name = "background";
-  background_mesh.vertex_type = VertexType::k3dUVColor;
-
-  constexpr int kSize = 40;
-  constexpr int kBorder = 3;
-  for (int y = 0; y < 32; y++) {
-    float offset_y = y * (kSize + kBorder);
-    for (int x = 0; x < 32; x++) {
-      float offset_x = x * (kSize + kBorder);
-      PushSquare(&background_mesh, {offset_x, offset_y}, {kSize, kSize});
-    }
-  }
-
-  /* PushSquare(&background_mesh, {30, 30}, {200, 100}); */
-  /* PushSquare(&background_mesh, {400, 500}, {200, 100}); */
-
-
-  if (!RendererStageMesh(&game.renderer, &background_mesh))
+  auto background_mesh = rothko::emulator::CreateBackgroundMesh(&game);
+  if (!background_mesh)
     return 1;
-
 
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -240,7 +191,6 @@ int main(int argc, char* argv[]) {
   /* PaintTile(base_color, 41, colors::kBlue); */
   /* PaintTile(base_color, 66, colors::kBlue); */
 
-  int prev_index = -1;
   uint8_t* color_end = (uint8_t*)color;
   ASSERT(color_end == background_texture.data.value + size);
 
@@ -251,13 +201,12 @@ int main(int argc, char* argv[]) {
   if (!RendererStageTexture(config, &game.renderer, &background_texture))
     return 1;
 
-  uint64_t step = kSecond;
-  uint64_t next_time = GetNanoseconds() + step;
 
 
-  rothko::emulator::Memory memory;
+  std::unique_ptr<rothko::emulator::Memory> memory;
 
 
+  /* int prev_index = -1; */
   bool running = true;
   while (running) {
     auto events = Update(&game);
@@ -268,23 +217,25 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    auto frame_time = GetNanoseconds();
-    if (frame_time >= next_time) {
-      next_time = next_time + step;
-      int new_index = Random(0, 100);
-      LOG(App, "Recover index %d (%s), change index %d (%s)",
-               prev_index, ToString(IndexToCoord(prev_index)).c_str(),
-               new_index, ToString(IndexToCoord(new_index)).c_str());
+    /* constexpr uint64_t step = kSecond; */
+    /* constexpr uint64_t next_time = GetNanoseconds() + step; */
+    /* auto frame_time = GetNanoseconds(); */
+    /* if (frame_time >= next_time) { */
+    /*   next_time = next_time + step; */
+    /*   int new_index = Random(0, 100); */
+    /*   LOG(App, "Recover index %d (%s), change index %d (%s)", */
+    /*            prev_index, ToString(IndexToCoord(prev_index)).c_str(), */
+    /*            new_index, ToString(IndexToCoord(new_index)).c_str()); */
 
-      if (prev_index > 0) {
-        /* PaintTile((Color*)background_texture.data.value, prev_index, TileColor(IndexToCoord(prev_index))); */
-      }
-      prev_index = new_index;
+    /*   if (prev_index > 0) { */
+    /*     /1* PaintTile((Color*)background_texture.data.value, prev_index, TileColor(IndexToCoord(prev_index))); *1/ */
+    /*   } */
+    /*   prev_index = new_index; */
 
-      /* PaintTile((Color*)background_texture.data.value, new_index, colors::kBlue); */
+    /*   /1* PaintTile((Color*)background_texture.data.value, new_index, colors::kBlue); *1/ */
 
-      /* RendererSubTexture(&game.renderer, &background_texture, {0, 0}, kTextureDim, background_texture.data.value); */
-    }
+    /*   /1* RendererSubTexture(&game.renderer, &background_texture, {0, 0}, kTextureDim, background_texture.data.value); *1/ */
+    /* } */
 
     if (KeyUpThisFrame(&game.input, Key::kEscape)) {
       running = false;
@@ -305,12 +256,13 @@ int main(int argc, char* argv[]) {
           }
           ASSERT_MSG(data.size() >= KILOBYTES(64), "Got size %zu", data.size());
 
-          memcpy(&memory, data.data(), KILOBYTES(64));
+          memory = std::make_unique<rothko::emulator::Memory>();
+          memcpy(memory.get(), data.data(), KILOBYTES(64));
 
           for (int y = 0; y < 16 + 8; y++) {
             for (int x = 0; x < 16; x++) {
-              rothko::emulator::Tile* tile = memory.vram.tiles + (y * 16) + x;
-              rothko::emulator::TileToTexture(memory.mapped_io.bgp, tile, tile_color);
+              rothko::emulator::Tile* tile = memory->vram.tiles + (y * 16) + x;
+              rothko::emulator::TileToTexture(memory->mapped_io.bgp, tile, tile_color);
               PaintTile(base_color, {x, y}, tile_color);
             }
           }
@@ -318,6 +270,9 @@ int main(int argc, char* argv[]) {
           RendererSubTexture(&game.renderer, &background_texture,
                              {0, 0}, kTextureDim,
                              background_texture.data.value);
+
+          if (!UpdateBackgroundMesh(&game, memory.get(), background_mesh.get()))
+            return 1;
         }
 
         ImGui::EndMenu();
@@ -326,33 +281,37 @@ int main(int argc, char* argv[]) {
       ImGui::EndMainMenuBar();
     }
 
-
+    /* ImGui::ShowDemoWindow(); */
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
     // window.
     {
-      static float f = 0.0f;
-      static int counter = 0;
-
-      ImGui::Begin("Hello, world!");  // Create a window called "Hello, world!" and append into it.
-
-      ImGui::Text(
-          "This is some useful text.");  // Display some text (you can use a format strings too)
-
-      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);  // Edit 1 float using a slider from 0.0f to 1.0f
+      ImGui::Begin("Emulator");
       ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
-
-      if (ImGui::Button("Button"))  // Buttons return true when clicked (most widgets return true
-                                    // when edited/activated)
-        counter++;
-      ImGui::SameLine();
-      ImGui::Text("counter = %d", counter);
 
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                   1000.0f / ImGui::GetIO().Framerate,
                   ImGui::GetIO().Framerate);
+      ImGui::Separator();
+      ImGui::Text("Tiles");
 
-      ImGui::Image(&background_texture, {800, 800 + 400});
+      if (memory) {
+
+      for (int y = 0; y < 32; y++) {
+        for (int x = 0; x < 32; x++) {
+          ImGui::Text("%03d ", memory->vram.background_map0[y * 32 + x]);
+          if (x < 31)
+            ImGui::SameLine();
+        }
+      }
+
+      }
+
+      ImGui::Separator();
+      ImGui::Text("Tile texture");
+      ImGui::Image(&background_texture, {200, 200 * 1.5f});
+
+
       ImGui::End();
     }
 
@@ -372,9 +331,9 @@ int main(int argc, char* argv[]) {
     commands.push_back(std::move(config_renderer));
 
     RenderMesh render_mesh;
-    render_mesh.mesh = &background_mesh;
+    render_mesh.mesh = background_mesh.get();
     render_mesh.shader = normal_shader.get();
-    render_mesh.indices_size = background_mesh.indices_count;
+    render_mesh.indices_size = background_mesh->indices_count;
     render_mesh.vert_ubo_data = (uint8_t*)&normal_ubo;
     render_mesh.cull_faces = true;
     render_mesh.textures.push_back(&background_texture);

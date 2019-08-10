@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include <rothko/graphics/common/color.h>
 #include <rothko/logging/logging.h>
+#include <rothko/game.h>
 
 #include "memory.h"
 
@@ -29,6 +29,9 @@ inline Color ShadeToColor(uint32_t shade) {
 // |data| are 16 bytes, representing 64 pixels of 2 bits each.
 // |out| must be able to support 8x8 pixels (64).
 void TileToTexture(uint8_t palette, const void* data, Color* out);
+
+std::unique_ptr<Mesh> CreateBackgroundMesh(Game* game);
+bool UpdateBackgroundMesh(Game* game, Memory* memory, Mesh* mesh);
 
 }  // namespace emulator
 }  // namespace rothko
