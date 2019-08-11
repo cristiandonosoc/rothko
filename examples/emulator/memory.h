@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
-
+#include <rothko/logging/logging.h>
 #include <rothko/utils/types.h>
+#include <stddef.h>
+#include <stdint.h>
 
 namespace rothko {
 namespace emulator {
@@ -261,6 +261,12 @@ struct Memory {
   uint8_t interrupt_enable_register;
 };
 static_assert(sizeof(Memory) == KILOBYTES(64));
+
+// At address 0x104 the nintendo header is located and should always be there.
+inline bool Loaded(const Memory& memory) {
+  uint32_t val = *(uint32_t*)(memory.rom_bank0 + 0x104);
+  return val == 0x6666edce;
+}
 
 }  // namespace emulator
 }  // namespace rothko

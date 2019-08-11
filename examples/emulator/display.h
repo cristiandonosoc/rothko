@@ -33,5 +33,7 @@ void TileToTexture(uint8_t palette, const void* data, Color* out);
 std::unique_ptr<Mesh> CreateBackgroundMesh(Game* game);
 bool UpdateBackgroundMesh(Game* game, Memory* memory, Mesh* mesh);
 
+void CreateDisplayImgui(Memory* memory, Texture* tilemap);
+
 }  // namespace emulator
 }  // namespace rothko

@@ -4,6 +4,9 @@
 #include "display.h"
 
 #include <rothko/logging/logging.h>
+#include <rothko/ui/imgui.h>
+#include <rothko/utils/defer.h>
+#include <rothko/utils/strings.h>
 
 namespace rothko {
 namespace emulator {
@@ -140,6 +143,42 @@ std::unique_ptr<Mesh> CreateBackgroundMesh(Game* game) {
   if (!RendererStageMesh(&game->renderer, background_mesh.get()))
     return nullptr;
   return background_mesh;
+}
+
+
+void CreateDisplayImgui(Memory* memory, Texture* tilemap) {
+  ImGui::Begin("Display");
+  DEFER([]() { ImGui::End(); });
+
+  if (!Loaded(*memory)) {
+    ImGui::Text("No ROM loaded.");
+    return;
+  }
+
+  ImGui::Text("Background");
+
+
+  // Create tiles.
+  constexpr float kImageSize = 20;
+  ImDrawList* draw_list = ImGui::GetWindowDrawList();
+  for (int y = 0; y < 32; y++) {
+    for (int x = 0; x < 32; x++) {
+      uint8_t index = memory->vram.background_map0[y * 32 + x];
+      Vec2 uv_base = TileIndexToUV(index);
+      Vec2 uv_end = uv_base + kUVOffset;
+
+      ImVec2 pos = ImGui::GetCursorScreenPos();
+      LOG(App, "Cursor: [%f, %f]", pos.x, pos.y);
+
+      ImGui::Image(tilemap, {kImageSize, kImageSize}, ToImVec(uv_base), ToImVec(uv_end));
+
+      auto text = StringPrintf("%03d", index);
+      draw_list->AddText(ImVec2{pos.x, pos.y + kImageSize - 13}, IM_COL32_WHITE, text.c_str());
+
+      if (x < 31)
+        ImGui::SameLine();
+    }
+  }
 }
 
 

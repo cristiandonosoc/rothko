@@ -41,17 +41,17 @@ bool CreateMesh(Renderer* renderer, ImguiRenderer* imgui) {
   imgui_mesh.vertex_type = VertexType::k2dUVColor;
 
   // A imgui vertex is 20 bytes. An index is 4 bytes.
-  // 512 kb / 20 = 26214 vertices.
-  // 512 kb / 4 = 131072 indices.
+  // 2048 kb / 20 = 104857 vertices.
+  // 1024 kb / 4 = 262144 indices.
   //
   // We reserve this size when staging the mesh, as we're going to re-upload pieces of this buffer
   // each time, and we don't want to be re-allocating the buffer each time.
-  imgui_mesh.vertices = std::vector<uint8_t>(KILOBYTES(512));
+  imgui_mesh.vertices = std::vector<uint8_t>(KILOBYTES(2048));
   imgui_mesh.vertices_count = imgui_mesh.vertices.size() / sizeof(Vertex2dUVColor);
-  ASSERT(imgui_mesh.vertices_count == 26214);
-  imgui_mesh.indices  = std::vector<uint8_t>(KILOBYTES(512));
+  ASSERT(imgui_mesh.vertices_count == 104857);
+  imgui_mesh.indices  = std::vector<uint8_t>(KILOBYTES(1024));
   imgui_mesh.indices_count = imgui_mesh.indices.size() / sizeof(Mesh::IndexType);
-  ASSERT(imgui_mesh.indices_count == 131072);
+  ASSERT(imgui_mesh.indices_count == 262144);
 
   /* imgui->mesh = CreateMesh(); */
   /* if (!RendererStageMesh(renderer, &imgui->mesh)) */

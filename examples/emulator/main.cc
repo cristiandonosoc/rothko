@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
 
 
 
-  std::unique_ptr<rothko::emulator::Memory> memory;
+  rothko::emulator::Memory memory = {};
 
 
   /* int prev_index = -1; */
@@ -256,13 +256,15 @@ int main(int argc, char* argv[]) {
           }
           ASSERT_MSG(data.size() >= KILOBYTES(64), "Got size %zu", data.size());
 
-          memory = std::make_unique<rothko::emulator::Memory>();
-          memcpy(memory.get(), data.data(), KILOBYTES(64));
+          memcpy(&memory, data.data(), KILOBYTES(64));
+
+          LOG(App, "0x%x", *(uint32_t*)(memory.rom_bank0 + 0x104));
+
 
           for (int y = 0; y < 16 + 8; y++) {
             for (int x = 0; x < 16; x++) {
-              rothko::emulator::Tile* tile = memory->vram.tiles + (y * 16) + x;
-              rothko::emulator::TileToTexture(memory->mapped_io.bgp, tile, tile_color);
+              rothko::emulator::Tile* tile = memory.vram.tiles + (y * 16) + x;
+              rothko::emulator::TileToTexture(memory.mapped_io.bgp, tile, tile_color);
               PaintTile(base_color, {x, y}, tile_color);
             }
           }
@@ -271,7 +273,7 @@ int main(int argc, char* argv[]) {
                              {0, 0}, kTextureDim,
                              background_texture.data.value);
 
-          if (!UpdateBackgroundMesh(&game, memory.get(), background_mesh.get()))
+          if (!UpdateBackgroundMesh(&game, &memory, background_mesh.get()))
             return 1;
         }
 
@@ -281,7 +283,13 @@ int main(int argc, char* argv[]) {
       ImGui::EndMainMenuBar();
     }
 
-    /* ImGui::ShowDemoWindow(); */
+    ImGui::ShowDemoWindow();
+
+    CreateDisplayImgui(&memory, &background_texture);
+
+    /* if (Loaded(memory)) */
+    /*   return 1; */
+
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
     // window.
@@ -292,20 +300,24 @@ int main(int argc, char* argv[]) {
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                   1000.0f / ImGui::GetIO().Framerate,
                   ImGui::GetIO().Framerate);
-      ImGui::Separator();
-      ImGui::Text("Tiles");
+      /* if (memory) { */
+      /* ImGui::Separator(); */
+      /* ImGui::Text("Tiles"); */
 
-      if (memory) {
 
-      for (int y = 0; y < 32; y++) {
-        for (int x = 0; x < 32; x++) {
-          ImGui::Text("%03d ", memory->vram.background_map0[y * 32 + x]);
-          if (x < 31)
-            ImGui::SameLine();
-        }
-      }
+      /* for (int y = 0; y < 32; y++) { */
+      /*   for (int x = 0; x < 32; x++) { */
 
-      }
+      /*     ImGui::Image(background_texture, */
+
+
+      /*     ImGui::Text("%03d ", memory->vram.background_map0[y * 32 + x]); */
+      /*     if (x < 31) */
+      /*       ImGui::SameLine(); */
+      /*   } */
+      /* } */
+
+      /* } */
 
       ImGui::Separator();
       ImGui::Text("Tile texture");

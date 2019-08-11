@@ -11,6 +11,7 @@
 
 #include "rothko/graphics/common/mesh.h"
 #include "rothko/graphics/opengl/renderer_backend.h"
+#include "rothko/graphics/opengl/utils.h"
 #include "rothko/logging/logging.h"
 
 namespace rothko {
@@ -161,13 +162,14 @@ void OpenGLUnstageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
 
 namespace {
 
-void VerifyBufferSize(GLenum target, uint32_t size, uint32_t offset) {
+void VerifyBufferSize(Mesh* mesh, GLenum target, uint32_t size, uint32_t offset) {
   GLint gl_size= 0;
   glGetBufferParameteriv(target, GL_BUFFER_SIZE, &gl_size);
   uint64_t buf_size = (uint64_t)gl_size;
   uint32_t total = size + offset;
 
-  ASSERT_MSG(buf_size >= (size + offset), "Buf size exceeded. %" PRIu64 " <= %u", buf_size, total);
+  ASSERT_MSG(buf_size >= (size + offset), "Mesh %s (%s): Buf size exceeded. %" PRIu64 " <= %u",
+             mesh->name.c_str(), ToString(target), buf_size, total);
 }
 
 }  // namespace
@@ -194,7 +196,7 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
 
     glBindBuffer(GL_ARRAY_BUFFER, handles.vbo);
 #if DEBUG_MODE
-    VerifyBufferSize(GL_ARRAY_BUFFER, size, offset);
+    VerifyBufferSize(mesh, GL_ARRAY_BUFFER, size, offset);
 #endif
     glBufferSubData(GL_ARRAY_BUFFER, offset, size, mesh->vertices.data());
     glBindBuffer(GL_ARRAY_BUFFER, NULL);
@@ -209,7 +211,7 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.ebo);
 #if DEBUG_MODE
-    VerifyBufferSize(GL_ELEMENT_ARRAY_BUFFER, size, offset);
+    VerifyBufferSize(mesh, GL_ELEMENT_ARRAY_BUFFER, size, offset);
 #endif
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, mesh->indices.data());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, NULL);
