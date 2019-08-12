@@ -4,12 +4,14 @@
 #include "rothko/graphics/opengl/mesh.h"
 
 #include <GL/gl3w.h>
+#include <inttypes.h>
 #include <stddef.h>
 
 #include <atomic>
 
 #include "rothko/graphics/common/mesh.h"
 #include "rothko/graphics/opengl/renderer_backend.h"
+#include "rothko/graphics/opengl/utils.h"
 #include "rothko/logging/logging.h"
 
 namespace rothko {
@@ -61,28 +63,28 @@ void StageAttributes(Mesh* mesh) {
       glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, uv));
       return;
     }
-    case VertexType::kColor: {
-      static_assert(sizeof(VertexColor) == 24);
-      GLsizei stride = sizeof(VertexColor);
+    case VertexType::k2dUVColor: {
+      static_assert(sizeof(Vertex2dUVColor) == 20);
+      GLsizei stride = sizeof(Vertex2dUVColor);
       glEnableVertexAttribArray(0);
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexColor, pos));
+      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex2dUVColor, pos));
       glEnableVertexAttribArray(1);
-      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexColor, uv));
+      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex2dUVColor, uv));
       glEnableVertexAttribArray(2);
       glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride,
-                            (void*)offsetof(VertexColor, color));
+                            (void*)offsetof(Vertex2dUVColor, color));
       return;
     }
-    case VertexType::kImgui: {
-      static_assert(sizeof(VertexImgui) == 20);
-      GLsizei stride = sizeof(VertexImgui);
+    case VertexType::k3dUVColor: {
+      static_assert(sizeof(Vertex3dUVColor) == 24);
+      GLsizei stride = sizeof(Vertex3dUVColor);
       glEnableVertexAttribArray(0);
-      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexImgui, pos));
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dUVColor, pos));
       glEnableVertexAttribArray(1);
-      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexImgui, uv));
+      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dUVColor, uv));
       glEnableVertexAttribArray(2);
       glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride,
-                            (void*)offsetof(VertexImgui, color));
+                            (void*)offsetof(Vertex3dUVColor, color));
       return;
     }
     case VertexType::kLast:
@@ -160,13 +162,14 @@ void OpenGLUnstageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
 
 namespace {
 
-void VerifyBufferSize(GLenum target, uint32_t size, uint32_t offset) {
+void VerifyBufferSize(Mesh* mesh, GLenum target, uint32_t size, uint32_t offset) {
   GLint gl_size= 0;
   glGetBufferParameteriv(target, GL_BUFFER_SIZE, &gl_size);
   uint64_t buf_size = (uint64_t)gl_size;
   uint32_t total = size + offset;
 
-  ASSERT_MSG(buf_size > (size + offset), "Buf size exceeded. %llu <= %u", buf_size, total);
+  ASSERT_MSG(buf_size >= (size + offset), "Mesh %s (%s): Buf size exceeded. %" PRIu64 " <= %u",
+             mesh->name.c_str(), ToString(target), buf_size, total);
 }
 
 }  // namespace
@@ -193,7 +196,7 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
 
     glBindBuffer(GL_ARRAY_BUFFER, handles.vbo);
 #if DEBUG_MODE
-    VerifyBufferSize(GL_ARRAY_BUFFER, size, offset);
+    VerifyBufferSize(mesh, GL_ARRAY_BUFFER, size, offset);
 #endif
     glBufferSubData(GL_ARRAY_BUFFER, offset, size, mesh->vertices.data());
     glBindBuffer(GL_ARRAY_BUFFER, NULL);
@@ -208,7 +211,7 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.ebo);
 #if DEBUG_MODE
-    VerifyBufferSize(GL_ELEMENT_ARRAY_BUFFER, size, offset);
+    VerifyBufferSize(mesh, GL_ELEMENT_ARRAY_BUFFER, size, offset);
 #endif
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, mesh->indices.data());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, NULL);

@@ -31,7 +31,13 @@ if (compiler == "msvc") {
       "/GR-",
     ]
 
-    ldflags = [ "/SUBSYSTEM:CONSOLE" ]
+    ldflags = [
+      "/SUBSYSTEM:CONSOLE",
+      "/opt:ref",
+      "user32.lib",
+      "comctl32.lib",
+      "Ole32.lib",
+    ]
   }
 
   config("debug") {
@@ -83,8 +89,9 @@ if (compiler == "clang") {
 # to work. Otherwise we get weird linker "underfined symbol" errors.
 config("osx_compiler_config") {
   ldflags = [
-    "-framework", "Foundation",
-    "-framework", "AppKit",
+    "-framework",
+    "Foundation",
+    "-framework",
+    "AppKit",
   ]
 }
-

@@ -82,8 +82,9 @@ void ExecuteClearRenderAction(const ClearFrame& clear) {
 // Execute Config Renderer -------------------------------------------------------------------------
 
 void ExecuteConfigRendererAction(const ConfigRenderer& config) {
-  if (config.viewport.width != 0 && config.viewport.height != 0) {
-    glViewport(0, 0, (GLsizei)config.viewport.width, (GLsizei)config.viewport.height);
+  if (config.viewport_size.width != 0 && config.viewport_size.height != 0) {
+    glViewport((GLsizei)config.viewport_base.x, (GLsizei)config.viewport_base.y,
+               (GLsizei)config.viewport_size.width, (GLsizei)config.viewport_size.height);
   }
 }
 
@@ -93,7 +94,7 @@ void ExecuteConfigRendererAction(const ConfigRenderer& config) {
 void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_handles) {
   // Vertex UBOs.
   if (Valid(render_mesh.shader->vert_ubo)) {
-    auto& ubo = render_mesh.shader->vert_ubo;
+    Shader::UBO& ubo = render_mesh.shader->vert_ubo;
     auto& ubo_binding = shader_handles.vert_ubo;
 
     ASSERT(ubo_binding.binding_index >= 0);

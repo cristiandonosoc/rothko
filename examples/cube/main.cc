@@ -2,19 +2,17 @@
 // This code has a BSD license. See LICENSE.
 
 #include <rothko/graphics/graphics.h>
-#include <rothko/math/math.h>
-#include <rothko/platform/timing.h>
-#include <rothko/scene/camera.h>
 #include <rothko/logging/logging.h>
+#include <rothko/logging/timer.h>
+#include <rothko/math/math.h>
+#include <rothko/platform/platform.h>
+#include <rothko/scene/camera.h>
+#include <rothko/ui/imgui.h>
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
-#include <rothko/ui/imgui.h>
-#include <rothko/logging/timer.h>
 
 #include <sstream>
 #include <thread>
-
-#include "gui.h"
 
 using namespace rothko;
 using namespace rothko::imgui;
@@ -57,7 +55,7 @@ Texture LoadTexture(Renderer* renderer, const std::string& path) {
 }  // namespace
 
 int main() {
-  auto log_handle = InitLoggingSystem();
+  auto log_handle = InitLoggingSystem(true);
 
   ERROR(App, "Test error: %s", "error");
   WARNING(OpenGL, "Test warning");
@@ -88,7 +86,7 @@ int main() {
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
 
   UBO ubo;
-  ubo.proj= Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
+  ubo.proj = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
   ubo.view = LookAt({5, 5, 5}, {}, {0, 1, 0});
   ubo.model = Translate({10, 0, 0});
   ubos.push_back(ubo);
@@ -222,8 +220,8 @@ struct Colors {
   static constexpr uint32_t kWhite =  0xff'ff'ff'ff;
 };
 
-VertexColor CreateVertex(Vec3 pos, Vec2 uv, uint32_t color) {
-  VertexColor vertex = {};
+Vertex3dUVColor CreateVertex(Vec3 pos, Vec2 uv, uint32_t color) {
+  Vertex3dUVColor vertex = {};
   vertex.pos = pos;
   vertex.uv = uv;
   vertex.color = color;
@@ -234,9 +232,9 @@ VertexColor CreateVertex(Vec3 pos, Vec2 uv, uint32_t color) {
 Mesh CreateMesh() {
   Mesh mesh = {};
   mesh.name = "cube";
-  mesh.vertex_type = VertexType::kColor;
+  mesh.vertex_type = VertexType::k3dUVColor;
 
-  VertexColor vertices[] = {
+  Vertex3dUVColor vertices[] = {
     // X
     CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
     CreateVertex({-1, -1,  1}, { 0,  1}, Colors::kGreen),
@@ -306,16 +304,13 @@ CubeShader CreateShader() {
   return shader;
 }
 
-inline uint8_t FloatToColor(float color) {
-  return (uint8_t)(color * 255.0f);
-}
 
 uint32_t VecToColor(ImVec4 color) {
   // RGBA
-  return (FloatToColor(color.x) << 24) |
-         (FloatToColor(color.y) << 16) |
-         (FloatToColor(color.z) << 8) |
-         (FloatToColor(color.w));
+  return ((uint8_t)(color.x * 255.0f) << 24) |
+         ((uint8_t)(color.y * 255.0f) << 16) |
+         ((uint8_t)(color.z * 255.0f) << 8) |
+         ((uint8_t)(color.w * 255.0f));
 }
 
 PerFrameVector<RenderCommand>

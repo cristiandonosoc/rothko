@@ -152,6 +152,12 @@ void RendererUnstageTexture(Renderer* renderer, Texture* texture) {
   renderer->backend->UnstageTexture(texture);
 }
 
+void RendererSubTexture(Renderer* renderer, Texture* texture, Int2 offset, Int2 range, void* data) {
+  ASSERT(Valid(renderer));
+  ASSERT(Staged(texture));
+  renderer->backend->SubTexture(texture, offset, range, data);
+}
+
 // Execute Commands ------------------------------------------------------------
 
 void RendererExecuteCommands(const PerFrameVector<RenderCommand>& commands,

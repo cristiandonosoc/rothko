@@ -17,9 +17,9 @@ namespace rothko {
 struct Renderer;
 
 enum class VertexType : uint32_t {
-  kDefault,   // VertexDefault.
-  kColor,     // VertexColor.
-  kImgui,     // VertexImgui.
+  kDefault,       // VertexDefault.
+  k2dUVColor,     // Vertex2dUvColor.
+  k3dUVColor,     // Vertex3dUVColor.
   kLast,
 };
 const char* ToString(VertexType);
@@ -65,6 +65,16 @@ void PushVertices(Mesh* mesh, VertexType* data, uint32_t count) {
 // The |offset| is a value that will be added to each element.
 void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t offset = 0);
 
+inline void ClearVertices(Mesh* mesh) {
+  mesh->vertices.clear();
+  mesh->vertices_count = 0;
+}
+
+inline void ClearIndices(Mesh* mesh) {
+  mesh->indices.clear();
+  mesh->indices_count = 0;
+}
+
 // Vertex Definitions ------------------------------------------------------------------------------
 
 // NOTE: pragma pack(push, <MODE>) pushes into the compiler state the way the compiler should pad
@@ -85,23 +95,23 @@ struct VertexDefault {
 };
 static_assert(sizeof(VertexDefault) == 32);
 
-struct VertexColor {
-  static constexpr VertexType kVertexType = VertexType::kColor;
-
-  Vec3 pos;
-  Vec2 uv;
-  uint32_t color;
-};
-static_assert(sizeof(VertexColor) == 24);
-
-struct VertexImgui {
-  static constexpr VertexType kVertexType = VertexType::kImgui;
+struct Vertex2dUVColor{
+  static constexpr VertexType kVertexType = VertexType::k2dUVColor;
 
   Vec2 pos;
   Vec2 uv;
   uint32_t color;
 };
-static_assert(sizeof(VertexImgui) == 20);
+static_assert(sizeof(Vertex2dUVColor) == 20);
+
+struct Vertex3dUVColor {
+  static constexpr VertexType kVertexType = VertexType::k3dUVColor;
+
+  Vec3 pos;
+  Vec2 uv;
+  uint32_t color;
+};
+static_assert(sizeof(Vertex3dUVColor) == 24);
 
 #pragma pack(pop)
 

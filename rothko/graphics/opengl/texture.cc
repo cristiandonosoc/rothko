@@ -24,7 +24,17 @@ uint32_t GetNextTextureUUID() {
   return id;
 }
 
-// Stage Texture ---------------------------------------------------------------
+GLenum TextureTypeToGL(TextureType type) {
+  switch (type) {
+    case TextureType::kRGBA: return GL_RGBA;
+    case TextureType::kLast: break;
+  }
+
+  NOT_REACHED();
+  return 0;
+}
+
+// Stage Texture -----------------------------------------------------------------------------------
 
 GLenum WrapToGL(StageTextureConfig::Wrap wrap) {
   switch (wrap) {
@@ -41,14 +51,10 @@ GLenum FilterToGL(StageTextureConfig::Filter filter) {
   switch (filter) {
     case StageTextureConfig::Filter::kNearest: return GL_NEAREST;
     case StageTextureConfig::Filter::kLinear: return GL_LINEAR;
-    case StageTextureConfig::Filter::kNearestMipmapNearest:
-      return GL_NEAREST_MIPMAP_NEAREST;
-    case StageTextureConfig::Filter::kNearestMipmapLinear:
-      return GL_NEAREST_MIPMAP_LINEAR;
-    case StageTextureConfig::Filter::kLinearMipmapNearest:
-      return GL_LINEAR_MIPMAP_NEAREST;
-    case StageTextureConfig::Filter::kLinearMipampLinear:
-      return GL_LINEAR_MIPMAP_LINEAR;
+    case StageTextureConfig::Filter::kNearestMipmapNearest: return GL_NEAREST_MIPMAP_NEAREST;
+    case StageTextureConfig::Filter::kNearestMipmapLinear: return GL_NEAREST_MIPMAP_LINEAR;
+    case StageTextureConfig::Filter::kLinearMipmapNearest: return GL_LINEAR_MIPMAP_NEAREST;
+    case StageTextureConfig::Filter::kLinearMipampLinear: return GL_LINEAR_MIPMAP_LINEAR;
   }
 
   NOT_REACHED();
@@ -72,24 +78,20 @@ bool OpenGLStageTexture(const StageTextureConfig& config,
   glBindTexture(GL_TEXTURE_2D, handle);
 
   // Setup wrapping/filtering options.
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                  WrapToGL(config.wrap_u));
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-                  WrapToGL(config.wrap_v));
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  FilterToGL(config.min_filter));
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-                  FilterToGL(config.max_filter));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, WrapToGL(config.wrap_u));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, WrapToGL(config.wrap_v));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, FilterToGL(config.min_filter));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, FilterToGL(config.max_filter));
 
   // Send the bits over.
-  glTexImage2D(GL_TEXTURE_2D,           // target
-               0,                       // level
-               GL_RGBA,                 // internalformat
-               texture->dims.width,     // width,
-               texture->dims.height,    // height
-               0,                       // border
-               GL_RGBA,                 // format
-               GL_UNSIGNED_BYTE,        // type,
+  glTexImage2D(GL_TEXTURE_2D,         // target
+               0,                     // level
+               GL_RGBA8,              // internalformat
+               texture->dims.width,   // width,
+               texture->dims.height,  // height
+               0,                     // border
+               GL_RGBA,               // format
+               GL_UNSIGNED_BYTE,      // type,
                texture->data.value);
 
   if (config.generate_mipmaps)
@@ -105,7 +107,7 @@ bool OpenGLStageTexture(const StageTextureConfig& config,
   return true;
 }
 
-// Unstage Texture -------------------------------------------------------------
+// Unstage Texture ---------------------------------------------------------------------------------
 
 void OpenGLUnstageTexture(OpenGLRendererBackend* opengl, Texture* texture) {
   auto it = opengl->loaded_textures.find(texture->uuid.value);
@@ -115,6 +117,29 @@ void OpenGLUnstageTexture(OpenGLRendererBackend* opengl, Texture* texture) {
   opengl->loaded_textures.erase(it);
   texture->uuid = 0;
 }
+
+// Sub Tex -----------------------------------------------------------------------------------------
+
+void OpenGLSubTexture(OpenGLRendererBackend* opengl, Texture* texture, Int2 offset, Int2 range,
+                              void* data) {
+  ASSERT(offset.x + range.x <= texture->dims.x);
+  ASSERT(offset.y + range.y >= 0 && range.y <= texture->dims.y);
+
+  auto it = opengl->loaded_textures.find(texture->uuid.value);
+  ASSERT(it != opengl->loaded_textures.end());
+
+  glBindTexture(GL_TEXTURE_2D, it->second.tex_handle);
+  glTexSubImage2D(GL_TEXTURE_2D,
+                  0,
+                  offset.x,
+                  offset.y,
+                  range.width,
+                  range.height,
+                  TextureTypeToGL(texture->type),
+                  GL_UNSIGNED_BYTE,
+                  data);
+}
+
 
 }  // namespace opengl
 }  // namespace rothko

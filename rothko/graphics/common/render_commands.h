@@ -41,7 +41,8 @@ std::string ToString(const ClearFrame&);
 struct ConfigRenderer {
   static constexpr RenderCommandType kType = RenderCommandType::kConfigRenderer;
 
-  Int2 viewport = {};  // If non-zero, makes the renderer consider this the viewport size;
+  Int2 viewport_base = {};
+  Int2 viewport_size = {};  // If non-zero, makes the renderer consider this the viewport size;
 };
 std::string ToString(const ConfigRenderer&);
 

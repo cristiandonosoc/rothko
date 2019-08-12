@@ -3,10 +3,11 @@
 
 #pragma once
 
+#include "rothko/graphics/common/texture.h"
+
 namespace rothko {
 
 struct StageTextureConfig;
-struct Texture;
 
 namespace opengl {
 
@@ -16,6 +17,8 @@ bool OpenGLStageTexture(const StageTextureConfig&,
                         OpenGLRendererBackend*,
                         Texture*);
 void OpenGLUnstageTexture(OpenGLRendererBackend*, Texture*);
+
+void OpenGLSubTexture(OpenGLRendererBackend*, Texture*, Int2 offset, Int2 range, void* data);
 
 }  // namespace opengl
 }  // namespace rothko

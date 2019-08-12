@@ -53,19 +53,13 @@ _configs = [
 ]
 
 if (target_os == "mac") {
-  _configs += [
-    "//gn_config/compilers:osx_compiler_config",
-  ]
+  _configs += [ "//gn_config/compilers:osx_compiler_config" ]
 }
 
 if (is_debug) {
-  _configs += [
-    "//gn_config/compilers:debug",
-  ]
+  _configs += [ "//gn_config/compilers:debug" ]
 } else {
-  _configs += [
-    "//gn_config/compilers:release",
-  ]
+  _configs += [ "//gn_config/compilers:release" ]
 }
 
 set_defaults("executable") {

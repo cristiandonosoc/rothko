@@ -85,7 +85,8 @@ const ConfigRenderer& RenderCommand::GetConfigRenderer() const {
 std::string ToString(const ConfigRenderer& config_renderer) {
   std::stringstream ss;
   ss << std::boolalpha;
-  ss << "Viewport size: " << ToString(config_renderer.viewport);
+  ss << "Viewport base: " << ToString(config_renderer.viewport_base)
+     << ", size: " << ToString(config_renderer.viewport_size);
   return ss.str();
 }
 

@@ -1,16 +1,19 @@
 # Copyright 2019, Cristián Donoso.
 # This code has a BSD license. See LICENSE.
 
-executable("cube") {
+executable("emulator") {
   sources = [
     "main.cc",
+    "memory.h",
+    "display.h",
+    "display.cc",
+    "shader.cc",
+    "shader.h",
   ]
 
   deps = [
+    "//rothko:game",
     "//rothko/graphics:opengl",
-    "//rothko/logging",
-    "//rothko/math",
-    "//rothko/platform",
     "//rothko/ui:imgui",
     "//rothko/window:sdl_opengl",
   ]

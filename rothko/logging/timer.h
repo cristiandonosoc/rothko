@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-#include <rothko/platform/timing.h>
+#include <rothko/platform/platform.h>
 
 namespace rothko {
 

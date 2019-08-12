@@ -1,23 +1,12 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include "gui.h"
+#include "rothko/ui/imgui/imgui_windows.h"
 
-#include <rothko/logging/logging.h>
-#include <rothko/platform/paths.h>
-#include <rothko/ui/imgui.h>
-#include <rothko/utils/macros.h>
+#include "rothko/ui/imgui.h"
 
-using namespace rothko;
-
-namespace {
-
-float ToSeconds(uint64_t nanos) {
-  uint64_t micros = nanos / 1000;
-  return (float)micros / 1000000.0f;
-}
-
-}  // namespace
+namespace rothko {
+namespace imgui {
 
 void CreateLogWindow() {
   ImGui::SetNextWindowSize({1500, 400});
@@ -39,7 +28,6 @@ void CreateLogWindow() {
   int read_index = write_index - LogContainer::kMaxEntries;
   if (read_index < 0)
     read_index = 0;
-  /* uint64_t last_nano = logs.entries[write_index % LogContainer::kMaxEntries].log_time.nanos; */
 
   // Write the last one first.
   for (int i = write_index - 1; i >= read_index; i--) {
@@ -68,8 +56,9 @@ void CreateLogWindow() {
                        entry.msg.c_str());
   }
 
-
   ImGui::EndChild();
   ImGui::End();
 }
 
+}  // namespace imgui
+}  // namespace rothko

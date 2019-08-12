@@ -108,6 +108,7 @@ struct StageTextureConfig {
 };
 bool RendererStageTexture(const StageTextureConfig&, Renderer*, Texture*);
 void RendererUnstageTexture(Renderer*, Texture*);
+void RendererSubTexture(Renderer*, Texture*, Int2 offset, Int2 range, void* data);
 
 void StartFrame(Renderer*);
 void RendererExecuteCommands(const PerFrameVector<RenderCommand>&, Renderer*);

@@ -16,6 +16,8 @@ namespace rothko {
 bool ReadWholeFile(const std::string& path,
                    std::string* out,
                    bool add_extra_zero = true);
+bool ReadWholeFile(const std::string& path,
+                   std::vector<uint8_t>* out);
 
 struct FileHandle {
   RAII_CONSTRUCTORS(FileHandle);
@@ -24,10 +26,9 @@ struct FileHandle {
 
 inline bool Valid(FileHandle* file) { return file->hndl.has_value(); }
 
-FileHandle OpenFile(const std::string_view& path, bool append = false);
+FileHandle OpenFile(const std::string& path, bool append = false);
 void WriteToFile(FileHandle*, void* data, size_t size);
 void Flush(FileHandle*);
 void CloseFile(FileHandle*);
-
 
 }  // namespace rothko

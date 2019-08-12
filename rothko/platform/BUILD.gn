@@ -4,14 +4,11 @@
 # Platform is the a base level library, it has no dependencies.
 source_set("platform") {
   public = [
-    "paths.h",
     "platform.h",
-    "timing.h",
   ]
 
   sources = [
-    "paths.cc",
-    "timing.cc",
+    "platform.cc",
   ]
 
   # Platform specific sources ----------------------------------------------------------------------
@@ -21,7 +18,10 @@ source_set("platform") {
   } else if (is_linux) {
     sources += [ "platform_linux.cc" ]
   } else if (is_osx) {
-    sources += [ "platform_macos.cc" ]
+    # NOTE(Cristian): .mm means an Objective-C/C++ hybrid file.
+    #                 Gets compiled with the objcxx tool within the clang toolchain.
+    #                 See gn_config/toolchains/BUILD.gn
+    sources += [ "platform_macos.mm" ]
   } else {
     assert(false, "Unhandled OS: $target_os")
   }

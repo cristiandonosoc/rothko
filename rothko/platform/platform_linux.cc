@@ -1,17 +1,29 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 
-#include "rothko/platform/paths.h"
 #include "rothko/platform/platform.h"
-#include "rothko/platform/timing.h"
 
 namespace rothko {
+
+// Initialize --------------------------------------------------------------------------------------
+
+// Initialization in linux is a no-op.
+
+PlatformHandle::PlatformHandle() = default;
+PlatformHandle::~PlatformHandle() = default;
+
+std::unique_ptr<PlatformHandle> InitializePlatform() {
+  return std::make_unique<PlatformHandle>();
+}
+
+// Paths -------------------------------------------------------------------------------------------
 
 std::string GetCurrentExecutablePath() {
   char buf[1024];
@@ -47,6 +59,18 @@ uint64_t GetNanoseconds() {
   struct timespec now;
   clock_gettime(CLOCK_MONOTONIC, &now);
   return now.tv_sec * 1000000000 + now.tv_nsec;
+}
+
+// Dialogs -----------------------------------------------------------------------------------------
+
+std::string OpenFileDialog() {
+  char filename[1024];
+  FILE* f = popen("zenity --file-selection", "r");
+  fgets(filename, 1024, f);
+  int res = pclose(f);
+  assert(res == 0);
+
+  return filename;
 }
 
 }  // namespace rothko

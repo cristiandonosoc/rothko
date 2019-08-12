@@ -60,6 +60,7 @@ struct OpenGLRendererBackend : public RendererBackend {
   // Textures.
   bool StageTexture(const StageTextureConfig&, Texture*) override;
   void UnstageTexture(Texture*) override;
+  void SubTexture(Texture*, Int2 offset, Int2 range, void* data) override;
 };
 
 inline bool Valid(const OpenGLRendererBackend& o) { return !!o.window; }

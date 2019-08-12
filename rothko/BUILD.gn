@@ -1,17 +1,16 @@
 # Copyright 2019, Cristián Donoso.
 # This code has a BSD license. See LICENSE.
 
-source_set("logging") {
-  public = [
-    "logging.h",
-    "timer.h",
-  ]
-
+# NOTE: Window and renderer must be set by who is importing.
+source_set("game") {
   sources = [
-    "logging.cc",
+    "game.cc",
+    "game.h",
   ]
 
   deps = [
+    "//rothko/logging",
+    "//rothko/math",
     "//rothko/platform",
     "//rothko/utils",
   ]

@@ -4,7 +4,7 @@
 #include "rothko/ui/imgui/imgui.h"
 
 #include "rothko/input/input.h"
-#include "rothko/platform/timing.h"
+#include "rothko/platform/platform.h"
 #include "rothko/ui/imgui/def.h"
 #include "rothko/ui/imgui/imgui_renderer.h"
 #include "rothko/window/window.h"
