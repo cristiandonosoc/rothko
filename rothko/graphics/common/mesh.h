@@ -47,9 +47,19 @@ struct Mesh {
 
 inline bool Staged(Mesh* m) { return m->uuid.has_value(); }
 
+inline void Reset(Mesh* mesh) {
+  mesh->vertices.clear();
+  mesh->vertices_count = 0;
+  mesh->indices.clear();
+  mesh->indices_count = 0;
+}
+
 template <typename VertexType>
 void PushVertices(Mesh* mesh, VertexType* data, uint32_t count) {
-  ASSERT(mesh->vertex_type == VertexType::kVertexType);
+  ASSERT_MSG(mesh->vertex_type == VertexType::kVertexType,
+             "Expected \"%s\", Got \"%s\"",
+             ToString(mesh->vertex_type),
+             ToString(VertexType::kVertexType));
 
   // Have to be able to hold all the vertices.
   mesh->vertices.reserve((mesh->vertices_count + count) * ToSize(mesh->vertex_type));
@@ -64,16 +74,6 @@ void PushVertices(Mesh* mesh, VertexType* data, uint32_t count) {
 // Pushes an array of indices into the mesh.
 // The |offset| is a value that will be added to each element.
 void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t offset = 0);
-
-inline void ClearVertices(Mesh* mesh) {
-  mesh->vertices.clear();
-  mesh->vertices_count = 0;
-}
-
-inline void ClearIndices(Mesh* mesh) {
-  mesh->indices.clear();
-  mesh->indices_count = 0;
-}
 
 // Vertex Definitions ------------------------------------------------------------------------------
 
@@ -114,6 +114,5 @@ struct Vertex3dUVColor {
 static_assert(sizeof(Vertex3dUVColor) == 24);
 
 #pragma pack(pop)
-
 
 }  // namespace rothko

@@ -11,6 +11,49 @@
 namespace rothko {
 namespace emulator {
 
+namespace {
+
+// Constants.
+
+int kTileSize = 8;
+Int2 kTileCount =  {16, 16 + 8};
+Int2 kTextureDim = kTileCount * kTileSize;
+Vec2 kUVOffset = {1.0f / 16.0f, 1.0f / (16.0f + 8.0f)};
+
+
+
+}  // namespace
+
+// Display -----------------------------------------------------------------------------------------
+
+bool InitDisplay(Game* game, Display* out) {
+  // Init the background texture.
+  out->background.name = "background-texture";
+  out->background.type = TextureType::kRGBA;
+  out->background.dims = kTextureDim;
+
+  size_t size = sizeof(Color) * kTextureDim.width * kTextureDim.height;
+  out->background.data = (uint8_t*)malloc(size);
+  out->background.free_function = free;
+
+  StageTextureConfig config = {};
+  config.generate_mipmaps = false;
+  config.min_filter = StageTextureConfig::Filter::kNearest;
+  config.max_filter = StageTextureConfig::Filter::kNearest;
+  if (!RendererStageTexture(config, &game->renderer, &out->background))
+    return false;
+
+  // Init the quad manager (which we will use to output textured quads).
+
+  QuadManagerConfig quad_config;
+  quad_config.name = "gb-quads";
+  quad_config.capacity = 2000;
+  if (!Init(&game->renderer, &out->quads, std::move(quad_config)))
+    return 1;
+
+  return true;
+}
+
 // Each pixels are defined by two bytes, where one is the "upper index" of the pixel and the second
 // is the lower pixel. These are shades that need to be interpreted into a color according to a
 // palette register (bgp, obp0, obp1).
@@ -54,14 +97,10 @@ void TileToTexture(uint8_t palette, const void* data, Color* out) {
   }
 }
 
-// Background Mesh --------------------------------------------------------------------------------
+
+// Background Mesh ---------------------------------------------------------------------------------
 
 namespace {
-
-int kTileSize = 8;
-Int2 kTileCount =  {16, 16 + 8};
-Int2 kTextureDim = kTileCount * kTileSize;
-Vec2 kUVOffset = {1.0f / 16.0f, 1.0f / (16.0f + 8.0f)};
 
 Vertex3dUVColor CreateVertex(Vec3 pos, Vec2 uv, Color color) {
   Vertex3dUVColor vertex = {};
@@ -81,7 +120,6 @@ void PushSquare(Mesh* mesh, Vec2 base, Vec2 size, Vec2 uv_base) {
   };
 
   Mesh::IndexType base_index = mesh->vertices_count;
-
   Mesh::IndexType indices[] = {
     0, 1, 2, 2, 1, 3,
     4, 5, 6, 6, 5, 7,
@@ -109,13 +147,28 @@ Vec2 TileIndexToUV(uint8_t index, int map_index) {
   return {x * kUVOffset.x, y * kUVOffset.y};
 }
 
+std::pair<Vec2, Vec2> ObtainTileUVs(Memory* memory, Int2 coord, int map_index) {
+  uint8_t* background_map = map_index == 0 ? memory->vram.tilemap0 : memory->vram.tilemap1;
 
+  // Background map 0 maps [0, 256).
+  // Background map 1 maps [-128, 128).
+  int index = 0;
+  if (map_index == 0) {
+    index = background_map[coord.y * 32 + coord.x];
+  } else if (map_index == 1) {
+    index = (int)(background_map[coord.y * 32 + coord.x]);
+  }
+
+  Vec2 uv_base = TileIndexToUV(index, map_index);
+  Vec2 uv_end = uv_base + kUVOffset;
+
+  return {uv_base, uv_end};
+}
 
 }  // namespace
 
 bool UpdateBackgroundMesh(Game* game, Memory* memory, Mesh* mesh) {
-  ClearVertices(mesh);
-  ClearIndices(mesh);
+  Reset(mesh);
 
   for (int y = 0; y < 32; y++) {
     float offset_y = y * (kSize + kBorder);
@@ -132,26 +185,40 @@ bool UpdateBackgroundMesh(Game* game, Memory* memory, Mesh* mesh) {
   return true;
 }
 
-std::unique_ptr<Mesh> CreateBackgroundMesh(Game* game) {
-  auto background_mesh = std::make_unique<Mesh>();
-  background_mesh->name = "background";
-  background_mesh->vertex_type = VertexType::k3dUVColor;
+void CreateBackgroundMesh(Renderer* renderer, Display* display, Memory* memory, Texture* texture,
+                          Shader* shader, uint8_t* camera) {
+  QuadEntry entry;
+  entry.shader = shader;
+  entry.texture = texture;
+  entry.vert_ubo = camera;
 
   for (int y = 0; y < 32; y++) {
     float offset_y = y * (kSize + kBorder);
     for (int x = 0; x < 32; x++) {
       float offset_x = x * (kSize + kBorder);
-      PushSquare(background_mesh.get(), {offset_x, offset_y}, {kSize, kSize}, {});
+
+      entry.from_pos = {offset_x, offset_y, 0.0f};
+      entry.to_pos = entry.from_pos + Vec3{kSize, kSize, 0.0f};
+
+      auto [from_uv, to_uv] =
+          ObtainTileUVs(memory, {x, y}, LCDC_BG_TILE_MAP_DISPLAY_SELECT(memory->mapped_io.lcdc));
+      entry.from_uv = from_uv;
+      entry.to_uv = to_uv;
+
+      Push(&display->quads, entry);
+
+      break;
     }
+
+    break;
   }
 
-  if (!RendererStageMesh(&game->renderer, background_mesh.get()))
-    return nullptr;
-  return background_mesh;
+  Stage(renderer, &display->quads);
+
+  LOG(App, "Created background mesh!");
 }
 
 namespace {
-
 
 void ShowBackgroundTiles(Memory* memory, Texture* tilemap) {
   ImGui::Text("Background");

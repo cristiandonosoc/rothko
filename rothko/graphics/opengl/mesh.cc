@@ -67,19 +67,21 @@ void StageAttributes(Mesh* mesh) {
       static_assert(sizeof(Vertex2dUVColor) == 20);
       GLsizei stride = sizeof(Vertex2dUVColor);
       glEnableVertexAttribArray(0);
-      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex2dUVColor, pos));
+      glVertexAttribPointer(
+          0, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex2dUVColor, pos));
       glEnableVertexAttribArray(1);
       glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex2dUVColor, uv));
       glEnableVertexAttribArray(2);
-      glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride,
-                            (void*)offsetof(Vertex2dUVColor, color));
+      glVertexAttribPointer(
+          2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offsetof(Vertex2dUVColor, color));
       return;
     }
     case VertexType::k3dUVColor: {
       static_assert(sizeof(Vertex3dUVColor) == 24);
       GLsizei stride = sizeof(Vertex3dUVColor);
       glEnableVertexAttribArray(0);
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dUVColor, pos));
+      glVertexAttribPointer(
+          0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dUVColor, pos));
       glEnableVertexAttribArray(1);
       glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dUVColor, uv));
       glEnableVertexAttribArray(2);

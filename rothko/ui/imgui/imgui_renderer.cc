@@ -145,10 +145,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
   uint64_t base_index_offset = 0;
   uint64_t base_vertex_offset = 0;
 
-  imgui_renderer->mesh.vertices.clear();
-  imgui_renderer->mesh.vertices_count = 0;
-  imgui_renderer->mesh.indices.clear();
-  imgui_renderer->mesh.indices_count = 0;
+  Reset(&imgui_renderer->mesh);
 
   // Create the draw list.
   ImVec2 pos = draw_data->DisplayPos;

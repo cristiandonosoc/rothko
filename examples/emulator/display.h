@@ -7,6 +7,7 @@
 #include <rothko/game.h>
 
 #include "memory.h"
+#include "quad.h"
 
 namespace rothko {
 namespace emulator {
@@ -25,15 +26,31 @@ inline Color ShadeToColor(uint32_t shade) {
   return {};
 }
 
+struct Display {
+  Texture background;
+  Texture window;
+
+  QuadManager quads;
+};
+
+bool InitDisplay(Game*, Display* out);
+
 // |palette| is a palette register (bgp, obp0, obp1).
 // |data| are 16 bytes, representing 64 pixels of 2 bits each.
 // |out| must be able to support 8x8 pixels (64).
 void TileToTexture(uint8_t palette, const void* data, Color* out);
 
 std::unique_ptr<Mesh> CreateBackgroundMesh(Game* game);
+
+void CreateBackgroundMesh(Renderer*, Display*, Memory*, Texture*, Shader*, uint8_t* camera_ubo);
+
 bool UpdateBackgroundMesh(Game* game, Memory* memory, Mesh* mesh);
 
+
 void CreateDisplayImgui(Memory* memory, Texture* tilemap);
+
+
+void UpdateBackgroundTexture(Memory* memory, Texture* background_texture);
 
 }  // namespace emulator
 }  // namespace rothko

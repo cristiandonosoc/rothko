@@ -10,6 +10,7 @@
 #include "display.h"
 #include "memory.h"
 #include "shader.h"
+#include "quad.h"
 
 using namespace rothko;
 using namespace rothko::imgui;
@@ -87,7 +88,6 @@ int main(int argc, char* argv[]) {
 
   printf("Log to stdout %d\n", log_to_stdout);
 
-
   Game game;
   InitWindowConfig window_config = {};
   window_config.type = WindowType::kSDLOpenGL;
@@ -101,8 +101,8 @@ int main(int argc, char* argv[]) {
   if (!InitImgui(&game.renderer, &imgui))
     return 1;
 
-  auto background_mesh = rothko::emulator::CreateBackgroundMesh(&game);
-  if (!background_mesh)
+  rothko::emulator::Display display;
+  if (!InitDisplay(&game, &display))
     return 1;
 
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -132,68 +132,6 @@ int main(int argc, char* argv[]) {
   background_texture.data = (uint8_t*)malloc(size);
   background_texture.free_function = free;
 
-  // Fill in the texture.
-  Color* base_color = (Color*)background_texture.data.value;
-  Color* color = base_color;
-  for (int y = 0; y < kTextureDim.height; y++) {
-    /* int tile_y = (y / kTileSize); */
-
-    for (int x = 0; x < kTextureDim.width; x++) {
-      /* int tile_x = (x / kTileSize); */
-
-      /* *color = TileColor({tile_x, tile_y}); */
-      *color = 0xff000000;
-      color++;
-    }
-  }
-
-  constexpr uint8_t kTileData[] = {
-    0b00'11'00'11,
-    0b00'00'11'11,
-    0b11'00'11'00,
-    0b11'11'00'00,
-
-    0b00'11'00'11,
-    0b00'00'11'11,
-    0b11'00'11'00,
-    0b11'11'00'00,
-
-    0b00'11'00'11,
-    0b00'00'11'11,
-    0b11'00'11'00,
-    0b11'11'00'00,
-
-    0b00'11'00'11,
-    0b00'00'11'11,
-    0b11'00'11'00,
-    0b11'11'00'00,
-  };
-  static_assert(sizeof(kTileData) == 16);
-
-  Color tile_color[64];
-  /* rothko::emulator::TileToTexture(kTileData, tile_color); */
-
-  /* PaintTile(base_color, {0, 0}, tile_color); */
-  /* PaintTile(base_color, {1, 1}, tile_color); */
-  /* PaintTile(base_color, {0, 2}, tile_color); */
-  /* PaintTile(base_color, {2, 3}, tile_color); */
-  /* PaintTile(base_color, {3, 3}, tile_color); */
-
-
-
-
-  /* PaintTile(base_color, {0, 0}, colors::kBlue); */
-  /* PaintTile(base_color, {1, 1}, colors::kBlue); */
-  /* PaintTile(base_color, {1, 4}, colors::kBlue); */
-  /* PaintTile(base_color, {6, 6}, colors::kBlue); */
-  /* PaintTile(base_color, 0, colors::kBlue); */
-  /* PaintTile(base_color, 11, colors::kBlue); */
-  /* PaintTile(base_color, 41, colors::kBlue); */
-  /* PaintTile(base_color, 66, colors::kBlue); */
-
-  uint8_t* color_end = (uint8_t*)color;
-  ASSERT(color_end == background_texture.data.value + size);
-
   StageTextureConfig config = {};
   config.generate_mipmaps = false;
   config.min_filter = StageTextureConfig::Filter::kNearest;
@@ -201,10 +139,11 @@ int main(int argc, char* argv[]) {
   if (!RendererStageTexture(config, &game.renderer, &background_texture))
     return 1;
 
-
-
   rothko::emulator::Memory memory = {};
 
+  // Fill in the texture.
+  Color tile_color[64];
+  Color* base_color = (Color*)background_texture.data.value;
 
   /* int prev_index = -1; */
   bool running = true;
@@ -216,26 +155,6 @@ int main(int argc, char* argv[]) {
         break;
       }
     }
-
-    /* constexpr uint64_t step = kSecond; */
-    /* constexpr uint64_t next_time = GetNanoseconds() + step; */
-    /* auto frame_time = GetNanoseconds(); */
-    /* if (frame_time >= next_time) { */
-    /*   next_time = next_time + step; */
-    /*   int new_index = Random(0, 100); */
-    /*   LOG(App, "Recover index %d (%s), change index %d (%s)", */
-    /*            prev_index, ToString(IndexToCoord(prev_index)).c_str(), */
-    /*            new_index, ToString(IndexToCoord(new_index)).c_str()); */
-
-    /*   if (prev_index > 0) { */
-    /*     /1* PaintTile((Color*)background_texture.data.value, prev_index, TileColor(IndexToCoord(prev_index))); *1/ */
-    /*   } */
-    /*   prev_index = new_index; */
-
-    /*   /1* PaintTile((Color*)background_texture.data.value, new_index, colors::kBlue); *1/ */
-
-    /*   /1* RendererSubTexture(&game.renderer, &background_texture, {0, 0}, kTextureDim, background_texture.data.value); *1/ */
-    /* } */
 
     if (KeyUpThisFrame(&game.input, Key::kEscape)) {
       running = false;
@@ -269,12 +188,16 @@ int main(int argc, char* argv[]) {
             }
           }
 
+          LOG(App, "Updating texture");
           RendererSubTexture(&game.renderer, &background_texture,
                              {0, 0}, kTextureDim,
                              background_texture.data.value);
 
-          if (!UpdateBackgroundMesh(&game, &memory, background_mesh.get()))
-            return 1;
+          LOG(App, "Updating mesh");
+
+          // Generate the background mesh.
+          CreateBackgroundMesh(&game.renderer, &display, &memory, &background_texture,
+                               normal_shader.get(), (uint8_t*)&normal_ubo);
         }
 
         ImGui::EndMenu();
@@ -287,11 +210,7 @@ int main(int argc, char* argv[]) {
 
     CreateDisplayImgui(&memory, &background_texture);
 
-    /* if (Loaded(memory)) */
-    /*   return 1; */
 
-
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
     // window.
     {
       ImGui::Begin("Emulator");
@@ -300,24 +219,6 @@ int main(int argc, char* argv[]) {
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                   1000.0f / ImGui::GetIO().Framerate,
                   ImGui::GetIO().Framerate);
-      /* if (memory) { */
-      /* ImGui::Separator(); */
-      /* ImGui::Text("Tiles"); */
-
-
-      /* for (int y = 0; y < 32; y++) { */
-      /*   for (int x = 0; x < 32; x++) { */
-
-      /*     ImGui::Image(background_texture, */
-
-
-      /*     ImGui::Text("%03d ", memory->vram.background_map0[y * 32 + x]); */
-      /*     if (x < 31) */
-      /*       ImGui::SameLine(); */
-      /*   } */
-      /* } */
-
-      /* } */
 
       ImGui::Separator();
       ImGui::Text("Tile texture");
@@ -342,14 +243,9 @@ int main(int argc, char* argv[]) {
     config_renderer.viewport_size = game.window.screen_size - Int2{0, 20};
     commands.push_back(std::move(config_renderer));
 
-    RenderMesh render_mesh;
-    render_mesh.mesh = background_mesh.get();
-    render_mesh.shader = normal_shader.get();
-    render_mesh.indices_size = background_mesh->indices_count;
-    render_mesh.vert_ubo_data = (uint8_t*)&normal_ubo;
-    render_mesh.cull_faces = true;
-    render_mesh.textures.push_back(&background_texture);
-    commands.push_back(std::move(render_mesh));
+    if (!display.quads.render_commands.empty())
+      commands.insert(commands.end(), display.quads.render_commands.begin(),
+                                      display.quads.render_commands.end());
 
     auto imgui_commands = EndFrame(&imgui);
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
