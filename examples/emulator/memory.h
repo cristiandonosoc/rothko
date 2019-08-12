@@ -36,7 +36,6 @@ constexpr int kPixelsPerTileSide = 8;
 struct Tile {
   uint8_t data[16];
 };
-static_assert(sizeof(Tile) == 16);
 
 // OAM ---------------------------------------------------------------------------------------------
 
@@ -63,7 +62,6 @@ struct OAMEntry {
   //    (Used for both BG and Window. BG color 0 is always behind OBJ)
   uint8_t flags;
 };
-static_assert(sizeof(OAMEntry) == 4);
 
 #define OAM_PALLETE_NUMBER_GBC(flags) (flags & 0b00000111)
 #define OAM_TILE_VRAM_BANK(flags)     (flags & 0b00001000)
@@ -79,10 +77,15 @@ struct VRAM {
   // 0x8000-0x8fff  Tilemap0 - Overlaps with tilemap1. (0-255)
   // 0x8800-0x97ff  Tilemap1 - Overlaps with tilemap0. (127-383)
   Tile tiles[384];
-  // 0x9800-0x9bff  Background map 0.
-  uint8_t background_map0[32 * 32];
-  // 0x9c00-0x9fff  Background map 1.
-  uint8_t background_map1[32 * 32];
+
+  // Tilemaps.
+  // These tiles are shared by both background and window. Which one it is and how the map to the
+  // actual tiles stored in |tiles| is determined by the |lcdc| register in |MappedIO|.
+
+  // 0x9800-0x9bff  Tilemap 0.
+  uint8_t tilemap0[32 * 32];
+  // 0x9c00-0x9fff  Tilemap 1.
+  uint8_t tilemap1[32 * 32];
 };
 
 // MappedIO ----------------------------------------------------------------------------------------
@@ -146,7 +149,27 @@ struct MappedIO {
     uint8_t wfram[16];
 
     // LCD registers.
-    uint8_t lcdc;     // 0xff40: LCD Control. TODO(Cristian): Do access macros.
+    uint8_t lcdc;     // 0xff40: LCD Control.
+// Whether to display the background. If 0, the background is white.
+#define LCDC_BG_DISPLAY(lcdc)                           (lcdc & 0b00000001)
+// Whether to show OAM sprites.
+#define LCDC_OBJ_SPRITE_ENABLE(lcdc)                    (lcdc & 0b00000010)
+// Size of sprites. 0 = 8x8 pixels, 1 = 8x16 pixels.
+#define LCDC_OBJ_SPRITE_SIZE(lcdc)                      (lcdc & 0b00000100)
+// What tilemap to use for background. 0 = |tilemap0|, 1 = |tilemap1|.
+#define LCDC_BG_TILE_MAP_DISPLAY_SELECT(lcdc)           (lcdc & 0b00001000)
+// What tile mapping the tilemaps point to within |tiles|.
+// 0 = Tiles [0, 256). The tilemap value is interpret as uint8_t [0, 256).
+// 1 = Tiles [128, 384). The tilemap value is interpreted as int8_t [-128, 128), and are an offset
+//     from tile 256.
+#define LCDC_BG_WINDOW_TILE_DATA_SELECT(lcdc)           (lcdc & 0b00010000)
+// Whether to show the window display.
+#define LCDC_WINDOW_DISPLAY_ENABLE(lcdc)                (lcdc & 0b00100000)
+// What tilemap to use for the window. 0 = |tilemap0|, 1 = |tilemap1|.
+#define LCDC_WINDOW_TILE_MAP_DISPLAY_SELECT(lcdc)       (lcdc & 0b01000000)
+// Whether the display is enabled or not.
+#define LCDC_DISPLAY_ENABLE(lcdc)                       (lcdc & 0b10000000)
+
     uint8_t stat;     // 0xff41: LCD Status. TODO(Cristian): Do access macros.
     uint8_t scy;      // 0xff42: BG Scroll Y. Window automatically wraps borders.
     uint8_t scx;      // 0xff43: BG Scroll X. Window automatically wraps borders.
@@ -174,6 +197,63 @@ struct MappedIO {
 
     uint8_t __pad_final[52];
 };
+// Extracts palette colors |bgp|, |obp0| and |obp1|. Valid indices are 0-3.
+// NOTE: |obp0| and |obp1| lower 2 bits (PALLETE_COLOR(<reg>, 0) is unused, as those bits are
+//       reserved for transparent color.
+inline uint32_t PaletteColor(uint8_t reg, uint32_t index) { return reg >> (2u * index) & 0b11u; }
+
+// GB Memory Layout --------------------------------------------------------------------------------
+
+struct Memory {
+  uint8_t rom_bank0[KILOBYTES(16)];
+  uint8_t rom_banks[KILOBYTES(16)];
+
+  VRAM vram;
+
+  // 0xa000-0xbfff    8KB External RAM     (in cartridge, switchable bank, if any)
+  uint8_t external_ram[KILOBYTES(8)];
+
+  // 0xc000-0xcfff    4KB Work RAM Bank 0 (WRAM)
+  // 0xd000-0xdfff    4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
+  uint8_t work_ram[KILOBYTES(8)];
+
+  // 0xe000-0xfdff    Same as C000-DDFF (ECHO)    (typically not used)
+  //                  This is replicated from |work_ram| due to gameboy wiring.
+  // The last 512 bytes are wired differently.
+  uint8_t echo[KILOBYTES(8) - 512];
+
+  // 0xfe00-0xfe9f    Sprite Attribute Table (OAM)
+  OAMEntry oam_table[40];
+
+  // 0xfea0-0xfeff    Not Usable
+  uint8_t unused[96];
+
+  // 0xff00-0xff7f    I/O Ports (128 bytes).
+  MappedIO mapped_io;
+
+  // 0xff80-0xfffe    High RAM (HRAM)
+  uint8_t hram[127];
+
+  // 0xffff           Interrupt Enable Register
+  uint8_t interrupt_enable_register;
+};
+
+// At address 0x104 the nintendo header is located and should always be there.
+inline bool Loaded(const Memory& memory) {
+  uint32_t val = *(uint32_t*)(memory.rom_bank0 + 0x104);
+  return val == 0x6666edce;
+}
+
+// Static assert checks ----------------------------------------------------------------------------
+
+static_assert(sizeof(Memory) == KILOBYTES(64));
+
+static_assert(sizeof(VRAM) == KILOBYTES(8));
+
+static_assert(sizeof(Tile) == 16);
+
+static_assert(sizeof(OAMEntry) == 4);
+
 static_assert(sizeof(MappedIO) == 128);
 static_assert(0xff00 + offsetof(MappedIO, joypad) == 0xff00);
 static_assert(0xff00 + offsetof(MappedIO, sb) == 0xff01);
@@ -217,56 +297,6 @@ static_assert(0xff00 + offsetof(MappedIO, obp0) == 0xff48);
 static_assert(0xff00 + offsetof(MappedIO, obp1) == 0xff49);
 static_assert(0xff00 + offsetof(MappedIO, wy) == 0xff4a);
 static_assert(0xff00 + offsetof(MappedIO, wx) == 0xff4b);
-
-// Extracts palette colors |bgp|, |obp0| and |obp1|. Valid indices are 0-3.
-// NOTE: |obp0| and |obp1| lower 2 bits (PALLETE_COLOR(<reg>, 0) is unused, as those bits are
-//       reserved for transparent color.
-inline uint32_t PaletteColor(uint8_t reg, uint32_t index) { return reg >> (2u * index) & 0b11u; }
-
-// GB Memory Layout --------------------------------------------------------------------------------
-
-struct Memory {
-  uint8_t rom_bank0[KILOBYTES(16)];
-  uint8_t rom_banks[KILOBYTES(16)];
-
-  VRAM vram;
-
-  static_assert(sizeof(VRAM) == KILOBYTES(8));
-
-  // 0xa000-0xbfff    8KB External RAM     (in cartridge, switchable bank, if any)
-  uint8_t external_ram[KILOBYTES(8)];
-
-  // 0xc000-0xcfff    4KB Work RAM Bank 0 (WRAM)
-  // 0xd000-0xdfff    4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
-  uint8_t work_ram[KILOBYTES(8)];
-
-  // 0xe000-0xfdff    Same as C000-DDFF (ECHO)    (typically not used)
-  //                  This is replicated from |work_ram| due to gameboy wiring.
-  // The last 512 bytes are wired differently.
-  uint8_t echo[KILOBYTES(8) - 512];
-
-  // 0xfe00-0xfe9f    Sprite Attribute Table (OAM)
-  OAMEntry oam_table[40];
-
-  // 0xfea0-0xfeff    Not Usable
-  uint8_t unused[96];
-
-  // 0xff00-0xff7f    I/O Ports (128 bytes).
-  MappedIO mapped_io;
-
-  // 0xff80-0xfffe    High RAM (HRAM)
-  uint8_t hram[127];
-
-  // 0xffff           Interrupt Enable Register
-  uint8_t interrupt_enable_register;
-};
-static_assert(sizeof(Memory) == KILOBYTES(64));
-
-// At address 0x104 the nintendo header is located and should always be there.
-inline bool Loaded(const Memory& memory) {
-  uint32_t val = *(uint32_t*)(memory.rom_bank0 + 0x104);
-  return val == 0x6666edce;
-}
 
 }  // namespace emulator
 }  // namespace rothko

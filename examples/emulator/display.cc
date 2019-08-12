@@ -121,7 +121,7 @@ bool UpdateBackgroundMesh(Game* game, Memory* memory, Mesh* mesh) {
     float offset_y = y * (kSize + kBorder);
     for (int x = 0; x < 32; x++) {
       float offset_x = x * (kSize + kBorder);
-      uint8_t index = memory->vram.background_map0[y * 32 + x];
+      uint8_t index = memory->vram.tilemap0[y * 32 + x];
       Vec2 uv_base = TileIndexToUV(index, 0);
       PushSquare(mesh, {offset_x, offset_y}, {kSize, kSize}, uv_base);
     }
@@ -170,8 +170,8 @@ void ShowBackgroundTiles(Memory* memory, Texture* tilemap) {
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
   for (int y = 0; y < 32; y++) {
     for (int x = 0; x < 32; x++) {
-      uint8_t* background_map = map_index == 0 ? memory->vram.background_map0 :
-                                                 memory->vram.background_map1;
+      uint8_t* background_map = map_index == 0 ? memory->vram.tilemap0 :
+                                                 memory->vram.tilemap1;
 
       // Background map 0 maps [0, 256).
       // Background map 1 maps [-128, 128).
@@ -226,6 +226,23 @@ void CreateDisplayImgui(Memory* memory, Texture* tilemap) {
     ImGui::Text("No ROM loaded.");
     return;
   }
+
+  uint8_t lcdc = memory->mapped_io.lcdc;
+
+  ImGui::Text("LCDC: 0x%x", lcdc);
+  ImGui::RadioButton("Display enable", LCDC_DISPLAY_ENABLE(lcdc));
+
+  ImGui::Text("BG/Window Tile base: %s", LCDC_BG_WINDOW_TILE_DATA_SELECT(lcdc) ?
+      "[0, 256) tile index is uint8_t" : "[128, 384) tile index is int8_t");
+
+  ImGui::RadioButton("BG Display", LCDC_BG_DISPLAY(lcdc)); ImGui::SameLine();
+  ImGui::Text("BG tilemap: %d", LCDC_BG_TILE_MAP_DISPLAY_SELECT(lcdc) ? 0 : 1);
+
+  ImGui::RadioButton("Window enable", LCDC_WINDOW_DISPLAY_ENABLE(lcdc)); ImGui::SameLine();
+  ImGui::Text("Window tilemap: %d", LCDC_WINDOW_TILE_MAP_DISPLAY_SELECT(lcdc) ? 0 : 1);
+
+  ImGui::RadioButton("SpriteEnable", LCDC_OBJ_SPRITE_ENABLE(lcdc)); ImGui::SameLine();
+  ImGui::Text("Sprite Size: %s", LCDC_OBJ_SPRITE_SIZE(lcdc) ? "8x8" : "8x16");
 
   if (ImGui::BeginTabBar("GB Tiles")) {
     if (ImGui::BeginTabItem("Background")) {
