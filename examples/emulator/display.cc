@@ -97,9 +97,14 @@ void PushSquare(Mesh* mesh, Vec2 base, Vec2 size, Vec2 uv_base) {
 constexpr int kSize = 40;
 constexpr int kBorder = 3;
 
-Vec2 TileIndexToUV(uint8_t index) {
+Vec2 TileIndexToUV(uint8_t index, int map_index) {
   int x = index % 16;
   int y = index / 16;
+
+  // |map_index| == 1 means that we're using background tile map 1, which points uses a different
+  // offset scheme and base for finding tiles. See VRAM in memory.h.
+  if (map_index == 1)
+    y += 16;
 
   return {x * kUVOffset.x, y * kUVOffset.y};
 }
@@ -117,7 +122,7 @@ bool UpdateBackgroundMesh(Game* game, Memory* memory, Mesh* mesh) {
     for (int x = 0; x < 32; x++) {
       float offset_x = x * (kSize + kBorder);
       uint8_t index = memory->vram.background_map0[y * 32 + x];
-      Vec2 uv_base = TileIndexToUV(index);
+      Vec2 uv_base = TileIndexToUV(index, 0);
       PushSquare(mesh, {offset_x, offset_y}, {kSize, kSize}, uv_base);
     }
   }
@@ -145,9 +150,76 @@ std::unique_ptr<Mesh> CreateBackgroundMesh(Game* game) {
   return background_mesh;
 }
 
+namespace {
+
+
+void ShowBackgroundTiles(Memory* memory, Texture* tilemap) {
+  ImGui::Text("Background");
+
+  static bool show_indices_inline = false;
+
+  ImGui::Checkbox("Show indices inline", &show_indices_inline);
+
+  // Which background map we're reading from.
+  static int map_index = 0;
+  ImGui::RadioButton("Background Map 0", &map_index, 0); ImGui::SameLine();
+  ImGui::RadioButton("Background Map 1", &map_index, 1);
+
+  // Create tiles.
+  constexpr float kImageSize = 30;
+  ImDrawList* draw_list = ImGui::GetWindowDrawList();
+  for (int y = 0; y < 32; y++) {
+    for (int x = 0; x < 32; x++) {
+      uint8_t* background_map = map_index == 0 ? memory->vram.background_map0 :
+                                                 memory->vram.background_map1;
+
+      // Background map 0 maps [0, 256).
+      // Background map 1 maps [-128, 128).
+      int index = 0;
+      if (map_index == 0) {
+        index = background_map[y * 32 + x];
+      } else if (map_index == 1) {
+        index = (int)(background_map[y * 32 + x]);
+      }
+
+      Vec2 uv_base = TileIndexToUV(index, map_index);
+      Vec2 uv_end = uv_base + kUVOffset;
+
+      Vec2 pos = ImGui::GetCursorScreenPos();
+      pos.x += x * (kImageSize + 1);
+      pos.y += y * (kImageSize + 1);
+
+      Vec2 end = pos + Vec2{kImageSize, kImageSize};
+
+      draw_list->AddImageQuad(tilemap,
+                              pos,{pos.x, end.y},
+                              end, {end.x, pos.y},
+                              uv_base, {uv_base.x, uv_end.y}, uv_end, {uv_end.x, uv_base.y});
+
+      if (ImGui::IsMouseHoveringRect(pos, end)) {
+        ImGui::BeginTooltip();
+
+        ImGui::Text("Tile (%02d, %02d) -> %03d", x, y , index);
+        ImGui::Image(tilemap, {100, 100}, ToImVec(uv_base), ToImVec(uv_end));
+
+        ImGui::EndTooltip();
+      }
+
+      if (show_indices_inline) {
+        auto text = StringPrintf("%03d", index);
+        draw_list->AddText(ImVec2{pos.x, pos.y + kImageSize - 13}, IM_COL32_WHITE, text.c_str());
+      }
+    }
+  }
+
+  ImGui::Dummy({33 * (kImageSize + 1), 33 * (kImageSize + 1)});
+}
+
+
+}  // namespace
 
 void CreateDisplayImgui(Memory* memory, Texture* tilemap) {
-  ImGui::Begin("Display");
+  ImGui::Begin("Display", nullptr, ImGuiWindowFlags_HorizontalScrollbar);
   DEFER([]() { ImGui::End(); });
 
   if (!Loaded(*memory)) {
@@ -155,33 +227,26 @@ void CreateDisplayImgui(Memory* memory, Texture* tilemap) {
     return;
   }
 
-  ImGui::Text("Background");
-
-
-  // Create tiles.
-  constexpr float kImageSize = 20;
-  ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  for (int y = 0; y < 32; y++) {
-    for (int x = 0; x < 32; x++) {
-      uint8_t index = memory->vram.background_map0[y * 32 + x];
-      Vec2 uv_base = TileIndexToUV(index);
-      Vec2 uv_end = uv_base + kUVOffset;
-
-      ImVec2 pos = ImGui::GetCursorScreenPos();
-      LOG(App, "Cursor: [%f, %f]", pos.x, pos.y);
-
-      ImGui::Image(tilemap, {kImageSize, kImageSize}, ToImVec(uv_base), ToImVec(uv_end));
-
-      auto text = StringPrintf("%03d", index);
-      draw_list->AddText(ImVec2{pos.x, pos.y + kImageSize - 13}, IM_COL32_WHITE, text.c_str());
-
-      if (x < 31)
-        ImGui::SameLine();
+  if (ImGui::BeginTabBar("GB Tiles")) {
+    if (ImGui::BeginTabItem("Background")) {
+      ShowBackgroundTiles(memory, tilemap);
+      ImGui::EndTabItem();
     }
+
+    if (ImGui::BeginTabItem("Window")) {
+      ImGui::Text("TODO");
+      ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Sprites")) {
+      ImGui::Text("TODO");
+      ImGui::EndTabItem();
+    }
+
+    ImGui::EndTabBar();
   }
+
 }
-
-
 
 }  // namespace emulator
 }  // namespace rothko
