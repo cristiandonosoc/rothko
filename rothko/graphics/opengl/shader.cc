@@ -97,18 +97,18 @@ uint32_t LinkProgram(uint32_t vert_handle, uint32_t frag_handle) {
   return prog_handle;
 }
 
-bool BindUBOs(const Shader::UBO& ubo,
+bool BindUBOs(const std::string& ubo_name, uint32_t ubo_size,
               uint32_t prog_handle,
               ShaderHandles::UBO* binding) {
-  if (!Valid(ubo))
+  if (ubo_size == 0)
     return true;
 
   uint32_t current_binding = 0;
 
   // Obtain the block index.
-  uint32_t index = glGetUniformBlockIndex(prog_handle, ubo.name.c_str());
+  uint32_t index = glGetUniformBlockIndex(prog_handle, ubo_name.c_str());
   if (index == GL_INVALID_INDEX) {
-    ERROR(OpenGL, "Could not find UBO index for %s", ubo.name.c_str());
+    ERROR(OpenGL, "Could not find UBO index for %s", ubo_name.c_str());
     return false;
   }
 
@@ -118,8 +118,8 @@ bool BindUBOs(const Shader::UBO& ubo,
   uint32_t buffer_handle = 0;
   glGenBuffers(1, &buffer_handle);
   glBindBuffer(GL_UNIFORM_BUFFER, buffer_handle);
-  ASSERT(ubo.size > 0);
-  glBufferData(GL_UNIFORM_BUFFER, ubo.size, NULL, GL_DYNAMIC_DRAW);
+  ASSERT(ubo_size > 0);
+  glBufferData(GL_UNIFORM_BUFFER, ubo_size, NULL, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_UNIFORM_BUFFER, NULL);
 
   // Store the binding data.
@@ -148,8 +148,8 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
     return false;
   handles->program = prog_handle;
 
-  if (!BindUBOs(shader->vert_ubo, prog_handle, &handles->vert_ubo) ||
-      !BindUBOs(shader->frag_ubo, prog_handle, &handles->frag_ubo)) {
+  if (!BindUBOs(shader->vert_ubo_name, shader->vert_ubo_size, prog_handle, &handles->vert_ubo) ||
+      !BindUBOs(shader->frag_ubo_name, shader->frag_ubo_size, prog_handle, &handles->frag_ubo)) {
     return false;
   }
 

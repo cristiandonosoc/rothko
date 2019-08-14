@@ -18,9 +18,10 @@ namespace {
 void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
   for (auto& command : commands) {
     switch (command.type()) {
-      case RenderCommandType::kClear: ASSERT(command.is_clear_frame()); continue;
+      case RenderCommandType::kClearFrame: ASSERT(command.is_clear_frame()); continue;
       case RenderCommandType::kConfigRenderer: ASSERT(command.is_config_renderer()); continue;
-      case RenderCommandType::kMesh: {
+      case RenderCommandType::kPushCamera: break;
+      case RenderCommandType::kRenderMesh: {
         ASSERT(command.is_render_mesh());
         auto& render_mesh = command.GetRenderMesh();
         ASSERT(render_mesh.mesh);
@@ -92,30 +93,31 @@ void ExecuteConfigRendererAction(const ConfigRenderer& config) {
 // Execute Mesh Render Actions ---------------------------------------------------------------------
 
 void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_handles) {
+  const Shader* shader = render_mesh.shader;
   // Vertex UBOs.
-  if (Valid(render_mesh.shader->vert_ubo)) {
-    Shader::UBO& ubo = render_mesh.shader->vert_ubo;
+  if (shader->vert_ubo_size > 0) {
     auto& ubo_binding = shader_handles.vert_ubo;
 
     ASSERT(ubo_binding.binding_index >= 0);
     ASSERT(ubo_binding.buffer_handle > 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, ubo.size, render_mesh.vert_ubo_data, GL_STREAM_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, shader->vert_ubo_size, render_mesh.vert_ubo_data,
+                 GL_STREAM_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
     glBindBuffer(GL_UNIFORM_BUFFER, NULL);
   }
 
   // Fragment UBOs.
-  if (Valid(render_mesh.shader->frag_ubo)) {
-    auto& ubo = render_mesh.shader->frag_ubo;
+  if (shader->frag_ubo_size > 0) {
     auto& ubo_binding = shader_handles.frag_ubo;
 
     ASSERT(ubo_binding.binding_index >= 0);
     ASSERT(ubo_binding.buffer_handle > 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, ubo.size, render_mesh.frag_ubo_data, GL_STREAM_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, shader->frag_ubo_size, render_mesh.frag_ubo_data,
+                 GL_STREAM_DRAW);
     //glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
     glBindBuffer(GL_UNIFORM_BUFFER, NULL);
   }
@@ -186,19 +188,21 @@ void OpenGLExecuteCommands(OpenGLRendererBackend* opengl,
 
   for (auto& command : commands) {
     switch (command.type()) {
-      case RenderCommandType::kClear:
+      case RenderCommandType::kClearFrame:
         ExecuteClearRenderAction(command.GetClearFrame());
         break;
       case RenderCommandType::kConfigRenderer:
         ExecuteConfigRendererAction(command.GetConfigRenderer());
         break;
-      case RenderCommandType::kMesh:
+      case RenderCommandType::kPushCamera:
+        NOT_IMPLEMENTED();
+        break;
+      case RenderCommandType::kRenderMesh:
         ExecuteMeshRenderActions(*opengl, command.GetRenderMesh());
         break;
       case RenderCommandType::kLast:
         NOT_REACHED();
     }
-
   }
 }
 

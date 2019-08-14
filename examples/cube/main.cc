@@ -14,18 +14,14 @@
 #include <sstream>
 #include <thread>
 
+#include "shader.h"
+
 using namespace rothko;
 using namespace rothko::imgui;
 
 namespace {
 
 bool Setup(Window*);
-
-struct UBO {
-  Mat4 proj;
-  Mat4 view;
-  Mat4 model;
-};
 
 std::vector<UBO> ubos;
 
@@ -34,10 +30,9 @@ struct CubeShader {
 };
 
 Mesh CreateMesh();
-CubeShader CreateShader();
 Camera CreateCamera();
 
-PerFrameVector<RenderCommand> GetRenderCommands(ImVec4 clear_color, Mesh* mesh, CubeShader* shader,
+PerFrameVector<RenderCommand> GetRenderCommands(ImVec4 clear_color, Mesh* mesh, Shader* shader,
                                                 Texture* tex0, Texture* tex1);
 
 Texture LoadTexture(Renderer* renderer, const std::string& path) {
@@ -76,9 +71,7 @@ int main() {
   if (!RendererStageMesh(renderer.get(), &mesh))
     return 1;
 
-  CubeShader cube_shader = CreateShader();
-  if (!RendererStageShader(renderer.get(), &cube_shader.shader))
-    return 1;
+  auto shader = CreateShader(renderer.get());
 
   Texture wall = LoadTexture(renderer.get(), "examples/cube/wall.jpg");
   if (!Loaded(&wall))
@@ -170,7 +163,7 @@ int main() {
 
     float angle = time.seconds * ToRadians(50.0f);
     ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
-    auto cube_commands = GetRenderCommands(clear_color, &mesh, &cube_shader, &wall, &face);
+    auto cube_commands = GetRenderCommands(clear_color, &mesh, shader.get(), &wall, &face);
     commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
 
     auto imgui_commands = EndFrame(&imgui);
@@ -288,19 +281,6 @@ Mesh CreateMesh() {
   return mesh;
 }
 
-CubeShader CreateShader() {
-  CubeShader shader;
-  shader.shader.name = "cube";
-  shader.shader.vert_ubo = {"Uniforms", sizeof(UBO)};
-  shader.shader.texture_count = 2;
-
-  ASSERT(LoadShaderSources("examples/cube/shader.vert",
-                           "examples/cube/shader.frag",
-                           &shader.shader));
-  return shader;
-}
-
-
 uint32_t VecToColor(ImVec4 color) {
   // RGBA
   return ((uint8_t)(color.x * 255.0f) << 24) |
@@ -310,9 +290,8 @@ uint32_t VecToColor(ImVec4 color) {
 }
 
 PerFrameVector<RenderCommand>
-GetRenderCommands(ImVec4 color, Mesh* mesh, CubeShader* cube_shader, Texture* tex0, Texture* tex1) {
+GetRenderCommands(ImVec4 color, Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   (void)mesh;
-  (void)cube_shader;
   PerFrameVector<RenderCommand> commands;
 
   // Clear command.
@@ -324,7 +303,7 @@ GetRenderCommands(ImVec4 color, Mesh* mesh, CubeShader* cube_shader, Texture* te
   // Mesh command.
   RenderMesh render_mesh;
   render_mesh.mesh = mesh;
-  render_mesh.shader = &cube_shader->shader;
+  render_mesh.shader = shader;
   render_mesh.cull_faces = false;
   render_mesh.indices_size = mesh->indices_count;
   render_mesh.vert_ubo_data = (uint8_t*)&ubos[1];
@@ -334,7 +313,7 @@ GetRenderCommands(ImVec4 color, Mesh* mesh, CubeShader* cube_shader, Texture* te
 
   // Add another cube.
   /* render_mesh.mesh = mesh; */
-  /* render_mesh.shader = &cube_shader->shader; */
+  /* render_mesh.shader = shader; */
   /* render_mesh.cull_faces = false; */
   /* render_mesh.indices_size = mesh->indices_count; */
   /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[0]; */

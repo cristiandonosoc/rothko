@@ -4,6 +4,7 @@
 #pragma once
 
 #include "rothko/graphics/graphics.h"
+#include "rothko/ui/imgui/imgui_shaders.h"
 #include "rothko/utils/macros.h"
 
 struct ImGuiIO;
@@ -26,10 +27,7 @@ struct ImguiRenderer {
   ImGuiIO* io = nullptr;
   Renderer* renderer = nullptr;  // Must outlive.
 
-  struct UBO {
-    Mat4 projection;
-    Mat4 view;
-  } ubo;
+  ImguiUBO ubo;
 };
 
 inline bool Valid(ImguiRenderer* r) { return !!r->renderer && !!r->io; }

@@ -28,16 +28,17 @@ struct Texture;
 // Render Actions ----------------------------------------------------------------------------------
 
 enum class RenderCommandType {
-  kClear,
-  kMesh,
+  kClearFrame,
   kConfigRenderer,
+  kRenderMesh,
+  kPushCamera,
   kLast,
 };
 const char* ToString(RenderCommandType);
 uint32_t ToSize(RenderCommandType);
 
 struct ClearFrame {
-  static constexpr RenderCommandType kType = RenderCommandType::kClear;
+  static constexpr RenderCommandType kType = RenderCommandType::kClearFrame;
 
   bool clear_depth = true;
   bool clear_color = true;
@@ -53,11 +54,19 @@ struct ConfigRenderer {
 };
 std::string ToString(const ConfigRenderer&);
 
+struct PushCamera {
+  static constexpr RenderCommandType kType = RenderCommandType::kPushCamera;
+
+  Mat4 projection;
+  Mat4 view;
+};
+std::string ToString(const PushCamera&);
+
 // Represents all the information needed to render a mesh. It provides the mesh, texture, uniform
 // and whatnot. The renderer can be clever about re-using state (like if two consecutive render
 // mesh commands use the same shader), but it's not obligated to do that.
 struct RenderMesh {
-  static constexpr RenderCommandType kType = RenderCommandType::kMesh;
+  static constexpr RenderCommandType kType = RenderCommandType::kRenderMesh;
 
   Mesh* mesh = nullptr;
   Shader* shader = nullptr;
@@ -87,39 +96,38 @@ std::string ToString(const RenderMesh&);
 
 // Render Command ----------------------------------------------------------------------------------
 
+#define GENERATE_COMMAND(Command, getter)                                  \
+  RenderCommand(Command cmd) { SetRenderCommand(std::move(cmd)); }         \
+  RenderCommand& operator=(Command cmd) {                                  \
+    SetRenderCommand(std::move(cmd));                                      \
+    return *this;                                                          \
+  }                                                                        \
+  const Command& Get##Command() const { return std::get<Command>(data_); } \
+  bool getter() const { return type_ == RenderCommandType::k##Command; }
+
 struct RenderCommand {
   RenderCommand() = default;
   DEFAULT_COPY_AND_ASSIGN(RenderCommand);
   DEFAULT_MOVE_AND_ASSIGN(RenderCommand);
 
-  RenderCommand(ClearFrame);
-  RenderCommand& operator=(ClearFrame);
-
-  RenderCommand(ConfigRenderer);
-  RenderCommand& operator=(ConfigRenderer);
-
-  RenderCommand(RenderMesh);
-  RenderCommand& operator=(RenderMesh);
-
   RenderCommandType type() const { return type_; }
-  bool is_clear_frame() const { return type_ == RenderCommandType::kClear; }
-  bool is_config_renderer() const { return type_ == RenderCommandType::kConfigRenderer; }
-  bool is_render_mesh() const { return type_ == RenderCommandType::kMesh; }
 
-  // Getters.
-  ClearFrame& GetClearFrame();
-  const ClearFrame& GetClearFrame() const;
+  GENERATE_COMMAND(ClearFrame, is_clear_frame);
+  GENERATE_COMMAND(ConfigRenderer, is_config_renderer);
+  GENERATE_COMMAND(PushCamera, is_push_camera);
+  GENERATE_COMMAND(RenderMesh, is_render_mesh);
 
-  ConfigRenderer& GetConfigRenderer();
-  const ConfigRenderer& GetConfigRenderer() const;
-
-  RenderMesh& GetRenderMesh();
-  const RenderMesh& GetRenderMesh() const;
-
-  // "pseudo"-private.
+ private:
   RenderCommandType type_ = RenderCommandType::kLast;
-  std::variant<ClearFrame, ConfigRenderer, RenderMesh> data_;
+  std::variant<ClearFrame, ConfigRenderer, PushCamera, RenderMesh> data_;
+
+  template <typename T>
+  void SetRenderCommand(T t) {
+    type_ = T::kType;
+    data_ = std::move(t);
+  }
 };
+
 std::string ToString(const RenderCommand&);
 
 }  // namespace rothko

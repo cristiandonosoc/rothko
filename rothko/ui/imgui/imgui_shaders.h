@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <rothko/math/math.h>
+
 // This is meant to be a holder API for getting specialized shaders for each kind of  supported
 // renderer within Rothko.
 //
@@ -14,6 +16,11 @@ namespace rothko {
 struct Shader;
 
 namespace imgui {
+
+struct ImguiUBO {
+  Mat4 projection;
+  Mat4 view;
+};
 
 Shader GetOpenGLImguiShader();
 

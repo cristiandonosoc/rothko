@@ -9,21 +9,12 @@
 
 namespace rothko {
 
-namespace {
-
-template <typename T>
-void SetRenderCommand(RenderCommand* command, T t) {
-  command->type_ = T::kType;
-  command->data_ = t;
-}
-
-}  // namespace
-
 const char* ToString(RenderCommandType type) {
   switch (type) {
-    case RenderCommandType::kClear: return "Clear";
+    case RenderCommandType::kClearFrame: return "Clear Frame";
     case RenderCommandType::kConfigRenderer: return "Config Renderer";
-    case RenderCommandType::kMesh: return "Mesh";
+    case RenderCommandType::kPushCamera: return "Push Camera";
+    case RenderCommandType::kRenderMesh: return "Render Mesh";
     case RenderCommandType::kLast: return "Last";
   }
 
@@ -32,23 +23,6 @@ const char* ToString(RenderCommandType type) {
 }
 
 // Clear Action-------------------------------------------------------------------------------------
-
-RenderCommand::RenderCommand(ClearFrame clear_frame) {
-  SetRenderCommand(this, std::move(clear_frame));
-}
-
-RenderCommand& RenderCommand::operator=(ClearFrame clear_frame) {
-  SetRenderCommand(this, std::move(clear_frame));
-  return *this;
-}
-
-ClearFrame& RenderCommand::GetClearFrame() {
-  if (!is_clear_frame())
-    SetRenderCommand(this, ClearFrame());
-  return std::get<ClearFrame>(data_);
-}
-
-const ClearFrame& RenderCommand::GetClearFrame() const { return std::get<ClearFrame>(data_); }
 
 std::string ToString(const ClearFrame& clear_frame) {
   std::stringstream ss;
@@ -63,25 +37,6 @@ std::string ToString(const ClearFrame& clear_frame) {
 
 // Config Renderer ---------------------------------------------------------------------------------
 
-RenderCommand::RenderCommand(ConfigRenderer config_renderer) {
-  SetRenderCommand(this, std::move(config_renderer));
-}
-
-RenderCommand& RenderCommand::operator=(ConfigRenderer config_renderer) {
-  SetRenderCommand(this, std::move(config_renderer));
-  return *this;
-}
-
-ConfigRenderer& RenderCommand::GetConfigRenderer() {
-  if (!is_config_renderer())
-    SetRenderCommand(this, ConfigRenderer());
-  return std::get<ConfigRenderer>(data_);
-}
-
-const ConfigRenderer& RenderCommand::GetConfigRenderer() const {
-  return std::get<ConfigRenderer>(data_);
-}
-
 std::string ToString(const ConfigRenderer& config_renderer) {
   std::stringstream ss;
   ss << std::boolalpha;
@@ -90,28 +45,17 @@ std::string ToString(const ConfigRenderer& config_renderer) {
   return ss.str();
 }
 
+// Push Camera -------------------------------------------------------------------------------------
+
+std::string ToString(const PushCamera& push_camera) {
+  std::stringstream ss;
+  ss << std::boolalpha;
+  ss << "Projection: " << ToString(push_camera.projection) << std::endl
+     << "View: " << ToString(push_camera.view);
+  return ss.str();
+}
+
 // Render Mesh -------------------------------------------------------------------------------------
-
-RenderCommand::RenderCommand(RenderMesh render_mesh) {
-  SetRenderCommand(this, std::move(render_mesh));
-}
-
-RenderCommand& RenderCommand::operator=(RenderMesh render_mesh) {
-  SetRenderCommand(this, std::move(render_mesh));
-  return *this;
-}
-
-RenderMesh& RenderCommand::GetRenderMesh() {
-  if (!is_render_mesh())
-    SetRenderCommand(this, RenderMesh());
-  return std::get<RenderMesh>(data_);
-}
-
-namespace {
-
-}  // namespace
-
-const RenderMesh& RenderCommand::GetRenderMesh() const { return std::get<RenderMesh>(data_); }
 
 std::string ToString(const RenderMesh& render_mesh) {
   std::stringstream ss;
@@ -152,17 +96,19 @@ std::string ToString(const RenderMesh& render_mesh) {
 
 std::string ToString(const RenderCommand& command) {
   std::stringstream ss;
-  ss << "Type: " << ToString(command.type_) << std::endl;
-  switch (command.type_) {
-    case RenderCommandType::kClear:
+  ss << "Type: " << ToString(command.type()) << std::endl;
+  switch (command.type()) {
+    case RenderCommandType::kClearFrame:
       ss << ToString(command.GetClearFrame());
       break;
     case RenderCommandType::kConfigRenderer:
       ss << ToString(command.GetConfigRenderer());
       break;
-    case RenderCommandType::kMesh:
+    case RenderCommandType::kRenderMesh:
       ss << ToString(command.GetRenderMesh());
       break;
+    case RenderCommandType::kPushCamera:
+      ss << ToString(command.GetPushCamera());
     case RenderCommandType::kLast:
       break;
   }

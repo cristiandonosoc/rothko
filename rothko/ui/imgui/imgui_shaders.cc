@@ -68,8 +68,8 @@ void main() {
 Shader GetOpenGLImguiShader() {
   Shader shader;
   shader.name = "Imgui Shader";
-  shader.vert_ubo.name = "Camera";
-  shader.vert_ubo.size = 128;
+  shader.vert_ubo_name = "Camera";
+  shader.vert_ubo_size = sizeof(ImguiUBO);
   shader.texture_count = 1;
 
   shader.vert_src = kOpenGLVertex;

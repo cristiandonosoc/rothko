@@ -4,6 +4,8 @@
 executable("cube") {
   sources = [
     "main.cc",
+    "shader.cc",
+    "shader.h",
   ]
 
   deps = [
