@@ -83,6 +83,53 @@ TEST_CASE("Vec3") {
   }
 }
 
+TEST_CASE("Mat4") {
+  Mat4 mat = Mat4{{ 1,  2,  3,  4},
+                  { 5,  6,  7,  8},
+                  { 9, 10, 11, 12},
+                  {13, 14, 15, 16}};
+
+  SECTION("Storage") {
+    // The API treats it as row-major, but they're stored column-major.
+    REQUIRE(mat.cols[0] == Vec4{ 1,  2,  3,  4});
+    REQUIRE(mat.cols[1] == Vec4{ 5,  6,  7,  8});
+    REQUIRE(mat.cols[2] == Vec4{ 9, 10, 11, 12});
+    REQUIRE(mat.cols[3] == Vec4{13, 14, 15, 16});
+  }
+
+  SECTION("GetRow") {
+    REQUIRE(GetRow(mat, 0) == Vec4{ 1,  2,  3,  4});
+    REQUIRE(GetRow(mat, 1) == Vec4{ 5,  6,  7,  8});
+    REQUIRE(GetRow(mat, 2) == Vec4{ 9, 10, 11, 12});
+    REQUIRE(GetRow(mat, 3) == Vec4{13, 14, 15, 16});
+  }
+
+  SECTION("GetCol") {
+    REQUIRE(GetCol(mat, 0) == Vec4{ 1,  5,  9, 13});
+    REQUIRE(GetCol(mat, 1) == Vec4{ 2,  6, 10, 14});
+    REQUIRE(GetCol(mat, 2) == Vec4{ 3,  7, 11, 15});
+    REQUIRE(GetCol(mat, 3) == Vec4{ 4,  8, 12, 16});
+  }
+
+  SECTION("V3 multiplication") {
+    Vec3 v = Vec3{2, 3, 4};
+    Vec4 res = mat * v;
+    REQUIRE(res[0] == 24);    // 1*2 + 2*3 + 3*4 + 4*1
+    REQUIRE(res[1] == 64);    // 5*2 + 6*3 + 7*4 + 8*1
+    REQUIRE(res[2] == 104);   // 9*2 + 10*3 + 11*4 + 12*1
+    REQUIRE(res[3] == 144);   // 13*2 + 14*3 + 15*4 + 16*1
+  }
+
+  SECTION("v4 multiplication") {
+    Vec4 v = Vec4{1, 2, 3, 4};
+    Vec4 res = mat * v;
+    REQUIRE(res[0] == 30);    // 1*1 + 2*2 + 3*3 + 4*4
+    REQUIRE(res[1] == 70);    // 5*1 + 6*2 + 7*3 + 8*4
+    REQUIRE(res[2] == 110);   // 9*1 + 10*2 + 11*3 + 12*4
+    REQUIRE(res[3] == 150);   // 13*1 + 14*2 + 15*3 + 16*4
+  }
+}
+
 }  // namespace
 
 }  // namespace rothko

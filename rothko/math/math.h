@@ -157,8 +157,8 @@ union _v3 {
   _v3 operator/(const T& t) const { return {x / t, y / t, z / t}; }
   void operator/=(const T& t) { x /= t; y /= t; z /= t; }
 
-  void operator==(const _v3& o) const { return x == o.x && y == o.y && z == o.z; }
-  void operator!=(const _v3& o) const { return x != o.x || y != o.y || z != o.z; }
+  bool operator==(const _v3& o) const { return x == o.x && y == o.y && z == o.z; }
+  bool operator!=(const _v3& o) const { return x != o.x || y != o.y || z != o.z; }
 };
 
 using Int3 = _v3<int>;
@@ -236,8 +236,8 @@ union _v4 {
   _v4 operator/(const T& t) const { return {x / t, y / t, z / t, w / t}; }
   void operator/=(const T& t) { x /= t; y /= t; z /= t; w /= t; }
 
-  void operator==(const _v4& o) const { return x == o.x && y == o.y && z == o.z && w == o.w; }
-  void operator!=(const _v4& o) const { return x != o.x || y != o.y || z != o.z || w != o.w; }
+  bool operator==(const _v4& o) const { return x == o.x && y == o.y && z == o.z && w == o.w; }
+  bool operator!=(const _v4& o) const { return x != o.x || y != o.y || z != o.z || w != o.w; }
 };
 
 using Int4 = _v4<int>;
@@ -317,8 +317,14 @@ union _mat4 {
   static _mat4 Identity() { return {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}; }
 
   // Operators.
-
   float& get(int x, int y) { return elements[y][x]; }
+  _v4<T> get_row(int index) const {
+    return cols[index];
+  }
+
+  _v4<T> get_col(int index) const {
+    return {cols[0][index], cols[1][index], cols[2][index], cols[3][index]};
+  }
 
   bool operator==(const _mat4& o) const {
     return cols[0] == o.cols[0] && cols[1] == o.cols[1] &&
@@ -326,6 +332,16 @@ union _mat4 {
   }
 
   bool operator!=(const _mat4& o) const { return !(*this == o); }
+
+  // Vec3 appends a 1.0f to the w coordinate.
+  _v4<T> operator*(const _v3<T>& v) const {
+    _v4<T> vec = {v.x, v.y, v.z, 1.0f};
+    return _v4<T>{Dot(cols[0], vec), Dot(cols[1], vec), Dot(cols[2], vec), Dot(cols[3], vec)};
+  }
+
+  _v4<T> operator*(const _v4<T>& vec) const {
+    return _v4<T>{Dot(cols[0], vec), Dot(cols[1], vec), Dot(cols[2], vec), Dot(cols[3], vec)};
+  }
 };
 
 using IntMat4 = _mat4<int>;
@@ -333,6 +349,16 @@ using Mat4 = _mat4<float>;
 
 template <typename T>
 void SetRowCol(_mat4<T>* m, T x, T y) { (*m)[y][x]; }
+
+template <typename T>
+_v4<T> GetRow(const _mat4<T>& m, int index) {
+  return m.get_row(index);
+}
+
+template <typename T>
+_v4<T> GetCol(const _mat4<T>& m, int index) {
+  return m.get_col(index);
+}
 
 std::string ToString(const Mat4&);
 
