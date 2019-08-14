@@ -95,6 +95,17 @@ Mat4 Rotate(const Vec3& v, float radian_angle) {
   // clang-format on
 }
 
+Vec3 Rotate(Vec3 pos, float radian_x, float radian_y) {
+  if (radian_x != 0) {
+    pos = RotateX(pos, radian_x);
+  }
+
+  if (radian_y != 0) {
+    pos = RotateY(pos, radian_y);
+  }
+  return pos;
+}
+
 Mat4 Scale(const Vec3& v) {
   // clang-format on
   return Mat4({ v.x,   0,   0,   0},

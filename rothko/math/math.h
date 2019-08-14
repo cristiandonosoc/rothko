@@ -318,11 +318,12 @@ union _mat4 {
 
   // Operators.
   float& get(int x, int y) { return elements[y][x]; }
-  _v4<T> get_row(int index) const {
+
+  _v4<T> row(int index) const {
     return cols[index];
   }
 
-  _v4<T> get_col(int index) const {
+  _v4<T> col(int index) const {
     return {cols[0][index], cols[1][index], cols[2][index], cols[3][index]};
   }
 
@@ -342,6 +343,20 @@ union _mat4 {
   _v4<T> operator*(const _v4<T>& vec) const {
     return _v4<T>{Dot(cols[0], vec), Dot(cols[1], vec), Dot(cols[2], vec), Dot(cols[3], vec)};
   }
+
+  _mat4<T> operator*(const _mat4<T>& m) const {
+    _mat4<T> res = {};
+    res.cols[0] = {
+        Dot(row(0), m.col(0)), Dot(row(0), m.col(1)), Dot(row(0), m.col(2)), Dot(row(0), m.col(3))};
+    res.cols[1] = {
+        Dot(row(1), m.col(0)), Dot(row(1), m.col(1)), Dot(row(1), m.col(2)), Dot(row(1), m.col(3))};
+    res.cols[2] = {
+        Dot(row(2), m.col(0)), Dot(row(2), m.col(1)), Dot(row(2), m.col(2)), Dot(row(2), m.col(3))};
+    res.cols[3] = {
+        Dot(row(3), m.col(0)), Dot(row(3), m.col(1)), Dot(row(3), m.col(2)), Dot(row(3), m.col(3))};
+
+    return res;
+  }
 };
 
 using IntMat4 = _mat4<int>;
@@ -352,12 +367,12 @@ void SetRowCol(_mat4<T>* m, T x, T y) { (*m)[y][x]; }
 
 template <typename T>
 _v4<T> GetRow(const _mat4<T>& m, int index) {
-  return m.get_row(index);
+  return m.row(index);
 }
 
 template <typename T>
 _v4<T> GetCol(const _mat4<T>& m, int index) {
-  return m.get_col(index);
+  return m.col(index);
 }
 
 std::string ToString(const Mat4&);
@@ -371,8 +386,26 @@ Mat4 Translate(const Vec3& v);
 // Rotate |radian_angle| around |v|.
 Mat4 Rotate(const Vec3& v, float radian_angle);
 
+// If |x| or |y| is zero, no rotation would be made in that axis.
+// That means that if no value is given, |pos| would be given just out.
+Vec3 Rotate(Vec3 pos, float radian_x, float radian_y);
+
+inline Vec3 RotateX(Vec3 pos, float radian_angle) {
+  Vec4 res = Rotate({1, 0, 0}, radian_angle) * pos;
+  return {res.x, res.y, res.z};
+}
+
+inline Vec3 RotateY(Vec3 pos, float radian_angle) {
+  Vec4 res = Rotate({0, 1, 0}, radian_angle) * pos;
+  return {res.x, res.y, res.z};
+}
+
 // Each coord of |v| represents the scale on that dimenstion.
 Mat4 Scale(const Vec3& v);
+
+inline Mat4 Scale(float scale) {
+  return Scale({scale, scale, scale});
+}
 
 // Usually |hint_up| points upward. Our Y vector represents up.
 Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 hint_up = {0, 1, 0});

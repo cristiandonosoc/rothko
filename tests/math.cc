@@ -84,10 +84,10 @@ TEST_CASE("Vec3") {
 }
 
 TEST_CASE("Mat4") {
-  Mat4 mat = Mat4{{ 1,  2,  3,  4},
-                  { 5,  6,  7,  8},
-                  { 9, 10, 11, 12},
-                  {13, 14, 15, 16}};
+  Mat4 mat = {{ 1,  2,  3,  4},
+              { 5,  6,  7,  8},
+              { 9, 10, 11, 12},
+              {13, 14, 15, 16}};
 
   SECTION("Storage") {
     // The API treats it as row-major, but they're stored column-major.
@@ -127,6 +127,20 @@ TEST_CASE("Mat4") {
     REQUIRE(res[1] == 70);    // 5*1 + 6*2 + 7*3 + 8*4
     REQUIRE(res[2] == 110);   // 9*1 + 10*2 + 11*3 + 12*4
     REQUIRE(res[3] == 150);   // 13*1 + 14*2 + 15*3 + 16*4
+  }
+
+  SECTION("mat4 multiplication") {
+    Mat4 mat2 = {{ 1,  2,  3,  4},
+                 { 5,  6,  7,  8},
+                 { 9, 10, 11, 12},
+                 {13, 14, 15, 16}};
+
+    Mat4 res = mat * mat2;
+
+    REQUIRE(GetRow(res, 0) == Vec4{ 90, 100, 110, 120});
+    REQUIRE(GetRow(res, 1) == Vec4{202, 228, 254, 280});
+    REQUIRE(GetRow(res, 2) == Vec4{314, 356, 398, 440});
+    REQUIRE(GetRow(res, 3) == Vec4{426, 484, 542, 600});
   }
 }
 
