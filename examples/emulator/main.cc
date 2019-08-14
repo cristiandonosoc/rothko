@@ -94,11 +94,11 @@ int main(int argc, char* argv[]) {
   window_config.resizable = true;
   /* window_config.fullscreen = true; */
   window_config.screen_size = {1920, 1440};
-  if (!InitGame(&game, &window_config, RendererType::kOpenGL, log_to_stdout))
+  if (!InitGame(&game, &window_config, log_to_stdout))
     return 1;
 
   ImguiContext imgui;
-  if (!InitImgui(&game.renderer, &imgui))
+  if (!InitImgui(game.renderer.get(), &imgui))
     return 1;
 
   rothko::emulator::Display display;
@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
   /* normal_ubo.view = LookAt({5, 5, 5}, {}, {0, 1, 0}); */
   normal_ubo.view = Mat4::Identity();
 
-  auto normal_shader = rothko::emulator::CreateNormalShader(&game.renderer);
+  auto normal_shader = rothko::emulator::CreateNormalShader(game.renderer.get());
   if (!normal_shader) {
     ERROR(App, "Could not create shader.");
     return 1;
@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
   config.generate_mipmaps = false;
   config.min_filter = StageTextureConfig::Filter::kNearest;
   config.max_filter = StageTextureConfig::Filter::kNearest;
-  if (!RendererStageTexture(config, &game.renderer, &background_texture))
+  if (!RendererStageTexture(game.renderer.get(), &background_texture, config))
     return 1;
 
   rothko::emulator::Memory memory = {};
@@ -189,14 +189,14 @@ int main(int argc, char* argv[]) {
           }
 
           LOG(App, "Updating texture");
-          RendererSubTexture(&game.renderer, &background_texture,
+          RendererSubTexture(game.renderer.get(), &background_texture,
                              {0, 0}, kTextureDim,
                              background_texture.data.value);
 
           LOG(App, "Updating mesh");
 
           // Generate the background mesh.
-          CreateBackgroundMesh(&game.renderer, &display, &memory, &background_texture,
+          CreateBackgroundMesh(game.renderer.get(), &display, &memory, &background_texture,
                                normal_shader.get(), (uint8_t*)&normal_ubo);
         }
 
@@ -250,8 +250,7 @@ int main(int argc, char* argv[]) {
     auto imgui_commands = EndFrame(&imgui);
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
 
-    RendererExecuteCommands(commands, &game.renderer);
-
-    EndFrame(&game.renderer);
+    RendererExecuteCommands(game.renderer.get(), std::move(commands));
+    RendererEndFrame(game.renderer.get(), &game.window);
   }
 }

@@ -17,7 +17,6 @@ source_set("tests_lib") {
 
   deps = [
     "//rothko/containers",
-    "//rothko/graphics/common",
     "//rothko/logging",
     "//rothko/math",
     "//rothko/memory",

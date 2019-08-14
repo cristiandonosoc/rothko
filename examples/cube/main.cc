@@ -19,7 +19,7 @@ using namespace rothko::imgui;
 
 namespace {
 
-bool Setup(Window*, Renderer*);
+bool Setup(Window*);
 
 struct UBO {
   Mat4 proj;
@@ -46,7 +46,7 @@ Texture LoadTexture(Renderer* renderer, const std::string& path) {
     return {};
 
   StageTextureConfig config = {};
-  if (!RendererStageTexture(config, renderer, &texture))
+  if (!RendererStageTexture(renderer, &texture, config))
     return {};
 
   return texture;
@@ -61,25 +61,30 @@ int main() {
   WARNING(OpenGL, "Test warning");
 
   Window window;
-  Renderer renderer;
-  if (!Setup(&window, &renderer))
+  if (!Setup(&window))
     return 1;
+
+  auto renderer = InitRenderer();
+  if (!renderer)
+    return 1;
+
+
 
   Input input = {};
 
   Mesh mesh = CreateMesh();
-  if (!RendererStageMesh(&renderer, &mesh))
+  if (!RendererStageMesh(renderer.get(), &mesh))
     return 1;
 
   CubeShader cube_shader = CreateShader();
-  if (!RendererStageShader(&renderer, &cube_shader.shader))
+  if (!RendererStageShader(renderer.get(), &cube_shader.shader))
     return 1;
 
-  Texture wall = LoadTexture(&renderer, "examples/cube/wall.jpg");
+  Texture wall = LoadTexture(renderer.get(), "examples/cube/wall.jpg");
   if (!Loaded(&wall))
     return 1;
 
-  Texture face = LoadTexture(&renderer, "examples/cube/awesomeface.png");
+  Texture face = LoadTexture(renderer.get(), "examples/cube/awesomeface.png");
   if (!Loaded(&face))
     return 1;
 
@@ -96,7 +101,7 @@ int main() {
   Time time = InitTime();
 
   ImguiContext imgui;
-  if (!InitImgui(&renderer, &imgui))
+  if (!InitImgui(renderer.get(), &imgui))
     return 1;
 
   ImGui::StyleColorsDark();
@@ -127,7 +132,7 @@ int main() {
     }
 
     Update(&time);
-    StartFrame(&renderer);
+    RendererStartFrame(renderer.get());
     StartFrame(&imgui, &window, &time, &input);
 
     PerFrameVector<RenderCommand> commands;
@@ -171,15 +176,15 @@ int main() {
     auto imgui_commands = EndFrame(&imgui);
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
 
-    RendererExecuteCommands(commands, &renderer);
+    RendererExecuteCommands(renderer.get(), std::move(commands));
 
-    EndFrame(&renderer);
+    RendererEndFrame(renderer.get(), &window);
   }
 }
 
 namespace {
 
-bool Setup(Window* window, Renderer* renderer) {
+bool Setup(Window* window) {
   // Window.
   InitWindowConfig window_config = {};
   window_config.type = WindowType::kSDLOpenGL;
@@ -188,15 +193,6 @@ bool Setup(Window* window, Renderer* renderer) {
   window_config.screen_size = {1920, 1440};
   if (!InitWindow(window, &window_config)) {
     ERROR(App, "Could not initialize window. Exiting.");
-    return false;
-  }
-
-  // Renderer.
-  InitRendererConfig renderer_config = {};
-  renderer_config.type = RendererType::kOpenGL;
-  renderer_config.window = window;
-  if (!InitRenderer(renderer, &renderer_config)) {
-    ERROR(App, "Could not initialize the renderer. Exiting.");
     return false;
   }
 

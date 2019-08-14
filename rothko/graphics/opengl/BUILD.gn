@@ -19,7 +19,7 @@ source_set("opengl") {
   ]
 
   deps = [
-    "//rothko/graphics/common",
+    "//rothko/graphics:common",
     "//rothko/math",
     "//rothko/window/common",
     "//third_party/gl3w",

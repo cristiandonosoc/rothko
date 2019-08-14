@@ -7,9 +7,9 @@
 
 #include <atomic>
 
-#include "rothko/graphics/common/renderer.h"
-#include "rothko/graphics/common/texture.h"
 #include "rothko/graphics/opengl/renderer_backend.h"
+#include "rothko/graphics/renderer.h"
+#include "rothko/graphics/texture.h"
 #include "rothko/logging/logging.h"
 
 namespace rothko {
@@ -63,9 +63,8 @@ GLenum FilterToGL(StageTextureConfig::Filter filter) {
 
 }  // namespace
 
-bool OpenGLStageTexture(const StageTextureConfig& config,
-                        OpenGLRendererBackend* opengl,
-                        Texture* texture) {
+bool OpenGLStageTexture(OpenGLRendererBackend* opengl, Texture* texture,
+                        const StageTextureConfig& config) {
   uint32_t uuid = GetNextTextureUUID();
   auto it = opengl->loaded_textures.find(uuid);
   if (it != opengl->loaded_textures.end()) {

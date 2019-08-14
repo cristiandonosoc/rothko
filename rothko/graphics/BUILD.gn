@@ -3,21 +3,50 @@
 
 # See the buildconfig file (set in .gn) for then *_enabled variables.
 
+backend = ""
+macro_defines = []
 if (opengl_enabled) {
-  group("opengl") {
-    public_configs = [ ":graphics_macros" ]
-
-    deps = [
-      ":graphics_common",
-      "//rothko/graphics/opengl",
-    ]
+  if (backend != "") {
+    print("Backend already defined:", backend)
+    assert(false, "Only define one graphics backend.")
   }
+  backend = "//rothko/graphics/opengl"
+  macro_defines += [ "ROTHKO_OPENGL_ENABLED" ]
 }
 
-source_set("graphics_common") {
-  public = [
-    "graphics.h",
+# Example of vulkan integration build rule.
+#if (vulkan_enabled) {
+#  if (backend != "") {
+#    print("Backend already defined:", backend)
+#    assert(false, "Only define one graphics backend.")
+#  }
+#  backend = "//rothko/graphics/vulkan"
+#  macro_defines += [ "ROTHKO_VULKAN_ENABLED" ]
+#}
+
+assert(backend != "", "You must define a graphics backend.")
+
+group("graphics") {
+  deps = [
+    backend,
+    ":common_config",
+    ":common",
   ]
+}
+
+#if (opengl_enabled) {
+#  group("opengl") {
+#    public_configs = [ ":graphics_macros" ]
+#
+#    deps = [
+#      ":graphics_common",
+#      "//rothko/graphics/opengl",
+#    ]
+#  }
+#}
+
+source_set("common_config") {
+  defines = macro_defines
 }
 
 config("graphics_macros") {
@@ -26,4 +55,32 @@ config("graphics_macros") {
   if (opengl_enabled) {
     defines += [ "ROTHKO_OPENGL_ENABLED" ]
   }
+}
+
+# Common set of functionality each renderer implementation will use.
+source_set("common") {
+  public = [
+    "graphics.h",
+
+    "color.h",
+    "mesh.h",
+    "commands.h",
+    "renderer.h",
+    "renderer_backend.h",
+    "shader.h",
+    "texture.h",
+  ]
+
+  sources = [
+    "color.cc",
+    "mesh.cc",
+    "commands.cc",
+    #"renderer.cc",
+    "shader.cc",
+    "texture.cc",
+  ]
+
+  deps = [
+    "//rothko/utils",
+  ]
 }

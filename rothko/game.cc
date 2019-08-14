@@ -5,8 +5,7 @@
 
 namespace rothko {
 
-bool InitGame(Game* game, InitWindowConfig* window_config, RendererType renderer_type,
-              bool log_to_stdout) {
+bool InitGame(Game* game, InitWindowConfig* window_config, bool log_to_stdout) {
   game->platform_handle = InitializePlatform();
 
   game->log_handle = InitLoggingSystem(log_to_stdout);
@@ -16,11 +15,8 @@ bool InitGame(Game* game, InitWindowConfig* window_config, RendererType renderer
     return false;
   }
 
-  // Renderer.
-  InitRendererConfig renderer_config = {};
-  renderer_config.type = renderer_type;
-  renderer_config.window = &game->window;
-  if (!InitRenderer(&game->renderer, &renderer_config)) {
+  game->renderer = InitRenderer();
+  if (!game->renderer) {
     ERROR(App, "Could not initialize the renderer.");
     return false;
   }
@@ -31,8 +27,7 @@ bool InitGame(Game* game, InitWindowConfig* window_config, RendererType renderer
 PerFrameVector<WindowEvent> Update(Game* game) {
   auto events = NewFrame(&game->window, &game->input);
   Update(&game->time);
-  StartFrame(&game->renderer);
-
+  RendererStartFrame(game->renderer.get());
   return events;
 }
 

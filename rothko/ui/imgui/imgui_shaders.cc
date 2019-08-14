@@ -3,7 +3,7 @@
 
 #include "rothko/ui/imgui/imgui_shaders.h"
 
-#include "rothko/graphics/common/shader.h"
+#include "rothko/graphics/shader.h"
 #include "rothko/logging/logging.h"
 
 namespace rothko {

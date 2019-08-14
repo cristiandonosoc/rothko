@@ -1,12 +1,12 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include "rothko/graphics/common/shader.h"
+#include "rothko/graphics/shader.h"
 
 #include <map>
 #include <optional>
 
-#include "rothko/graphics/common/renderer.h"
+#include "rothko/graphics/renderer.h"
 #include "rothko/logging/logging.h"
 #include "rothko/utils/strings.h"
 #include "rothko/utils/file.h"

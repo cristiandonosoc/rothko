@@ -178,8 +178,8 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
 
 }  // namespace
 
-void OpenGLExecuteCommands(const PerFrameVector<RenderCommand>& commands,
-                           OpenGLRendererBackend* opengl) {
+void OpenGLExecuteCommands(OpenGLRendererBackend* opengl,
+                           const PerFrameVector<RenderCommand>& commands) {
 #if DEBUG_MODE
   ValidateRenderCommands(commands);
 #endif

@@ -21,7 +21,7 @@ source_set("imgui") {
   public_configs = [ ":renderer_macros" ]
 
   deps = [
-    "//rothko/graphics/common",
+    "//rothko/graphics:common",
     "//rothko/input",
     "//rothko/platform",
     "//rothko/utils",

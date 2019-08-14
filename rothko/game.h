@@ -17,14 +17,14 @@ namespace rothko {
 struct Game {
   std::unique_ptr<PlatformHandle> platform_handle;
   std::unique_ptr<LoggerHandle> log_handle;
+  std::unique_ptr<Renderer> renderer;
   Window window;
-  Renderer renderer;
   Input input;
   Time time;
 };
 
 // WindowType and RendererType must be compatible (ie. both OpenGL, Vulkan, etc.).
-bool InitGame(Game*, InitWindowConfig*, RendererType, bool log_to_stdout);
+bool InitGame(Game*, InitWindowConfig*, bool log_to_stdout);
 
 PerFrameVector<WindowEvent> Update(Game*);
 

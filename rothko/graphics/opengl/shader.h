@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include "rothko/graphics/common/shader.h"
+#include "rothko/graphics/shader.h"
 
 namespace rothko {
 

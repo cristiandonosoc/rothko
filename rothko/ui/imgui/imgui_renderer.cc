@@ -16,14 +16,13 @@ namespace imgui {
 namespace {
 
 bool CreateShader(Renderer* renderer, ImguiRenderer* imgui) {
+  ASSERT(Valid(renderer));
   Shader shader;
-  switch (renderer->type) {
-    case RendererType::kOpenGL:
-      shader = GetOpenGLImguiShader();
-      break;
-    case RendererType::kLast:
-      ERROR(Imgui, "Unsupported renderer type: %s", ToString(renderer->type));
-      return false;
+  if (strcmp(renderer->renderer_type, "OpenGL") == 0) {
+    shader = GetOpenGLImguiShader();
+  } else {
+    ERROR(Imgui, "Unsupported renderer type: %s", renderer->renderer_type);
+    return false;
   }
 
   if (!Loaded(shader) || !RendererStageShader(renderer, &shader))
@@ -81,7 +80,7 @@ bool CreateFontTexture(Renderer* renderer, ImguiRenderer* imgui) {
   texture.data = pixels;
 
   StageTextureConfig config = {};   // Defaults are sensible.
-  if (!RendererStageTexture(config, renderer, &texture))
+  if (!RendererStageTexture(renderer, &texture, config))
     return false;
 
   // Imgui wants a way of tracking the font texture id to relay it back to use on render time.

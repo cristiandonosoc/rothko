@@ -8,7 +8,7 @@
 #include <memory>
 #include <sstream>
 
-#include "rothko/graphics/common/renderer.h"
+#include "rothko/graphics/renderer.h"
 #include "rothko/graphics/opengl/execute_commands.h"
 #include "rothko/graphics/opengl/mesh.h"
 #include "rothko/graphics/opengl/shader.h"
@@ -17,30 +17,12 @@
 #include "rothko/window/window.h"
 
 namespace rothko {
+
+using namespace opengl;
+
 namespace opengl {
 
-// Backend suscription -----------------------------------------------------------------------------
-
-namespace {
-
-std::unique_ptr<RendererBackend> CreateOpenGLRenderer() {
-  return std::make_unique<OpenGLRendererBackend>();
-}
-
-struct BackendSuscriptor {
-  BackendSuscriptor() {
-    SuscribeRendererBackendFactory(RendererType::kOpenGL, CreateOpenGLRenderer);
-  }
-};
-
-// Trigger the suscription.
-BackendSuscriptor backend_suscriptor;
-
-} // namespace
-
-OpenGLRendererBackend::OpenGLRendererBackend() = default;
-
-// Init ------------------------------------------------------------------------
+// Init --------------------------------------------------------------------------------------------
 
 namespace {
 
@@ -114,16 +96,18 @@ Gl3wInitResultToString(int res) {
   return "<unknown>";
 }
 
-bool OpenGLInit(OpenGLRendererBackend* opengl, InitRendererConfig* config) {
-  if (Valid(*opengl)) {
-    NOT_REACHED_MSG("Backend should not be initialized twice.");
-    return false;
-  }
+std::unique_ptr<OpenGLRendererBackend> gBackend;
+
+}  // namespace
+}  // opengl
+
+std::unique_ptr<Renderer> InitRenderer() {
+  ASSERT(!gBackend);
 
   int res = gl3wInit();
   if (res != GL3W_OK) {
     ERROR(OpenGL, "Got non-ok GL3W result: %s", Gl3wInitResultToString(res));
-    return false;
+    return nullptr;
   }
 
   LOG(OpenGL, "Init gl3w");
@@ -142,32 +126,27 @@ bool OpenGLInit(OpenGLRendererBackend* opengl, InitRendererConfig* config) {
   }
 #endif
 
-  opengl->window = config->window;
-  return true;
+  gBackend = std::make_unique<OpenGLRendererBackend>();
+
+  auto renderer = std::make_unique<Renderer>();
+  renderer->renderer_type = "OpenGL";
+  return renderer;
 }
 
-}  // namespace
-
-bool OpenGLRendererBackend::Init(Renderer*, InitRendererConfig* config) {
-  return OpenGLInit(this, config);
+void ShutdownRenderer() {
+  ASSERT(gBackend);
+  gBackend.reset();
 }
-
-// Shutdown ----------------------------------------------------------------------------------------
-
-OpenGLRendererBackend::~OpenGLRendererBackend() = default;
 
 // Execute Commands --------------------------------------------------------------------------------
 
-void OpenGLRendererBackend::ExecuteCommands(
-    const PerFrameVector<RenderCommand>& commands) {
-  OpenGLExecuteCommands(commands, this);
+void RendererExecuteCommands(Renderer*, const PerFrameVector<RenderCommand>& commands) {
+  OpenGLExecuteCommands(gBackend.get(), commands);
 }
 
 // StartFrame --------------------------------------------------------------------------------------
 
-void OpenGLRendererBackend::StartFrame() {
-  ASSERT(Valid(*this));
-}
+void RendererStartFrame(Renderer*) {}
 
 // EndFrame ----------------------------------------------------------------------------------------
 
@@ -179,50 +158,47 @@ void ResetRendererState() {
 
 }  // namespace
 
-void OpenGLRendererBackend::EndFrame() {
-  ASSERT(Valid(*this));
+void RendererEndFrame(Renderer*, Window* window) {
   ResetRendererState();
-  WindowSwapBuffers(this->window);
+  WindowSwapBuffers(window);
 }
 
 // Meshes ------------------------------------------------------------------------------------------
 
-bool OpenGLRendererBackend::StageMesh(Mesh* mesh) {
-  return OpenGLStageMesh(this, mesh);
+bool RendererStageMesh(Renderer*, Mesh* mesh) {
+  return OpenGLStageMesh(gBackend.get(), mesh);
 }
 
-void OpenGLRendererBackend::UnstageMesh(Mesh* mesh) {
-  OpenGLUnstageMesh(this, mesh);
+void RendererUnstageMesh(Renderer*, Mesh* mesh) {
+  OpenGLUnstageMesh(gBackend.get(), mesh);
 }
 
-bool OpenGLRendererBackend::UploadMeshRange(Mesh* mesh, Int2 vertex_range, Int2 index_range) {
-  return OpenGLUploadMeshRange(this, mesh, vertex_range, index_range);
+bool RendererUploadMeshRange(Renderer*, Mesh* mesh, Int2 vertex_range, Int2 index_range) {
+  return OpenGLUploadMeshRange(gBackend.get(), mesh, vertex_range, index_range);
 }
 
 // Shaders -----------------------------------------------------------------------------------------
 
-bool OpenGLRendererBackend::StageShader(Shader* shader) {
-  return OpenGLStageShader(this, shader);
+bool RendererStageShader(Renderer*, Shader* shader) {
+  return OpenGLStageShader(gBackend.get(), shader);
 }
 
-void OpenGLRendererBackend::UnstageShader(Shader* shader) {
-  OpenGLUnstageShader(this, shader);
+void RendererUnstageShader(Renderer*, Shader* shader) {
+  OpenGLUnstageShader(gBackend.get(), shader);
 }
 
 // Textures ----------------------------------------------------------------------------------------
 
-bool OpenGLRendererBackend::StageTexture(const StageTextureConfig& config,
-                                         Texture* texture) {
-  return OpenGLStageTexture(config, this, texture);
+bool RendererStageTexture(Renderer*, Texture* texture, const StageTextureConfig& config) {
+  return OpenGLStageTexture(gBackend.get(), texture, config);
 }
 
-void OpenGLRendererBackend::UnstageTexture(Texture* texture) {
-  OpenGLUnstageTexture(this, texture);
+void RendererUnstageTexture(Renderer*, Texture* texture) {
+  OpenGLUnstageTexture(gBackend.get(), texture);
 }
 
-void OpenGLRendererBackend::SubTexture(Texture* texture, Int2 offset, Int2 range, void* data) {
-  OpenGLSubTexture(this, texture, offset, range, data);
+void RendererSubTexture(Renderer*, Texture* texture, Int2 offset, Int2 range, void* data) {
+  OpenGLSubTexture(gBackend.get(), texture, offset, range, data);
 }
 
-}  // namespace opengl
 }  // namespace rothko

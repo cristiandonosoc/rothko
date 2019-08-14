@@ -1,3 +1,4 @@
+
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
@@ -11,12 +12,18 @@
 
 namespace rothko {
 
+// Render Commands
+// =================================================================================================
+//
+// Render commands represent an "action" the renderer must do. Some of the actions are "clear the
+// screen", "render this mesh", "set viewport", etc. Note that some of this actions are stateful,
+// meaning that they *will* affect how the renderer will behave in the future (think setting the
+// viewport).
+
 struct Camera;
 struct Mesh;
 struct Shader;
 struct Texture;
-
-union RenderAction;
 
 // Render Actions ----------------------------------------------------------------------------------
 
@@ -46,6 +53,9 @@ struct ConfigRenderer {
 };
 std::string ToString(const ConfigRenderer&);
 
+// Represents all the information needed to render a mesh. It provides the mesh, texture, uniform
+// and whatnot. The renderer can be clever about re-using state (like if two consecutive render
+// mesh commands use the same shader), but it's not obligated to do that.
 struct RenderMesh {
   static constexpr RenderCommandType kType = RenderCommandType::kMesh;
 

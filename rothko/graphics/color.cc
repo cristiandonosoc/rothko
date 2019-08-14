@@ -1,7 +1,7 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include "rothko/graphics/common/color.h"
+#include "rothko/graphics/color.h"
 
 namespace rothko {
 namespace colors {

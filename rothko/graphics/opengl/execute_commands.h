@@ -13,8 +13,7 @@ namespace opengl {
 
 struct OpenGLRendererBackend;
 
-void OpenGLExecuteCommands(const PerFrameVector<RenderCommand>& commands,
-                           OpenGLRendererBackend*);
+void OpenGLExecuteCommands(OpenGLRendererBackend*, const PerFrameVector<RenderCommand>& commands);
 
 }  // namespace opengl
 }  // namespace rothko

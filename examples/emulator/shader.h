@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <rothko/graphics/common/shader.h>
+#include <rothko/graphics/shader.h>
 #include <rothko/math/math.h>
 
 #include <memory>

@@ -40,7 +40,7 @@ bool InitDisplay(Game* game, Display* out) {
   config.generate_mipmaps = false;
   config.min_filter = StageTextureConfig::Filter::kNearest;
   config.max_filter = StageTextureConfig::Filter::kNearest;
-  if (!RendererStageTexture(config, &game->renderer, &out->background))
+  if (!RendererStageTexture(game->renderer.get(), &out->background, config))
     return false;
 
   // Init the quad manager (which we will use to output textured quads).
@@ -48,7 +48,7 @@ bool InitDisplay(Game* game, Display* out) {
   QuadManagerConfig quad_config;
   quad_config.name = "gb-quads";
   quad_config.capacity = 2000;
-  if (!Init(&game->renderer, &out->quads, std::move(quad_config)))
+  if (!Init(game->renderer.get(), &out->quads, std::move(quad_config)))
     return 1;
 
   return true;
@@ -180,7 +180,7 @@ bool UpdateBackgroundMesh(Game* game, Memory* memory, Mesh* mesh) {
     }
   }
 
-  if (!RendererUploadMeshRange(&game->renderer, mesh))
+  if (!RendererUploadMeshRange(game->renderer.get(), mesh))
     return false;
   return true;
 }

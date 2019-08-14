@@ -9,7 +9,7 @@
 
 #include <atomic>
 
-#include "rothko/graphics/common/mesh.h"
+#include "rothko/graphics/mesh.h"
 #include "rothko/graphics/opengl/renderer_backend.h"
 #include "rothko/graphics/opengl/utils.h"
 #include "rothko/logging/logging.h"
