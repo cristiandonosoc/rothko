@@ -7,6 +7,7 @@
 #include <string>
 
 #include "rothko/graphics/opengl/shader.h"
+#include "rothko/math/math.h"
 #include "rothko/utils/macros.h"
 
 namespace rothko {
@@ -23,15 +24,19 @@ struct MeshHandles {
 };
 
 struct TextureHandles {
-
   uint32_t tex_handle = 0;
 };
 
 struct OpenGLRendererBackend {
+  Mat4 projection = Mat4::Identity();
+  Mat4 view = Mat4::Identity();
+
   std::map<uint32_t, MeshHandles> loaded_meshes;
   std::map<uint32_t, ShaderHandles> loaded_shaders;
   std::map<uint32_t, TextureHandles> loaded_textures;
 };
+
+OpenGLRendererBackend* GetOpenGL();
 
 }  // namespace opengl
 }  // namespace rothko

@@ -9,8 +9,8 @@
 #include <memory>
 
 struct UBO {
-  ::rothko::Mat4 proj;
-  ::rothko::Mat4 view;
+  //::rothko::Mat4 proj;
+  //::rothko::Mat4 view;
   ::rothko::Mat4 model;
 };
 

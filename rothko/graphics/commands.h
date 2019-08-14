@@ -54,6 +54,7 @@ struct ConfigRenderer {
 };
 std::string ToString(const ConfigRenderer&);
 
+// Sets the current camera state on the renderer. This persists to other calls.
 struct PushCamera {
   static constexpr RenderCommandType kType = RenderCommandType::kPushCamera;
 

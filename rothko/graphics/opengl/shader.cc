@@ -129,6 +129,17 @@ bool BindUBOs(const std::string& ubo_name, uint32_t ubo_size,
   return true;
 }
 
+bool GetUniformLocation(uint32_t program, const char* uniform_name, int* out) {
+  GLint result = glGetUniformLocation(program, uniform_name);
+  if (result == GL_INVALID_VALUE || result == GL_INVALID_OPERATION || result == -1) {
+    ERROR(OpenGL, "Could not get uniform %s", uniform_name);
+    return false;
+  }
+
+  *out = result;
+  return true;
+}
+
 bool UploadShader(Shader* shader, ShaderHandles* handles) {
   *handles = {};
 
@@ -148,6 +159,16 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
     return false;
   handles->program = prog_handle;
 
+  // Get the camera uniform locations.
+  if (!GetUniformLocation(handles->program, "proj", &handles->proj_location) ||
+      !GetUniformLocation(handles->program, "view", &handles->view_location)) {
+    ERROR(OpenGL, "Could not find camera uniform(s) for shader %s", shader->name.c_str());
+    return false;
+  }
+
+  LOG(OpenGL, "PROJ: %d, VIEW: %d", handles->proj_location, handles->view_location);
+
+  // Get the uniform buffer object information.
   if (!BindUBOs(shader->vert_ubo_name, shader->vert_ubo_size, prog_handle, &handles->vert_ubo) ||
       !BindUBOs(shader->frag_ubo_name, shader->frag_ubo_size, prog_handle, &handles->frag_ubo)) {
     return false;

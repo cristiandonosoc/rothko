@@ -7,6 +7,7 @@
 
 #include "rothko/containers/vector.h"
 #include "rothko/graphics/commands.h"
+#include "rothko/math/math.h"
 #include "rothko/utils/macros.h"
 
 // Renderer

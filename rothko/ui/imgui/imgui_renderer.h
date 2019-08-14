@@ -26,8 +26,6 @@ struct ImguiRenderer {
 
   ImGuiIO* io = nullptr;
   Renderer* renderer = nullptr;  // Must outlive.
-
-  ImguiUBO ubo;
 };
 
 inline bool Valid(ImguiRenderer* r) { return !!r->renderer && !!r->io; }

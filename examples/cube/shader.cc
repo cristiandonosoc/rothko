@@ -21,10 +21,10 @@ out vec2 f_uv;
 out vec4 f_color;
 
 // Camera uniforms.
+uniform mat4 proj;
+uniform mat4 view;
 
 layout (std140) uniform Uniforms {
-mat4 proj;
-mat4 view;
   mat4 model;
 };
 

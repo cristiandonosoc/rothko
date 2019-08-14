@@ -103,8 +103,8 @@ bool InitImguiRenderer(ImguiRenderer* imgui_renderer, Renderer* renderer, ImGuiI
 
   imgui_renderer->renderer = renderer;
 
-  imgui_renderer->ubo.projection = Mat4::Identity();
-  imgui_renderer->ubo.view = Mat4::Identity();
+  /* imgui_renderer->ubo.projection = Mat4::Identity(); */
+  /* imgui_renderer->ubo.view = Mat4::Identity(); */
 
   return true;
 }
@@ -135,11 +135,19 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
   /* config.viewport = {(int)io->DisplaySize.x, (int)io->DisplaySize.y}; */
   render_commands.push_back(std::move(config));
 
+  // Set the camera imgui is going to use and then restore the one that was set before us.
+  /* PushCamera prev_camera = {}; */
+  /* prev_camera.projection = imgui_renderer->renderer->projection; */
+  /* prev_camera.view = imgui_renderer->renderer->view; */
+
   float L = draw_data->DisplayPos.x;
   float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
   float T = draw_data->DisplayPos.y;
   float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
-  imgui_renderer->ubo.projection = Ortho(L, R, B, T);
+  PushCamera imgui_camera;
+  imgui_camera.projection = Ortho(L, R, B, T);
+  imgui_camera.view = Mat4::Identity();
+  render_commands.push_back(std::move(imgui_camera));
 
   uint64_t base_index_offset = 0;
   uint64_t base_vertex_offset = 0;
@@ -192,7 +200,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
       render_mesh.indices_offset = base_index_offset + index_offset;
       render_mesh.indices_size = draw_cmd->ElemCount;
 
-      render_mesh.vert_ubo_data = (uint8_t*)&imgui_renderer->ubo;
+      /* render_mesh.vert_ubo_data = (uint8_t*)&imgui_renderer->ubo; */
       render_mesh.blend_enabled = true;
       render_mesh.cull_faces = false;
       render_mesh.depth_test = false;

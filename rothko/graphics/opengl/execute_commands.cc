@@ -1,12 +1,11 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include "rothko/graphics/opengl/execute_commands.h"
-
 #include <GL/gl3w.h>
 
 #include "rothko/graphics/graphics.h"
 #include "rothko/graphics/opengl/renderer_backend.h"
+#include "rothko/graphics/renderer.h"
 #include "rothko/logging/logging.h"
 #include "rothko/utils/macros.h"
 
@@ -20,7 +19,7 @@ void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
     switch (command.type()) {
       case RenderCommandType::kClearFrame: ASSERT(command.is_clear_frame()); continue;
       case RenderCommandType::kConfigRenderer: ASSERT(command.is_config_renderer()); continue;
-      case RenderCommandType::kPushCamera: break;
+      case RenderCommandType::kPushCamera: continue;
       case RenderCommandType::kRenderMesh: {
         ASSERT(command.is_render_mesh());
         auto& render_mesh = command.GetRenderMesh();
@@ -89,11 +88,24 @@ void ExecuteConfigRendererAction(const ConfigRenderer& config) {
   }
 }
 
+// Execute Push Camera -----------------------------------------------------------------------------
+
+void ExecutePushCamera(OpenGLRendererBackend* opengl,
+                       const PushCamera& push_camera) {
+  opengl->projection = push_camera.projection;
+  opengl->view = push_camera.view;
+}
 
 // Execute Mesh Render Actions ---------------------------------------------------------------------
 
-void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_handles) {
+void SetUniforms(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh,
+                 const ShaderHandles& shader_handles) {
   const Shader* shader = render_mesh.shader;
+
+  // Camera.
+  glUniformMatrix4fv(shader_handles.proj_location, 1, GL_FALSE, (GLfloat*)&opengl.projection);
+  glUniformMatrix4fv(shader_handles.view_location, 1, GL_FALSE, (GLfloat*)&opengl.view);
+
   // Vertex UBOs.
   if (shader->vert_ubo_size > 0) {
     auto& ubo_binding = shader_handles.vert_ubo;
@@ -121,7 +133,6 @@ void SetUniforms(const RenderMesh& render_mesh, const ShaderHandles& shader_hand
     //glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
     glBindBuffer(GL_UNIFORM_BUFFER, NULL);
   }
-
 }
 
 void SetTextures(const OpenGLRendererBackend& opengl,
@@ -159,7 +170,7 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   ASSERT(mesh_it != opengl.loaded_meshes.end());
 
   const MeshHandles& mesh_handles = mesh_it->second;
-  SetUniforms(render_mesh, shader_handles);
+  SetUniforms(opengl, render_mesh, shader_handles);
 
   SetTextures(opengl, shader_handles, render_mesh);
 
@@ -180,8 +191,14 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
 
 }  // namespace
 
-void OpenGLExecuteCommands(OpenGLRendererBackend* opengl,
-                           const PerFrameVector<RenderCommand>& commands) {
+}  // namespace opengl
+
+using namespace opengl;
+
+void RendererExecuteCommands(Renderer*,
+                             const PerFrameVector<RenderCommand>& commands) {
+  OpenGLRendererBackend* opengl = GetOpenGL();
+
 #if DEBUG_MODE
   ValidateRenderCommands(commands);
 #endif
@@ -195,7 +212,7 @@ void OpenGLExecuteCommands(OpenGLRendererBackend* opengl,
         ExecuteConfigRendererAction(command.GetConfigRenderer());
         break;
       case RenderCommandType::kPushCamera:
-        NOT_IMPLEMENTED();
+        ExecutePushCamera(opengl, command.GetPushCamera());
         break;
       case RenderCommandType::kRenderMesh:
         ExecuteMeshRenderActions(*opengl, command.GetRenderMesh());
@@ -206,5 +223,4 @@ void OpenGLExecuteCommands(OpenGLRendererBackend* opengl,
   }
 }
 
-}  // namespace opengl
 }  // namespace rothko

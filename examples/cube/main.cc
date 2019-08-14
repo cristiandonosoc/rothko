@@ -32,8 +32,10 @@ struct CubeShader {
 Mesh CreateMesh();
 Camera CreateCamera();
 
-PerFrameVector<RenderCommand> GetRenderCommands(ImVec4 clear_color, Mesh* mesh, Shader* shader,
-                                                Texture* tex0, Texture* tex1);
+PushCamera push_camera;
+
+PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0,
+                                                Texture* tex1);
 
 Texture LoadTexture(Renderer* renderer, const std::string& path) {
   Texture texture;
@@ -45,6 +47,14 @@ Texture LoadTexture(Renderer* renderer, const std::string& path) {
     return {};
 
   return texture;
+}
+
+uint32_t VecToColor(ImVec4 color) {
+  // RGBA
+  return ((uint8_t)(color.x * 255.0f) << 24) |
+         ((uint8_t)(color.y * 255.0f) << 16) |
+         ((uint8_t)(color.z * 255.0f) << 8) |
+         ((uint8_t)(color.w * 255.0f));
 }
 
 }  // namespace
@@ -62,8 +72,6 @@ int main() {
   auto renderer = InitRenderer();
   if (!renderer)
     return 1;
-
-
 
   Input input = {};
 
@@ -83,9 +91,10 @@ int main() {
 
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
 
+  push_camera.projection = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
+  push_camera.view = LookAt({5, 5, 5}, {}, {0, 1, 0});
+
   UBO ubo;
-  ubo.proj = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
-  ubo.view = LookAt({5, 5, 5}, {}, {0, 1, 0});
   ubo.model = Translate({10, 0, 0});
   ubos.push_back(ubo);
   ubo.model = Translate({0, 0, 0});
@@ -128,7 +137,6 @@ int main() {
     RendererStartFrame(renderer.get());
     StartFrame(&imgui, &window, &time, &input);
 
-    PerFrameVector<RenderCommand> commands;
 
     CreateLogWindow();
 
@@ -161,9 +169,19 @@ int main() {
       ImGui::End();
     }
 
+    // 3. Generate render commands.
+    PerFrameVector<RenderCommand> commands;
+
+    // Clear command.
+    ClearFrame clear_frame;
+    clear_frame = {};
+    clear_frame.color = VecToColor(clear_color);
+    commands.push_back(std::move(clear_frame));
+
     float angle = time.seconds * ToRadians(50.0f);
     ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
-    auto cube_commands = GetRenderCommands(clear_color, &mesh, shader.get(), &wall, &face);
+
+    auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face);
     commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
 
     auto imgui_commands = EndFrame(&imgui);
@@ -281,24 +299,13 @@ Mesh CreateMesh() {
   return mesh;
 }
 
-uint32_t VecToColor(ImVec4 color) {
-  // RGBA
-  return ((uint8_t)(color.x * 255.0f) << 24) |
-         ((uint8_t)(color.y * 255.0f) << 16) |
-         ((uint8_t)(color.z * 255.0f) << 8) |
-         ((uint8_t)(color.w * 255.0f));
-}
-
 PerFrameVector<RenderCommand>
-GetRenderCommands(ImVec4 color, Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
+GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   (void)mesh;
   PerFrameVector<RenderCommand> commands;
 
-  // Clear command.
-  ClearFrame clear_frame;
-  clear_frame = {};
-  clear_frame.color = VecToColor(color);
-  commands.push_back(std::move(clear_frame));
+  // Set the camera.
+  commands.push_back(push_camera);
 
   // Mesh command.
   RenderMesh render_mesh;
@@ -312,12 +319,12 @@ GetRenderCommands(ImVec4 color, Mesh* mesh, Shader* shader, Texture* tex0, Textu
   commands.push_back(render_mesh);
 
   // Add another cube.
-  /* render_mesh.mesh = mesh; */
-  /* render_mesh.shader = shader; */
-  /* render_mesh.cull_faces = false; */
-  /* render_mesh.indices_size = mesh->indices_count; */
-  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[0]; */
-  /* commands.push_back(render_mesh); */
+  render_mesh.mesh = mesh;
+  render_mesh.shader = shader;
+  render_mesh.cull_faces = false;
+  render_mesh.indices_size = mesh->indices_count;
+  render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
+  commands.push_back(render_mesh);
 
   return commands;
 }

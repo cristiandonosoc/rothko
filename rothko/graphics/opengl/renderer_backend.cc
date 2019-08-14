@@ -9,7 +9,6 @@
 #include <sstream>
 
 #include "rothko/graphics/renderer.h"
-#include "rothko/graphics/opengl/execute_commands.h"
 #include "rothko/graphics/opengl/mesh.h"
 #include "rothko/graphics/opengl/shader.h"
 #include "rothko/graphics/opengl/texture.h"
@@ -99,6 +98,12 @@ Gl3wInitResultToString(int res) {
 std::unique_ptr<OpenGLRendererBackend> gBackend;
 
 }  // namespace
+
+OpenGLRendererBackend* GetOpenGL() {
+  ASSERT(gBackend);
+  return gBackend.get();
+}
+
 }  // opengl
 
 std::unique_ptr<Renderer> InitRenderer() {
@@ -136,12 +141,6 @@ std::unique_ptr<Renderer> InitRenderer() {
 void ShutdownRenderer() {
   ASSERT(gBackend);
   gBackend.reset();
-}
-
-// Execute Commands --------------------------------------------------------------------------------
-
-void RendererExecuteCommands(Renderer*, const PerFrameVector<RenderCommand>& commands) {
-  OpenGLExecuteCommands(gBackend.get(), commands);
 }
 
 // StartFrame --------------------------------------------------------------------------------------

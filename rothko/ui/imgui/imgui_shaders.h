@@ -17,11 +17,6 @@ struct Shader;
 
 namespace imgui {
 
-struct ImguiUBO {
-  Mat4 projection;
-  Mat4 view;
-};
-
 Shader GetOpenGLImguiShader();
 
 }  // namespace imgui

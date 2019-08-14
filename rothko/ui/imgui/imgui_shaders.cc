@@ -30,10 +30,8 @@ out vec2 uv;
 
 // Uniforms ----------------------------------------------------------------------------------------
 
-layout (std140) uniform Camera {
-  mat4 proj;
-  mat4 view;
-};
+uniform mat4 proj;
+uniform mat4 view;
 
 void main() {
   gl_Position = proj * view * vec4(in_pos.xy, 0, 1.0f);
@@ -68,8 +66,6 @@ void main() {
 Shader GetOpenGLImguiShader() {
   Shader shader;
   shader.name = "Imgui Shader";
-  shader.vert_ubo_name = "Camera";
-  shader.vert_ubo_size = sizeof(ImguiUBO);
   shader.texture_count = 1;
 
   shader.vert_src = kOpenGLVertex;
