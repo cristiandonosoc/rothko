@@ -8,8 +8,16 @@
 namespace rothko {
 
 struct Camera {
-  Mat4 projection;
-  Mat4 view;
+  Vec3 pos;
+  Vec3 target;
 };
+
+struct OrbitCamera {
+  Vec3 target;
+  Vec2 angles;    // In radians.
+  float distance;
+};
+
+Mat4 GetView(const OrbitCamera&);
 
 }  // namespace rothko

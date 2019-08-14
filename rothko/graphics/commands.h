@@ -103,6 +103,7 @@ std::string ToString(const RenderMesh&);
     SetRenderCommand(std::move(cmd));                                      \
     return *this;                                                          \
   }                                                                        \
+  Command& Get##Command() { return std::get<Command>(data_); }             \
   const Command& Get##Command() const { return std::get<Command>(data_); } \
   bool getter() const { return type_ == RenderCommandType::k##Command; }
 

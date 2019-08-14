@@ -166,8 +166,6 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
     return false;
   }
 
-  LOG(OpenGL, "PROJ: %d, VIEW: %d", handles->proj_location, handles->view_location);
-
   // Get the uniform buffer object information.
   if (!BindUBOs(shader->vert_ubo_name, shader->vert_ubo_size, prog_handle, &handles->vert_ubo) ||
       !BindUBOs(shader->frag_ubo_name, shader->frag_ubo_size, prog_handle, &handles->frag_ubo)) {

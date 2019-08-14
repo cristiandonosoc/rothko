@@ -92,12 +92,20 @@ int main() {
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
 
   push_camera.projection = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
-  push_camera.view = LookAt({5, 5, 5}, {}, {0, 1, 0});
+
+
+  Vec3 camera_pos = {5, 0, 0};
+  /* camera_pos = RotateX(camera_pos, ToRadians(45.0f)); */
+  /* camera_pos = RotateY(camera_pos, ToRadians(45.0f)); */
+
+  push_camera.view = LookAt(camera_pos, {}, {0, 1, 0});
 
   UBO ubo;
+  ubo.model = Translate({0, 0, 0});
+  ubos.push_back(ubo);
   ubo.model = Translate({10, 0, 0});
   ubos.push_back(ubo);
-  ubo.model = Translate({0, 0, 0});
+  ubo.model = Translate({0, 1, 0}) * Scale(0.5f);
   ubos.push_back(ubo);
 
   Time time = InitTime();
@@ -113,8 +121,6 @@ int main() {
     style.Colors[ImGuiCol_WindowBg].w = 1.0f;
   }
 
-  bool show_demo_window = true;
-  bool show_another_window = false;
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
   // Sample game loop.
@@ -143,26 +149,10 @@ int main() {
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
     // window.
     {
-      static float f = 0.0f;
-      static int counter = 0;
+      ImGui::Begin("Cube Example");
 
-      ImGui::Begin("Hello, world!");  // Create a window called "Hello, world!" and append into it.
-
-      ImGui::Text(
-          "This is some useful text.");  // Display some text (you can use a format strings too)
-      ImGui::Checkbox("Demo Window",
-                      &show_demo_window);  // Edit bools storing our window open/close state
-      ImGui::Checkbox("Another Window", &show_another_window);
-
-      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);  // Edit 1 float using a slider from 0.0f to 1.0f
       ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
-
-      if (ImGui::Button("Button"))  // Buttons return true when clicked (most widgets return true
-                                    // when edited/activated)
-        counter++;
-      ImGui::SameLine();
-      ImGui::Text("counter = %d", counter);
-
+      ImGui::InputFloat3("Camera pos", (float*)&camera_pos);
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                   1000.0f / ImGui::GetIO().Framerate,
                   ImGui::GetIO().Framerate);
@@ -179,7 +169,8 @@ int main() {
     commands.push_back(std::move(clear_frame));
 
     float angle = time.seconds * ToRadians(50.0f);
-    ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle);
+    /* ubos[1].model = Translate({5, 0, 0}) * Rotate({1.0f, 0.3f, 0.5f}, angle); */
+    ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle) * Translate({5, 0, 0});
 
     auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face);
     commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
@@ -301,7 +292,6 @@ Mesh CreateMesh() {
 
 PerFrameVector<RenderCommand>
 GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
-  (void)mesh;
   PerFrameVector<RenderCommand> commands;
 
   // Set the camera.
@@ -313,17 +303,17 @@ GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   render_mesh.shader = shader;
   render_mesh.cull_faces = false;
   render_mesh.indices_size = mesh->indices_count;
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[1];
+  render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
   render_mesh.textures.push_back(tex1);
   render_mesh.textures.push_back(tex0);
   commands.push_back(render_mesh);
 
   // Add another cube.
-  render_mesh.mesh = mesh;
-  render_mesh.shader = shader;
-  render_mesh.cull_faces = false;
-  render_mesh.indices_size = mesh->indices_count;
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
+  render_mesh.vert_ubo_data = (uint8_t*)&ubos[1];
+  commands.push_back(render_mesh);
+
+  render_mesh.vert_ubo_data = (uint8_t*)&ubos[2];
+  render_mesh.depth_test = false;
   commands.push_back(render_mesh);
 
   return commands;

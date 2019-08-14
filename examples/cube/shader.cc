@@ -54,8 +54,6 @@ void main() {
 }
 )";
 
-
-
 }  // namespace
 
 
