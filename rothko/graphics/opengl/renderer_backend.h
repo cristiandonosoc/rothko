@@ -28,8 +28,9 @@ struct TextureHandles {
 };
 
 struct OpenGLRendererBackend {
-  Mat4 projection = Mat4::Identity();
-  Mat4 view = Mat4::Identity();
+  Vec3 camera_pos;
+  Mat4 camera_projection = Mat4::Identity();
+  Mat4 camera_view = Mat4::Identity();
 
   std::map<uint32_t, MeshHandles> loaded_meshes;
   std::map<uint32_t, ShaderHandles> loaded_shaders;

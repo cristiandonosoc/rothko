@@ -13,6 +13,23 @@ namespace rothko {
 
 struct Renderer;
 
+// Shader
+//
+// Rothko's shaders use certain shader features:
+// Uniform Buffer Objects: Uniforms are treated as a single struct that is memcpy'ed over to the
+//                         GPU. Rothko expects at most one UBO for vertex shader and at most one
+//                         UBO for fragment shader. Both can have no UBO.
+//
+// Expected uniforms: Rothko expects certain uniforms to be defined and some other are provided
+//                    as optional. In order to avoid adding them manually, you should always
+//                    pass your shader source through |CreateVertSource| and  |CreateFragSource|.
+//
+//
+// Provided uniforms: All of them are optional.
+// - camera_pos: The position of the camera. Passed through the |PushCamera| command.
+// - camera_proj: The projection matrix. Passed through the |PushCamera| command.
+// - camera_view: The view matrix. Passed through the |PushCamera| command.
+
 struct Shader {
   RAII_CONSTRUCTORS(Shader);
 
@@ -39,6 +56,14 @@ struct Shader {
 };
 inline bool Loaded(const Shader& s) { return !s.vert_src.empty() && !s.frag_src.empty(); }
 inline bool Staged(const Shader& s) { return s.renderer && s.uuid.has_value(); }
+
+// Rothko will add a header in which it will define some uniforms and functions that are common
+// functionality to all shaders.
+//
+// If |header| is not provided, Rothko will append the header with the glsl version and some
+// extensions. If provided, it will append that instead.
+std::string CreateVertexSource(const std::string& vert_src, const char* header = nullptr);
+std::string CreateFragmentSource(const std::string& frag_src, const char* header = nullptr);
 
 bool LoadShaderSources(const std::string& vert_path,
                        const std::string& frag_path,

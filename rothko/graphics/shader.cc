@@ -33,4 +33,54 @@ void RemoveSources(Shader* shader) {
   shader->frag_src.clear();
 }
 
+
+// CreateVertSource --------------------------------------------------------------------------------
+
+namespace {
+  // This will be appended if |header| is null.
+  constexpr char kVertexHeader[] = R"(
+#version 330 core
+#extension GL_ARB_separate_shader_objects : enable
+  )";
+
+  // This will appended always.
+  constexpr char kVertexData[] = R"(
+uniform vec3 camera_pos;
+uniform mat4 camera_proj;
+uniform mat4 camera_view;
+  )";
+
+}  // namespace
+
+std::string CreateVertexSource(const std::string& vert_src, const char* header) {
+  if (!header)
+    header = kVertexHeader;
+  auto src = StringPrintf("%s\n\n%s\n\n%s", header, kVertexData, vert_src.c_str());
+  return src;
+}
+
+// CreateFragSource --------------------------------------------------------------------------------
+
+namespace {
+  // This will be appended if |header| is null.
+  constexpr char kFragmentHeader[] = R"(
+#version 330 core
+#extension GL_ARB_separate_shader_objects : enable
+  )";
+
+  // This will appended always.
+  constexpr char kFragmentData[] = R"(
+uniform vec3 camera_pos;
+uniform mat4 camera_proj;
+uniform mat4 camera_view;
+  )";
+}  // namespace
+
+std::string CreateFragmentSource(const std::string& frag_src, const char* header) {
+  if (!header)
+    header = kFragmentHeader;
+  auto src = StringPrintf("%s\n\n%s\n\n%s", header, kFragmentData, frag_src.c_str());
+  return src;
+}
+
 }  // namespace rothko

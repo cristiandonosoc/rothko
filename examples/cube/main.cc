@@ -73,10 +73,10 @@ std::unique_ptr<Mesh> CreateGridMesh(Renderer* renderer) {
   mesh->vertex_type = VertexType::k3dUVColor;
 
   Vertex3dUVColor vertices[] = {
-    CreateVertex({-10,  0, -10}, {0, 0}, 0xffffffff),
-    CreateVertex({ 10,  0, -10}, {0, 1}, 0xffffffff),
-    CreateVertex({ 10,  0,  10}, {1, 1}, 0xffffffff),
-    CreateVertex({-10,  0,  10}, {1, 0}, 0xffffffff),
+    CreateVertex({-1'000'000,  0, -1'00'00}, {0, 0}, 0xffffffff),
+    CreateVertex({ 1'000'000,  0, -1'00'00}, {0, 1}, 0xffffffff),
+    CreateVertex({ 1'000'000,  0,  1'00'00}, {1, 1}, 0xffffffff),
+    CreateVertex({-1'000'000,  0,  1'00'00}, {1, 0}, 0xffffffff),
   };
 
   Mesh::IndexType indices[] = {
@@ -139,11 +139,11 @@ int main() {
   push_camera.projection = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
 
 
-  Vec3 camera_pos = {5, 0, 0};
+  Vec3 camera_pos = {5, 5, 5};
   /* camera_pos = RotateX(camera_pos, ToRadians(45.0f)); */
   /* camera_pos = RotateY(camera_pos, ToRadians(45.0f)); */
 
-  push_camera.view = LookAt(camera_pos, {}, {0, 0, 5});
+  push_camera.view = LookAt(camera_pos, {});
 
   UBO ubo;
   ubo.model = Translate({0, 0, 0});
@@ -224,6 +224,7 @@ int main() {
     grid_command.mesh = grid_mesh.get();
     grid_command.shader = grid_shader.get();
     grid_command.cull_faces = false;
+    grid_command.blend_enabled = true;
     grid_command.indices_size = grid_mesh->indices_count;
     commands.push_back(grid_command);
 

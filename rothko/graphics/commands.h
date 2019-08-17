@@ -58,6 +58,7 @@ std::string ToString(const ConfigRenderer&);
 struct PushCamera {
   static constexpr RenderCommandType kType = RenderCommandType::kPushCamera;
 
+  Vec3 camera_pos;
   Mat4 projection;
   Mat4 view;
 };

@@ -30,7 +30,7 @@ std::string StringPrintf(const char* fmt, ...) {
 }
 
 std::string StringPrintfV(const char* fmt, va_list va) {
-  char buf[256];
+  char buf[2048];
   stbsp_vsnprintf(buf, sizeof(buf), fmt, va);
   return std::string(buf);
 }

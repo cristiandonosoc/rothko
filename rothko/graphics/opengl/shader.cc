@@ -129,10 +129,13 @@ bool BindUBOs(const std::string& ubo_name, uint32_t ubo_size,
   return true;
 }
 
-bool GetUniformLocation(uint32_t program, const char* uniform_name, int* out) {
+// |log| means whether to log that we didn't find the uniform. In some cases, it is valid to not
+// find the uniform (like camera_pos), so we don't want to clutter the logs in that case.
+bool GetUniformLocation(uint32_t program, const char* uniform_name, int* out, bool log = false) {
   GLint result = glGetUniformLocation(program, uniform_name);
   if (result == GL_INVALID_VALUE || result == GL_INVALID_OPERATION || result == -1) {
-    ERROR(OpenGL, "Could not get uniform %s", uniform_name);
+    if (log)
+      ERROR(OpenGL, "Could not get uniform %s", uniform_name);
     return false;
   }
 
@@ -160,11 +163,12 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
   handles->program = prog_handle;
 
   // Get the camera uniform locations.
-  if (!GetUniformLocation(handles->program, "proj", &handles->proj_location) ||
-      !GetUniformLocation(handles->program, "view", &handles->view_location)) {
-    ERROR(OpenGL, "Could not find camera uniform(s) for shader %s", shader->name.c_str());
-    return false;
-  }
+  // |camera_pos| is optional.
+  GetUniformLocation(handles->program, "camera_pos", &handles->camera_pos_location);
+  GetUniformLocation(handles->program, "camera_proj", &handles->camera_proj_location);
+  GetUniformLocation(handles->program, "camera_view", &handles->camera_view_location);
+
+  // Camera pos is optional.
 
   // Get the uniform buffer object information.
   if (!BindUBOs(shader->vert_ubo_name, shader->vert_ubo_size, prog_handle, &handles->vert_ubo) ||

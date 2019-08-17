@@ -4,15 +4,13 @@
 #include "shader.h"
 
 #include <rothko/graphics/renderer.h>
+#include <rothko/graphics/shader.h>
 
 using namespace rothko;
 
 namespace {
 
 constexpr char kVertexShader[] = R"(
-#version 330 core
-#extension GL_ARB_separate_shader_objects : enable
-
 layout (location = 0) in vec3 in_pos;
 layout (location = 1) in vec2 in_uv;
 layout (location = 2) in vec4 in_color;
@@ -20,25 +18,18 @@ layout (location = 2) in vec4 in_color;
 out vec2 f_uv;
 out vec4 f_color;
 
-// Camera uniforms.
-uniform mat4 proj;
-uniform mat4 view;
-
 layout (std140) uniform Uniforms {
   mat4 model;
 };
 
 void main() {
-  gl_Position = proj * view * model * vec4(in_pos, 1.0);
+  gl_Position = camera_proj * camera_view * model * vec4(in_pos, 1.0);
   f_uv = in_uv;
   f_color = in_color;
 }
 )";
 
 constexpr char kFragmentShader[] = R"(
-#version 330 core
-#extension GL_ARB_separate_shader_objects : enable
-
 in vec2 f_uv;
 in vec4 f_color;
 
@@ -62,8 +53,8 @@ std::unique_ptr<Shader> CreateShader(Renderer* renderer) {
   shader->vert_ubo_size = sizeof(UBO);
   shader->texture_count = 2;
 
-  shader->vert_src = kVertexShader;
-  shader->frag_src = kFragmentShader;
+  shader->vert_src = CreateVertexSource(kVertexShader);
+  shader->frag_src = CreateFragmentSource(kFragmentShader);
 
   if (!RendererStageShader(renderer, shader.get()))
     return nullptr;
@@ -75,9 +66,6 @@ std::unique_ptr<Shader> CreateShader(Renderer* renderer) {
 namespace {
 
 constexpr char kGridVertexShader[] = R"(
-#version 330 core
-#extension GL_ARB_separate_shader_objects : enable
-
 layout (location = 0) in vec3 in_pos;
 layout (location = 1) in vec2 in_uv;
 layout (location = 2) in vec4 in_color;
@@ -86,41 +74,45 @@ out vec2 f_uv;
 out vec4 f_color;
 
 out vec3 f_pos;
-
-// Camera uniforms.
-uniform mat4 proj;
-uniform mat4 view;
+out vec3 f_transformed_pos;
 
 void main() {
-  gl_Position = proj * view * vec4(in_pos, 1.0);
+  gl_Position = camera_proj * camera_view * vec4(in_pos, 1.0);
   f_uv = in_uv;
   f_color = in_color;
-  f_pos = gl_Position.xyz;
+  f_pos = in_pos;
+  f_transformed_pos = gl_Position.xyz;
 }
 )";
 
 constexpr char kGridFragmentShader[] = R"(
-#version 330 core
-#extension GL_ARB_separate_shader_objects : enable
-
 in vec2 f_uv;
 in vec4 f_color;
 in vec3 f_pos;
+in vec3 f_transformed_pos;
 
 layout (location = 0) out vec4 out_color;
 
-
-const float one_width = 0.01f;
+const float fog_near = 10.0f;
+const float fog_far = 50.0f;
 
 void main() {
-  if ((mod(f_pos.x, 1.0f) < one_width) || (mod(f_pos.z, 1.0f) < one_width)) {
-    out_color = vec4(0, 0, 0, 1);
-  } else {
-    discard;
-  }
+  vec2 wrapped = abs(fract(f_pos.xz) - vec2(0.5f, 0.5f));
+  vec2 speed = fwidth(f_pos.xz);
 
-  /* out_color = vec4(mod(f_pos.x, 1.0f), 0, 0, 1.0f); */
-  /* out_color = vec4(f_pos.x - 15.0f, 0, 0, 1.0f); */
+  vec2 range = wrapped / speed;
+
+  float line_width = 0.05f;
+  float weight = clamp(min(range.x, range.y) - line_width, 0.0f, 1.0f);
+
+  float camera_dist = distance(camera_pos, f_transformed_pos);
+
+  float fog = 1 - ((camera_dist - fog_near) / (fog_far - fog_near));
+  /* out_color = vec4(0, 0, 0, fog); */
+
+  float grid_weight = 1 - weight;
+
+  out_color = vec4(weight, 0, 0, grid_weight * fog);
 }
 )";
 
@@ -130,8 +122,8 @@ std::unique_ptr<Shader> CreateGridShader(Renderer* renderer) {
   auto shader = std::make_unique<Shader>();
   shader->name = "grid-shader";
 
-  shader->vert_src = kGridVertexShader;
-  shader->frag_src = kGridFragmentShader;
+  shader->vert_src = CreateVertexSource(kGridVertexShader);
+  shader->frag_src = CreateFragmentSource(kGridFragmentShader);
 
   if (!RendererStageShader(renderer, shader.get()))
     return nullptr;

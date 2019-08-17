@@ -92,8 +92,9 @@ void ExecuteConfigRendererAction(const ConfigRenderer& config) {
 
 void ExecutePushCamera(OpenGLRendererBackend* opengl,
                        const PushCamera& push_camera) {
-  opengl->projection = push_camera.projection;
-  opengl->view = push_camera.view;
+  opengl->camera_pos = push_camera.camera_pos;
+  opengl->camera_projection = push_camera.projection;
+  opengl->camera_view = push_camera.view;
 }
 
 // Execute Mesh Render Actions ---------------------------------------------------------------------
@@ -103,8 +104,18 @@ void SetUniforms(const OpenGLRendererBackend& opengl, const RenderMesh& render_m
   const Shader* shader = render_mesh.shader;
 
   // Camera.
-  glUniformMatrix4fv(shader_handles.proj_location, 1, GL_FALSE, (GLfloat*)&opengl.projection);
-  glUniformMatrix4fv(shader_handles.view_location, 1, GL_FALSE, (GLfloat*)&opengl.view);
+  if (shader_handles.camera_pos_location != -1)
+    glUniform3fv(shader_handles.camera_pos_location, 1, (GLfloat*)&opengl.camera_pos);
+
+  if (shader_handles.camera_proj_location != -1) {
+    glUniformMatrix4fv(shader_handles.camera_proj_location, 1, GL_FALSE,
+                       (GLfloat*)&opengl.camera_projection);
+  }
+
+  if (shader_handles.camera_view_location != -1) {
+    glUniformMatrix4fv(shader_handles.camera_view_location, 1, GL_FALSE,
+                       (GLfloat*)&opengl.camera_view);
+  }
 
   // Vertex UBOs.
   if (shader->vert_ubo_size > 0) {
