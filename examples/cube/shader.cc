@@ -80,7 +80,11 @@ void main() {
   gl_Position = camera_proj * camera_view * vec4(in_pos, 1.0);
   f_uv = in_uv;
   f_color = in_color;
-  f_pos = in_pos;
+
+  // NOTE(Cristian): we offset the point because the calculation for the line alpha weight does a
+  //                 range shift that also translates. I still haven't found how not to do it
+  //                 without this hack :(
+  f_pos = in_pos + vec3(0.5f, 0, 0.5f);
   f_transformed_pos = gl_Position.xyz;
 }
 )";
@@ -112,7 +116,14 @@ void main() {
 
   float grid_weight = 1 - weight;
 
-  out_color = vec4(weight, 0, 0, grid_weight * fog);
+  vec2 real_pos = f_pos.xz - vec2(0.5f, 0.5f);
+  if (abs(real_pos.x) < 0.1f && abs(real_pos.y) < 0.1f) {
+    out_color = vec4(1, 0, 0, 1);
+  } else {
+    out_color = vec4(0, 0, 0, grid_weight * fog);
+  }
+
+
 }
 )";
 

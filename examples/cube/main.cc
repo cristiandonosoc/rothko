@@ -14,6 +14,19 @@
 #include <sstream>
 #include <thread>
 
+BEGIN_IGNORE_WARNINGS()
+
+#include <third_party/include/glm/glm.hpp>
+#include <third_party/include/glm/gtc/matrix_transform.hpp>
+#include <third_party/include/glm/gtc/type_ptr.hpp>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
+
+END_IGNORE_WARNINGS()
+
+#include <third_party/imguizmo/ImGuizmo.h>
+
 #include "shader.h"
 
 using namespace rothko;
@@ -33,9 +46,6 @@ Mesh CreateMesh();
 Camera CreateCamera();
 
 PushCamera push_camera;
-
-PerFrameVector<RenderCommand> GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0,
-                                                Texture* tex1);
 
 Texture LoadTexture(Renderer* renderer, const std::string& path) {
   Texture texture;
@@ -66,6 +76,20 @@ Vertex3dUVColor CreateVertex(Vec3 pos, Vec2 uv, uint32_t color) {
   return vertex;
 }
 
+void MatrixWidget(const Mat4& m) {
+  Vec4 row = m.row(0);
+  ImGui::InputFloat4("X", (float*)&row);
+
+  row = m.row(1);
+  ImGui::InputFloat4("Y", (float*)&row);
+
+  row = m.row(2);
+  ImGui::InputFloat4("Z", (float*)&row);
+
+  row = m.row(3);
+  ImGui::InputFloat4("W", (float*)&row);
+}
+
 std::unique_ptr<Mesh> CreateGridMesh(Renderer* renderer) {
   auto mesh = std::make_unique<Mesh>();
   mesh->name = "grid";
@@ -94,149 +118,6 @@ std::unique_ptr<Mesh> CreateGridMesh(Renderer* renderer) {
 
 }  // namespace
 
-int main() {
-  auto log_handle = InitLoggingSystem(true);
-
-  ERROR(App, "Test error: %s", "error");
-  WARNING(OpenGL, "Test warning");
-
-  Window window;
-  if (!Setup(&window))
-    return 1;
-
-  auto renderer = InitRenderer();
-  if (!renderer)
-    return 1;
-
-  Input input = {};
-
-  Mesh mesh = CreateMesh();
-  if (!RendererStageMesh(renderer.get(), &mesh))
-    return 1;
-
-  auto shader = CreateShader(renderer.get());
-  if (!shader)
-    return 1;
-
-  auto grid_mesh = CreateGridMesh(renderer.get());
-  if (!grid_mesh)
-    return 1;
-
-  auto grid_shader = CreateGridShader(renderer.get());
-  if (!grid_shader)
-    return 1;
-
-  Texture wall = LoadTexture(renderer.get(), "examples/cube/wall.jpg");
-  if (!Loaded(&wall))
-    return 1;
-
-  Texture face = LoadTexture(renderer.get(), "examples/cube/awesomeface.png");
-  if (!Loaded(&face))
-    return 1;
-
-  float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
-
-  push_camera.projection = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
-
-
-  Vec3 camera_pos = {5, 5, 5};
-  /* camera_pos = RotateX(camera_pos, ToRadians(45.0f)); */
-  /* camera_pos = RotateY(camera_pos, ToRadians(45.0f)); */
-
-  push_camera.view = LookAt(camera_pos, {});
-
-  UBO ubo;
-  ubo.model = Translate({0, 0, 0});
-  ubos.push_back(ubo);
-  ubo.model = Translate({10, 0, 0});
-  ubos.push_back(ubo);
-  ubo.model = Translate({0, 1, 0}) * Scale(0.5f);
-  ubos.push_back(ubo);
-
-  Time time = InitTime();
-
-  ImguiContext imgui;
-  if (!InitImgui(renderer.get(), &imgui))
-    return 1;
-
-  ImGui::StyleColorsDark();
-  ImGuiStyle& style = ImGui::GetStyle();
-  {
-    style.WindowRounding = 0.0f;
-    style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-  }
-
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-  // Sample game loop.
-  bool running = true;
-  while (running) {
-    auto events = NewFrame(&window, &input);
-    for (auto event : events) {
-      if (event == WindowEvent::kQuit) {
-        running = false;
-        break;
-      }
-    }
-
-    if (KeyUpThisFrame(&input, Key::kEscape)) {
-      running = false;
-      break;
-    }
-
-    Update(&time);
-    RendererStartFrame(renderer.get());
-    StartFrame(&imgui, &window, &time, &input);
-
-
-    CreateLogWindow();
-
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
-    // window.
-    {
-      ImGui::Begin("Cube Example");
-
-      ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
-      ImGui::InputFloat3("Camera pos", (float*)&camera_pos);
-      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                  1000.0f / ImGui::GetIO().Framerate,
-                  ImGui::GetIO().Framerate);
-      ImGui::End();
-    }
-
-    // 3. Generate render commands.
-    PerFrameVector<RenderCommand> commands;
-
-    // Clear command.
-    ClearFrame clear_frame;
-    clear_frame = {};
-    clear_frame.color = VecToColor(clear_color);
-    commands.push_back(std::move(clear_frame));
-
-    float angle = time.seconds * ToRadians(50.0f);
-    /* ubos[1].model = Translate({5, 0, 0}) * Rotate({1.0f, 0.3f, 0.5f}, angle); */
-    ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle) * Translate({5, 0, 0});
-
-    auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face);
-    commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
-
-    RenderMesh grid_command = {};
-    grid_command.mesh = grid_mesh.get();
-    grid_command.shader = grid_shader.get();
-    grid_command.cull_faces = false;
-    grid_command.blend_enabled = true;
-    grid_command.indices_size = grid_mesh->indices_count;
-    commands.push_back(grid_command);
-
-    auto imgui_commands = EndFrame(&imgui);
-    commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
-
-    RendererExecuteCommands(renderer.get(), std::move(commands));
-
-    RendererEndFrame(renderer.get(), &window);
-  }
-}
-
 namespace {
 
 bool Setup(Window* window) {
@@ -256,15 +137,6 @@ bool Setup(Window* window) {
 
 struct Colors {
   // abgr
-  /* static constexpr uint32_t kBlack=   0x00'00'00'ff; */
-  /* static constexpr uint32_t kBlue=    0x00'00'ff'ff; */
-  /* static constexpr uint32_t kGreen =  0x00'ff'00'ff; */
-  /* static constexpr uint32_t kRed =    0xff'00'00'ff; */
-  /* static constexpr uint32_t kWhite =  0xff'ff'ff'ff; */
-  /* static constexpr uint32_t kTeal =   0xff'f9'f0'ea; */
-  /* static constexpr uint32_t kGray =   0xff'99'99'99; */
-
-  /* static constexpr uint32_t kBlack=   0xff'00'00'00; */
   static constexpr uint32_t kBlue=    0xff'ff'00'00;
   static constexpr uint32_t kGreen =  0xff'00'ff'00;
   static constexpr uint32_t kRed =    0xff'00'00'ff;
@@ -338,8 +210,6 @@ PerFrameVector<RenderCommand>
 GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   PerFrameVector<RenderCommand> commands;
 
-  // Set the camera.
-  commands.push_back(push_camera);
 
   // Mesh command.
   RenderMesh render_mesh;
@@ -352,15 +222,200 @@ GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   render_mesh.textures.push_back(tex0);
   commands.push_back(render_mesh);
 
-  // Add another cube.
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[1];
-  commands.push_back(render_mesh);
+  /* // Add another cube. */
+  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[1]; */
+  /* commands.push_back(render_mesh); */
 
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[2];
-  render_mesh.depth_test = false;
-  commands.push_back(render_mesh);
+  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[2]; */
+  /* render_mesh.depth_test = false; */
+  /* commands.push_back(render_mesh); */
 
   return commands;
 }
 
 }  // namespace
+
+int main() {
+  auto log_handle = InitLoggingSystem(true);
+
+  ERROR(App, "Test error: %s", "error");
+  WARNING(OpenGL, "Test warning");
+
+  Window window;
+  if (!Setup(&window))
+    return 1;
+
+  auto renderer = InitRenderer();
+  if (!renderer)
+    return 1;
+
+  Input input = {};
+
+  Mesh mesh = CreateMesh();
+  if (!RendererStageMesh(renderer.get(), &mesh))
+    return 1;
+
+  auto shader = CreateShader(renderer.get());
+  if (!shader)
+    return 1;
+
+  auto grid_mesh = CreateGridMesh(renderer.get());
+  if (!grid_mesh)
+    return 1;
+
+  auto grid_shader = CreateGridShader(renderer.get());
+  if (!grid_shader)
+    return 1;
+
+  Texture wall = LoadTexture(renderer.get(), "examples/cube/wall.jpg");
+  if (!Loaded(&wall))
+    return 1;
+
+  Texture face = LoadTexture(renderer.get(), "examples/cube/awesomeface.png");
+  if (!Loaded(&face))
+    return 1;
+
+  float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
+
+  push_camera.projection = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
+
+
+  Vec3 camera_pos = {5, 5, 5};
+  /* Vec3 camera_pos = {5, 0, 0}; */
+  /* camera_pos = RotateX(camera_pos, ToRadians(45.0f)); */
+  /* camera_pos = RotateY(camera_pos, ToRadians(45.0f)); */
+  push_camera.view = LookAt(camera_pos, {});
+  /* push_camera.view = Translate({5, 5, 5}) * FromRows({1, 0, -1}, {-1, 1, -1}, {1, 1, 1}); */
+  /* push_camera.view = FromRows({1, 0, -1}, {-1, 1, -1}, {1, 1, 1}) * Translate({5, 5, 5}); */
+
+
+  auto my_view = LookAt({5, 5, 5}, {});
+  auto view = glm::lookAt(glm::vec3(5, 5, 5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+  /* push_camera.view = *(Mat4*)&view; */
+
+  LOG(App, "%s", glm::to_string(view).c_str());
+
+  UBO ubo;
+  ubo.model = Translate({0, 0, 0});
+  ubos.push_back(ubo);
+  ubo.model = Translate({10, 0, 0});
+  ubos.push_back(ubo);
+  ubo.model = Translate({0, 1, 0}) * Scale(0.5f);
+  ubos.push_back(ubo);
+
+  Time time = InitTime();
+
+  ImguiContext imgui;
+  if (!InitImgui(renderer.get(), &imgui))
+    return 1;
+
+  ImGui::StyleColorsDark();
+  ImGuiStyle& style = ImGui::GetStyle();
+  {
+    style.WindowRounding = 0.0f;
+    style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+  }
+
+  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+  // Sample game loop.
+  bool running = true;
+  while (running) {
+    auto events = NewFrame(&window, &input);
+    for (auto event : events) {
+      if (event == WindowEvent::kQuit) {
+        running = false;
+        break;
+      }
+    }
+
+    if (KeyUpThisFrame(&input, Key::kEscape)) {
+      running = false;
+      break;
+    }
+
+    Update(&time);
+    RendererStartFrame(renderer.get());
+    StartFrame(&imgui, &window, &time, &input);
+    // Create a guizmo.
+    ImGuizmo::BeginFrame();
+
+
+    CreateLogWindow();
+
+    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
+    // window.
+    {
+      ImGui::Begin("Cube Example");
+
+      ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
+      ImGui::InputFloat3("Camera pos", (float*)&camera_pos);
+
+      ImGui::Separator();
+
+      MatrixWidget(*(Mat4*)&view);
+
+      ImGui::Separator();
+
+      MatrixWidget(my_view);
+
+      ImGui::Separator();
+
+      ImGui::InputFloat4("RAW", (float*)&my_view);
+      ImGui::InputFloat4("GLM", (float*)&view);
+
+      ImGui::Separator();
+
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                  1000.0f / ImGui::GetIO().Framerate,
+                  ImGui::GetIO().Framerate);
+
+      ImGui::End();
+    }
+
+    // 3. Generate render commands.
+    PerFrameVector<RenderCommand> commands;
+
+    // Clear command.
+    ClearFrame clear_frame;
+    clear_frame = {};
+    clear_frame.color = VecToColor(clear_color);
+    commands.push_back(std::move(clear_frame));
+
+    // Set the camera.
+    commands.push_back(push_camera);
+
+    float angle = time.seconds * ToRadians(50.0f);
+    /* ubos[1].model = Translate({5, 0, 0}) * Rotate({1.0f, 0.3f, 0.5f}, angle); */
+    ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle) * Translate({5, 0, 0});
+
+    /* auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face); */
+    /* commands.insert(commands.end(), cube_commands.begin(), cube_commands.end()); */
+
+    RenderMesh grid_command = {};
+    grid_command.mesh = grid_mesh.get();
+    grid_command.shader = grid_shader.get();
+    grid_command.cull_faces = false;
+    grid_command.blend_enabled = true;
+    grid_command.indices_size = grid_mesh->indices_count;
+    commands.push_back(grid_command);
+
+
+    Mat4 identity = Mat4::Identity();
+    ImGuizmo::SetRect(0, 0, window.screen_size.width, window.screen_size.height);
+    ImGuizmo::Manipulate((float*)&push_camera.view,
+                         (float*)&push_camera.projection,
+                         ImGuizmo::OPERATION::SCALE,
+                         ImGuizmo::MODE::WORLD,
+                         (float*)&identity);
+
+    auto imgui_commands = EndFrame(&imgui);
+    commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
+
+    RendererExecuteCommands(renderer.get(), std::move(commands));
+
+    RendererEndFrame(renderer.get(), &window);
+  }
+}
+
+

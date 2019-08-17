@@ -381,6 +381,8 @@ std::string ToString(const Mat4&);
 // Transformation Matrices.
 // =================================================================================================
 
+Mat4 FromRows(Vec3 row_x, Vec3 row_y, Vec3 row_z);
+
 Mat4 Translate(const Vec3& v);
 
 // Rotate |radian_angle| around |v|.

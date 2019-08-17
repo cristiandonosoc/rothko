@@ -7,6 +7,8 @@
 
 #include "rothko/utils/strings.h"
 
+#include "rothko/logging/logging.h"
+
 namespace rothko {
 
 // Math Functions ==================================================================================
@@ -69,6 +71,17 @@ Vec4 Normalize(const Vec4& v) {
 
 // Transformation Matrices =========================================================================
 
+Mat4 FromRows(Vec3 row_x, Vec3 row_y, Vec3 row_z) {
+  row_x = Normalize(row_x);
+  row_y = Normalize(row_y);
+  row_z = Normalize(row_z);
+
+  return {{row_x.x, row_x.y, row_x.z, 0},
+          {row_y.x, row_y.y, row_y.z, 0},
+          {row_z.x, row_z.y, row_z.z, 0},
+          {0, 0, 0, 1}};
+}
+
 Mat4 Translate(const Vec3& v) {
   // clang-format off
   return Mat4({  1,   0,   0, 0},
@@ -108,29 +121,29 @@ Vec3 Rotate(Vec3 pos, float radian_x, float radian_y) {
 
 Mat4 Scale(const Vec3& v) {
   // clang-format on
-  return Mat4({ v.x,   0,   0,   0},
-              {   0, v.y,   0,   0},
-              {   0,   0, v.z,   0},
-              {   0,   0,   0,   1});
+  return {{ v.x,   0,   0,   0},
+          {   0, v.y,   0,   0},
+          {   0,   0, v.z,   0},
+          {   0,   0,   0,   1}};
   // clang-format off
 }
 
 Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 hint_up) {
   // We calculate the new axis for the coordinate system.
-  Vec3 forward = Normalize(target - pos);             // Z: Point into the target.
-  Vec3 right   = Normalize(Cross(forward, hint_up));  // X: Right to the new Z axis.
-  Vec3 up      = Cross(right, forward);               // Y: Simply cross Z and X.
-
+  Vec3 forward = Normalize(pos - target);             // Z: Point into the target.
+  Vec3 right   = Normalize(Cross(hint_up, forward));  // X: Right to the new Z axis.
+  Vec3 up      = Cross(forward, right);               // Y: Simply cross Z and X.
+                                                      //    Comes out normalized.
   // NOTE: Each field in this matrix is pre-calculated to be the new matrix that transform the
   //       world to view-space. In reality, this is the result of a two step process:
   //          1. Rotate the world to the new coordinate system (forward, up, right).
   //          2. Translate the world to the camera position.
   //       Then this would result in the following matrix multiplication:
   //
-  //       [   1,    0,    0,  0]   [r.x, r.y, r.z,  0]
-  //       [   0,    1,    0,  0] * [u.x, u.y, u.z,  0]
-  //       [   0,    0,    1,  0]   [f.x, f.y, f.z,  0]
-  //       [-p.x, -p.y, -p.z,  0]   [  0,   0,   0,  1]
+  //       [r.x, r.y, r.z,  0]   [   1,    0,    0,  0]
+  //       [u.x, u.y, u.z,  0] * [   0,    1,    0,  0]
+  //       [f.x, f.y, f.z,  0]   [   0,    0,    1,  0]
+  //       [  0,   0,   0,  1]   [-p.x, -p.y, -p.z,  0]
   //
   //       Thus explaining the final row with the dot products.
   //
@@ -139,37 +152,37 @@ Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 hint_up) {
   //       NOTE3: f = forward, u = up, r = right, p = pos.
 
   // clang-format off
-  return Mat4({          right.x,        right.y,           right.z,     0},
-              {             up.x,           up.y,              up.z,     0},
-              {       -forward.x,     -forward.y,        -forward.z,     0},
-              { -Dot(right, pos),  -Dot(up, pos), Dot(forward, pos),     1});
+  return {{          right.x,           up.x,          forward.z,     0},
+          {          right.y,           up.y,          forward.z,     0},
+          {          right.z,           up.z,          forward.z,     0},
+          { -Dot(right, pos),  -Dot(up, pos), -Dot(forward, pos),     1}};
   // clang-format on
 }
 
 Mat4 Frustrum(float l, float r, float b, float t, float n, float f) {
   // clang-format off
-  return Mat4{{  2 * n / (r - l),                 0,                    0,       0},
-              {                0,   2 * n / (t - b),                    0,       0},
-              {(r + l) / (r - l), (t + b) / (t - b),   -(f + n) / (f - n),      -1},
-              {                0,                 0, -2 * f * n / (f - n),       0}};
+  return {{  2 * n / (r - l),                 0,                    0,       0},
+          {                0,   2 * n / (t - b),                    0,       0},
+          {(r + l) / (r - l), (t + b) / (t - b),   -(f + n) / (f - n),      -1},
+          {                0,                 0, -2 * f * n / (f - n),       0}};
   // clang-format on
 }
 
 Mat4 Ortho(float l, float r, float b, float t) {
   // clang-format off
-  return Mat4({       2 / (r - l),                  0,        0,        0},
-              {                 0,        2 / (t - b),        0,        0},
-              {                 0,                  0,       -1,        0},
-              {-(r + l) / (r - l), -(t + b) / (t - b),        0,        1});
+  return {{       2 / (r - l),                  0,        0,        0},
+          {                 0,        2 / (t - b),        0,        0},
+          {                 0,                  0,       -1,        0},
+          {-(r + l) / (r - l), -(t + b) / (t - b),        0,        1}};
   // clang-format on
 }
 
 Mat4 Ortho(float l, float r, float b, float t, float n, float f) {
   // clang-format off
-  return Mat4({       2 / (r - l),                  0,                 0,        0},
-              {                 0,        2 / (t - b),                 0,        0},
-              {                 0,                  0,      -2 / (f - n),        0},
-              {-(r + l) / (r - l), -(t + b) / (t - b), -(f + n) / (f- n),        1});
+  return {{       2 / (r - l),                  0,                 0,        0},
+          {                 0,        2 / (t - b),                 0,        0},
+          {                 0,                  0,      -2 / (f - n),        0},
+          {-(r + l) / (r - l), -(t + b) / (t - b), -(f + n) / (f- n),        1}};
   // clang-format on
 }
 

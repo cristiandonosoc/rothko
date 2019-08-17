@@ -130,17 +130,16 @@ TEST_CASE("Mat4") {
   }
 
   SECTION("mat4 multiplication") {
-    Mat4 mat2 = {{ 1,  2,  3,  4},
-                 { 5,  6,  7,  8},
-                 { 9, 10, 11, 12},
-                 {13, 14, 15, 16}};
-
+    Mat4 mat2 = {{ 2,  3,  4,  5},
+                 { 6,  7,  8,  9},
+                 {10, 11, 12, 13},
+                 {14, 15, 16, 17}};
     Mat4 res = mat * mat2;
 
-    REQUIRE(GetRow(res, 0) == Vec4{ 90, 100, 110, 120});
-    REQUIRE(GetRow(res, 1) == Vec4{202, 228, 254, 280});
-    REQUIRE(GetRow(res, 2) == Vec4{314, 356, 398, 440});
-    REQUIRE(GetRow(res, 3) == Vec4{426, 484, 542, 600});
+    REQUIRE(GetRow(res, 0) == Vec4{100, 110, 120, 130});
+    REQUIRE(GetRow(res, 1) == Vec4{228, 254, 280, 306});
+    REQUIRE(GetRow(res, 2) == Vec4{356, 398, 440, 482});
+    REQUIRE(GetRow(res, 3) == Vec4{484, 542, 600, 658});
   }
 }
 
