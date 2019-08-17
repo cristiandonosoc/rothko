@@ -57,6 +57,41 @@ uint32_t VecToColor(ImVec4 color) {
          ((uint8_t)(color.w * 255.0f));
 }
 
+Vertex3dUVColor CreateVertex(Vec3 pos, Vec2 uv, uint32_t color) {
+  Vertex3dUVColor vertex = {};
+  vertex.pos = pos;
+  vertex.uv = uv;
+  vertex.color = color;
+
+  return vertex;
+}
+
+std::unique_ptr<Mesh> CreateGridMesh(Renderer* renderer) {
+  auto mesh = std::make_unique<Mesh>();
+  mesh->name = "grid";
+
+  mesh->vertex_type = VertexType::k3dUVColor;
+
+  Vertex3dUVColor vertices[] = {
+    CreateVertex({-10,  0, -10}, {0, 0}, 0xffffffff),
+    CreateVertex({ 10,  0, -10}, {0, 1}, 0xffffffff),
+    CreateVertex({ 10,  0,  10}, {1, 1}, 0xffffffff),
+    CreateVertex({-10,  0,  10}, {1, 0}, 0xffffffff),
+  };
+
+  Mesh::IndexType indices[] = {
+    0, 1, 2, 2, 3, 0,
+  };
+
+
+  PushVertices(mesh.get(), vertices, ARRAY_SIZE(vertices));
+  PushIndices(mesh.get(), indices, ARRAY_SIZE(indices));
+
+  if (!RendererStageMesh(renderer, mesh.get()))
+    return nullptr;
+  return mesh;
+}
+
 }  // namespace
 
 int main() {
@@ -80,6 +115,16 @@ int main() {
     return 1;
 
   auto shader = CreateShader(renderer.get());
+  if (!shader)
+    return 1;
+
+  auto grid_mesh = CreateGridMesh(renderer.get());
+  if (!grid_mesh)
+    return 1;
+
+  auto grid_shader = CreateGridShader(renderer.get());
+  if (!grid_shader)
+    return 1;
 
   Texture wall = LoadTexture(renderer.get(), "examples/cube/wall.jpg");
   if (!Loaded(&wall))
@@ -98,7 +143,7 @@ int main() {
   /* camera_pos = RotateX(camera_pos, ToRadians(45.0f)); */
   /* camera_pos = RotateY(camera_pos, ToRadians(45.0f)); */
 
-  push_camera.view = LookAt(camera_pos, {}, {0, 1, 0});
+  push_camera.view = LookAt(camera_pos, {}, {0, 0, 5});
 
   UBO ubo;
   ubo.model = Translate({0, 0, 0});
@@ -175,6 +220,13 @@ int main() {
     auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face);
     commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
 
+    RenderMesh grid_command = {};
+    grid_command.mesh = grid_mesh.get();
+    grid_command.shader = grid_shader.get();
+    grid_command.cull_faces = false;
+    grid_command.indices_size = grid_mesh->indices_count;
+    commands.push_back(grid_command);
+
     auto imgui_commands = EndFrame(&imgui);
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
 
@@ -217,15 +269,6 @@ struct Colors {
   static constexpr uint32_t kRed =    0xff'00'00'ff;
   static constexpr uint32_t kWhite =  0xff'ff'ff'ff;
 };
-
-Vertex3dUVColor CreateVertex(Vec3 pos, Vec2 uv, uint32_t color) {
-  Vertex3dUVColor vertex = {};
-  vertex.pos = pos;
-  vertex.uv = uv;
-  vertex.color = color;
-
-  return vertex;
-}
 
 Mesh CreateMesh() {
   Mesh mesh = {};

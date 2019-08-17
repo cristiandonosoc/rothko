@@ -9,9 +9,9 @@
 #include <memory>
 
 struct UBO {
-  //::rothko::Mat4 proj;
-  //::rothko::Mat4 view;
   ::rothko::Mat4 model;
 };
 
 std::unique_ptr<::rothko::Shader> CreateShader(::rothko::Renderer*);
+
+std::unique_ptr<::rothko::Shader> CreateGridShader(::rothko::Renderer*);
