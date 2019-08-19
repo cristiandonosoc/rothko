@@ -19,8 +19,9 @@ namespace rothko {
 // =================================================================================================
 
 
-constexpr float PI = 3.14159265359f;
-constexpr double PI64 = 3.14159265358979323846;
+constexpr float kPI = 3.14159265359f;
+constexpr double kPI64 = 3.14159265358979323846;
+constexpr float kSqrt2 = 1.4142135623730950488f;
 
 float SquareRoot(float);
 
@@ -28,7 +29,13 @@ float Sin(float radian_angle);
 float Cos(float radian_angle);
 float Tan(float radian_angle);
 
-inline float ToRadians(float degrees) { return degrees * (PI / 180.0f); }
+inline float ToRadians(float degrees) { return degrees * (kPI / 180.0f); }
+inline float ToDegrees(float radians) {
+  float deg = 180.0f * radians / kPI;
+  if (deg < 0.0f)
+    deg += 360.0f;
+  return deg;
+}
 
 #define IS_EVEN(x) ((x) % 2 == 0)
 #define IS_ODD(x) ((x) % 2 == 1)
@@ -448,5 +455,22 @@ Mat4 Ortho(float left, float right, float bottom, float top, float near, float f
 
 // Returns |Frustrum| after calculating the values.
 Mat4 Perspective(float fov, float aspect_ratio, float near, float far);
+
+// =================================================================================================
+// Euler Angles
+// =================================================================================================
+
+// |pitch| = Radian angle of rotation by the x-axis.
+// |yaw| = Randian angle of rotation by the y-axis.
+Vec3 DirectionFromEuler(float pitch, float yaw);
+inline Vec3 DirectionFromEulerDeg(float pitch_deg, float yaw_deg) {
+  return DirectionFromEuler(ToRadians(pitch_deg), ToRadians(yaw_deg));
+}
+
+Vec2 EulerFromDirection(const Vec3& direction);
+inline Vec2 EulerFromDirectionDeg(const Vec3& direction) {
+  Vec2 euler= EulerFromDirection(direction);
+  return {ToDegrees(euler.x), ToDegrees(euler.y)};
+}
 
 }  // rothko

@@ -229,4 +229,24 @@ std::string ToString(const Mat4& m) {
   // clang-format on
 }
 
+// Euler Angles ====================================================================================
+
+Vec3 DirectionFromEuler(float pitch, float yaw) {
+  Vec3 direction;
+  direction.x = std::cos(pitch) * std::cos(yaw);
+  direction.y = std::sin(pitch);
+  direction.z = std::cos(pitch) * std::sin(yaw);
+  return Normalize(direction);
+}
+
+Vec2 EulerFromDirection(const Vec3& direction) {
+  Vec2 result;
+  // Pitch.
+  result.x = std::asin(direction.y);
+
+  // Yaw.
+  result.y = std::atan2(direction.z, direction.x);
+  return result;
+}
+
 }  // namespace rothko
