@@ -96,11 +96,12 @@ std::unique_ptr<Mesh> CreateGridMesh(Renderer* renderer) {
 
   mesh->vertex_type = VertexType::k3dUVColor;
 
+  constexpr float size = 10000.0f;
   Vertex3dUVColor vertices[] = {
-    CreateVertex({-1000000,  0, -1000000}, {0, 0}, 0xffffffff),
-    CreateVertex({ 1000000,  0, -1000000}, {0, 1}, 0xffffffff),
-    CreateVertex({ 1000000,  0,  1000000}, {1, 1}, 0xffffffff),
-    CreateVertex({-1000000,  0,  1000000}, {1, 0}, 0xffffffff),
+    CreateVertex({-size,  0, -size}, {0, 0}, 0xffffffff),
+    CreateVertex({ size,  0, -size}, {0, 1}, 0xffffffff),
+    CreateVertex({ size,  0,  size}, {1, 1}, 0xffffffff),
+    CreateVertex({-size,  0,  size}, {1, 0}, 0xffffffff),
   };
 
   Mesh::IndexType indices[] = {
@@ -275,10 +276,16 @@ int main() {
   if (!Loaded(&face))
     return 1;
 
+  OrbitCamera camera = OrbitCamera::FromLookAt({5, 5, 5}, {});
+  push_camera.view = GetView(camera);
+
   /* push_camera.projection = Mat4::Identity(); */
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
   auto projection = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
   push_camera.projection = projection;
+
+
+
 
   Vec3 camera_pos = {5, 5, 5};
   /* Vec3 camera_pos = {5, 0, 0}; */
@@ -289,16 +296,14 @@ int main() {
   /* push_camera.view = FromRows({1, 0, -1}, {-1, 1, -1}, {1, 1, 1}) * Translate({5, 5, 5}); */
 
   auto my_view = LookAt({5, 5, 5}, {});
-  push_camera.view = my_view;
   auto glm_view = glm::lookAt(glm::vec3(5, 5, 5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-  /* push_camera.view = *(Mat4*)&glm_view; */
   /* LOG(App, "%s", glm::to_string(view).c_str()); */
 
   auto glm_pers = glm::perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
   /* push_camera.projection = *(Mat4*)&glm_pers; */
 
   LOG(App, "ROTHKO VIEW: %s", ToString(view).c_str());
-  LOG(App, "GLM    VIEW: %s", ToString(push_camera.view).c_str());
+  LOG(App, "GLM    VIEW: %s", ToString(*(Mat4*)&glm_view).c_str());
 
   LOG(App, "ROTHKO PROJECTION: %s", ToString(projection).c_str());
   LOG(App, "GLM    PROJECTION: %s", ToString(push_camera.projection).c_str());
@@ -309,7 +314,7 @@ int main() {
   float B = 10.0f;
   auto ortho = Ortho(L, R, B, T, 0.1f, 100.0f);
   auto glm_ortho = glm::ortho(L, R, B, T, 0.1f, 100.0f);
-  push_camera.view = ortho;
+  /* push_camera.view = ortho; */
 
   LOG(App, "ROTHKO ORTHO: %s", ToString(ortho).c_str());
   LOG(App, "GLM    ORTHO: %s", ToString(*(Mat4*)&glm_ortho).c_str());
@@ -359,6 +364,39 @@ int main() {
     // Create a guizmo.
     ImGuizmo::BeginFrame();
 
+    constexpr float kMouseSensibility = 0.007f;
+    static float kMaxPitch = ToRadians(89.0f);
+    if (!imgui.mouse_captured) {
+      if (input.mouse.right) {
+        if (!IsZero(input.mouse_offset)) {
+          camera.angles.x -= input.mouse_offset.y * kMouseSensibility;
+          if (camera.angles.x > kMaxPitch) {
+            camera.angles.x = kMaxPitch;
+          } else if (camera.angles.x < -kMaxPitch) {
+            camera.angles.x = -kMaxPitch;
+          }
+
+          camera.angles.y += input.mouse_offset.x * kMouseSensibility;
+          if (camera.angles.y > kRadians360) {
+            camera.angles.y -= kRadians360;
+          } else if (camera.angles.y < 0) {
+            camera.angles.y += kRadians360;
+          }
+        }
+
+        // Zoom.
+        constexpr float kZoomSpeed = 0.25f;
+        if (input.mouse.wheel.y != 0) {
+          camera.distance -= input.mouse.wheel.y * kZoomSpeed;
+          if (camera.distance < 0.5f)
+            camera.distance = 0.5f;
+        }
+      }
+    }
+
+    Update(&camera);
+    push_camera.view = GetView(camera);
+
 
     CreateLogWindow();
 
@@ -368,15 +406,35 @@ int main() {
       ImGui::Begin("Cube Example");
 
       ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
+
+      ImGui::Separator();
+
       ImGui::InputFloat3("Camera pos", (float*)&camera_pos);
+      ImGui::InputFloat3("Camera target", (float*)&camera.target);
+
+      float deg_angles[2] = {
+        ToDegrees(camera.angles.x),
+        ToDegrees(camera.angles.y),
+      };
+
+      ImGui::InputFloat2("Camera angles", deg_angles);
 
       ImGui::Separator();
 
-      MatrixWidget(*(Mat4*)&view);
+      ImGui::Checkbox("Mouse captured", &imgui.mouse_captured);
+      ImGui::InputInt2("Mouse", (int*)&input.mouse);
+      ImGui::InputInt2("Mouse (prev)", (int*)&input.prev_mouse);
+      ImGui::InputInt2("Mouse offset", (int*)&input.mouse_offset);
 
       ImGui::Separator();
 
-      MatrixWidget(my_view);
+      ImGui::Text("GLM VIEW");
+      MatrixWidget(*(Mat4*)&glm_view);
+
+      ImGui::Separator();
+
+      ImGui::Text("ROTHKO VIEW");
+      MatrixWidget(push_camera.view);
 
       ImGui::Separator();
 

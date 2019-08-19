@@ -6,6 +6,7 @@ source_set("tests_lib") {
   testonly = true
   sources = [
     "defer.cc",
+    "euler_angles.cc",
     "math.cc",
     "memory.cc",
     "strings.cc",

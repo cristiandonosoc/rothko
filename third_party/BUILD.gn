@@ -28,20 +28,16 @@ source_set("imgui") {
 
 source_set("imguizmo") {
   public = [
-    "imguizmo/ImGuizmo.h"
+    "imguizmo/ImGuizmo.h",
   ]
 
   sources = [
-    "imguizmo/ImGuizmo.cpp"
+    "imguizmo/ImGuizmo.cpp",
   ]
 
-  configs += [
-    ":imgui_config",
-  ]
+  configs += [ ":imgui_config" ]
 
-  include_dirs = [
-    "//third_party/imguizmo",
-  ]
+  include_dirs = [ "//third_party/imguizmo" ]
 
   # We don't care about the warnings of this library.
   configs -= [ "//gn_config/compilers:default_warnings" ]

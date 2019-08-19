@@ -22,6 +22,9 @@ namespace rothko {
 constexpr float kPI = 3.14159265359f;
 constexpr double kPI64 = 3.14159265358979323846;
 constexpr float kSqrt2 = 1.4142135623730950488f;
+constexpr float kRadians90 = kPI / 2.0f;
+constexpr float kRadians180 = kPI;
+constexpr float kRadians360 = 2.0f * kPI;
 
 float SquareRoot(float);
 

@@ -12,7 +12,7 @@ source_set("game") {
     "//rothko/logging",
     "//rothko/math",
     "//rothko/platform",
-    "//rothko/utils",
     "//rothko/scene",
+    "//rothko/utils",
   ]
 }

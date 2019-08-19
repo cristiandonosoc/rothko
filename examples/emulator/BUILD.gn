@@ -3,14 +3,14 @@
 
 executable("emulator") {
   sources = [
+    "display.cc",
+    "display.h",
     "main.cc",
     "memory.h",
-    "display.h",
-    "display.cc",
-    "shader.cc",
-    "shader.h",
     "quad.cc",
     "quad.h",
+    "shader.cc",
+    "shader.h",
   ]
 
   deps = [

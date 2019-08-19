@@ -145,6 +145,8 @@ void StartFrame(ImguiContext* imgui, Window* window, Time* time, Input* input) {
 
   RestartKeys(window, input, imgui->io);
 
+  imgui->mouse_captured = imgui->io->WantCaptureMouse;
+
   ImGui::NewFrame();
 }
 

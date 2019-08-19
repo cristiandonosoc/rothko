@@ -28,9 +28,9 @@ assert(backend != "", "You must define a graphics backend.")
 
 group("graphics") {
   deps = [
-    backend,
-    ":common_config",
     ":common",
+    ":common_config",
+    backend,
   ]
 }
 
@@ -60,11 +60,10 @@ config("graphics_macros") {
 # Common set of functionality each renderer implementation will use.
 source_set("common") {
   public = [
-    "graphics.h",
-
     "color.h",
-    "mesh.h",
     "commands.h",
+    "graphics.h",
+    "mesh.h",
     "renderer.h",
     "renderer_backend.h",
     "shader.h",
@@ -73,8 +72,9 @@ source_set("common") {
 
   sources = [
     "color.cc",
-    "mesh.cc",
     "commands.cc",
+    "mesh.cc",
+
     #"renderer.cc",
     "shader.cc",
     "texture.cc",
