@@ -97,10 +97,10 @@ std::unique_ptr<Mesh> CreateGridMesh(Renderer* renderer) {
   mesh->vertex_type = VertexType::k3dUVColor;
 
   Vertex3dUVColor vertices[] = {
-    CreateVertex({-1'000'000,  0, -1'00'00}, {0, 0}, 0xffffffff),
-    CreateVertex({ 1'000'000,  0, -1'00'00}, {0, 1}, 0xffffffff),
-    CreateVertex({ 1'000'000,  0,  1'00'00}, {1, 1}, 0xffffffff),
-    CreateVertex({-1'000'000,  0,  1'00'00}, {1, 0}, 0xffffffff),
+    CreateVertex({-1000000,  0, -1000000}, {0, 0}, 0xffffffff),
+    CreateVertex({ 1000000,  0, -1000000}, {0, 1}, 0xffffffff),
+    CreateVertex({ 1000000,  0,  1000000}, {1, 1}, 0xffffffff),
+    CreateVertex({-1000000,  0,  1000000}, {1, 0}, 0xffffffff),
   };
 
   Mesh::IndexType indices[] = {
@@ -150,37 +150,37 @@ Mesh CreateMesh() {
 
   Vertex3dUVColor vertices[] = {
     // X
-    CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
-    CreateVertex({-1, -1,  1}, { 0,  1}, Colors::kGreen),
-    CreateVertex({-1,  1,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({-1,  1, -1}, { 1,  0}, Colors::kRed),
+    CreateVertex({0, 0, 0}, { 0,  0}, Colors::kBlue),
+    CreateVertex({0, 0,  1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({0,  1,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({0,  1, 0}, { 1,  0}, Colors::kRed),
 
-    CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
-    CreateVertex({-1, -1,  1}, { 0,  1}, Colors::kGreen),
-    CreateVertex({-1,  1,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({-1,  1, -1}, { 1,  0}, Colors::kRed),
+    CreateVertex({0, 0, 0}, { 0,  0}, Colors::kBlue),
+    CreateVertex({0, 0,  1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({0,  1,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({0,  1, 0}, { 1,  0}, Colors::kRed),
 
     // Y
-    CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
-    CreateVertex({ 1, -1, -1}, { 0,  1}, Colors::kGreen),
-    CreateVertex({ 1, -1,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({-1, -1,  1}, { 1,  0}, Colors::kRed),
+    CreateVertex({0, 0, 0}, { 0,  0}, Colors::kBlue),
+    CreateVertex({ 1, 0, 0}, { 0,  1}, Colors::kGreen),
+    CreateVertex({ 1, 0,  1}, { 1,  1}, Colors::kWhite),
+    CreateVertex({0, 0,  1}, { 1,  0}, Colors::kRed),
 
-    CreateVertex({-1,  1, -1}, { 0,  0}, Colors::kBlue),
-    CreateVertex({ 1,  1, -1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({0,  1, 0}, { 0,  0}, Colors::kBlue),
+    CreateVertex({ 1,  1, 0}, { 0,  1}, Colors::kGreen),
     CreateVertex({ 1,  1,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({-1,  1,  1}, { 1,  0}, Colors::kRed),
+    CreateVertex({0,  1,  1}, { 1,  0}, Colors::kRed),
 
     // Z
-    CreateVertex({-1, -1, -1}, { 0,  0}, Colors::kBlue),
-    CreateVertex({ 1, -1, -1}, { 0,  1}, Colors::kGreen),
-    CreateVertex({ 1,  1, -1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({-1,  1, -1}, { 1,  0}, Colors::kRed),
+    CreateVertex({0, 0, 0}, { 0,  0}, Colors::kBlue),
+    CreateVertex({ 1, 0, 0}, { 0,  1}, Colors::kGreen),
+    CreateVertex({ 1,  1, 0}, { 1,  1}, Colors::kWhite),
+    CreateVertex({0,  1, 0}, { 1,  0}, Colors::kRed),
 
-    CreateVertex({-1, -1,  1}, { 0,  0}, Colors::kBlue),
-    CreateVertex({ 1, -1,  1}, { 0,  1}, Colors::kGreen),
+    CreateVertex({0, 0,  1}, { 0,  0}, Colors::kBlue),
+    CreateVertex({ 1, 0,  1}, { 0,  1}, Colors::kGreen),
     CreateVertex({ 1,  1,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({-1,  1,  1}, { 1,  0}, Colors::kRed),
+    CreateVertex({0,  1,  1}, { 1,  0}, Colors::kRed),
   };
 
   Mesh::IndexType indices[] = {
@@ -275,25 +275,44 @@ int main() {
   if (!Loaded(&face))
     return 1;
 
+  /* push_camera.projection = Mat4::Identity(); */
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
-
-  push_camera.projection = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
-
+  auto projection = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
+  push_camera.projection = projection;
 
   Vec3 camera_pos = {5, 5, 5};
   /* Vec3 camera_pos = {5, 0, 0}; */
   /* camera_pos = RotateX(camera_pos, ToRadians(45.0f)); */
   /* camera_pos = RotateY(camera_pos, ToRadians(45.0f)); */
-  push_camera.view = LookAt(camera_pos, {});
+  auto view = LookAt(camera_pos, {});
   /* push_camera.view = Translate({5, 5, 5}) * FromRows({1, 0, -1}, {-1, 1, -1}, {1, 1, 1}); */
   /* push_camera.view = FromRows({1, 0, -1}, {-1, 1, -1}, {1, 1, 1}) * Translate({5, 5, 5}); */
 
-
   auto my_view = LookAt({5, 5, 5}, {});
-  auto view = glm::lookAt(glm::vec3(5, 5, 5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-  /* push_camera.view = *(Mat4*)&view; */
+  push_camera.view = my_view;
+  auto glm_view = glm::lookAt(glm::vec3(5, 5, 5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+  /* push_camera.view = *(Mat4*)&glm_view; */
+  /* LOG(App, "%s", glm::to_string(view).c_str()); */
 
-  LOG(App, "%s", glm::to_string(view).c_str());
+  auto glm_pers = glm::perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
+  /* push_camera.projection = *(Mat4*)&glm_pers; */
+
+  LOG(App, "ROTHKO VIEW: %s", ToString(view).c_str());
+  LOG(App, "GLM    VIEW: %s", ToString(push_camera.view).c_str());
+
+  LOG(App, "ROTHKO PROJECTION: %s", ToString(projection).c_str());
+  LOG(App, "GLM    PROJECTION: %s", ToString(push_camera.projection).c_str());
+
+  float L = 0;
+  float R = 10.0f;
+  float T = 0;
+  float B = 10.0f;
+  auto ortho = Ortho(L, R, B, T, 0.1f, 100.0f);
+  auto glm_ortho = glm::ortho(L, R, B, T, 0.1f, 100.0f);
+  push_camera.view = ortho;
+
+  LOG(App, "ROTHKO ORTHO: %s", ToString(ortho).c_str());
+  LOG(App, "GLM    ORTHO: %s", ToString(*(Mat4*)&glm_ortho).c_str());
 
   UBO ubo;
   ubo.model = Translate({0, 0, 0});
@@ -389,8 +408,8 @@ int main() {
     /* ubos[1].model = Translate({5, 0, 0}) * Rotate({1.0f, 0.3f, 0.5f}, angle); */
     ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle) * Translate({5, 0, 0});
 
-    /* auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face); */
-    /* commands.insert(commands.end(), cube_commands.begin(), cube_commands.end()); */
+    auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face);
+    commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
 
     RenderMesh grid_command = {};
     grid_command.mesh = grid_mesh.get();

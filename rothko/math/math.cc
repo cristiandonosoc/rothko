@@ -71,16 +71,20 @@ Vec4 Normalize(const Vec4& v) {
 
 // Transformation Matrices =========================================================================
 
-Mat4 FromRows(Vec3 row_x, Vec3 row_y, Vec3 row_z) {
-  row_x = Normalize(row_x);
-  row_y = Normalize(row_y);
-  row_z = Normalize(row_z);
-
-  return {{row_x.x, row_x.y, row_x.z, 0},
-          {row_y.x, row_y.y, row_y.z, 0},
-          {row_z.x, row_z.y, row_z.z, 0},
-          {0, 0, 0, 1}};
+Mat4 FromRows(Vec3 x, Vec3 y, Vec3 z) {
+  return {{x.x, x.y, x.z,  0},
+          {y.x, y.y, y.z,  0},
+          {z.x, z.y, z.z,  0},
+          {  0,   0,   0,  1}};
 }
+
+Mat4 FromColumns(Vec3 x, Vec3 y, Vec3 z) {
+  return {{x.x, y.y, z.z,  0},
+          {x.x, y.y, z.z,  0},
+          {x.x, y.y, z.z,  0},
+          {  0,   0,   0,  1}};
+}
+
 
 Mat4 Translate(const Vec3& v) {
   // clang-format off
@@ -152,37 +156,43 @@ Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 hint_up) {
   //       NOTE3: f = forward, u = up, r = right, p = pos.
 
   // clang-format off
-  return {{          right.x,           up.x,          forward.z,     0},
-          {          right.y,           up.y,          forward.z,     0},
-          {          right.z,           up.z,          forward.z,     0},
-          { -Dot(right, pos),  -Dot(up, pos), -Dot(forward, pos),     1}};
+  /* return {{          right.x,           up.x,          forward.z,     0}, */
+  /*         {          right.y,           up.y,          forward.z,     0}, */
+  /*         {          right.z,           up.z,          forward.z,     0}, */
+  /*         { -Dot(right, pos),  -Dot(up, pos), -Dot(forward, pos),     1}}; */
+
+  return {{          right.x,        right.y,            right.z,   -Dot(right, pos)},
+          {             up.x,           up.y,               up.z,      -Dot(up, pos)},
+          {        forward.x,      forward.y,          forward.z, -Dot(forward, pos)},
+          {                0,              0,                  0,                  1}};
   // clang-format on
 }
 
 Mat4 Frustrum(float l, float r, float b, float t, float n, float f) {
   // clang-format off
-  return {{  2 * n / (r - l),                 0,                    0,       0},
-          {                0,   2 * n / (t - b),                    0,       0},
-          {(r + l) / (r - l), (t + b) / (t - b),   -(f + n) / (f - n),      -1},
-          {                0,                 0, -2 * f * n / (f - n),       0}};
+  return {{  2 * n / (r - l),                 0,                    0,                    0},
+          {                0,   2 * n / (t - b),                    0,                    0},
+          {(r + l) / (r - l), (t + b) / (t - b),   -(f + n) / (f - n), -2 * f * n / (f - n)},
+          {                0,                 0,                   -1,                    0}};
   // clang-format on
 }
 
 Mat4 Ortho(float l, float r, float b, float t) {
   // clang-format off
-  return {{       2 / (r - l),                  0,        0,        0},
-          {                 0,        2 / (t - b),        0,        0},
-          {                 0,                  0,       -1,        0},
-          {-(r + l) / (r - l), -(t + b) / (t - b),        0,        1}};
+  return {{       2 / (r - l),                  0,                 0,  -(r + l) / (r - l)},
+          {                 0,        2 / (t - b),                 0,  -(t + b) / (t - b)},
+          {                 0,                  0,                -1,                   0},
+          {                 0,                  0,                 0,                   1}};
+
   // clang-format on
 }
 
 Mat4 Ortho(float l, float r, float b, float t, float n, float f) {
   // clang-format off
-  return {{       2 / (r - l),                  0,                 0,        0},
-          {                 0,        2 / (t - b),                 0,        0},
-          {                 0,                  0,      -2 / (f - n),        0},
-          {-(r + l) / (r - l), -(t + b) / (t - b), -(f + n) / (f- n),        1}};
+  return {{       2 / (r - l),                  0,                 0,  -(r + l) / (r - l)},
+          {                 0,        2 / (t - b),                 0,  -(t + b) / (t - b)},
+          {                 0,                  0,      -2 / (f - n),  -(f + n) / (f - n)},
+          {                 0,                  0,                 0,                   1}};
   // clang-format on
 }
 

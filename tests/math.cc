@@ -88,13 +88,14 @@ TEST_CASE("Mat4") {
               { 5,  6,  7,  8},
               { 9, 10, 11, 12},
               {13, 14, 15, 16}};
+  /* printf("%s\n", ToString(mat).c_str()); */
 
   SECTION("Storage") {
     // The API treats it as row-major, but they're stored column-major.
-    REQUIRE(mat.cols[0] == Vec4{ 1,  2,  3,  4});
-    REQUIRE(mat.cols[1] == Vec4{ 5,  6,  7,  8});
-    REQUIRE(mat.cols[2] == Vec4{ 9, 10, 11, 12});
-    REQUIRE(mat.cols[3] == Vec4{13, 14, 15, 16});
+    REQUIRE(mat.cols[0] == Vec4{ 1,  5,  9, 13});
+    REQUIRE(mat.cols[1] == Vec4{ 2,  6, 10, 14});
+    REQUIRE(mat.cols[2] == Vec4{ 3,  7, 11, 15});
+    REQUIRE(mat.cols[3] == Vec4{ 4,  8, 12, 16});
   }
 
   SECTION("GetRow") {
@@ -134,12 +135,30 @@ TEST_CASE("Mat4") {
                  { 6,  7,  8,  9},
                  {10, 11, 12, 13},
                  {14, 15, 16, 17}};
-    Mat4 res = mat * mat2;
+    Mat4 mat3 = {{ 3,  4,  5,  6},
+                 { 7,  8,  9, 10},
+                 {11, 12, 13, 14},
+                 {15, 16, 17, 18}};
 
-    REQUIRE(GetRow(res, 0) == Vec4{100, 110, 120, 130});
-    REQUIRE(GetRow(res, 1) == Vec4{228, 254, 280, 306});
-    REQUIRE(GetRow(res, 2) == Vec4{356, 398, 440, 482});
-    REQUIRE(GetRow(res, 3) == Vec4{484, 542, 600, 658});
+    Mat4 res1_2 = mat * mat2;
+    REQUIRE(GetRow(res1_2, 0) == Vec4{100, 110, 120, 130});
+    REQUIRE(GetRow(res1_2, 1) == Vec4{228, 254, 280, 306});
+    REQUIRE(GetRow(res1_2, 2) == Vec4{356, 398, 440, 482});
+    REQUIRE(GetRow(res1_2, 3) == Vec4{484, 542, 600, 658});
+
+    // A * B * C = (A * B) * C = A * (B * C);
+
+    Mat4 res12_3 = res1_2 * mat3;
+    REQUIRE(GetRow(res12_3, 0) == Vec4{ 4340,  4800,  5260,  5720});
+    REQUIRE(GetRow(res12_3, 1) == Vec4{10132, 11200, 12268, 13336});
+    REQUIRE(GetRow(res12_3, 2) == Vec4{15924, 17600, 19276, 20952});
+    REQUIRE(GetRow(res12_3, 3) == Vec4{21716, 24000, 26284, 28568});
+
+    Mat4 res123 = mat * mat2 * mat3;
+    REQUIRE(GetRow(res123, 0) == Vec4{ 4340,  4800,  5260,  5720});
+    REQUIRE(GetRow(res123, 1) == Vec4{10132, 11200, 12268, 13336});
+    REQUIRE(GetRow(res123, 2) == Vec4{15924, 17600, 19276, 20952});
+    REQUIRE(GetRow(res123, 3) == Vec4{21716, 24000, 26284, 28568});
   }
 }
 
