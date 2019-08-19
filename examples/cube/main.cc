@@ -10,22 +10,10 @@
 #include <rothko/ui/imgui.h>
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
+#include <third_party/imguizmo/ImGuizmo.h>
 
 #include <sstream>
 #include <thread>
-
-BEGIN_IGNORE_WARNINGS()
-
-#include <third_party/include/glm/glm.hpp>
-#include <third_party/include/glm/gtc/matrix_transform.hpp>
-#include <third_party/include/glm/gtc/type_ptr.hpp>
-
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/string_cast.hpp>
-
-END_IGNORE_WARNINGS()
-
-#include <third_party/imguizmo/ImGuizmo.h>
 
 #include "shader.h"
 
@@ -147,41 +135,45 @@ struct Colors {
 Mesh CreateMesh() {
   Mesh mesh = {};
   mesh.name = "cube";
+
   mesh.vertex_type = VertexType::k3dUVColor;
 
+
+
+
   Vertex3dUVColor vertices[] = {
-    // X
-    CreateVertex({0, 0, 0}, { 0,  0}, Colors::kBlue),
-    CreateVertex({0, 0,  1}, { 0,  1}, Colors::kGreen),
-    CreateVertex({0,  1,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({0,  1, 0}, { 1,  0}, Colors::kRed),
+      // X
+      CreateVertex({-0.5f, -0.5f, -0.5f}, {0, 0}, Colors::kBlue),
+      CreateVertex({-0.5f, -0.5f,  0.5f}, {0, 1}, Colors::kGreen),
+      CreateVertex({-0.5f,  0.5f,  0.5f}, {1, 1}, Colors::kWhite),
+      CreateVertex({-0.5f,  0.5f, -0.5f}, {1, 0}, Colors::kRed),
 
-    CreateVertex({0, 0, 0}, { 0,  0}, Colors::kBlue),
-    CreateVertex({0, 0,  1}, { 0,  1}, Colors::kGreen),
-    CreateVertex({0,  1,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({0,  1, 0}, { 1,  0}, Colors::kRed),
+      CreateVertex({ 0.5f, -0.5f, -0.5f}, {0, 0}, Colors::kBlue),
+      CreateVertex({ 0.5f, -0.5f,  0.5f}, {0, 1}, Colors::kGreen),
+      CreateVertex({ 0.5f,  0.5f,  0.5f}, {1, 1}, Colors::kWhite),
+      CreateVertex({ 0.5f,  0.5f, -0.5f}, {1, 0}, Colors::kRed),
 
-    // Y
-    CreateVertex({0, 0, 0}, { 0,  0}, Colors::kBlue),
-    CreateVertex({ 1, 0, 0}, { 0,  1}, Colors::kGreen),
-    CreateVertex({ 1, 0,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({0, 0,  1}, { 1,  0}, Colors::kRed),
+      // Y
+      CreateVertex({-0.5f, -0.5f, -0.5f}, {0, 0}, Colors::kBlue),
+      CreateVertex({ 0.5f, -0.5f, -0.5f}, {0, 1}, Colors::kGreen),
+      CreateVertex({ 0.5f, -0.5f,  0.5f}, {1, 1}, Colors::kWhite),
+      CreateVertex({-0.5f, -0.5f,  0.5f}, {1, 0}, Colors::kRed),
 
-    CreateVertex({0,  1, 0}, { 0,  0}, Colors::kBlue),
-    CreateVertex({ 1,  1, 0}, { 0,  1}, Colors::kGreen),
-    CreateVertex({ 1,  1,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({0,  1,  1}, { 1,  0}, Colors::kRed),
+      CreateVertex({-0.5f,  0.5f, -0.5f}, {0, 0}, Colors::kBlue),
+      CreateVertex({ 0.5f,  0.5f, -0.5f}, {0, 1}, Colors::kGreen),
+      CreateVertex({ 0.5f,  0.5f,  0.5f}, {1, 1}, Colors::kWhite),
+      CreateVertex({-0.5f,  0.5f,  0.5f}, {1, 0}, Colors::kRed),
 
-    // Z
-    CreateVertex({0, 0, 0}, { 0,  0}, Colors::kBlue),
-    CreateVertex({ 1, 0, 0}, { 0,  1}, Colors::kGreen),
-    CreateVertex({ 1,  1, 0}, { 1,  1}, Colors::kWhite),
-    CreateVertex({0,  1, 0}, { 1,  0}, Colors::kRed),
+      // Z
+      CreateVertex({-0.5f, -0.5f, -0.5f}, {0, 0}, Colors::kBlue),
+      CreateVertex({ 0.5f, -0.5f, -0.5f}, {0, 1}, Colors::kGreen),
+      CreateVertex({ 0.5f,  0.5f, -0.5f}, {1, 1}, Colors::kWhite),
+      CreateVertex({-0.5f,  0.5f, -0.5f}, {1, 0}, Colors::kRed),
 
-    CreateVertex({0, 0,  1}, { 0,  0}, Colors::kBlue),
-    CreateVertex({ 1, 0,  1}, { 0,  1}, Colors::kGreen),
-    CreateVertex({ 1,  1,  1}, { 1,  1}, Colors::kWhite),
-    CreateVertex({0,  1,  1}, { 1,  0}, Colors::kRed),
+      CreateVertex({-0.5f, -0.5f,  0.5f}, {0, 0}, Colors::kBlue),
+      CreateVertex({ 0.5f, -0.5f,  0.5f}, {0, 1}, Colors::kGreen),
+      CreateVertex({ 0.5f,  0.5f,  0.5f}, {1, 1}, Colors::kWhite),
+      CreateVertex({-0.5f,  0.5f,  0.5f}, {1, 0}, Colors::kRed),
   };
 
   Mesh::IndexType indices[] = {
@@ -279,45 +271,9 @@ int main() {
   OrbitCamera camera = OrbitCamera::FromLookAt({5, 5, 5}, {});
   push_camera.view = GetView(camera);
 
-  /* push_camera.projection = Mat4::Identity(); */
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
   auto projection = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
   push_camera.projection = projection;
-
-
-
-
-  Vec3 camera_pos = {5, 5, 5};
-  /* Vec3 camera_pos = {5, 0, 0}; */
-  /* camera_pos = RotateX(camera_pos, ToRadians(45.0f)); */
-  /* camera_pos = RotateY(camera_pos, ToRadians(45.0f)); */
-  auto view = LookAt(camera_pos, {});
-  /* push_camera.view = Translate({5, 5, 5}) * FromRows({1, 0, -1}, {-1, 1, -1}, {1, 1, 1}); */
-  /* push_camera.view = FromRows({1, 0, -1}, {-1, 1, -1}, {1, 1, 1}) * Translate({5, 5, 5}); */
-
-  auto my_view = LookAt({5, 5, 5}, {});
-  auto glm_view = glm::lookAt(glm::vec3(5, 5, 5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-  /* LOG(App, "%s", glm::to_string(view).c_str()); */
-
-  auto glm_pers = glm::perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
-  /* push_camera.projection = *(Mat4*)&glm_pers; */
-
-  LOG(App, "ROTHKO VIEW: %s", ToString(view).c_str());
-  LOG(App, "GLM    VIEW: %s", ToString(*(Mat4*)&glm_view).c_str());
-
-  LOG(App, "ROTHKO PROJECTION: %s", ToString(projection).c_str());
-  LOG(App, "GLM    PROJECTION: %s", ToString(push_camera.projection).c_str());
-
-  float L = 0;
-  float R = 10.0f;
-  float T = 0;
-  float B = 10.0f;
-  auto ortho = Ortho(L, R, B, T, 0.1f, 100.0f);
-  auto glm_ortho = glm::ortho(L, R, B, T, 0.1f, 100.0f);
-  /* push_camera.view = ortho; */
-
-  LOG(App, "ROTHKO ORTHO: %s", ToString(ortho).c_str());
-  LOG(App, "GLM    ORTHO: %s", ToString(*(Mat4*)&glm_ortho).c_str());
 
   UBO ubo;
   ubo.model = Translate({0, 0, 0});
@@ -409,7 +365,7 @@ int main() {
 
       ImGui::Separator();
 
-      ImGui::InputFloat3("Camera pos", (float*)&camera_pos);
+      ImGui::InputFloat3("Camera pos", (float*)&camera.pos_);
       ImGui::InputFloat3("Camera target", (float*)&camera.target);
 
       float deg_angles[2] = {
@@ -428,18 +384,8 @@ int main() {
 
       ImGui::Separator();
 
-      ImGui::Text("GLM VIEW");
-      MatrixWidget(*(Mat4*)&glm_view);
-
-      ImGui::Separator();
-
       ImGui::Text("ROTHKO VIEW");
       MatrixWidget(push_camera.view);
-
-      ImGui::Separator();
-
-      ImGui::InputFloat4("RAW", (float*)&my_view);
-      ImGui::InputFloat4("GLM", (float*)&view);
 
       ImGui::Separator();
 
