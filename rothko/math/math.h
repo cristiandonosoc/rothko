@@ -29,8 +29,17 @@ constexpr float kRadians360 = 2.0f * kPI;
 float SquareRoot(float);
 
 float Sin(float radian_angle);
+float Asin(float radian_angle);
+
 float Cos(float radian_angle);
+float Acos(float radian_angle);
+
 float Tan(float radian_angle);
+float Atan(float radian_angle);
+
+// Atan2 uses both |x| and |y| to determine the quadrant. They're *not* angles.
+// Think of it as a unit vector in a unit circle.
+float Atan2(float x, float y);
 
 inline float ToRadians(float degrees) { return degrees * (kPI / 180.0f); }
 inline float ToDegrees(float radians) {

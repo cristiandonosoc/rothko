@@ -97,7 +97,7 @@ in vec3 f_transformed_pos;
 
 layout (location = 0) out vec4 out_color;
 
-const float fog_near = 10.0f;
+const float fog_near = 20.0f;
 const float fog_far = 50.0f;
 
 void main() {
@@ -109,7 +109,8 @@ void main() {
   float line_width = 0.05f;
   float weight = clamp(min(range.x, range.y) - line_width, 0.0f, 1.0f);
 
-  float camera_dist = distance(camera_pos, f_transformed_pos);
+  /* float camera_dist = distance(camera_pos, f_transformed_pos); */
+  float camera_dist = distance(camera_pos, f_pos);
 
   float fog = 1 - ((camera_dist - fog_near) / (fog_far - fog_near));
   /* out_color = vec4(0, 0, 0, fog); */
@@ -122,8 +123,6 @@ void main() {
   } else {
     out_color = vec4(0, 0, 0, grid_weight * fog);
   }
-
-
 }
 )";
 

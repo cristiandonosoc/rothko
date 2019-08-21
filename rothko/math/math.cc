@@ -16,8 +16,15 @@ namespace rothko {
 float SquareRoot(float f) { return std::sqrt(f); }
 
 float Sin(float radian_angle) { return std::sin(radian_angle); }
+float Asin(float radian_angle) { return std::asin(radian_angle); }
+
 float Cos(float radian_angle) { return std::cos(radian_angle); }
+float Acos(float radian_angle) { return std::acos(radian_angle); }
+
 float Tan(float radian_angle) { return std::tan(radian_angle); }
+float Atan(float radian_angle) { return std::atan(radian_angle); }
+
+float Atan2(float x, float y) { return std::atan2(x, y); }
 
 //Vectors ==========================================================================================
 
@@ -233,19 +240,19 @@ std::string ToString(const Mat4& m) {
 
 Vec3 DirectionFromEuler(float pitch, float yaw) {
   Vec3 direction;
-  direction.x = std::cos(pitch) * std::cos(yaw);
-  direction.y = std::sin(pitch);
-  direction.z = std::cos(pitch) * std::sin(yaw);
+  direction.x = Cos(pitch) * Cos(yaw);
+  direction.y = Sin(pitch);
+  direction.z = Cos(pitch) * Sin(yaw);
   return Normalize(direction);
 }
 
 Vec2 EulerFromDirection(const Vec3& direction) {
   Vec2 result;
   // Pitch.
-  result.x = std::asin(direction.y);
+  result.x = Asin(direction.y);
 
   // Yaw.
-  result.y = std::atan2(direction.z, direction.x);
+  result.y = Atan2(direction.z, direction.x);
   return result;
 }
 

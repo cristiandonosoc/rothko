@@ -203,7 +203,6 @@ PerFrameVector<RenderCommand>
 GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   PerFrameVector<RenderCommand> commands;
 
-
   // Mesh command.
   RenderMesh render_mesh;
   render_mesh.mesh = mesh;
@@ -268,12 +267,16 @@ int main() {
   if (!Loaded(&face))
     return 1;
 
-  OrbitCamera camera = OrbitCamera::FromLookAt({5, 5, 5}, {});
-  push_camera.view = GetView(camera);
-
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
-  auto projection = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
-  push_camera.projection = projection;
+  OrbitCamera camera = OrbitCamera::FromLookAt({5, 5, 5}, {}, ToRadians(60.0f), aspect_ratio);
+
+  push_camera.view = GetView(camera);
+  push_camera.projection = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
+
+  /* constexpr float kFrameWidth = 40.0f; */
+  /* float kFrameHeight = kFrameWidth / aspect_ratio; */
+  /* auto ortho = Ortho(-kFrameWidth, kFrameWidth, -kFrameHeight, kFrameHeight, 0.1f, 100.0f); */
+
 
   UBO ubo;
   ubo.model = Translate({0, 0, 0});
@@ -351,13 +354,13 @@ int main() {
     }
 
     Update(&camera);
+    push_camera.camera_pos = camera.pos_;
     push_camera.view = GetView(camera);
+    push_camera.projection = GetProjection(camera);
 
-
+    ImGui::ShowDemoWindow();
     CreateLogWindow();
 
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named
-    // window.
     {
       ImGui::Begin("Cube Example");
 
@@ -365,15 +368,25 @@ int main() {
 
       ImGui::Separator();
 
-      ImGui::InputFloat3("Camera pos", (float*)&camera.pos_);
+      static int proj_option = (int)camera.projection_type;
+      ImGui::RadioButton("Perspective", &proj_option, (int)ProjectionType::kProjection);
+      ImGui::SameLine();
+      ImGui::RadioButton("Ortho", &proj_option, (int)ProjectionType::kOrthographic);
+      camera.projection_type = (ProjectionType)proj_option;
+
+      Vec3 camera_pos = camera.pos_;
       ImGui::InputFloat3("Camera target", (float*)&camera.target);
+      ImGui::SliderFloat("Camera distance", &camera.distance, 1.0f, 40.0f);
+      ImGui::SliderFloat("Side/depth fix", &camera.size_per_depth_fix, 0.5f, 2.0f);
 
       float deg_angles[2] = {
         ToDegrees(camera.angles.x),
         ToDegrees(camera.angles.y),
       };
-
       ImGui::InputFloat2("Camera angles", deg_angles);
+
+
+      ImGui::InputFloat3("Camera pos (fixed)", (float*)&camera_pos);
 
       ImGui::Separator();
 
