@@ -26,10 +26,6 @@ bool Setup(Window*);
 
 std::vector<UBO> ubos;
 
-struct CubeShader {
-  Shader shader;
-};
-
 Mesh CreateMesh();
 Camera CreateCamera();
 
@@ -342,14 +338,14 @@ int main() {
             camera.angles.y += kRadians360;
           }
         }
+      }
 
-        // Zoom.
-        constexpr float kZoomSpeed = 0.25f;
-        if (input.mouse.wheel.y != 0) {
-          camera.distance -= input.mouse.wheel.y * kZoomSpeed;
-          if (camera.distance < 0.5f)
-            camera.distance = 0.5f;
-        }
+      // Zoom.
+      if (input.mouse.wheel.y != 0) {
+        // We actually want to advance a percentage of the distance.
+        camera.distance -= input.mouse.wheel.y * camera.distance * camera.zoom_speed;
+        if (camera.distance < 0.5f)
+          camera.distance = 0.5f;
       }
     }
 
@@ -358,12 +354,22 @@ int main() {
     push_camera.view = GetView(camera);
     push_camera.projection = GetProjection(camera);
 
+    /* float angle = time.seconds * ToRadians(20.0f); */
+    /* Mat4 rotation = Rotate({1, 2, 3}, angle); */
+    /* ubos[0].model = rotation; */
+
     ImGui::ShowDemoWindow();
     CreateLogWindow();
+
+    static ImGuizmo::OPERATION imguizmo_operation = ImGuizmo::TRANSLATE;
+    static ImGuizmo::MODE imguizmo_mode = ImGuizmo::WORLD;
 
     {
       ImGui::Begin("Cube Example");
 
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                  1000.0f / ImGui::GetIO().Framerate,
+                  ImGui::GetIO().Framerate);
       ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
 
       ImGui::Separator();
@@ -378,14 +384,13 @@ int main() {
       ImGui::InputFloat3("Camera target", (float*)&camera.target);
       ImGui::SliderFloat("Camera distance", &camera.distance, 1.0f, 40.0f);
       ImGui::SliderFloat("Side/depth fix", &camera.size_per_depth_fix, 0.5f, 2.0f);
+      ImGui::SliderFloat("Zoom speed (percent)", &camera.zoom_speed, 0.01f, 0.2f);
 
       float deg_angles[2] = {
         ToDegrees(camera.angles.x),
         ToDegrees(camera.angles.y),
       };
       ImGui::InputFloat2("Camera angles", deg_angles);
-
-
       ImGui::InputFloat3("Camera pos (fixed)", (float*)&camera_pos);
 
       ImGui::Separator();
@@ -402,9 +407,20 @@ int main() {
 
       ImGui::Separator();
 
-      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                  1000.0f / ImGui::GetIO().Framerate,
-                  ImGui::GetIO().Framerate);
+      ImGui::Text("Manipulation");
+
+      ImGui::RadioButton("Translate", (int*)&imguizmo_operation, ImGuizmo::OPERATION::TRANSLATE);
+      ImGui::SameLine();
+      ImGui::RadioButton("Rotate", (int*)&imguizmo_operation, ImGuizmo::OPERATION::ROTATE);
+      ImGui::SameLine();
+      ImGui::RadioButton("Scale", (int*)&imguizmo_operation, ImGuizmo::OPERATION::SCALE);
+
+      ImGui::RadioButton("World", (int*)&imguizmo_mode, ImGuizmo::MODE::WORLD);
+      ImGui::SameLine();
+      ImGui::RadioButton("Local", (int*)&imguizmo_mode, ImGuizmo::MODE::LOCAL);
+
+      if (imguizmo_operation == ImGuizmo::OPERATION::SCALE)
+        imguizmo_mode = ImGuizmo::MODE::LOCAL;
 
       ImGui::End();
     }
@@ -421,9 +437,9 @@ int main() {
     // Set the camera.
     commands.push_back(push_camera);
 
-    float angle = time.seconds * ToRadians(50.0f);
+    /* float angle = time.seconds * ToRadians(50.0f); */
     /* ubos[1].model = Translate({5, 0, 0}) * Rotate({1.0f, 0.3f, 0.5f}, angle); */
-    ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle) * Translate({5, 0, 0});
+    /* ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle) * Translate({5, 0, 0}); */
 
     auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face);
     commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
@@ -437,13 +453,14 @@ int main() {
     commands.push_back(grid_command);
 
 
-    Mat4 identity = Mat4::Identity();
+    /* Mat4 identity = Mat4::Identity(); */
     ImGuizmo::SetRect(0, 0, window.screen_size.width, window.screen_size.height);
     ImGuizmo::Manipulate((float*)&push_camera.view,
                          (float*)&push_camera.projection,
-                         ImGuizmo::OPERATION::SCALE,
-                         ImGuizmo::MODE::WORLD,
-                         (float*)&identity);
+                         imguizmo_operation,
+                         imguizmo_mode,
+                         (float*)&ubos[0]);
+                         /* (float*)&identity); */
 
     auto imgui_commands = EndFrame(&imgui);
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());

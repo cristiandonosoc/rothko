@@ -22,6 +22,9 @@ struct OrbitCamera {
   Vec2 angles;      // In radians. X = pitch, Y = yaw.
   float distance;
 
+  // The percentage of |distance| that will change.
+  float zoom_speed = 0.1f;
+
   float fov = 0;
   float aspect_ratio = 0;
   float near = 0.1f;
