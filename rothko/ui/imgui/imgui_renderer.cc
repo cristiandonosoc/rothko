@@ -40,21 +40,15 @@ bool CreateMesh(Renderer* renderer, ImguiRenderer* imgui) {
   imgui_mesh.vertex_type = VertexType::k2dUVColor;
 
   // A imgui vertex is 20 bytes. An index is 4 bytes.
+  //
   // 2048 kb / 20 = 104857 vertices.
   // 1024 kb / 4 = 262144 indices.
   //
   // We reserve this size when staging the mesh, as we're going to re-upload pieces of this buffer
   // each time, and we don't want to be re-allocating the buffer each time.
-  imgui_mesh.vertices = std::vector<uint8_t>(KILOBYTES(2048));
-  imgui_mesh.vertices_count = imgui_mesh.vertices.size() / sizeof(Vertex2dUVColor);
-  ASSERT(imgui_mesh.vertices_count == 104857);
-  imgui_mesh.indices  = std::vector<uint8_t>(KILOBYTES(1024));
-  imgui_mesh.indices_count = imgui_mesh.indices.size() / sizeof(Mesh::IndexType);
-  ASSERT(imgui_mesh.indices_count == 262144);
-
-  /* imgui->mesh = CreateMesh(); */
-  /* if (!RendererStageMesh(renderer, &imgui->mesh)) */
-  if (!RendererStageMesh(renderer, &imgui_mesh))
+  uint32_t vertex_count = KILOBYTES(2048) / sizeof(Vertex2dUVColor);
+  uint32_t index_count = KILOBYTES(1024) / sizeof(Mesh::IndexType);
+  if (!StageWithCapacity(renderer, &imgui_mesh, VertexType::k2dUVColor, vertex_count, index_count))
     return false;
 
   imgui->mesh = std::move(imgui_mesh);
@@ -65,11 +59,10 @@ bool CreateFontTexture(Renderer* renderer, ImguiRenderer* imgui) {
   ASSERT(imgui->io);
 
   // IMGUI AUTHOR NOTE:
-  // Load as RGBA 32-bits (75% of the memory is wasted, but default font is
-  // so small) because it is more likely to be compatible with user's existing
-  // shaders. If your ImTextureId represent a higher-level concept than just a
-  // GL texture id, consider calling GetTexDataAsAlpha8() instead to save on
-  // GPU memory.
+  // Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is
+  // more likely to be compatible with user's existing shaders. If your ImTextureId represent a
+  // higher-level concept than just a GL texture id, consider calling GetTexDataAsAlpha8() instead
+  // to save on GPU memory.
   uint8_t* pixels;
   int width, height;
   imgui->io->Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
@@ -103,9 +96,6 @@ bool InitImguiRenderer(ImguiRenderer* imgui_renderer, Renderer* renderer, ImGuiI
 
   imgui_renderer->renderer = renderer;
 
-  /* imgui_renderer->ubo.projection = Mat4::Identity(); */
-  /* imgui_renderer->ubo.view = Mat4::Identity(); */
-
   return true;
 }
 
@@ -132,13 +122,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
   PerFrameVector<RenderCommand> render_commands;
   ConfigRenderer config = {};
   config.viewport_size = {fb_width, fb_height};
-  /* config.viewport = {(int)io->DisplaySize.x, (int)io->DisplaySize.y}; */
   render_commands.push_back(std::move(config));
-
-  // Set the camera imgui is going to use and then restore the one that was set before us.
-  /* PushCamera prev_camera = {}; */
-  /* prev_camera.projection = imgui_renderer->renderer->projection; */
-  /* prev_camera.view = imgui_renderer->renderer->view; */
 
   float L = draw_data->DisplayPos.x;
   float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
@@ -174,7 +158,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
     //       normally PushIndices should work.
     static_assert(sizeof(ImDrawIdx) == 2);
     auto& mesh = imgui_renderer->mesh;
-    mesh.indices.reserve((mesh.indices_count + cmd_list->IdxBuffer.Size) * sizeof(Mesh::IndexType));
+    mesh.indices.reserve((mesh.index_count + cmd_list->IdxBuffer.Size) * sizeof(Mesh::IndexType));
     for (int ii = 0; ii < cmd_list->IdxBuffer.Size; ii++) {
       // NOTE: |mesh.indices| is a uint8_t array, so we need to decompose the value into a series of
       //       bytes that we can append to the indices.
@@ -183,7 +167,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
       uint8_t* tmp_end = (uint8_t*)(&val + 1);
       mesh.indices.insert(mesh.indices.end(), tmp, tmp_end);
     }
-    mesh.indices_count += cmd_list->IdxBuffer.Size;
+    mesh.index_count += cmd_list->IdxBuffer.Size;
 
     // This will start appending drawing data into the mesh buffer that's
     // already staged into the renderer.
@@ -194,7 +178,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
       RenderMesh render_mesh;
       render_mesh.shader = &imgui_renderer->shader;
       render_mesh.mesh = &imgui_renderer->mesh;
-      /* render_mesh.textures.push_back(&imgui_renderer->font_texture); */
+      render_mesh.primitive_type = PrimitiveType::kTrianges;
       render_mesh.textures.push_back((Texture*)draw_cmd->TextureId);
 
       render_mesh.indices_offset = base_index_offset + index_offset;
@@ -227,7 +211,6 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
 
     // We advance the base according to how much data we added to the pool.
     base_vertex_offset += cmd_list->VtxBuffer.Size;
-    /* base_index_offset += cmd_list->IdxBuffer.Size * sizeof(Mesh::IndexType); */
     base_index_offset += index_offset;
   }
 

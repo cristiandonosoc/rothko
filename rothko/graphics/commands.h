@@ -1,4 +1,3 @@
-
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
@@ -37,6 +36,13 @@ enum class RenderCommandType {
 const char* ToString(RenderCommandType);
 uint32_t ToSize(RenderCommandType);
 
+enum class PrimitiveType {
+  kLines,
+  kTrianges,
+  kLast,
+};
+const char* ToString(PrimitiveType);
+
 struct ClearFrame {
   static constexpr RenderCommandType kType = RenderCommandType::kClearFrame;
 
@@ -64,6 +70,11 @@ struct PushCamera {
 };
 std::string ToString(const PushCamera&);
 
+// ### RenderMesh.
+
+inline float GetLineWidht(uint32_t ctx) { return (float)(ctx & 0b111u); }
+inline uint64_t SetLineWidth(uint64_t ctx, int width) { return ctx | (width & 0b111); }
+
 // Represents all the information needed to render a mesh. It provides the mesh, texture, uniform
 // and whatnot. The renderer can be clever about re-using state (like if two consecutive render
 // mesh commands use the same shader), but it's not obligated to do that.
@@ -72,6 +83,11 @@ struct RenderMesh {
 
   Mesh* mesh = nullptr;
   Shader* shader = nullptr;
+
+  PrimitiveType primitive_type = PrimitiveType::kLast;
+
+  // Specific context for whatever |primitive_type| is.
+  uint64_t primitive_context = 0;
 
   // Config.
   // TODO(Cristian): This could me move to a bit-field.

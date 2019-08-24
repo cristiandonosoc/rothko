@@ -5,9 +5,12 @@ source_set("scene") {
   sources = [
     "camera.cc",
     "camera.h",
+    "lines.cc",
+    "lines.h",
   ]
 
   deps = [
     "//rothko/math",
+    "//rothko/graphics",
   ]
 }

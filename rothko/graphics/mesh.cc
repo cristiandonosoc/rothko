@@ -17,6 +17,7 @@ const char* ToString(VertexType type) {
   switch (type) {
     case VertexType::kDefault: return "Default";
     case VertexType::k2dUVColor: return "2d UV Color";
+    case VertexType::k3dColor: return "3d Color";
     case VertexType::k3dUVColor: return "3D UV Color";
     case VertexType::kLast: return "Last";
   }
@@ -29,6 +30,7 @@ uint32_t ToSize(VertexType type) {
   switch (type) {
     case VertexType::kDefault: return sizeof(VertexDefault);
     case VertexType::k2dUVColor: return sizeof(Vertex2dUVColor);
+    case VertexType::k3dColor: return sizeof(Vertex3dColor);
     case VertexType::k3dUVColor: return sizeof(Vertex3dUVColor);
     case VertexType::kLast: break;
   }
@@ -37,9 +39,31 @@ uint32_t ToSize(VertexType type) {
   return 0;
 }
 
+bool StageWithCapacity(Renderer* renderer, Mesh* mesh, VertexType vertex_type,
+                       uint32_t vertex_count, uint32_t index_count) {
+  ASSERT(!Staged(mesh));
+  ASSERT(vertex_count > 0);
+  ASSERT(index_count > 0);
+
+  Reset(mesh);
+  mesh->vertex_type = vertex_type;
+  mesh->vertices = std::vector<uint8_t>(ToSize(vertex_type) * vertex_count);
+  mesh->indices = std::vector<uint8_t>(sizeof(Mesh::IndexType) * index_count);
+
+
+  bool staged = RendererStageMesh(renderer, mesh);
+  if (!staged)
+    return false;
+
+  // We just want the capacity, we don't need the data anymore.
+  mesh->vertices.clear();
+  mesh->indices.clear();
+
+  return true;
+}
 
 void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t offset) {
-  mesh->indices.reserve((mesh->indices_count + count) * sizeof(Mesh::IndexType));
+  mesh->indices.reserve((mesh->index_count + count) * sizeof(Mesh::IndexType));
 
   Mesh::IndexType* ptr = data;
   Mesh::IndexType* end = data + count;
@@ -55,7 +79,7 @@ void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t off
     ptr++;
   }
 
-  mesh->indices_count += count;
+  mesh->index_count += count;
 }
 
 }  // namespace rothko

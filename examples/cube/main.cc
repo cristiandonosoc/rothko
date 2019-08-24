@@ -7,6 +7,7 @@
 #include <rothko/math/math.h>
 #include <rothko/platform/platform.h>
 #include <rothko/scene/camera.h>
+#include <rothko/scene/lines.h>
 #include <rothko/ui/imgui.h>
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
@@ -92,7 +93,6 @@ std::unique_ptr<Mesh> CreateGridMesh(Renderer* renderer) {
     0, 1, 2, 2, 3, 0,
   };
 
-
   PushVertices(mesh.get(), vertices, ARRAY_SIZE(vertices));
   PushIndices(mesh.get(), indices, ARRAY_SIZE(indices));
 
@@ -133,10 +133,6 @@ Mesh CreateMesh() {
   mesh.name = "cube";
 
   mesh.vertex_type = VertexType::k3dUVColor;
-
-
-
-
   Vertex3dUVColor vertices[] = {
       // X
       CreateVertex({-0.5f, -0.5f, -0.5f}, {0, 0}, Colors::kBlue),
@@ -186,10 +182,10 @@ Mesh CreateMesh() {
   PushVertices(&mesh, vertices, ARRAY_SIZE(vertices));
   PushIndices(&mesh, indices, ARRAY_SIZE(indices));
 
-  ASSERT_MSG(mesh.vertices_count == ARRAY_SIZE(vertices), "Count: %u", mesh.vertices_count);
+  ASSERT_MSG(mesh.vertex_count == ARRAY_SIZE(vertices), "Count: %u", mesh.vertex_count);
   ASSERT(mesh.vertices.size() == sizeof(vertices));
 
-  ASSERT_MSG(mesh.indices_count == ARRAY_SIZE(indices), "Count: %u", mesh.indices_count);
+  ASSERT_MSG(mesh.index_count == ARRAY_SIZE(indices), "Count: %u", mesh.index_count);
   ASSERT(mesh.indices.size() == sizeof(indices));
 
   return mesh;
@@ -203,8 +199,9 @@ GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   RenderMesh render_mesh;
   render_mesh.mesh = mesh;
   render_mesh.shader = shader;
+  render_mesh.primitive_type = PrimitiveType::kTrianges;
   render_mesh.cull_faces = false;
-  render_mesh.indices_size = mesh->indices_count;
+  render_mesh.indices_size = mesh->index_count;
   render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
   render_mesh.textures.push_back(tex1);
   render_mesh.textures.push_back(tex0);
@@ -261,6 +258,15 @@ int main() {
 
   Texture face = LoadTexture(renderer.get(), "examples/cube/awesomeface.png");
   if (!Loaded(&face))
+    return 1;
+
+  LineManager line_manager = {};
+  if (!Init(renderer.get(), &line_manager, "line-manager"))
+    return 1;
+
+  PushLine(&line_manager, {}, {2, 2, 2}, colors::kBlue);
+  PushLine(&line_manager, {}, {0, 5, 0}, colors::kRed);
+  if (!Stage(renderer.get(), &line_manager))
     return 1;
 
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
@@ -370,7 +376,7 @@ int main() {
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                   1000.0f / ImGui::GetIO().Framerate,
                   ImGui::GetIO().Framerate);
-      ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
+      ImGui::ColorEdit3("clear color", (float*)&clear_color);
 
       ImGui::Separator();
 
@@ -444,12 +450,15 @@ int main() {
     auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face);
     commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
 
+    commands.push_back(line_manager.render_command);
+
     RenderMesh grid_command = {};
     grid_command.mesh = grid_mesh.get();
     grid_command.shader = grid_shader.get();
+    grid_command.primitive_type = PrimitiveType::kTrianges;
     grid_command.cull_faces = false;
     grid_command.blend_enabled = true;
-    grid_command.indices_size = grid_mesh->indices_count;
+    grid_command.indices_size = grid_mesh->index_count;
     commands.push_back(grid_command);
 
 

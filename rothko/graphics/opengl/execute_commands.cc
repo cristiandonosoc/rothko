@@ -25,6 +25,7 @@ void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
         auto& render_mesh = command.GetRenderMesh();
         ASSERT(render_mesh.mesh);
         ASSERT(render_mesh.shader);
+        ASSERT(render_mesh.primitive_type != PrimitiveType::kLast);
         continue;
       }
       case RenderCommandType::kLast: break;
@@ -163,7 +164,30 @@ void SetTextures(const OpenGLRendererBackend& opengl,
   }
 }
 
+GLenum ToGLEnum(PrimitiveType type) {
+  switch (type) {
+    case PrimitiveType::kTrianges: return GL_TRIANGLES;
+    case PrimitiveType::kLines: return GL_LINES;
+    case PrimitiveType::kLast: break;
+  }
+
+  NOT_REACHED();
+  return 0;
+}
+
+void SetupPrimitiveContext(PrimitiveType type, uint64_t context) {
+  if (type == PrimitiveType::kLines) {
+    glLineWidth(GetLineWidht(context));
+  }
+}
+
 void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
+  if (render_mesh.primitive_type == PrimitiveType::kLast) {
+    ERROR(OpenGL,
+          "Received mesh render (%s) without primitive type", render_mesh.mesh->name.c_str());
+    return;
+  }
+
   if (render_mesh.indices_size == 0) {
     ERROR(OpenGL, "Received mesh render mesh comman with size 0");
     return;
@@ -182,8 +206,8 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
 
   const MeshHandles& mesh_handles = mesh_it->second;
   SetUniforms(opengl, render_mesh, shader_handles);
-
   SetTextures(opengl, shader_handles, render_mesh);
+  SetupPrimitiveContext(render_mesh.primitive_type, render_mesh.primitive_context);
 
   // Scissoring.
   if (render_mesh.scissor_test &&
@@ -193,7 +217,7 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   }
 
   glBindVertexArray(mesh_handles.vao);
-  glDrawElements(GL_TRIANGLES, render_mesh.indices_size, GL_UNSIGNED_INT,
+  glDrawElements(ToGLEnum(render_mesh.primitive_type), render_mesh.indices_size, GL_UNSIGNED_INT,
                  (void*)(uint64_t)render_mesh.indices_offset);
 
   glBindVertexArray(NULL);

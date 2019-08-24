@@ -76,6 +76,16 @@ void StageAttributes(Mesh* mesh) {
           2, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offsetof(Vertex2dUVColor, color));
       return;
     }
+    case VertexType::k3dColor: {
+      static_assert(sizeof(Vertex3dColor) == 16);
+      GLsizei stride = sizeof(Vertex3dColor);
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dColor, pos));
+      glEnableVertexAttribArray(1);
+      glVertexAttribPointer(
+          1, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offsetof(Vertex3dColor, color));
+      return;
+    }
     case VertexType::k3dUVColor: {
       static_assert(sizeof(Vertex3dUVColor) == 24);
       GLsizei stride = sizeof(Vertex3dUVColor);
@@ -110,11 +120,12 @@ void StageIndices(Mesh* mesh, MeshHandles* handles) {
 }  // namespace
 
 bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
+  ASSERT_MSG(!Staged(mesh), "Mesh \"%s\" already staged.", mesh->name.c_str());
   uint32_t uuid = GetNextMeshUUID();
 
   auto it = opengl->loaded_meshes.find(uuid);
   if (it != opengl->loaded_meshes.end()) {
-    ERROR(OpenGL, "Reloading mesh %s", mesh->name.c_str());
+    ERROR(OpenGL, "Reloading mesh \"%s\"", mesh->name.c_str());
     return false;
   }
 
@@ -131,7 +142,7 @@ bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
   LOG(OpenGL,
       "Staging mesh %s (uuid: %u, VAO: %u) [%u vertices (%zu bytes)] [%u indices (%zu bytes)]",
       mesh->name.c_str(), uuid, handles.vao,
-      mesh->vertices_count, mesh->vertices.size(), mesh->indices_count, mesh->indices.size());
+      mesh->vertex_count, mesh->vertices.size(), mesh->index_count, mesh->indices.size());
 
   opengl->loaded_meshes[uuid] = std::move(handles);
   mesh->uuid = uuid;
@@ -194,7 +205,7 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
     uint32_t offset = vertex_range.x;
     uint32_t size = vertex_range.y;
     if (size == 0)
-      size = mesh->vertices_count * vertex_size;
+      size = mesh->vertex_count * vertex_size;
 
     glBindBuffer(GL_ARRAY_BUFFER, handles.vbo);
 #if DEBUG_MODE
@@ -209,7 +220,7 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
     uint32_t offset = index_range.x;
     uint32_t size = index_range.y;
     if (size == 0)
-      size = mesh->indices_count * sizeof(Mesh::IndexType);
+      size = mesh->index_count * sizeof(Mesh::IndexType);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.ebo);
 #if DEBUG_MODE

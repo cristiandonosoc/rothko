@@ -20,6 +20,7 @@ struct Renderer;
 enum class VertexType : uint32_t {
   kDefault,       // VertexDefault.
   k2dUVColor,     // Vertex2dUvColor.
+  k3dColor,       // Vertex3dColor.
   k3dUVColor,     // Vertex3dUVColor.
   kLast,
 };
@@ -42,17 +43,18 @@ struct Mesh {
   std::vector<uint8_t> vertices;
   std::vector<uint8_t> indices;
 
-  uint32_t vertices_count = 0;
-  uint32_t indices_count = 0;
+  uint32_t vertex_count = 0;
+  uint32_t index_count = 0;
 };
 
+bool StageWithCapacity(Renderer*, Mesh*, VertexType, uint32_t vertex_count, uint32_t index_count);
 inline bool Staged(Mesh* m) { return m->uuid.has_value(); }
 
 inline void Reset(Mesh* mesh) {
   mesh->vertices.clear();
-  mesh->vertices_count = 0;
+  mesh->vertex_count = 0;
   mesh->indices.clear();
-  mesh->indices_count = 0;
+  mesh->index_count = 0;
 }
 
 template <typename VertexType>
@@ -63,13 +65,13 @@ void PushVertices(Mesh* mesh, VertexType* data, uint32_t count) {
              ToString(VertexType::kVertexType));
 
   // Have to be able to hold all the vertices.
-  mesh->vertices.reserve((mesh->vertices_count + count) * ToSize(mesh->vertex_type));
+  mesh->vertices.reserve((mesh->vertex_count + count) * ToSize(mesh->vertex_type));
 
   VertexType* begin = data;
   VertexType* end = data + count;
 
   mesh->vertices.insert(mesh->vertices.end(), (uint8_t*)begin, (uint8_t*)end);
-  mesh->vertices_count += count;
+  mesh->vertex_count += count;
 }
 
 // Pushes an array of indices into the mesh.
@@ -104,6 +106,14 @@ struct Vertex2dUVColor{
   uint32_t color;
 };
 static_assert(sizeof(Vertex2dUVColor) == 20);
+
+struct Vertex3dColor {
+  static constexpr VertexType kVertexType = VertexType::k3dColor;
+
+  Vec3 pos;
+  uint32_t color;
+};
+static_assert(sizeof(Vertex3dColor) == 16);
 
 struct Vertex3dUVColor {
   static constexpr VertexType kVertexType = VertexType::k3dUVColor;

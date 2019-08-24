@@ -15,7 +15,18 @@ const char* ToString(RenderCommandType type) {
     case RenderCommandType::kConfigRenderer: return "Config Renderer";
     case RenderCommandType::kPushCamera: return "Push Camera";
     case RenderCommandType::kRenderMesh: return "Render Mesh";
-    case RenderCommandType::kLast: return "Last";
+    case RenderCommandType::kLast: return "<last>";
+  }
+
+  NOT_REACHED();
+  return "<unknown>";
+}
+
+const char* ToString(PrimitiveType type) {
+  switch (type) {
+    case PrimitiveType::kTrianges: return "Triangles";
+    case PrimitiveType::kLines: return "Lines";
+    case PrimitiveType::kLast: return "<last>";
   }
 
   NOT_REACHED();
@@ -115,5 +126,7 @@ std::string ToString(const RenderCommand& command) {
 
   return ss.str();
 }
+
+
 
 }  // namespace rothko
