@@ -47,7 +47,6 @@ bool InitShader(Renderer* renderer, LineManager* line_manager) {
 bool Init(Renderer* renderer, LineManager* line_manager, std::string name, uint32_t line_count) {
   ASSERT(!Valid(line_manager));
   line_manager->name = std::move(name);
-  line_manager->render_command = {};
 
   if (!InitShader(renderer, line_manager))
     return false;
@@ -56,30 +55,28 @@ bool Init(Renderer* renderer, LineManager* line_manager, std::string name, uint3
   // We asume one index per vertex. This might be less.
   uint32_t vertex_count = 2 * line_count * sizeof(Vertex3dColor);
   uint32_t index_count = 2 * line_count * sizeof(Mesh::IndexType);
-
-  bool staged = StageWithCapacity(renderer, &line_manager->mesh, VertexType::k3dColor,
+  bool staged = StageWithCapacity(renderer, &line_manager->strip_mesh, VertexType::k3dColor,
                                   vertex_count, index_count);
   if (!staged)
     return false;
 
-  line_manager->render_command.mesh = &line_manager->mesh;
+  line_manager->render_command = {};
+  line_manager->render_command.mesh = &line_manager->strip_mesh;
   line_manager->render_command.shader = &line_manager->shader;
-  line_manager->render_command.primitive_type = PrimitiveType::kLines;
-  line_manager->render_command.primitive_context = SetLineWidth(0, 4);
+  line_manager->render_command.primitive_type = PrimitiveType::kLineStrip;
 
   line_manager->staged = true;
   return true;
 }
 
 void Reset(LineManager* line_manager) {
-  Reset(&line_manager->mesh);
-  line_manager->line_count = 0;
+  Reset(&line_manager->strip_mesh);
 }
 
 bool Stage(Renderer* renderer, LineManager* line_manager) {
   if (line_manager->staged)
     return true;
-  return RendererUploadMeshRange(renderer, &line_manager->mesh);
+  return RendererUploadMeshRange(renderer, &line_manager->strip_mesh);
 }
 
 // Push Lines --------------------------------------------------------------------------------------
@@ -102,13 +99,41 @@ void PushLine(LineManager* line_manager, Vec3 from, Vec3 to, Color color) {
     CreateVertex(to, color),
   };
 
-  Mesh::IndexType base = line_manager->mesh.vertex_count;
-  Mesh::IndexType indices[2] = {base + 0, base + 1};
+  Mesh::IndexType base = line_manager->strip_mesh.vertex_count;
+  Mesh::IndexType indices[3] = {base + 0, base + 1, line_strip::kPrimitiveReset};
 
-  PushVertices(&line_manager->mesh, vertices, ARRAY_SIZE(vertices));
-  PushIndices(&line_manager->mesh, indices, ARRAY_SIZE(indices));
+  PushVertices(&line_manager->strip_mesh, vertices, ARRAY_SIZE(vertices));
+  PushIndices(&line_manager->strip_mesh, indices, ARRAY_SIZE(indices));
 
-  line_manager->render_command.indices_size += 2;
+  line_manager->render_command.indices_size += ARRAY_SIZE(indices);
+  line_manager->staged = false;
+}
+
+void PushCubeCenter(LineManager* line_manager, Vec3 c, Vec3 e, Color color) {
+  Vertex3dColor vertices[8] = {
+      CreateVertex(c + Vec3{-e.x, -e.y, -e.z}, color),
+      CreateVertex(c + Vec3{-e.x, -e.y, e.z}, color),
+      CreateVertex(c + Vec3{-e.x, e.y, -e.z}, color),
+      CreateVertex(c + Vec3{-e.x, e.y, e.z}, color),
+      CreateVertex(c + Vec3{e.x, -e.y, -e.z}, color),
+      CreateVertex(c + Vec3{e.x, -e.y, e.z}, color),
+      CreateVertex(c + Vec3{e.x, e.y, -e.z}, color),
+      CreateVertex(c + Vec3{e.x, e.y, e.z}, color),
+  };
+
+  Mesh::IndexType base = line_manager->strip_mesh.vertex_count;
+  Mesh::IndexType indices[18] = {
+    base + 0, base + 1, base + 3, base + 2, base + 0, base + 4, base + 5, base + 1,
+    line_strip::kPrimitiveReset,
+
+    base + 7, base + 3, base + 2, base + 6, base + 7, base + 5, base + 4, base + 6,
+    line_strip::kPrimitiveReset,
+  };
+
+  PushVertices(&line_manager->strip_mesh, vertices, ARRAY_SIZE(vertices));
+  PushIndices(&line_manager->strip_mesh, indices, ARRAY_SIZE(indices));
+  line_manager->render_command.indices_size += ARRAY_SIZE(indices);
+
   line_manager->staged = false;
 }
 

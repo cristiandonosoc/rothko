@@ -24,8 +24,9 @@ const char* ToString(RenderCommandType type) {
 
 const char* ToString(PrimitiveType type) {
   switch (type) {
-    case PrimitiveType::kTrianges: return "Triangles";
     case PrimitiveType::kLines: return "Lines";
+    case PrimitiveType::kLineStrip: return "Line Strip";
+    case PrimitiveType::kTriangles: return "Triangles";
     case PrimitiveType::kLast: return "<last>";
   }
 

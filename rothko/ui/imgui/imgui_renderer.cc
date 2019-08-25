@@ -178,7 +178,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
       RenderMesh render_mesh;
       render_mesh.shader = &imgui_renderer->shader;
       render_mesh.mesh = &imgui_renderer->mesh;
-      render_mesh.primitive_type = PrimitiveType::kTrianges;
+      render_mesh.primitive_type = PrimitiveType::kTriangles;
       render_mesh.textures.push_back((Texture*)draw_cmd->TextureId);
 
       render_mesh.indices_offset = base_index_offset + index_offset;

@@ -8,6 +8,7 @@
 #include "rothko/containers/vector.h"
 #include "rothko/math/math.h"
 #include "rothko/utils/macros.h"
+#include "rothko/graphics/mesh.h"
 
 namespace rothko {
 
@@ -38,7 +39,8 @@ uint32_t ToSize(RenderCommandType);
 
 enum class PrimitiveType {
   kLines,
-  kTrianges,
+  kLineStrip,
+  kTriangles,
   kLast,
 };
 const char* ToString(PrimitiveType);
@@ -70,10 +72,27 @@ struct PushCamera {
 };
 std::string ToString(const PushCamera&);
 
-// ### RenderMesh.
+// RenderMesh --------------------------------------------------------------------------------------
 
-inline float GetLineWidht(uint32_t ctx) { return (float)(ctx & 0b111u); }
-inline uint64_t SetLineWidth(uint64_t ctx, int width) { return ctx | (width & 0b111); }
+namespace lines {
+
+inline float GetLineWidth(uint64_t ctx) { return (float)(ctx & 0b111u); }
+inline uint64_t SetLineWidth(uint64_t ctx, int width) { return ctx & (width | ~(uint64_t)0b111); }
+
+}  // namespace
+
+namespace line_strip {
+
+// Value to use for reseting the indices lookup (basically glPrimitiveRestartIndex).
+constexpr Mesh::IndexType kPrimitiveReset = (Mesh::IndexType)-2;
+
+inline uint32_t GetRestartIndex(uint64_t ctx) { return (uint32_t)(ctx & (uint32_t)-1); }
+inline uint64_t SetRestartIndex(uint64_t ctx, uint32_t i) {
+  uint64_t mask = (i | ~(uint64_t)(uint32_t)-1);
+  return ctx & mask;
+}
+
+}  // namespace line_strip
 
 // Represents all the information needed to render a mesh. It provides the mesh, texture, uniform
 // and whatnot. The renderer can be clever about re-using state (like if two consecutive render
@@ -85,9 +104,6 @@ struct RenderMesh {
   Shader* shader = nullptr;
 
   PrimitiveType primitive_type = PrimitiveType::kLast;
-
-  // Specific context for whatever |primitive_type| is.
-  uint64_t primitive_context = 0;
 
   // Config.
   // TODO(Cristian): This could me move to a bit-field.

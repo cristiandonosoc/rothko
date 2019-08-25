@@ -114,6 +114,10 @@ union _v2 {
 using Int2 = _v2<int>;
 using Vec2 = _v2<float>;
 
+
+template <typename T>
+_v2<T> Abs(const _v2<T>& v) { return {ABS(v.x), ABS(v.y)}; }
+
 template <typename T>
 inline bool IsZero(const _v2<T>& v) { return v.x == 0 && v.y == 0; }
 
@@ -198,6 +202,9 @@ _v3<T> Cross(const _v3<T>& v1, const _v3<T>& v2) {
 }
 
 template <typename T>
+_v3<T> Abs(const _v3<T>& v) { return {ABS(v.x), ABS(v.y), ABS(v.z)}; }
+
+template <typename T>
 T Dot(const _v3<T>& a, const _v3<T>& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 
 template <typename T>
@@ -261,6 +268,9 @@ union _v4 {
 
 using Int4 = _v4<int>;
 using Vec4 = _v4<float>;
+
+template <typename T>
+_v4<T> Abs(const _v4<T>& v) { return {ABS(v.x), ABS(v.y), ABS(v.z), ABS(v.w)}; }
 
 template <typename T>
 T Dot(const _v4<T>& a, const _v4<T>& b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }

@@ -166,19 +166,14 @@ void SetTextures(const OpenGLRendererBackend& opengl,
 
 GLenum ToGLEnum(PrimitiveType type) {
   switch (type) {
-    case PrimitiveType::kTrianges: return GL_TRIANGLES;
     case PrimitiveType::kLines: return GL_LINES;
+    case PrimitiveType::kLineStrip: return GL_LINE_STRIP;
+    case PrimitiveType::kTriangles: return GL_TRIANGLES;
     case PrimitiveType::kLast: break;
   }
 
   NOT_REACHED();
   return 0;
-}
-
-void SetupPrimitiveContext(PrimitiveType type, uint64_t context) {
-  if (type == PrimitiveType::kLines) {
-    glLineWidth(GetLineWidht(context));
-  }
 }
 
 void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderMesh& render_mesh) {
@@ -207,7 +202,6 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   const MeshHandles& mesh_handles = mesh_it->second;
   SetUniforms(opengl, render_mesh, shader_handles);
   SetTextures(opengl, shader_handles, render_mesh);
-  SetupPrimitiveContext(render_mesh.primitive_type, render_mesh.primitive_context);
 
   // Scissoring.
   if (render_mesh.scissor_test &&

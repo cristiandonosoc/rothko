@@ -131,6 +131,10 @@ std::unique_ptr<Renderer> InitRenderer() {
   }
 #endif
 
+  glLineWidth(3);
+  glEnable(GL_PRIMITIVE_RESTART);
+  glPrimitiveRestartIndex(line_strip::kPrimitiveReset);
+
   gBackend = std::make_unique<OpenGLRendererBackend>();
 
   auto renderer = std::make_unique<Renderer>();

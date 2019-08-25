@@ -199,7 +199,7 @@ GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   RenderMesh render_mesh;
   render_mesh.mesh = mesh;
   render_mesh.shader = shader;
-  render_mesh.primitive_type = PrimitiveType::kTrianges;
+  render_mesh.primitive_type = PrimitiveType::kTriangles;
   render_mesh.cull_faces = false;
   render_mesh.indices_size = mesh->index_count;
   render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
@@ -264,8 +264,13 @@ int main() {
   if (!Init(renderer.get(), &line_manager, "line-manager"))
     return 1;
 
-  PushLine(&line_manager, {}, {2, 2, 2}, colors::kBlue);
-  PushLine(&line_manager, {}, {0, 5, 0}, colors::kRed);
+  PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, colors::kBlue);
+  PushLine(&line_manager, {-3, 2, -3}, {0, 2, 2}, colors::kRed);
+  PushLine(&line_manager, {2, 2, -3}, {3, 2, -1}, colors::kGreen);
+
+  PushCubeCenter(&line_manager, {0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, colors::kWhite);
+  PushCube(&line_manager, {-1, -1, -1}, {2, 4, 5}, colors::kBlack);
+
   if (!Stage(renderer.get(), &line_manager))
     return 1;
 
@@ -447,15 +452,15 @@ int main() {
     /* ubos[1].model = Translate({5, 0, 0}) * Rotate({1.0f, 0.3f, 0.5f}, angle); */
     /* ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle) * Translate({5, 0, 0}); */
 
-    auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face);
-    commands.insert(commands.end(), cube_commands.begin(), cube_commands.end());
+    /* auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face); */
+    /* commands.insert(commands.end(), cube_commands.begin(), cube_commands.end()); */
 
     commands.push_back(line_manager.render_command);
 
     RenderMesh grid_command = {};
     grid_command.mesh = grid_mesh.get();
     grid_command.shader = grid_shader.get();
-    grid_command.primitive_type = PrimitiveType::kTrianges;
+    grid_command.primitive_type = PrimitiveType::kTriangles;
     grid_command.cull_faces = false;
     grid_command.blend_enabled = true;
     grid_command.indices_size = grid_mesh->index_count;

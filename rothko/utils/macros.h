@@ -25,6 +25,7 @@
 // Hack to have variadic macros work with 0 arguments.
 #define VA_ARGS(...) , ##__VA_ARGS__
 
+#define ABS(x) (((x) < 0) ? (x) : (-(x)))
 #define U64_ALL_ONES() (uint64_t)-1
 
 #define SEGFAULT()                 \
