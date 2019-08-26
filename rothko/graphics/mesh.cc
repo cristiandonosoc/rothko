@@ -9,39 +9,13 @@
 namespace rothko {
 
 Mesh::~Mesh() {
-  if (Staged(this))
+  if (Staged(*this))
     RendererUnstageMesh(this->renderer, this);
-}
-
-const char* ToString(VertexType type) {
-  switch (type) {
-    case VertexType::kDefault: return "Default";
-    case VertexType::k2dUVColor: return "2d UV Color";
-    case VertexType::k3dColor: return "3d Color";
-    case VertexType::k3dUVColor: return "3D UV Color";
-    case VertexType::kLast: return "Last";
-  }
-
-  NOT_REACHED();
-  return "<unknown>";
-}
-
-uint32_t ToSize(VertexType type) {
-  switch (type) {
-    case VertexType::kDefault: return sizeof(VertexDefault);
-    case VertexType::k2dUVColor: return sizeof(Vertex2dUVColor);
-    case VertexType::k3dColor: return sizeof(Vertex3dColor);
-    case VertexType::k3dUVColor: return sizeof(Vertex3dUVColor);
-    case VertexType::kLast: break;
-  }
-
-  NOT_REACHED();
-  return 0;
 }
 
 bool StageWithCapacity(Renderer* renderer, Mesh* mesh, VertexType vertex_type,
                        uint32_t vertex_count, uint32_t index_count) {
-  ASSERT(!Staged(mesh));
+  ASSERT(!Staged(*mesh));
   ASSERT(vertex_count > 0);
   ASSERT(index_count > 0);
 

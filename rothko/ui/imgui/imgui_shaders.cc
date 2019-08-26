@@ -41,12 +41,13 @@ layout (location = 0) out vec4 out_color;
 void main() {
   out_color = color * texture(tex_sampler, uv);
 }
-
 )";
 
 Shader GetOpenGLImguiShader() {
   Shader shader;
   shader.name = "Imgui Shader";
+  shader.vertex_type = VertexType::k2dUVColor;
+
   shader.texture_count = 1;
 
   shader.vert_src = CreateVertexSource(kOpenGLVertex);

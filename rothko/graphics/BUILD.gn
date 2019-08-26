@@ -68,16 +68,16 @@ source_set("common") {
     "renderer_backend.h",
     "shader.h",
     "texture.h",
+    "vertices.h",
   ]
 
   sources = [
     "color.cc",
     "commands.cc",
     "mesh.cc",
-
-    #"renderer.cc",
     "shader.cc",
     "texture.cc",
+    "vertices.cc",
   ]
 
   deps = [

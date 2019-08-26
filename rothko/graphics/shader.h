@@ -6,8 +6,9 @@
 #include <string>
 #include <vector>
 
-#include "rothko/utils/macros.h"
+#include "rothko/graphics/vertices.h"
 #include "rothko/utils/clear_on_move.h"
+#include "rothko/utils/macros.h"
 
 namespace rothko {
 
@@ -50,6 +51,8 @@ struct Shader {
   uint32_t frag_ubo_size = 0;   // In bytes.
 
   uint32_t texture_count = 0;
+
+  VertexType vertex_type = VertexType::kLast;
 
   std::string vert_src;
   std::string frag_src;

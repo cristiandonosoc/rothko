@@ -26,6 +26,10 @@ void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
         ASSERT(render_mesh.mesh);
         ASSERT(render_mesh.shader);
         ASSERT(render_mesh.primitive_type != PrimitiveType::kLast);
+        ASSERT_MSG(render_mesh.mesh->vertex_type == render_mesh.shader->vertex_type,
+                   "Mesh (%s): %s, Shader: (%s) %s",
+                   render_mesh.mesh->name.c_str(), ToString(render_mesh.mesh->vertex_type),
+                   render_mesh.shader->name.c_str(), ToString(render_mesh.shader->vertex_type));
         continue;
       }
       case RenderCommandType::kLast: break;

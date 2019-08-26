@@ -35,7 +35,8 @@ void main() {
 
 bool InitShader(Renderer* renderer, LineManager* line_manager) {
   Shader* shader = &line_manager->shader;
-  shader->name = StringPrintf("line-manager-%s-shader", line_manager->name.c_str());
+  shader->name = StringPrintf("%s-shader", line_manager->name.c_str());
+  shader->vertex_type = VertexType::k3dColor;
   shader->vert_src = CreateVertexSource(kLineVertexShader);
   shader->frag_src = CreateFragmentSource(kLineFragmentShader);
 
@@ -59,6 +60,8 @@ bool Init(Renderer* renderer, LineManager* line_manager, std::string name, uint3
                                   vertex_count, index_count);
   if (!staged)
     return false;
+
+  line_manager->strip_mesh.name = StringPrintf("%s-mesh", line_manager->name.c_str());
 
   line_manager->render_command = {};
   line_manager->render_command.mesh = &line_manager->strip_mesh;

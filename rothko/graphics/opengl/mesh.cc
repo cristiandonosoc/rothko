@@ -86,6 +86,15 @@ void StageAttributes(Mesh* mesh) {
           1, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offsetof(Vertex3dColor, color));
       return;
     }
+    case VertexType::k3dUV: {
+      static_assert(sizeof(Vertex3dUV) == 20);
+      GLsizei stride = sizeof(Vertex3dUV);
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dUV, pos));
+      glEnableVertexAttribArray(1);
+      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dUV, uv));
+      return;
+    }
     case VertexType::k3dUVColor: {
       static_assert(sizeof(Vertex3dUVColor) == 24);
       GLsizei stride = sizeof(Vertex3dUVColor);
@@ -120,7 +129,7 @@ void StageIndices(Mesh* mesh, MeshHandles* handles) {
 }  // namespace
 
 bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
-  ASSERT_MSG(!Staged(mesh), "Mesh \"%s\" already staged.", mesh->name.c_str());
+  ASSERT_MSG(!Staged(*mesh), "Mesh \"%s\" already staged.", mesh->name.c_str());
   uint32_t uuid = GetNextMeshUUID();
 
   auto it = opengl->loaded_meshes.find(uuid);

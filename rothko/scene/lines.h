@@ -26,7 +26,7 @@ struct LineManager {
 // |line_count| means how many lines we pre-allocate within the mesh.
 // Keep in mind that a cube = 10 lines.
 bool Init(Renderer*, LineManager*, std::string name, uint32_t line_count = 1000);
-inline bool Valid(LineManager* l) { return Staged(&l->strip_mesh); }
+inline bool Valid(LineManager* l) { return Staged(l->strip_mesh); }
 void Reset(LineManager*);
 
 bool Stage(Renderer*, LineManager*);

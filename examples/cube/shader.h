@@ -13,5 +13,3 @@ struct UBO {
 };
 
 std::unique_ptr<::rothko::Shader> CreateShader(::rothko::Renderer*);
-
-std::unique_ptr<::rothko::Shader> CreateGridShader(::rothko::Renderer*);

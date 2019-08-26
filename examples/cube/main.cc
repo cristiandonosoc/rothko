@@ -7,6 +7,7 @@
 #include <rothko/math/math.h>
 #include <rothko/platform/platform.h>
 #include <rothko/scene/camera.h>
+#include <rothko/scene/grid.h>
 #include <rothko/scene/lines.h>
 #include <rothko/ui/imgui.h>
 #include <rothko/window/sdl/sdl_definitions.h>
@@ -73,32 +74,6 @@ void MatrixWidget(const Mat4& m) {
 
   row = m.row(3);
   ImGui::InputFloat4("W", (float*)&row);
-}
-
-std::unique_ptr<Mesh> CreateGridMesh(Renderer* renderer) {
-  auto mesh = std::make_unique<Mesh>();
-  mesh->name = "grid";
-
-  mesh->vertex_type = VertexType::k3dUVColor;
-
-  constexpr float size = 10000.0f;
-  Vertex3dUVColor vertices[] = {
-    CreateVertex({-size,  0, -size}, {0, 0}, 0xffffffff),
-    CreateVertex({ size,  0, -size}, {0, 1}, 0xffffffff),
-    CreateVertex({ size,  0,  size}, {1, 1}, 0xffffffff),
-    CreateVertex({-size,  0,  size}, {1, 0}, 0xffffffff),
-  };
-
-  Mesh::IndexType indices[] = {
-    0, 1, 2, 2, 3, 0,
-  };
-
-  PushVertices(mesh.get(), vertices, ARRAY_SIZE(vertices));
-  PushIndices(mesh.get(), indices, ARRAY_SIZE(indices));
-
-  if (!RendererStageMesh(renderer, mesh.get()))
-    return nullptr;
-  return mesh;
 }
 
 }  // namespace
@@ -244,12 +219,8 @@ int main() {
   if (!shader)
     return 1;
 
-  auto grid_mesh = CreateGridMesh(renderer.get());
-  if (!grid_mesh)
-    return 1;
-
-  auto grid_shader = CreateGridShader(renderer.get());
-  if (!grid_shader)
+  Grid grid;
+  if (!Init(renderer.get(), &grid, "main-grid"))
     return 1;
 
   Texture wall = LoadTexture(renderer.get(), "examples/cube/wall.jpg");
@@ -264,10 +235,9 @@ int main() {
   if (!Init(renderer.get(), &line_manager, "line-manager"))
     return 1;
 
-  PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, colors::kBlue);
-  PushLine(&line_manager, {-3, 2, -3}, {0, 2, 2}, colors::kRed);
-  PushLine(&line_manager, {2, 2, -3}, {3, 2, -1}, colors::kGreen);
-
+  /* PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, colors::kBlue); */
+  /* PushLine(&line_manager, {-3, 2, -3}, {0, 2, 2}, colors::kRed); */
+  /* PushLine(&line_manager, {2, 2, -3}, {3, 2, -1}, colors::kGreen); */
   PushCubeCenter(&line_manager, {0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, colors::kWhite);
   PushCube(&line_manager, {-1, -1, -1}, {2, 4, 5}, colors::kBlack);
 
@@ -369,7 +339,7 @@ int main() {
     /* Mat4 rotation = Rotate({1, 2, 3}, angle); */
     /* ubos[0].model = rotation; */
 
-    ImGui::ShowDemoWindow();
+    /* ImGui::ShowDemoWindow(); */
     CreateLogWindow();
 
     static ImGuizmo::OPERATION imguizmo_operation = ImGuizmo::TRANSLATE;
@@ -457,15 +427,7 @@ int main() {
 
     commands.push_back(line_manager.render_command);
 
-    RenderMesh grid_command = {};
-    grid_command.mesh = grid_mesh.get();
-    grid_command.shader = grid_shader.get();
-    grid_command.primitive_type = PrimitiveType::kTriangles;
-    grid_command.cull_faces = false;
-    grid_command.blend_enabled = true;
-    grid_command.indices_size = grid_mesh->index_count;
-    commands.push_back(grid_command);
-
+    commands.push_back(grid.render_command);
 
     /* Mat4 identity = Mat4::Identity(); */
     ImGuizmo::SetRect(0, 0, window.screen_size.width, window.screen_size.height);
