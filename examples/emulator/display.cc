@@ -54,50 +54,6 @@ bool InitDisplay(Game* game, Display* out) {
   return true;
 }
 
-// Each pixels are defined by two bytes, where one is the "upper index" of the pixel and the second
-// is the lower pixel. These are shades that need to be interpreted into a color according to a
-// palette register (bgp, obp0, obp1).
-//
-// |7|6|5|4|3|2|1|0| Byte 1 (Least significant bit).
-// |7|6|5|4|3|2|1|0| Byte 2 (Most significant bit).
-//  | | | | | | | |
-//  | | | | | | | |-> Shade 0
-//  | | | | | | |---> Shade 1
-//  | | | | | |-----> Shade 2
-//  | | | | |-------> Shade 3
-//  | | | |---------> Shade 4
-//  | | |-----------> Shade 5
-//  | |-------------> Shade 6
-//  |---------------> Shade 7
-void TileToTexture(uint8_t palette, const void* data, Color* out) {
-  uint32_t shades[4] = {
-    PaletteColor(palette, 0),
-    PaletteColor(palette, 1),
-    PaletteColor(palette, 2),
-    PaletteColor(palette, 3),
-  };
-
-  const uint8_t* ptr = (uint8_t*)data;
-  for (int y = 0; y < 8; y++) {
-    const uint8_t* lsb = ptr + 0;
-    const uint8_t* msb = ptr + 1;
-
-    // Bit 7 is the left-most pixel, so we iterate it backwards.
-    for (int x = 7; x >= 0; x--) {
-      uint8_t lsp = (*lsb >> x) & 0x1;
-      uint8_t msp = (*msb >> x) & 0x1;
-      uint8_t pixel = msp << 1 | lsp;
-      ASSERT_MSG(pixel < 0b100, "Got pixel: 0x%x", pixel);
-
-      *out = ShadeToColor(shades[pixel]);
-      out++;
-    }
-
-    ptr += 2;
-  }
-}
-
-
 // Background Mesh ---------------------------------------------------------------------------------
 
 namespace {
@@ -119,7 +75,7 @@ void PushSquare(Mesh* mesh, Vec2 base, Vec2 size, Vec2 uv_base) {
       CreateVertex({base.x + size.x, base.y + size.y, 0}, uv_base + kUVOffset, colors::kWhite),
   };
 
-  Mesh::IndexType base_index = mesh->vertices_count;
+  Mesh::IndexType base_index = mesh->vertex_count;
   Mesh::IndexType indices[] = {
     0, 1, 2, 2, 1, 3,
     4, 5, 6, 6, 5, 7,
@@ -220,23 +176,12 @@ void CreateBackgroundMesh(Renderer* renderer, Display* display, Memory* memory, 
 
 namespace {
 
-void ShowBackgroundTiles(Memory* memory, Texture* tilemap) {
-  ImGui::Text("Background");
-
-  static bool show_indices_inline = false;
-
-  ImGui::Checkbox("Show indices inline", &show_indices_inline);
-
-  // Which background map we're reading from.
-  static int map_index = 0;
-  ImGui::RadioButton("Background Map 0", &map_index, 0); ImGui::SameLine();
-  ImGui::RadioButton("Background Map 1", &map_index, 1);
-
+void ShowTiles(Memory* memory, Texture* tilemap, Int2 size, int map_index, bool indices_inline) {
   // Create tiles.
   constexpr float kImageSize = 30;
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  for (int y = 0; y < 32; y++) {
-    for (int x = 0; x < 32; x++) {
+  for (int y = 0; y < size.y; y++) {
+    for (int x = 0; x < size.x; x++) {
       uint8_t* background_map = map_index == 0 ? memory->vram.tilemap0 :
                                                  memory->vram.tilemap1;
 
@@ -272,16 +217,57 @@ void ShowBackgroundTiles(Memory* memory, Texture* tilemap) {
         ImGui::EndTooltip();
       }
 
-      if (show_indices_inline) {
+      if (indices_inline) {
         auto text = StringPrintf("%03d", index);
         draw_list->AddText(ImVec2{pos.x, pos.y + kImageSize - 13}, IM_COL32_WHITE, text.c_str());
       }
     }
   }
-
-  ImGui::Dummy({33 * (kImageSize + 1), 33 * (kImageSize + 1)});
 }
 
+void ShowBackgroundTiles(Memory* memory, Texture* tilemap) {
+  ImGui::Text("Background");
+
+  static bool indices_inline = false;
+
+  ImGui::Checkbox("Show indices inline", &indices_inline);
+
+  static int map_index = 0;
+  static int initial_map_index = 0;
+  int actual_map_index = LCDC_BG_TILE_MAP_DISPLAY_SELECT(memory->mapped_io.lcdc) ? 1 : 0;
+  if (initial_map_index != actual_map_index) {
+    initial_map_index = actual_map_index;
+    map_index = initial_map_index;
+  }
+
+  // Which background map we're reading from.
+  ImGui::RadioButton("Background Map 0", &map_index, 0); ImGui::SameLine();
+  ImGui::RadioButton("Background Map 1", &map_index, 1);
+
+  ShowTiles(memory, tilemap, {32, 32}, map_index, indices_inline);
+}
+
+void ShowWindowTiles(Memory* memory, Texture* tilemap) {
+  ImGui::Text("Window");
+
+  static bool indices_inline = false;
+
+  ImGui::Checkbox("Show indices inline", &indices_inline);
+
+  static int map_index = 0;
+  static int initial_map_index = 0;
+  int actual_map_index = LCDC_BG_TILE_MAP_DISPLAY_SELECT(memory->mapped_io.lcdc) ? 1 : 0;
+  if (initial_map_index != actual_map_index) {
+    initial_map_index = actual_map_index;
+    map_index = initial_map_index;
+  }
+
+  // Which background map we're reading from.
+  ImGui::RadioButton("Background Map 0", &map_index, 0); ImGui::SameLine();
+  ImGui::RadioButton("Background Map 1", &map_index, 1);
+
+  ShowTiles(memory, tilemap, {20, 18}, map_index, indices_inline);
+}
 
 }  // namespace
 
@@ -303,10 +289,10 @@ void CreateDisplayImgui(Memory* memory, Texture* tilemap) {
       "[0, 256) tile index is uint8_t" : "[128, 384) tile index is int8_t");
 
   ImGui::RadioButton("BG Display", LCDC_BG_DISPLAY(lcdc)); ImGui::SameLine();
-  ImGui::Text("BG tilemap: %d", LCDC_BG_TILE_MAP_DISPLAY_SELECT(lcdc) ? 0 : 1);
+  ImGui::Text("BG tilemap: %d", LCDC_BG_TILE_MAP_DISPLAY_SELECT(lcdc) ? 1 : 0);
 
   ImGui::RadioButton("Window enable", LCDC_WINDOW_DISPLAY_ENABLE(lcdc)); ImGui::SameLine();
-  ImGui::Text("Window tilemap: %d", LCDC_WINDOW_TILE_MAP_DISPLAY_SELECT(lcdc) ? 0 : 1);
+  ImGui::Text("Window tilemap: %d", LCDC_WINDOW_TILE_MAP_DISPLAY_SELECT(lcdc) ? 1 : 0);
 
   ImGui::RadioButton("SpriteEnable", LCDC_OBJ_SPRITE_ENABLE(lcdc)); ImGui::SameLine();
   ImGui::Text("Sprite Size: %s", LCDC_OBJ_SPRITE_SIZE(lcdc) ? "8x8" : "8x16");
@@ -318,7 +304,7 @@ void CreateDisplayImgui(Memory* memory, Texture* tilemap) {
     }
 
     if (ImGui::BeginTabItem("Window")) {
-      ImGui::Text("TODO");
+      ShowWindowTiles(memory, tilemap);
       ImGui::EndTabItem();
     }
 

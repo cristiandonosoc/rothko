@@ -53,6 +53,7 @@ void main() {
 std::unique_ptr<Shader> CreateNormalShader(Renderer* renderer) {
   auto shader = std::make_unique<Shader>();
   shader->name = "normal-shader";
+  shader->vertex_type = VertexType::k3dUVColor;
 
   shader->vert_src = kNormalVertex;
   shader->frag_src = kNormalFrag;

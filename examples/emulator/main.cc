@@ -11,17 +11,12 @@
 #include "memory.h"
 #include "shader.h"
 #include "quad.h"
+#include "textures.h"
 
 using namespace rothko;
 using namespace rothko::imgui;
 
 namespace {
-
-int kTileSize = 8;
-Int2 kTileCount =  {16, 16 + 8};
-Int2 kTextureDim = kTileCount * kTileSize;
-
-Vec2 kUVOffset = {1.0f / 16.0f, 1.0f / (16.0f + 8.0f)};
 
 uint32_t VecToColor(ImVec4 color) {
   // RGBA
@@ -29,52 +24,6 @@ uint32_t VecToColor(ImVec4 color) {
          ((uint8_t)(color.y * 255.0f) << 16) |
          ((uint8_t)(color.z * 255.0f) << 8) |
          ((uint8_t)(color.w * 255.0f));
-}
-
-Color TileColor(Int2 coord) {
-  Color color{};
-  if (IS_EVEN(coord.x + coord.y)) {
-    return colors::kRed;
-  } else {
-    return colors::kGreen;
-  }
-}
-
-Int2 IndexToCoord(int index) {
-  return {index % kTileCount.x, (index / kTileCount.y)};
-}
-
-int CoordToIndex(Int2 coord) {
-  return coord.y * kTileCount.x + coord.x;
-}
-
-void PaintTile(Color* data, Int2 coord, Color color) {
-  int cx = coord.x * kTileSize;
-  int cy = coord.y * kTileSize;
-
-  for (int y = cy; y < cy + kTileSize; y++) {
-    for (int x = cx; x < cx + kTileSize; x++) {
-      data[y * kTextureDim.width + x] = color;
-    }
-  }
-}
-
-void PaintTile(Color* data, int index, Color color) {
-  PaintTile(data, IndexToCoord(index), color);
-}
-
-void PaintTile(Color* data, Int2 coord, const Color* tile_data) {
-  Color* tile_base = data + (coord.y * kTileSize * kTextureDim.x  + coord.x * kTileSize);
-  for (int y = 0; y < 8; y++) {
-    Color* row_base = tile_base + (y * kTextureDim.x);
-    for (int x = 0; x < 8; x++) {
-      row_base[x] = *tile_data++;
-    }
-  }
-}
-
-void PaintTile(Color* data, int index, const Color* tile_data) {
-  PaintTile(data, IndexToCoord(index), tile_data);
 }
 
 }  // namespace
@@ -122,30 +71,14 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  // Create the background texture.
-  Texture background_texture;
-  background_texture.name = "background texture";
-  background_texture.type = TextureType::kRGBA;
-  background_texture.dims = kTextureDim;
-
-  size_t size = sizeof(Color) * kTextureDim.width * kTextureDim.height;
-  background_texture.data = (uint8_t*)malloc(size);
-  background_texture.free_function = free;
-
-  StageTextureConfig config = {};
-  config.generate_mipmaps = false;
-  config.min_filter = StageTextureConfig::Filter::kNearest;
-  config.max_filter = StageTextureConfig::Filter::kNearest;
-  if (!RendererStageTexture(game.renderer.get(), &background_texture, config))
+  auto tile_texture = rothko::emulator::CreateTileTexture(&game);
+  if (!tile_texture) {
+    ERROR(App, "Could not create tile texture.");
     return 1;
+  }
 
   rothko::emulator::Memory memory = {};
 
-  // Fill in the texture.
-  Color tile_color[64];
-  Color* base_color = (Color*)background_texture.data.value;
-
-  /* int prev_index = -1; */
   bool running = true;
   while (running) {
     auto events = Update(&game);
@@ -179,24 +112,10 @@ int main(int argc, char* argv[]) {
 
           LOG(App, "0x%x", *(uint32_t*)(memory.rom_bank0 + 0x104));
 
-
-          for (int y = 0; y < 16 + 8; y++) {
-            for (int x = 0; x < 16; x++) {
-              rothko::emulator::Tile* tile = memory.vram.tiles + (y * 16) + x;
-              rothko::emulator::TileToTexture(memory.mapped_io.bgp, tile, tile_color);
-              PaintTile(base_color, {x, y}, tile_color);
-            }
-          }
-
-          LOG(App, "Updating texture");
-          RendererSubTexture(game.renderer.get(), &background_texture,
-                             {0, 0}, kTextureDim,
-                             background_texture.data.value);
-
-          LOG(App, "Updating mesh");
+          UpdateTileTexture(&game, &memory, tile_texture.get());
 
           // Generate the background mesh.
-          CreateBackgroundMesh(game.renderer.get(), &display, &memory, &background_texture,
+          CreateBackgroundMesh(game.renderer.get(), &display, &memory, tile_texture.get(),
                                normal_shader.get(), (uint8_t*)&normal_ubo);
         }
 
@@ -208,7 +127,7 @@ int main(int argc, char* argv[]) {
 
     ImGui::ShowDemoWindow();
 
-    CreateDisplayImgui(&memory, &background_texture);
+    CreateDisplayImgui(&memory, tile_texture.get());
 
 
     // window.
@@ -222,8 +141,7 @@ int main(int argc, char* argv[]) {
 
       ImGui::Separator();
       ImGui::Text("Tile texture");
-      ImGui::Image(&background_texture, {200, 200 * 1.5f});
-
+      ImGui::Image(tile_texture.get(), {200, 200 * 1.5f});
 
       ImGui::End();
     }

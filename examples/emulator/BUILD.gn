@@ -11,6 +11,8 @@ executable("emulator") {
     "quad.h",
     "shader.cc",
     "shader.h",
+    "textures.cc",
+    "textures.h",
   ]
 
   deps = [

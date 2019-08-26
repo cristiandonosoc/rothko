@@ -14,14 +14,14 @@ bool Init(Renderer* renderer, QuadManager* quads, const QuadManagerConfig& confi
 
   // Each quad entry is reflected into 4 vertices.
   quads->mesh.vertices = std::vector<uint8_t>(4 * sizeof(Vertex3dUVColor) * config.capacity);
-  quads->mesh.vertices_count = 4 * config.capacity;
+  quads->mesh.vertex_count = 4 * config.capacity;
 
   LOG(App, "Mesh size: %zu", quads->mesh.vertices.size());
 
 
   // Each quad is 6 vertices.
   quads->mesh.indices = std::vector<uint8_t>(6 * sizeof(Mesh::IndexType) * config.capacity);
-  quads->mesh.indices_count = 6 * config.capacity;
+  quads->mesh.index_count = 6 * config.capacity;
 
   if (!RendererStageMesh(renderer, &quads->mesh))
     return false;
@@ -84,7 +84,7 @@ void Push(QuadManager* quads, const QuadEntry& entry) {
       CreateVertex(entry.to_pos, entry.to_uv, entry.color),
   };
 
-  Mesh::IndexType base = quads->mesh.vertices_count;
+  Mesh::IndexType base = quads->mesh.vertex_count;
   Mesh::IndexType indices[] = {
     base + 0, base + 1, base + 2, base + 2, base + 1, base + 3,
   };
@@ -98,6 +98,7 @@ void Push(QuadManager* quads, const QuadEntry& entry) {
     RenderMesh render_mesh = {};
     render_mesh.mesh = &quads->mesh;
     render_mesh.shader = entry.shader;
+    render_mesh.primitive_type = PrimitiveType::kTriangles;
     render_mesh.textures.push_back(entry.texture);
     render_mesh.indices_offset = quads->index_offset;
     render_mesh.indices_size = 6;

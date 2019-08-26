@@ -30,13 +30,6 @@ namespace emulator {
 // 0xff80-0xfffe    High RAM (HRAM)
 // 0xffff           Interrupt Enable Register
 
-// A tile is a 8x8 pixels. Each pixel is
-constexpr int kBitsPerPixel = 2;
-constexpr int kPixelsPerTileSide = 8;
-struct Tile {
-  uint8_t data[16];
-};
-
 // OAM ---------------------------------------------------------------------------------------------
 
 // OAM is the Sprite Attribute entry, that describes a single sprite being drawn.
@@ -72,6 +65,13 @@ struct OAMEntry {
 
 // Memory ------------------------------------------------------------------------------------------
 
+// A tile is a 8x8 pixels.
+constexpr int kBitsPerPixel = 2;
+constexpr int kPixelsPerTileSide = 8;
+struct Tile {
+  uint8_t data[16];
+};
+
 // VRAM = Video RAM.
 struct VRAM {
   // 0x8000-0x8fff  Tilemap0 - Overlaps with tilemap1. (0-255)
@@ -82,9 +82,9 @@ struct VRAM {
   // These tiles are shared by both background and window. Which one it is and how the map to the
   // actual tiles stored in |tiles| is determined by the |lcdc| register in |MappedIO|.
 
-  // 0x9800-0x9bff  Tilemap 0.
+  // 0x9800-0x9bff Tilemap 0.
   uint8_t tilemap0[32 * 32];
-  // 0x9c00-0x9fff  Tilemap 1.
+  // 0x9c00-0x9fff Tilemap 1.
   uint8_t tilemap1[32 * 32];
 };
 
@@ -168,7 +168,7 @@ struct MappedIO {
 // What tilemap to use for the window. 0 = |tilemap0|, 1 = |tilemap1|.
 #define LCDC_WINDOW_TILE_MAP_DISPLAY_SELECT(lcdc)       (lcdc & 0b01000000)
 // Whether the display is enabled or not.
-#define LCDC_DISPLAY_ENABLE(lcdc)                       (lcdc & 0b10000000)
+#define LCDC_DISPLAY_ENABLE(lcdc)                   (lcdc & 0b10000000)
 
     uint8_t stat;     // 0xff41: LCD Status. TODO(Cristian): Do access macros.
     uint8_t scy;      // 0xff42: BG Scroll Y. Window automatically wraps borders.
