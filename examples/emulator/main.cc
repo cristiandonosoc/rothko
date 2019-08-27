@@ -71,9 +71,9 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  auto tile_texture = rothko::emulator::CreateTileTexture(&game);
-  if (!tile_texture) {
-    ERROR(App, "Could not create tile texture.");
+  auto textures = rothko::emulator::CreateTextures(&game);
+  if (!textures) {
+    ERROR(App, "Could not create textures.");
     return 1;
   }
 
@@ -112,10 +112,10 @@ int main(int argc, char* argv[]) {
 
           LOG(App, "0x%x", *(uint32_t*)(memory.rom_bank0 + 0x104));
 
-          UpdateTileTexture(&game, &memory, tile_texture.get());
+          UpdateTileTexture(&game, &memory, &textures->tiles);
 
           // Generate the background mesh.
-          CreateBackgroundMesh(game.renderer.get(), &display, &memory, tile_texture.get(),
+          CreateBackgroundMesh(game.renderer.get(), &display, &memory, &textures->tiles,
                                normal_shader.get(), (uint8_t*)&normal_ubo);
         }
 
@@ -125,10 +125,9 @@ int main(int argc, char* argv[]) {
       ImGui::EndMainMenuBar();
     }
 
-    ImGui::ShowDemoWindow();
+    /* ImGui::ShowDemoWindow(); */
 
-    CreateDisplayImgui(&memory, tile_texture.get());
-
+    CreateDisplayImgui(&memory, textures.get());
 
     // window.
     {
@@ -141,7 +140,7 @@ int main(int argc, char* argv[]) {
 
       ImGui::Separator();
       ImGui::Text("Tile texture");
-      ImGui::Image(tile_texture.get(), {200, 200 * 1.5f});
+      ImGui::Image(&textures->tiles, {200, 200 * 1.5f});
 
       ImGui::End();
     }

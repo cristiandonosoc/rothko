@@ -8,6 +8,8 @@
 #include <rothko/utils/defer.h>
 #include <rothko/utils/strings.h>
 
+#include "textures.h"
+
 namespace rothko {
 namespace emulator {
 
@@ -19,8 +21,6 @@ int kTileSize = 8;
 Int2 kTileCount =  {16, 16 + 8};
 Int2 kTextureDim = kTileCount * kTileSize;
 Vec2 kUVOffset = {1.0f / 16.0f, 1.0f / (16.0f + 8.0f)};
-
-
 
 }  // namespace
 
@@ -223,9 +223,11 @@ void ShowTiles(Memory* memory, Texture* tilemap, Int2 size, int map_index, bool 
       }
     }
   }
+
+  ImGui::Dummy({size.x * (kImageSize + 1), size.y * (kImageSize + 1)});
 }
 
-void ShowBackgroundTiles(Memory* memory, Texture* tilemap) {
+void ShowBackgroundTiles(Memory* memory, Textures* textures) {
   ImGui::Text("Background");
 
   static bool indices_inline = false;
@@ -244,14 +246,13 @@ void ShowBackgroundTiles(Memory* memory, Texture* tilemap) {
   ImGui::RadioButton("Background Map 0", &map_index, 0); ImGui::SameLine();
   ImGui::RadioButton("Background Map 1", &map_index, 1);
 
-  ShowTiles(memory, tilemap, {32, 32}, map_index, indices_inline);
+  ShowTiles(memory, &textures->tiles, {32, 32}, map_index, indices_inline);
 }
 
-void ShowWindowTiles(Memory* memory, Texture* tilemap) {
+void ShowWindowTiles(Memory* memory, Textures* textures) {
   ImGui::Text("Window");
 
   static bool indices_inline = false;
-
   ImGui::Checkbox("Show indices inline", &indices_inline);
 
   static int map_index = 0;
@@ -266,12 +267,61 @@ void ShowWindowTiles(Memory* memory, Texture* tilemap) {
   ImGui::RadioButton("Background Map 0", &map_index, 0); ImGui::SameLine();
   ImGui::RadioButton("Background Map 1", &map_index, 1);
 
-  ShowTiles(memory, tilemap, {20, 18}, map_index, indices_inline);
+  ShowTiles(memory, &textures->tiles, {20, 18}, map_index, indices_inline);
+}
+
+void ShowSpriteTiles(Memory* memory, Textures* textures) {
+  ImGui::Text("Sprites");
+
+  static bool indices_inline = false;
+  ImGui::Checkbox("Show indices inline", &indices_inline);
+
+  constexpr float kImageSize = 30;
+  ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+  Int2 size = {10, 4};
+  for (int y = 0; y < size.y; y++) {
+    for (int x = 0; x < size.x; x++) {
+      OAMEntry& entry = memory->oam_table[x + y * size.x];
+
+      int index = entry.tile_number;
+      Vec2 uv_base = TileIndexToUV(index, 0);
+      Vec2 uv_end = uv_base + kUVOffset;
+
+      Vec2 pos = ImGui::GetCursorScreenPos();
+      pos.x += x * (kImageSize + 1);
+      pos.y += y * (kImageSize + 1);
+
+      Vec2 end = pos + Vec2{kImageSize, kImageSize};
+
+      draw_list->AddImageQuad(&textures->tiles,
+                              pos, {pos.x, end.y}, end, {end.x, pos.y},
+                              uv_base, {uv_base.x, uv_end.y}, uv_end, {uv_end.x, uv_base.y});
+    if (ImGui::IsMouseHoveringRect(pos, end)) {
+        ImGui::BeginTooltip();
+
+        ImGui::Text("Tile (%02d, %02d) -> %03d", x, y , index);
+        ImGui::Image(&textures->tiles, {100, 100}, ToImVec(uv_base), ToImVec(uv_end));
+
+        ImGui::EndTooltip();
+      }
+
+      if (indices_inline) {
+        auto text = StringPrintf("%03d", index);
+        draw_list->AddText(ImVec2{pos.x, pos.y + kImageSize - 13}, IM_COL32_WHITE, text.c_str());
+      }
+    }
+  }
+
+
+  ImGui::Dummy({size.x * (kImageSize + 1), size.y * (kImageSize + 1)});
+  /* ImGui::Separator(); */
+  /* ImGui::Image(transparent, {100, 100}, {0, 0}, {5, 5}); */
 }
 
 }  // namespace
 
-void CreateDisplayImgui(Memory* memory, Texture* tilemap) {
+void CreateDisplayImgui(Memory* memory, Textures* textures) {
   ImGui::Begin("Display", nullptr, ImGuiWindowFlags_HorizontalScrollbar);
   DEFER([]() { ImGui::End(); });
 
@@ -299,17 +349,17 @@ void CreateDisplayImgui(Memory* memory, Texture* tilemap) {
 
   if (ImGui::BeginTabBar("GB Tiles")) {
     if (ImGui::BeginTabItem("Background")) {
-      ShowBackgroundTiles(memory, tilemap);
+      ShowBackgroundTiles(memory, textures);
       ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Window")) {
-      ShowWindowTiles(memory, tilemap);
+      ShowWindowTiles(memory, textures);
       ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Sprites")) {
-      ImGui::Text("TODO");
+      ShowSpriteTiles(memory, textures);
       ImGui::EndTabItem();
     }
 

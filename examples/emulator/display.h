@@ -3,11 +3,12 @@
 
 #pragma once
 
-#include <rothko/logging/logging.h>
 #include <rothko/game.h>
+#include <rothko/logging/logging.h>
 
 #include "memory.h"
 #include "quad.h"
+#include "textures.h"
 
 namespace rothko {
 namespace emulator {
@@ -29,12 +30,9 @@ std::unique_ptr<Mesh> CreateBackgroundMesh(Game* game);
 void CreateBackgroundMesh(Renderer*, Display*, Memory*, Texture*, Shader*, uint8_t* camera_ubo);
 
 bool UpdateBackgroundMesh(Game* game, Memory* memory, Mesh* mesh);
-
-
-void CreateDisplayImgui(Memory* memory, Texture* tilemap);
-
-
 void UpdateBackgroundTexture(Memory* memory, Texture* background_texture);
+
+void CreateDisplayImgui(Memory* memory, Textures* textures);
 
 }  // namespace emulator
 }  // namespace rothko

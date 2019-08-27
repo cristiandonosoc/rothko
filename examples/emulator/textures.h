@@ -29,7 +29,17 @@ constexpr float kUVOffsetY = 1.0f / (float)kTileCountY;
 
 // Textures ----------------------------------------------------------------------------------------
 
-std::unique_ptr<Texture> CreateTileTexture(Game*);
+struct Textures {
+  Texture tiles;
+  Texture background;
+  Texture window;
+  Texture sprites;
+};
+
+std::unique_ptr<Textures> CreateTextures(Game*);
+
+/* std::unique_ptr<Texture> CreateTileTexture(Game*); */
+/* std::unique_ptr<Texture> CreateTransparentTexture(Game*); */
 
 void UpdateTileTexture(Game*, Memory*, Texture*);
 
