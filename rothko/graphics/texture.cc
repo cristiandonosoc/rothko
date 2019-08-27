@@ -39,7 +39,7 @@ bool STBLoadTexture(const std::string& path, TextureType texture_type, Texture* 
 
   Texture tmp;
   int channels;
-  tmp.data = stbi_load(path.c_str(), &tmp.dims.x, &tmp.dims.y, &channels,
+  tmp.data = stbi_load(path.c_str(), &tmp.size.x, &tmp.size.y, &channels,
                        TextureTypeToChannels(texture_type));
   if (!tmp.data.value) {
     ERROR(Graphics, "Could not load texture in %s: %s", path.c_str(), stbi_failure_reason());

@@ -21,11 +21,21 @@ constexpr int kTileSizeY = 8;
 constexpr int kTileCountX = 16;
 constexpr int kTileCountY = 16 + 8;
 
-constexpr int kTextureDimX = kTileCountX * kTileSizeX;
-constexpr int kTextureDimY = kTileCountY * kTileSizeY;
+// Tile Texture
+constexpr int kTilesSizeX = kTileCountX * kTileSizeX;
+constexpr int kTilesSizeY = kTileCountY * kTileSizeY;
+constexpr float kTilesUVOffsetX = 1.0f / (float)kTileCountX;
+constexpr float kTilesUVOffsetY = 1.0f / (float)kTileCountY;
 
-constexpr float kUVOffsetX = 1.0f / (float)kTileCountX;
-constexpr float kUVOffsetY = 1.0f / (float)kTileCountY;
+// We render the whole background and decide which part to show.
+constexpr int kBGSizeX = 32 * kTileSizeX;
+constexpr int kBGSizeY = 32 * kTileSizeY;
+
+constexpr int kWindowSizeX = 20 * kTileSizeX;
+constexpr int kWindowSizeY = 18 * kTileSizeY;
+
+constexpr int kSpritesSizeX = 20 * kTileSizeX;
+constexpr int kSpritesSizeY = 18 * kTileSizeY;
 
 // Textures ----------------------------------------------------------------------------------------
 
@@ -38,10 +48,11 @@ struct Textures {
 
 std::unique_ptr<Textures> CreateTextures(Game*);
 
-/* std::unique_ptr<Texture> CreateTileTexture(Game*); */
-/* std::unique_ptr<Texture> CreateTransparentTexture(Game*); */
-
 void UpdateTileTexture(Game*, Memory*, Texture*);
+
+// Will override the contents of the texture with a "transparent" pattern.
+// This WILL NOT re-upload to the renderer.
+void FillInTransparent(Texture*);
 
 }  // namespace emulator
 }  // namespace rothko

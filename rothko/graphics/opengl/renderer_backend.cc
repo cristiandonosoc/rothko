@@ -200,8 +200,8 @@ void RendererUnstageTexture(Renderer*, Texture* texture) {
   OpenGLUnstageTexture(gBackend.get(), texture);
 }
 
-void RendererSubTexture(Renderer*, Texture* texture, Int2 offset, Int2 range, void* data) {
-  OpenGLSubTexture(gBackend.get(), texture, offset, range, data);
+void RendererSubTexture(Renderer*, Texture* texture, void* data, Int2 offset, Int2 range) {
+  OpenGLSubTexture(gBackend.get(), texture, data, offset, range);
 }
 
 }  // namespace rothko

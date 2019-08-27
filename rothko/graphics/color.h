@@ -35,6 +35,7 @@ extern Color kBlue;
 extern Color kGreen;
 extern Color kRed;
 extern Color kWhite;
+extern Color kLightGray;
 
 }  // namespace colors
 

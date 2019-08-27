@@ -86,7 +86,10 @@ struct StageTextureConfig {
 };
 bool RendererStageTexture(Renderer*, Texture*, const StageTextureConfig&);
 void RendererUnstageTexture(Renderer*, Texture*);
-void RendererSubTexture(Renderer*, Texture*, Int2 offset, Int2 range, void* data);
+
+// |data| being nullptr means upload the data that's currently in the |texture.data.value|.
+// |offset| and |range| being zero means upload the whole texture.
+void RendererSubTexture(Renderer*, Texture*, void* data = nullptr, Int2 offset = {}, Int2 range = {});
 
 void RendererStartFrame(Renderer*);
 void RendererExecuteCommands(Renderer*, const PerFrameVector<RenderCommand>&);

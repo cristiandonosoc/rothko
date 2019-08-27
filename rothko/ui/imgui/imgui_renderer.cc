@@ -69,7 +69,7 @@ bool CreateFontTexture(Renderer* renderer, ImguiRenderer* imgui) {
 
   Texture texture;
   texture.name = "Imgui Font";
-  texture.dims = {width, height};
+  texture.size = {width, height};
   texture.data = pixels;
 
   StageTextureConfig config = {};   // Defaults are sensible.

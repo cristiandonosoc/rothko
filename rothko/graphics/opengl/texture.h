@@ -15,7 +15,7 @@ struct OpenGLRendererBackend;
 
 bool OpenGLStageTexture(OpenGLRendererBackend*, Texture*, const StageTextureConfig&);
 void OpenGLUnstageTexture(OpenGLRendererBackend*, Texture*);
-void OpenGLSubTexture(OpenGLRendererBackend*, Texture*, Int2 offset, Int2 range, void* data);
+void OpenGLSubTexture(OpenGLRendererBackend*, Texture*, void* data, Int2 offset, Int2 range);
 
 }  // namespace opengl
 }  // namespace rothko

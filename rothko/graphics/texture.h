@@ -32,7 +32,7 @@ struct Texture {
   TextureType type = TextureType::kLast;
 
   std::string name;
-  Int2 dims;
+  Int2 size;
 
   FreeFunction free_function = nullptr;
   ClearOnMove<uint8_t*> data = nullptr;

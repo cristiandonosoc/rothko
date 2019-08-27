@@ -30,7 +30,7 @@ bool InitDisplay(Game* game, Display* out) {
   // Init the background texture.
   out->background.name = "background-texture";
   out->background.type = TextureType::kRGBA;
-  out->background.dims = kTextureDim;
+  out->background.size = kTextureDim;
 
   size_t size = sizeof(Color) * kTextureDim.width * kTextureDim.height;
   out->background.data = (uint8_t*)malloc(size);
@@ -315,8 +315,8 @@ void ShowSpriteTiles(Memory* memory, Textures* textures) {
 
 
   ImGui::Dummy({size.x * (kImageSize + 1), size.y * (kImageSize + 1)});
-  /* ImGui::Separator(); */
-  /* ImGui::Image(transparent, {100, 100}, {0, 0}, {5, 5}); */
+  ImGui::Separator();
+  ImGui::Image(&textures->sprites, {500, 500}, {0, 0}, {1, 1});
 }
 
 }  // namespace

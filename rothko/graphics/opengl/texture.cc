@@ -86,8 +86,8 @@ bool OpenGLStageTexture(OpenGLRendererBackend* opengl, Texture* texture,
   glTexImage2D(GL_TEXTURE_2D,         // target
                0,                     // level
                GL_RGBA8,              // internalformat
-               texture->dims.width,   // width,
-               texture->dims.height,  // height
+               texture->size.width,   // width,
+               texture->size.height,  // height
                0,                     // border
                GL_RGBA,               // format
                GL_UNSIGNED_BYTE,      // type,
@@ -119,10 +119,16 @@ void OpenGLUnstageTexture(OpenGLRendererBackend* opengl, Texture* texture) {
 
 // Sub Tex -----------------------------------------------------------------------------------------
 
-void OpenGLSubTexture(OpenGLRendererBackend* opengl, Texture* texture, Int2 offset, Int2 range,
-                              void* data) {
-  ASSERT(offset.x + range.x <= texture->dims.x);
-  ASSERT(offset.y + range.y >= 0 && range.y <= texture->dims.y);
+void OpenGLSubTexture(OpenGLRendererBackend* opengl, Texture* texture, void* data,
+                      Int2 offset, Int2 range) {
+  ASSERT(offset.x + range.x <= texture->size.x);
+  ASSERT(offset.y + range.y >= 0 && range.y <= texture->size.y);
+
+  if (IsZero(offset) && IsZero(range))
+    range = texture->size;
+
+  if (data == nullptr)
+    data = texture->data.value;
 
   auto it = opengl->loaded_textures.find(texture->uuid.value);
   ASSERT(it != opengl->loaded_textures.end());
@@ -138,7 +144,6 @@ void OpenGLSubTexture(OpenGLRendererBackend* opengl, Texture* texture, Int2 offs
                   GL_UNSIGNED_BYTE,
                   data);
 }
-
 
 }  // namespace opengl
 }  // namespace rothko

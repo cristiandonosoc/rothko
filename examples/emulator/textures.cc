@@ -14,64 +14,57 @@ namespace emulator {
 
 namespace {
 
-bool CreateTileTexture(Game* game, Texture* texture) {
-  texture->name = "background texture";
-  texture->type = TextureType::kRGBA;
-  texture->dims = {kTextureDimX, kTextureDimY};
+bool CreateTexture(Game* game, std::string name, Vec2 size, Texture* out) {
+  out->name = std::move(name);
+  out->type = TextureType::kRGBA;
+  out->size = {(int)size.x, (int)size.y};
 
-  size_t size = sizeof(Color) * kTextureDimX * kTextureDimY;
-  texture->data = (uint8_t*)malloc(size);
-  texture->free_function = free;
+  size_t alloc_size = sizeof(Color) * size.x * size.y;
+  out->data = (uint8_t*)malloc(alloc_size);
+  out->free_function = free;
 
   StageTextureConfig config = {};
   config.generate_mipmaps = false;
   config.min_filter = StageTextureConfig::Filter::kNearest;
   config.max_filter = StageTextureConfig::Filter::kNearest;
-  if (!RendererStageTexture(game->renderer.get(), texture, config))
+  if (!RendererStageTexture(game->renderer.get(), out, config))
     return false;
   return true;
-}
-
-std::unique_ptr<Texture> CreateTransparentTexture(Game* game) {
-  auto texture = std::make_unique<Texture>();
-
-  texture->name = "transparent-texture";
-  texture->type = TextureType::kRGBA;
-  texture->dims = {8, 8};
-
-  size_t size = sizeof(Color) * texture->dims.x * texture->dims.y;
-  texture->data = (uint8_t*)malloc(size);
-  texture->free_function = free;
-
-  // Fill up texture.
-  constexpr int kSquareSize = 4;
-  Color* base = (Color*)texture->data.value;
-  for (int y = 0; y < texture->dims.y; y++) {
-    int kTileY = y / kSquareSize;
-    for (int x = 0; x < texture->dims.x; x++) {
-      int kTileX = x / kSquareSize;
-      *base++ = ((kTileX + kTileY) % 2 == 0) ? colors::kRed : colors::kBlue;
-    }
-  }
-
-  StageTextureConfig config = {};
-  config.generate_mipmaps = false;
-  config.min_filter = StageTextureConfig::Filter::kNearest;
-  config.max_filter = StageTextureConfig::Filter::kNearest;
-  config.wrap_u = StageTextureConfig::Wrap::kRepeat;
-  config.wrap_v = StageTextureConfig::Wrap::kRepeat;
-  if (!RendererStageTexture(game->renderer.get(), texture.get(), config))
-    return nullptr;
-  return texture;
 }
 
 }  // namespace
 
 std::unique_ptr<Textures> CreateTextures(Game* game) {
   auto textures = std::make_unique<Textures>();
-  if (!CreateTileTexture(game, &textures->tiles))
+  if (!CreateTexture(game, "tiles-texture", {kTilesSizeX, kTilesSizeY}, &textures->tiles) ||
+      !CreateTexture(game, "bg-texture", {kBGSizeX, kBGSizeY}, &textures->background) ||
+      !CreateTexture(game, "window-texture", {kWindowSizeX, kWindowSizeY}, &textures->window) ||
+      !CreateTexture(game, "sprites-texture", {kSpritesSizeX, kSpritesSizeY}, &textures->sprites)) {
     return nullptr;
+  }
+
+  FillInTransparent(&textures->sprites);
+  RendererSubTexture(game->renderer.get(), &textures->sprites);
+
   return textures;
+}
+
+// FillInTransparent -------------------------------------------------------------------------------
+
+void FillInTransparent(Texture* texture) {
+  constexpr int kSquareSize = 4;
+
+  Color* color = (Color*)texture->data.value;
+  Color* end = color + texture->size.x * texture->size.y;
+  for (int y = 0; y < texture->size.height; y++) {
+    int tile_y = y / kSquareSize;
+    for (int x = 0; x < texture->size.width; x++) {
+      int tile_x = x / kSquareSize;
+      *color++ = ((tile_x + tile_y) % 2 == 0) ? colors::kWhite : colors::kLightGray;
+    }
+  }
+
+  ASSERT(color == end);
 }
 
 // UpdateTileTexture -------------------------------------------------------------------------------
@@ -92,7 +85,7 @@ void PaintTile(Color* data, Int2 coord, Color color) {
 
   for (int y = cy; y < cy + kTileSizeY; y++) {
     for (int x = cx; x < cx + kTileSizeX; x++) {
-      data[y * kTextureDimX+ x] = color;
+      data[y * kTilesSizeX+ x] = color;
     }
   }
 }
@@ -102,9 +95,9 @@ void PaintTile(Color* data, int index, Color color) {
 }
 
 void PaintTile(Color* data, Int2 coord, const Color* tile_data) {
-  Color* tile_base = data + (coord.y * kTileSizeX * kTextureDimX  + coord.x * kTileSizeX);
+  Color* tile_base = data + (coord.y * kTileSizeX * kTilesSizeX  + coord.x * kTileSizeX);
   for (int y = 0; y < 8; y++) {
-    Color* row_base = tile_base + (y * kTextureDimX);
+    Color* row_base = tile_base + (y * kTilesSizeX);
     for (int x = 0; x < 8; x++) {
       row_base[x] = *tile_data++;
     }
@@ -188,8 +181,7 @@ void UpdateTileTexture(Game* game, Memory* memory, Texture* tile_texture) {
   }
 
   LOG(App, "Updating texture");
-  RendererSubTexture(game->renderer.get(), tile_texture, {0, 0}, {kTextureDimX, kTextureDimY},
-                     tile_texture->data.value);
+  RendererSubTexture(game->renderer.get(), tile_texture);
 }
 
 }  // namespace emulator
