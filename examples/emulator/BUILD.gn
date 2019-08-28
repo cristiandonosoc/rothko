@@ -6,6 +6,7 @@ executable("emulator") {
     "display.cc",
     "display.h",
     "main.cc",
+    "memory.cc",
     "memory.h",
     "quad.cc",
     "quad.h",

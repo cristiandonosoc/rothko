@@ -114,6 +114,9 @@ int main(int argc, char* argv[]) {
 
           UpdateTileTexture(&game, &memory, &textures->tiles);
 
+          UpdateSpritesDebugTexture(&memory, &textures->sprites_debug);
+          RendererSubTexture(game.renderer.get(), &textures->sprites_debug);
+
           // Generate the background mesh.
           CreateBackgroundMesh(game.renderer.get(), &display, &memory, &textures->tiles,
                                normal_shader.get(), (uint8_t*)&normal_ubo);

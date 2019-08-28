@@ -316,7 +316,7 @@ void ShowSpriteTiles(Memory* memory, Textures* textures) {
 
   ImGui::Dummy({size.x * (kImageSize + 1), size.y * (kImageSize + 1)});
   ImGui::Separator();
-  ImGui::Image(&textures->sprites, {500, 500}, {0, 0}, {1, 1});
+  ImGui::Image(&textures->sprites_debug, {500, 500}, {0, 0}, {1, 1});
 }
 
 }  // namespace

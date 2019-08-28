@@ -44,6 +44,7 @@ struct Textures {
   Texture background;
   Texture window;
   Texture sprites;
+  Texture sprites_debug;
 };
 
 std::unique_ptr<Textures> CreateTextures(Game*);
@@ -53,6 +54,9 @@ void UpdateTileTexture(Game*, Memory*, Texture*);
 // Will override the contents of the texture with a "transparent" pattern.
 // This WILL NOT re-upload to the renderer.
 void FillInTransparent(Texture*);
+
+void UpdateSpritesDebugTexture(Memory*, Texture*);
+void UpdateSpritesTexture(Texture*);
 
 }  // namespace emulator
 }  // namespace rothko

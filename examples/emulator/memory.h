@@ -11,6 +11,8 @@
 namespace rothko {
 namespace emulator {
 
+struct Memory;
+
 // Memory layout for the gameboy:
 //
 // 0x0000-0x3fff    16KB ROM Bank 00     (in cartridge, fixed at bank 00)
@@ -29,39 +31,6 @@ namespace emulator {
 // 0xff00-0xff7f    I/O Ports
 // 0xff80-0xfffe    High RAM (HRAM)
 // 0xffff           Interrupt Enable Register
-
-// OAM ---------------------------------------------------------------------------------------------
-
-// OAM is the Sprite Attribute entry, that describes a single sprite being drawn.
-struct OAMEntry {
-  // Vertical position on the screen (minus 16).
-  // This means that y = 0 or y >= 160 hides the sprite.
-  uint8_t y;
-
-  // Horizontal position on the screen (minus 8).
-  // This means that x = 0 or x >= 168 hides the sprite.
-  uint8_t x;
-
-  // Unsigned index into tilemap0.
-  uint8_t tile_number;
-
-  // Attributes/Flags. Use the getter macros below.
-  //  Bit2-0 Palette number  **CGB Mode Only**     (OBP0-7)
-  //  Bit3   Tile VRAM-Bank  **CGB Mode Only**     (0=Bank 0, 1=Bank 1)
-  //  Bit4   Palette number  **Non CGB Mode Only** (0=OBP0, 1=OBP1)
-  //  Bit5   X flip          (0=Normal, 1=Horizontally mirrored)
-  //  Bit6   Y flip          (0=Normal, 1=Vertically mirrored)
-  //  Bit7   OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
-  //    (Used for both BG and Window. BG color 0 is always behind OBJ)
-  uint8_t flags;
-};
-
-#define OAM_PALLETE_NUMBER_GBC(flags) (flags & 0b00000111)
-#define OAM_TILE_VRAM_BANK(flags)     (flags & 0b00001000)
-#define OAM_PALLETE_NUMBER(flags)     (flags & 0b00010000)
-#define OAM_X_FLIP(flags)             (flags & 0b00100000)
-#define OAM_Y_FLIP(flags)             (flags & 0b01000000)
-#define OAM_OBJ_TO_BG_PRIORITY(flags) (flags & 0b10000000)
 
 // Memory ------------------------------------------------------------------------------------------
 
@@ -152,23 +121,30 @@ struct MappedIO {
     uint8_t lcdc;     // 0xff40: LCD Control.
 // Whether to display the background. If 0, the background is white.
 #define LCDC_BG_DISPLAY(lcdc)                           (lcdc & 0b00000001)
+
 // Whether to show OAM sprites.
 #define LCDC_OBJ_SPRITE_ENABLE(lcdc)                    (lcdc & 0b00000010)
+
 // Size of sprites. 0 = 8x8 pixels, 1 = 8x16 pixels.
 #define LCDC_OBJ_SPRITE_SIZE(lcdc)                      (lcdc & 0b00000100)
+
 // What tilemap to use for background. 0 = |tilemap0|, 1 = |tilemap1|.
 #define LCDC_BG_TILE_MAP_DISPLAY_SELECT(lcdc)           (lcdc & 0b00001000)
+
 // What tile mapping the tilemaps point to within |tiles|.
 // 0 = Tiles [0, 256). The tilemap value is interpret as uint8_t [0, 256).
 // 1 = Tiles [128, 384). The tilemap value is interpreted as int8_t [-128, 128), and are an offset
 //     from tile 256.
 #define LCDC_BG_WINDOW_TILE_DATA_SELECT(lcdc)           (lcdc & 0b00010000)
+
 // Whether to show the window display.
 #define LCDC_WINDOW_DISPLAY_ENABLE(lcdc)                (lcdc & 0b00100000)
+
 // What tilemap to use for the window. 0 = |tilemap0|, 1 = |tilemap1|.
 #define LCDC_WINDOW_TILE_MAP_DISPLAY_SELECT(lcdc)       (lcdc & 0b01000000)
+
 // Whether the display is enabled or not.
-#define LCDC_DISPLAY_ENABLE(lcdc)                   (lcdc & 0b10000000)
+#define LCDC_DISPLAY_ENABLE(lcdc)                       (lcdc & 0b10000000)
 
     uint8_t stat;     // 0xff41: LCD Status. TODO(Cristian): Do access macros.
     uint8_t scy;      // 0xff42: BG Scroll Y. Window automatically wraps borders.
@@ -201,6 +177,43 @@ struct MappedIO {
 // NOTE: |obp0| and |obp1| lower 2 bits (PALLETE_COLOR(<reg>, 0) is unused, as those bits are
 //       reserved for transparent color.
 inline uint32_t PaletteColor(uint8_t reg, uint32_t index) { return reg >> (2u * index) & 0b11u; }
+
+// OAM ---------------------------------------------------------------------------------------------
+
+// OAM is the Sprite Attribute entry, that describes a single sprite being drawn.
+struct OAMEntry {
+  // Vertical position on the screen (minus 16).
+  // This means that y == 0 or y >= 160 hides the sprite.
+  uint8_t y;
+
+  // Horizontal position on the screen (minus 8).
+  // This means that x == 0 or x >= 168 hides the sprite.
+  uint8_t x;
+
+  // Unsigned index into tilemap0.
+  uint8_t tile_number;
+
+  // Attributes/Flags. Use the getter macros below.
+  //  Bit2-0 Palette number  **CGB Mode Only**     (OBP0-7)
+  //  Bit3   Tile VRAM-Bank  **CGB Mode Only**     (0=Bank 0, 1=Bank 1)
+  //  Bit4   Palette number  **Non CGB Mode Only** (0=OBP0, 1=OBP1)
+  //  Bit5   X flip          (0=Normal, 1=Horizontally mirrored)
+  //  Bit6   Y flip          (0=Normal, 1=Vertically mirrored)
+  //  Bit7   OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
+  //    (Used for both BG and Window. BG color 0 is always behind OBJ)
+  uint8_t flags;
+};
+
+// Sprites can be 8x8 or 8x16. The sprite position on the |OAMEntry| are offseted (x - 8, y - 16),
+// which means that the sprite can be completely hidden from being drawn.
+bool SpriteIsHidden(Memory*, const OAMEntry& sprite);
+
+#define OAM_PALLETE_NUMBER_GBC(flags) (flags & 0b00000111)
+#define OAM_TILE_VRAM_BANK(flags)     (flags & 0b00001000)
+#define OAM_PALLETE_NUMBER(flags)     (flags & 0b00010000)
+#define OAM_X_FLIP(flags)             (flags & 0b00100000)
+#define OAM_Y_FLIP(flags)             (flags & 0b01000000)
+#define OAM_OBJ_TO_BG_PRIORITY(flags) (flags & 0b10000000)
 
 // GB Memory Layout --------------------------------------------------------------------------------
 

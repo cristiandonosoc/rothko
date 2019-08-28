@@ -39,7 +39,9 @@ std::unique_ptr<Textures> CreateTextures(Game* game) {
   if (!CreateTexture(game, "tiles-texture", {kTilesSizeX, kTilesSizeY}, &textures->tiles) ||
       !CreateTexture(game, "bg-texture", {kBGSizeX, kBGSizeY}, &textures->background) ||
       !CreateTexture(game, "window-texture", {kWindowSizeX, kWindowSizeY}, &textures->window) ||
-      !CreateTexture(game, "sprites-texture", {kSpritesSizeX, kSpritesSizeY}, &textures->sprites)) {
+      !CreateTexture(game, "sprites-texture", {kSpritesSizeX, kSpritesSizeY}, &textures->sprites) ||
+      !CreateTexture(game, "sprites-debug-texture", {kSpritesSizeX, kSpritesSizeY},
+                           &textures->sprites_debug)) {
     return nullptr;
   }
 
@@ -60,7 +62,7 @@ void FillInTransparent(Texture* texture) {
     int tile_y = y / kSquareSize;
     for (int x = 0; x < texture->size.width; x++) {
       int tile_x = x / kSquareSize;
-      *color++ = ((tile_x + tile_y) % 2 == 0) ? colors::kWhite : colors::kLightGray;
+      *color++ = ((tile_x + tile_y) % 2 == 0) ? colors::kWhite : colors::kWhite;
     }
   }
 
@@ -104,14 +106,37 @@ void PaintTile(Color* data, Int2 coord, const Color* tile_data) {
   }
 }
 
+void PaintTilePixelOffset(Texture* texture, Int2 pos, const Color* tile_data) {
+  (void)tile_data;
+  Color* base = (Color*)texture->data.value;
+  Color* end = base + texture->size.width * texture->size.height;
+
+  Color* sprite_base = base + pos.y * texture->size.width + pos.x;
+  for (int y = 0; y < kTileSizeY; y++) {
+    // The sprite might be offset such that it's only partially seen.
+    // We need to detect that case.
+    Color* ptr = sprite_base + (y * texture->size.width);
+    if (ptr >= end)
+      break;
+
+    for (int x = 0; x < kTileSizeX; x++) {
+      *ptr++ = *tile_data++;
+      /* *ptr++ = colors::kBlack; */
+      if (ptr >= end)
+        break;
+    }
+  }
+}
+
 void PaintTile(Color* data, int index, const Color* tile_data) {
   PaintTile(data, IndexToCoord(index), tile_data);
 }
 
 // Transforms a GB shade (defined in a palette) to a Rothko Color. shades are 2 bits.
-inline Color ShadeToColor(uint32_t shade) {
+inline Color ShadeToColor(uint32_t shade, bool transparent) {
   switch (shade) {
-    case 0: return Color{0xffffffff};   // White.
+    // If we're in |transparent| mode, Color 0 is transparent. Otherwise it's white.
+    case 0: return transparent ? Color{0x00000000} : Color{0xffffffff};
     case 1: return Color{0xbbbbbbbb};   // Light gray.
     case 2: return Color{0xff666666};   // Dark gray.
     case 3: return Color{0xff000000};   // Black.
@@ -137,7 +162,7 @@ inline Color ShadeToColor(uint32_t shade) {
 //  | | |-----------> Shade 5
 //  | |-------------> Shade 6
 //  |---------------> Shade 7
-void TileToTexture(uint8_t palette, const void* data, Color* out) {
+void TileToTexture(uint8_t palette, const void* data, Color* out, bool transparent) {
   uint32_t shades[4] = {
     PaletteColor(palette, 0),
     PaletteColor(palette, 1),
@@ -157,7 +182,7 @@ void TileToTexture(uint8_t palette, const void* data, Color* out) {
       uint8_t pixel = msp << 1 | lsp;
       ASSERT_MSG(pixel < 0b100, "Got pixel: 0x%x", pixel);
 
-      *out = ShadeToColor(shades[pixel]);
+      *out = ShadeToColor(shades[pixel], transparent);
       out++;
     }
 
@@ -175,13 +200,28 @@ void UpdateTileTexture(Game* game, Memory* memory, Texture* tile_texture) {
   for (int y = 0; y < 16 + 8; y++) {
     for (int x = 0; x < 16; x++) {
       Tile* tile = memory->vram.tiles + (y * 16) + x;
-      TileToTexture(memory->mapped_io.bgp, tile, tile_color);
+      TileToTexture(memory->mapped_io.bgp, tile, tile_color, false);
       PaintTile(base_color, {x, y}, tile_color);
     }
   }
 
   LOG(App, "Updating texture");
   RendererSubTexture(game->renderer.get(), tile_texture);
+}
+
+
+void UpdateSpritesDebugTexture(Memory* memory, Texture* texture) {
+  FillInTransparent(texture);
+
+  Color sprite_color[64];
+  for (OAMEntry& sprite : memory->oam_table) {
+    if (SpriteIsHidden(memory, sprite))
+        continue;
+
+    Tile* tile = memory->vram.tiles + sprite.tile_number;
+    TileToTexture(memory->mapped_io.bgp, tile, sprite_color, true);
+    PaintTilePixelOffset(texture, {sprite.x + 8, sprite.y + 8}, sprite_color);
+  }
 }
 
 }  // namespace emulator
