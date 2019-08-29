@@ -5,6 +5,8 @@
 
 #include "rothko/graphics/graphics.h"
 
+#include "rothko/math/math.h"
+
 namespace rothko {
 
 // Appends into a single mesh the set of lines and figures push into it.

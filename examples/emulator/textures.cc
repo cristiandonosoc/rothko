@@ -5,6 +5,7 @@
 
 #include <rothko/game.h>
 
+#include "display.h"
 #include "memory.h"
 
 namespace rothko {
@@ -56,13 +57,15 @@ std::unique_ptr<Textures> CreateTextures(Game* game) {
 void FillInTransparent(Texture* texture) {
   constexpr int kSquareSize = 4;
 
+  Color gray = CreateGray(0xdd);
+
   Color* color = (Color*)texture->data.value;
   Color* end = color + texture->size.x * texture->size.y;
   for (int y = 0; y < texture->size.height; y++) {
     int tile_y = y / kSquareSize;
     for (int x = 0; x < texture->size.width; x++) {
       int tile_x = x / kSquareSize;
-      *color++ = ((tile_x + tile_y) % 2 == 0) ? colors::kWhite : colors::kWhite;
+      *color++ = ((tile_x + tile_y) % 2 == 0) ? colors::kWhite : gray;
     }
   }
 
@@ -120,8 +123,10 @@ void PaintTilePixelOffset(Texture* texture, Int2 pos, const Color* tile_data) {
       break;
 
     for (int x = 0; x < kTileSizeX; x++) {
+      if (IsTransparent(*tile_data))
+        continue;
+
       *ptr++ = *tile_data++;
-      /* *ptr++ = colors::kBlack; */
       if (ptr >= end)
         break;
     }
@@ -130,21 +135,6 @@ void PaintTilePixelOffset(Texture* texture, Int2 pos, const Color* tile_data) {
 
 void PaintTile(Color* data, int index, const Color* tile_data) {
   PaintTile(data, IndexToCoord(index), tile_data);
-}
-
-// Transforms a GB shade (defined in a palette) to a Rothko Color. shades are 2 bits.
-inline Color ShadeToColor(uint32_t shade, bool transparent) {
-  switch (shade) {
-    // If we're in |transparent| mode, Color 0 is transparent. Otherwise it's white.
-    case 0: return transparent ? Color{0x00000000} : Color{0xffffffff};
-    case 1: return Color{0xbbbbbbbb};   // Light gray.
-    case 2: return Color{0xff666666};   // Dark gray.
-    case 3: return Color{0xff000000};   // Black.
-    default: break;
-  }
-
-  NOT_REACHED();
-  return {};
 }
 
 // Each pixels are defined by two bytes, where one is the "upper index" of the pixel and the second

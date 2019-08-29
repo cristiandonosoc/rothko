@@ -155,10 +155,11 @@ struct MappedIO {
     uint8_t dma;      // 0xff46: DMA Transfer address.
 
     uint8_t bgp;      // 0xff47: BG Palette data. Determines colors for BG and window pixels.
-                      //         Bit 0-1 - Color for shade number 0
-                      //         Bit 2-3 - Color for shade number 1
-                      //         Bit 4-5 - Color for shade number 2
-                      //         Bit 6-7 - Color for shade number 3
+
+#define LCDC_BGP_GET_COLOR0(bgp)  ((bgp >> 0) & 0b11)   // Bit 0-1 - Color for shade number 0
+#define LCDC_BGP_GET_COLOR1(bgp)  ((bgp >> 2) & 0b11)   // Bit 2-3 - Color for shade number 1
+#define LCDC_BGP_GET_COLOR2(bgp)  ((bgp >> 4) & 0b11)   // Bit 4-5 - Color for shade number 2
+#define LCDC_BGP_GET_COLOR3(bgp)  ((bgp >> 6) & 0b11)   // Bit 6-7 - Color for shade number 3
 
     // For |obp0| and |obp1|, work the same as |bgp|, except the lower 2 bits are not used, as
     // sprite data 00 is transparent.

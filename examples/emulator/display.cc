@@ -24,6 +24,20 @@ Vec2 kUVOffset = {1.0f / 16.0f, 1.0f / (16.0f + 8.0f)};
 
 }  // namespace
 
+Color ShadeToColor(uint32_t shade, bool transparent) {
+  switch (shade) {
+    // If we're in |transparent| mode, Color 0 is transparent. Otherwise it's white.
+    case 0: return transparent ? Color{0x00000000} : Color{0xffffffff};
+    case 1: return Color{0xbbbbbbbb};   // Light gray.
+    case 2: return Color{0xff666666};   // Dark gray.
+    case 3: return Color{0xff000000};   // Black.
+    default: break;
+  }
+
+  NOT_REACHED();
+  return {};
+}
+
 // Display -----------------------------------------------------------------------------------------
 
 bool InitDisplay(Game* game, Display* out) {
@@ -176,6 +190,60 @@ void CreateBackgroundMesh(Renderer* renderer, Display* display, Memory* memory, 
 
 namespace {
 
+// |out| is uint8_t[64];
+void TileToIndexes(const void* data, uint8_t* out) {
+  const uint8_t* ptr = (uint8_t*)data;
+  for (int y = 0; y < 8; y++) {
+    const uint8_t* lsb = ptr + 0;
+    const uint8_t* msb = ptr + 1;
+
+    // Bit 7 is the left-most pixel, so we iterate it backwards.
+    for (int x = 7; x >= 0; x--) {
+      uint8_t lsp = (*lsb >> x) & 0x1;
+      uint8_t msp = (*msb >> x) & 0x1;
+      uint8_t pixel = msp << 1 | lsp;
+      ASSERT_MSG(pixel < 0b100, "Got pixel: 0x%x", pixel);
+
+      *out++ = pixel;
+    }
+
+    ptr += 2;
+  }
+}
+
+void PixelRowToImguiText(uint8_t* p) {
+  ImGui::Text("%u|%u|%u|%u|%u|%u|%u|%u", p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
+}
+
+void TileTooltip(Memory* memory, Texture* tilemap, Int2 pos, Vec2 uv_base, Vec2 uv_end, int index) {
+  ImGui::BeginTooltip();
+  ImGui::Text("Tile (%02d, %02d) -> %03d", pos.x, pos.y, index);
+
+  float size = 100.0f;
+  ImGui::BeginChild("tooltip-1", {size + 5, size}, false);
+  ImGui::Image(tilemap, {size, size}, ToImVec2(uv_base), ToImVec2(uv_end));
+  ImGui::EndChild();
+
+  ImGui::SameLine();
+  ImGui::BeginChild("tooltip-2", {120, 160}, true);
+
+  uint8_t p[64];
+  TileToIndexes((void*)&memory->vram.tiles[index], p);
+
+
+  PixelRowToImguiText(p + 0 * 8);
+  PixelRowToImguiText(p + 1 * 8);
+  PixelRowToImguiText(p + 2 * 8);
+  PixelRowToImguiText(p + 3 * 8);
+  PixelRowToImguiText(p + 4 * 8);
+  PixelRowToImguiText(p + 5 * 8);
+  PixelRowToImguiText(p + 6 * 8);
+  PixelRowToImguiText(p + 7 * 8);
+  ImGui::EndChild();
+
+  ImGui::EndTooltip();
+}
+
 void ShowTiles(Memory* memory, Texture* tilemap, Int2 size, int map_index, bool indices_inline) {
   // Create tiles.
   constexpr float kImageSize = 30;
@@ -208,14 +276,8 @@ void ShowTiles(Memory* memory, Texture* tilemap, Int2 size, int map_index, bool 
                               end, {end.x, pos.y},
                               uv_base, {uv_base.x, uv_end.y}, uv_end, {uv_end.x, uv_base.y});
 
-      if (ImGui::IsMouseHoveringRect(pos, end)) {
-        ImGui::BeginTooltip();
-
-        ImGui::Text("Tile (%02d, %02d) -> %03d", x, y , index);
-        ImGui::Image(tilemap, {100, 100}, ToImVec(uv_base), ToImVec(uv_end));
-
-        ImGui::EndTooltip();
-      }
+      if (ImGui::IsMouseHoveringRect(pos, end))
+        TileTooltip(memory, tilemap, {x, y}, uv_base, uv_end, index);
 
       if (indices_inline) {
         auto text = StringPrintf("%03d", index);
@@ -297,14 +359,8 @@ void ShowSpriteTiles(Memory* memory, Textures* textures) {
       draw_list->AddImageQuad(&textures->tiles,
                               pos, {pos.x, end.y}, end, {end.x, pos.y},
                               uv_base, {uv_base.x, uv_end.y}, uv_end, {uv_end.x, uv_base.y});
-    if (ImGui::IsMouseHoveringRect(pos, end)) {
-        ImGui::BeginTooltip();
-
-        ImGui::Text("Tile (%02d, %02d) -> %03d", x, y , index);
-        ImGui::Image(&textures->tiles, {100, 100}, ToImVec(uv_base), ToImVec(uv_end));
-
-        ImGui::EndTooltip();
-      }
+    if (ImGui::IsMouseHoveringRect(pos, end))
+        TileTooltip(memory, &textures->tiles, {x, y}, uv_base, uv_end, index);
 
       if (indices_inline) {
         auto text = StringPrintf("%03d", index);
@@ -316,7 +372,20 @@ void ShowSpriteTiles(Memory* memory, Textures* textures) {
 
   ImGui::Dummy({size.x * (kImageSize + 1), size.y * (kImageSize + 1)});
   ImGui::Separator();
-  ImGui::Image(&textures->sprites_debug, {500, 500}, {0, 0}, {1, 1});
+
+  ImGui::Image(&textures->sprites_debug, ToImVec2(textures->sprites_debug.size * 3),
+               {0, 0}, {1, 1});
+}
+
+void CreateColorPicker(int index, int shade) {
+  ImGuiColorEditFlags flags = ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoOptions |
+                              ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoLabel;
+
+
+  ImVec4 color = ToImVec4(ToVec4(ShadeToColor(shade, false)));
+  ImGui::AlignFirstTextHeightToWidgets();
+  ImGui::Text("Shade %d (%u)", index, shade); ImGui::SameLine();
+  ImGui::ColorEdit3("", (float*)&color, flags);
 }
 
 }  // namespace
@@ -347,6 +416,12 @@ void CreateDisplayImgui(Memory* memory, Textures* textures) {
   ImGui::RadioButton("SpriteEnable", LCDC_OBJ_SPRITE_ENABLE(lcdc)); ImGui::SameLine();
   ImGui::Text("Sprite Size: %s", LCDC_OBJ_SPRITE_SIZE(lcdc) ? "8x8" : "8x16");
 
+  auto bgp = memory->mapped_io.bgp;
+  CreateColorPicker(0, LCDC_BGP_GET_COLOR0(bgp)); ImGui::SameLine();
+  CreateColorPicker(1, LCDC_BGP_GET_COLOR1(bgp)); ImGui::SameLine();
+  CreateColorPicker(2, LCDC_BGP_GET_COLOR2(bgp)); ImGui::SameLine();
+  CreateColorPicker(3, LCDC_BGP_GET_COLOR3(bgp));
+
   if (ImGui::BeginTabBar("GB Tiles")) {
     if (ImGui::BeginTabItem("Background")) {
       ShowBackgroundTiles(memory, textures);
@@ -365,7 +440,6 @@ void CreateDisplayImgui(Memory* memory, Textures* textures) {
 
     ImGui::EndTabBar();
   }
-
 }
 
 }  // namespace emulator

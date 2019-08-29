@@ -54,6 +54,8 @@ int main(int argc, char* argv[]) {
   if (!InitDisplay(&game, &display))
     return 1;
 
+  LOG(App, "Window: %s", ToString(game.window.screen_size).c_str());
+
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
   // Create the painting shader.
@@ -128,7 +130,7 @@ int main(int argc, char* argv[]) {
       ImGui::EndMainMenuBar();
     }
 
-    /* ImGui::ShowDemoWindow(); */
+    ImGui::ShowDemoWindow();
 
     CreateDisplayImgui(&memory, textures.get());
 

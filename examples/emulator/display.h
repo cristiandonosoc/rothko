@@ -23,6 +23,9 @@ struct Display {
   QuadManager quads;
 };
 
+// |shade| are the values in |Memory.MappedIO.bgp
+Color ShadeToColor(uint32_t shade, bool transparent);
+
 bool InitDisplay(Game*, Display* out);
 
 std::unique_ptr<Mesh> CreateBackgroundMesh(Game* game);

@@ -18,6 +18,9 @@ namespace rothko {
 // Math Functions.
 // =================================================================================================
 
+#ifndef ABS
+#define ABS(x) (((x) < 0) ? (x) : (-(x)))
+#endif
 
 constexpr float kPI = 3.14159265359f;
 constexpr double kPI64 = 3.14159265358979323846;
