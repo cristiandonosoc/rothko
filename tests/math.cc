@@ -9,6 +9,65 @@ namespace rothko {
 
 namespace {
 
+TEST_CASE("Bits") {
+  SECTION("Get bits") {
+    uint8_t bits = 0b01010101;
+
+    CHECK(GetBit(bits, 0) == 1);
+    CHECK(GetBit(bits, 1) == 0);
+    CHECK(GetBit(bits, 2) == 1);
+    CHECK(GetBit(bits, 3) == 0);
+    CHECK(GetBit(bits, 4) == 1);
+    CHECK(GetBit(bits, 5) == 0);
+    CHECK(GetBit(bits, 6) == 1);
+    CHECK(GetBit(bits, 7) == 0);
+  }
+
+  SECTION("Set bits") {
+    CHECK(SetBit(0, 0) == 0b00000001);
+    CHECK(SetBit(0, 1) == 0b00000010);
+    CHECK(SetBit(0, 2) == 0b00000100);
+    CHECK(SetBit(0, 3) == 0b00001000);
+    CHECK(SetBit(0, 4) == 0b00010000);
+    CHECK(SetBit(0, 5) == 0b00100000);
+    CHECK(SetBit(0, 6) == 0b01000000);
+    CHECK(SetBit(0, 7) == 0b10000000);
+
+    uint8_t bits = 0b01010101;
+
+    CHECK(SetBit(bits, 0) == 0b01010101);
+    CHECK(SetBit(bits, 1) == 0b01010111);
+    CHECK(SetBit(bits, 2) == 0b01010101);
+    CHECK(SetBit(bits, 3) == 0b01011101);
+    CHECK(SetBit(bits, 4) == 0b01010101);
+    CHECK(SetBit(bits, 5) == 0b01110101);
+    CHECK(SetBit(bits, 6) == 0b01010101);
+    CHECK(SetBit(bits, 7) == 0b11010101);
+  }
+
+  SECTION("Clear bits") {
+    CHECK(ClearBit(0xff, 0) == 0b11111110);
+    CHECK(ClearBit(0xff, 1) == 0b11111101);
+    CHECK(ClearBit(0xff, 2) == 0b11111011);
+    CHECK(ClearBit(0xff, 3) == 0b11110111);
+    CHECK(ClearBit(0xff, 4) == 0b11101111);
+    CHECK(ClearBit(0xff, 5) == 0b11011111);
+    CHECK(ClearBit(0xff, 6) == 0b10111111);
+    CHECK(ClearBit(0xff, 7) == 0b01111111);
+
+    uint8_t bits = 0b01010101;
+
+    CHECK(ClearBit(bits, 0) == 0b01010100);
+    CHECK(ClearBit(bits, 1) == 0b01010101);
+    CHECK(ClearBit(bits, 2) == 0b01010001);
+    CHECK(ClearBit(bits, 3) == 0b01010101);
+    CHECK(ClearBit(bits, 4) == 0b01000101);
+    CHECK(ClearBit(bits, 5) == 0b01010101);
+    CHECK(ClearBit(bits, 6) == 0b00010101);
+    CHECK(ClearBit(bits, 7) == 0b01010101);
+  }
+}
+
 TEST_CASE("Vec2")
 {
   SECTION("ADDITION") {
