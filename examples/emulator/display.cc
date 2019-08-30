@@ -24,10 +24,9 @@ Vec2 kUVOffset = {1.0f / 16.0f, 1.0f / (16.0f + 8.0f)};
 
 }  // namespace
 
-Color ShadeToColor(uint32_t shade, bool transparent) {
+Color ShadeToColor(uint32_t shade) {
   switch (shade) {
-    // If we're in |transparent| mode, Color 0 is transparent. Otherwise it's white.
-    case 0: return transparent ? Color{0x00000000} : Color{0xffffffff};
+    case 0: return Color{0xffffffff};   // White.
     case 1: return Color{0xbbbbbbbb};   // Light gray.
     case 2: return Color{0xff666666};   // Dark gray.
     case 3: return Color{0xff000000};   // Black.
@@ -72,7 +71,7 @@ bool InitDisplay(Game* game, Display* out) {
 
 namespace {
 
-Vertex3dUVColor CreateVertex(Vec3 pos, Vec2 uv, Color color) {
+Vertex3dUVColor CreateVertex(Vec3 pos, Vec2 uv, Color color = Color::White()) {
   Vertex3dUVColor vertex = {};
   vertex.pos = pos;
   vertex.uv = uv;
@@ -83,10 +82,10 @@ Vertex3dUVColor CreateVertex(Vec3 pos, Vec2 uv, Color color) {
 
 void PushSquare(Mesh* mesh, Vec2 base, Vec2 size, Vec2 uv_base) {
   Vertex3dUVColor vertices[] = {
-      CreateVertex({base.x, base.y, 0}, uv_base, colors::kWhite),
-      CreateVertex({base.x, base.y + size.y, 0}, uv_base + Vec2{kUVOffset.x, 0.0f}, colors::kWhite),
-      CreateVertex({base.x + size.x, base.y, 0}, uv_base + Vec2{0, kUVOffset.y}, colors::kWhite),
-      CreateVertex({base.x + size.x, base.y + size.y, 0}, uv_base + kUVOffset, colors::kWhite),
+      CreateVertex({base.x, base.y, 0}, uv_base),
+      CreateVertex({base.x, base.y + size.y, 0}, uv_base + Vec2{kUVOffset.x, 0.0f}),
+      CreateVertex({base.x + size.x, base.y, 0}, uv_base + Vec2{0, kUVOffset.y}),
+      CreateVertex({base.x + size.x, base.y + size.y, 0}, uv_base + kUVOffset),
   };
 
   Mesh::IndexType base_index = mesh->vertex_count;
@@ -248,10 +247,10 @@ void ShowTiles(Memory* memory, Texture* tilemap, Int2 size, int map_index, bool 
   // Create tiles.
   constexpr float kImageSize = 30;
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+  uint8_t* background_map = map_index == 0 ? memory->vram.tilemap0 : memory->vram.tilemap1;
   for (int y = 0; y < size.y; y++) {
     for (int x = 0; x < size.x; x++) {
-      uint8_t* background_map = map_index == 0 ? memory->vram.tilemap0 :
-                                                 memory->vram.tilemap1;
 
       // Background map 0 maps [0, 256).
       // Background map 1 maps [-128, 128).
@@ -294,6 +293,10 @@ void ShowBackgroundTiles(Memory* memory, Textures* textures) {
 
   static bool indices_inline = false;
 
+  ImGui::Image(&textures->background, ToImVec2(textures->background.size * 2));
+
+  ImGui::Separator();
+
   ImGui::Checkbox("Show indices inline", &indices_inline);
 
   static int map_index = 0;
@@ -313,6 +316,8 @@ void ShowBackgroundTiles(Memory* memory, Textures* textures) {
 
 void ShowWindowTiles(Memory* memory, Textures* textures) {
   ImGui::Text("Window");
+
+  ImGui::Image(&textures->window, ToImVec2(textures->window.size * 2));
 
   static bool indices_inline = false;
   ImGui::Checkbox("Show indices inline", &indices_inline);
@@ -335,11 +340,18 @@ void ShowWindowTiles(Memory* memory, Textures* textures) {
 void ShowSpriteTiles(Memory* memory, Textures* textures) {
   ImGui::Text("Sprites");
 
-  static bool indices_inline = false;
-  ImGui::Checkbox("Show indices inline", &indices_inline);
+  // Show the target image.
+  ImGui::Image(&textures->sprites_debug, ToImVec2(textures->sprites_debug.size * 3));
+
+  ImGui::Separator();
+
+  // Show all the tiles that compose the image.
 
   constexpr float kImageSize = 30;
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+  static bool indices_inline = false;
+  ImGui::Checkbox("Show indices inline", &indices_inline);
 
   Int2 size = {10, 4};
   for (int y = 0; y < size.y; y++) {
@@ -369,20 +381,14 @@ void ShowSpriteTiles(Memory* memory, Textures* textures) {
     }
   }
 
-
   ImGui::Dummy({size.x * (kImageSize + 1), size.y * (kImageSize + 1)});
-  ImGui::Separator();
-
-  ImGui::Image(&textures->sprites_debug, ToImVec2(textures->sprites_debug.size * 3),
-               {0, 0}, {1, 1});
 }
 
 void CreateColorPicker(int index, int shade) {
   ImGuiColorEditFlags flags = ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoOptions |
                               ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoLabel;
 
-
-  ImVec4 color = ToImVec4(ToVec4(ShadeToColor(shade, false)));
+  ImVec4 color = ToImVec4(ToVec4(ShadeToColor(shade)));
   ImGui::AlignFirstTextHeightToWidgets();
   ImGui::Text("Shade %d (%u)", index, shade); ImGui::SameLine();
   ImGui::ColorEdit3("", (float*)&color, flags);

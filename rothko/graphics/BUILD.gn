@@ -72,7 +72,6 @@ source_set("common") {
   ]
 
   sources = [
-    "color.cc",
     "commands.cc",
     "mesh.cc",
     "shader.cc",

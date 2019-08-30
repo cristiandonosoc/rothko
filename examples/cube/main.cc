@@ -235,11 +235,11 @@ int main() {
   if (!Init(renderer.get(), &line_manager, "line-manager"))
     return 1;
 
-  /* PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, colors::kBlue); */
-  /* PushLine(&line_manager, {-3, 2, -3}, {0, 2, 2}, colors::kRed); */
-  /* PushLine(&line_manager, {2, 2, -3}, {3, 2, -1}, colors::kGreen); */
-  PushCubeCenter(&line_manager, {0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, colors::kWhite);
-  PushCube(&line_manager, {-1, -1, -1}, {2, 4, 5}, colors::kBlack);
+  /* PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, Color::Blue()); */
+  /* PushLine(&line_manager, {-3, 2, -3}, {0, 2, 2}, Color::Red()); */
+  /* PushLine(&line_manager, {2, 2, -3}, {3, 2, -1}, Color::Green()); */
+  PushCubeCenter(&line_manager, {0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, Color::White());
+  PushCube(&line_manager, {-1, -1, -1}, {2, 4, 5}, Color::Black());
 
   if (!Stage(renderer.get(), &line_manager))
     return 1;

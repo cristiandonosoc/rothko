@@ -114,9 +114,14 @@ int main(int argc, char* argv[]) {
 
           LOG(App, "0x%x", *(uint32_t*)(memory.rom_bank0 + 0x104));
 
-          UpdateTileTexture(&game, &memory, &textures->tiles);
-
+          UpdateTileTexture(&memory, &textures->tiles);
+          UpdateBackgroundTexture(&memory, &textures->background);
+          UpdateWindowTexture(&memory, &textures->window);
           UpdateSpritesDebugTexture(&memory, &textures->sprites_debug);
+
+          RendererSubTexture(game.renderer.get(), &textures->tiles);
+          RendererSubTexture(game.renderer.get(), &textures->background);
+          RendererSubTexture(game.renderer.get(), &textures->window);
           RendererSubTexture(game.renderer.get(), &textures->sprites_debug);
 
           // Generate the background mesh.

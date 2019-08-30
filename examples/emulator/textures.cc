@@ -65,7 +65,7 @@ void FillInTransparent(Texture* texture) {
     int tile_y = y / kSquareSize;
     for (int x = 0; x < texture->size.width; x++) {
       int tile_x = x / kSquareSize;
-      *color++ = ((tile_x + tile_y) % 2 == 0) ? colors::kWhite : gray;
+      *color++ = ((tile_x + tile_y) % 2 == 0) ? Color::White() : gray;
     }
   }
 
@@ -77,11 +77,11 @@ void FillInTransparent(Texture* texture) {
 namespace {
 
 Int2 IndexToCoord(int index) {
-  return {index % kTileCountX, (index / kTileCountY)};
+  return {index % kTileTextureCountX, (index / kTileTextureCountY)};
 }
 
 int CoordToIndex(Int2 coord) {
-  return coord.y * kTileCountX + coord.x;
+  return coord.y * kTileTextureCountX + coord.x;
 }
 
 void PaintTile(Color* data, Int2 coord, Color color) {
@@ -109,7 +109,7 @@ void PaintTile(Color* data, Int2 coord, const Color* tile_data) {
   }
 }
 
-void PaintTilePixelOffset(Texture* texture, Int2 pos, const Color* tile_data) {
+void PaintTilePixelOffset(Texture* texture, Int2 pos, const Color* tile_data, bool debug) {
   (void)tile_data;
   Color* base = (Color*)texture->data.value;
   Color* end = base + texture->size.width * texture->size.height;
@@ -123,10 +123,14 @@ void PaintTilePixelOffset(Texture* texture, Int2 pos, const Color* tile_data) {
       break;
 
     for (int x = 0; x < kTileSizeX; x++) {
-      if (IsTransparent(*tile_data))
+      // We always advance the pointers, even if we don't draw in debug mode.
+      Color* dst = ptr++;
+      const Color* src = tile_data++;
+
+      if (debug && IsTransparent(*src))
         continue;
 
-      *ptr++ = *tile_data++;
+      *dst = *src;
       if (ptr >= end)
         break;
     }
@@ -152,7 +156,7 @@ void PaintTile(Color* data, int index, const Color* tile_data) {
 //  | | |-----------> Shade 5
 //  | |-------------> Shade 6
 //  |---------------> Shade 7
-void TileToTexture(uint8_t palette, const void* data, Color* out, bool transparent) {
+void TileToTexture(uint8_t palette, const void* data, Color* out, bool sprite) {
   uint32_t shades[4] = {
     PaletteColor(palette, 0),
     PaletteColor(palette, 1),
@@ -169,10 +173,15 @@ void TileToTexture(uint8_t palette, const void* data, Color* out, bool transpare
     for (int x = 7; x >= 0; x--) {
       uint8_t lsp = (*lsb >> x) & 0x1;
       uint8_t msp = (*msb >> x) & 0x1;
-      uint8_t pixel = msp << 1 | lsp;
-      ASSERT_MSG(pixel < 0b100, "Got pixel: 0x%x", pixel);
+      uint8_t shade = msp << 1 | lsp;
+      ASSERT_MSG(shade < 0b100, "Got shade: 0x%x", shade);
 
-      *out = ShadeToColor(shades[pixel], transparent);
+      // Sprites use color 0 as transparent.
+      if (sprite && shade == 0) {
+        *out = Color::Transparent();
+      } else {
+        *out = ShadeToColor(shades[shade]);
+      }
       out++;
     }
 
@@ -182,23 +191,61 @@ void TileToTexture(uint8_t palette, const void* data, Color* out, bool transpare
 
 }  // namespace
 
-void UpdateTileTexture(Game* game, Memory* memory, Texture* tile_texture) {
+void UpdateTileTexture(Memory* memory, Texture* tile_texture) {
   // Fill in the texture.
   Color tile_color[64];
   Color* base_color = (Color*)tile_texture->data.value;
 
-  for (int y = 0; y < 16 + 8; y++) {
-    for (int x = 0; x < 16; x++) {
-      Tile* tile = memory->vram.tiles + (y * 16) + x;
+  for (int y = 0; y < kTileTextureCountY; y++) {
+    for (int x = 0; x < kTileTextureCountX; x++) {
+      Tile* tile = memory->vram.tiles + (y * kTileTextureCountX) + x;
       TileToTexture(memory->mapped_io.bgp, tile, tile_color, false);
       PaintTile(base_color, {x, y}, tile_color);
     }
   }
-
-  LOG(App, "Updating texture");
-  RendererSubTexture(game->renderer.get(), tile_texture);
 }
 
+void UpdateBackgroundTexture(Memory* memory, Texture* texture) {
+  int map_index = LCDC_BG_TILE_MAP_DISPLAY_SELECT(memory->mapped_io.lcdc);
+  uint8_t tile_data_select = LCDC_BG_WINDOW_TILE_DATA_SELECT(memory->mapped_io.lcdc);
+
+  Color tile_color[64];
+  uint8_t* background_map = map_index == 0 ? memory->vram.tilemap0 : memory->vram.tilemap1;
+
+  for (int y = 0; y < kBGTileY; y++) {
+    for (int x = 0; x < kBGTileX; x++) {
+      // Map 0 maps [0, 256).
+      // Map 1 maps [-128, 128) (signed).
+      uint8_t tile_index = background_map[y * kTileMapCountX + x];
+      int index = tile_data_select == 0 ? tile_index : (int)tile_index;
+
+      Tile* tile = memory->vram.tiles + index;
+      TileToTexture(memory->mapped_io.bgp, tile, tile_color, false);
+      PaintTilePixelOffset(texture, {x * kTileSizeX, y * kTileSizeY}, tile_color, false);
+    }
+  }
+}
+
+void UpdateWindowTexture(Memory* memory, Texture* texture) {
+  int map_index = LCDC_WINDOW_TILE_MAP_DISPLAY_SELECT(memory->mapped_io.lcdc);
+  uint8_t tile_data_select = LCDC_BG_WINDOW_TILE_DATA_SELECT(memory->mapped_io.lcdc);
+
+  Color tile_color[64];
+  uint8_t* window_map = map_index == 0 ? memory->vram.tilemap0 : memory->vram.tilemap1;
+
+  for (int y = 0; y < kWindowTileY; y++) {
+    for (int x = 0; x < kWindowTileX; x++) {
+      // Map 0 maps [0, 256).
+      // Map 1 maps [-128, 128) (signed).
+      uint8_t tile_index = window_map[y * kWindowTileX + x];
+      int index = tile_data_select == 0 ? tile_index : (int)tile_index;
+
+      Tile* tile = memory->vram.tiles + index;
+      TileToTexture(memory->mapped_io.bgp, tile, tile_color, false);
+      PaintTilePixelOffset(texture, {x * kTileSizeX, y * kTileSizeY}, tile_color, false);
+    }
+  }
+}
 
 void UpdateSpritesDebugTexture(Memory* memory, Texture* texture) {
   FillInTransparent(texture);
@@ -210,7 +257,7 @@ void UpdateSpritesDebugTexture(Memory* memory, Texture* texture) {
 
     Tile* tile = memory->vram.tiles + sprite.tile_number;
     TileToTexture(memory->mapped_io.bgp, tile, sprite_color, true);
-    PaintTilePixelOffset(texture, {sprite.x + 8, sprite.y + 8}, sprite_color);
+    PaintTilePixelOffset(texture, {sprite.x + 8, sprite.y + 8}, sprite_color, true);
   }
 }
 

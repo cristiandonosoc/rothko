@@ -5,6 +5,8 @@
 
 #include <rothko/graphics/graphics.h>
 
+#include "display.h"
+
 namespace rothko {
 
 struct Game;
@@ -15,17 +17,14 @@ struct Memory;
 
 // Size definitions --------------------------------------------------------------------------------
 
-constexpr int kTileSizeX = 8;
-constexpr int kTileSizeY = 8;
-
-constexpr int kTileCountX = 16;
-constexpr int kTileCountY = 16 + 8;
-
 // Tile Texture
-constexpr int kTilesSizeX = kTileCountX * kTileSizeX;
-constexpr int kTilesSizeY = kTileCountY * kTileSizeY;
-constexpr float kTilesUVOffsetX = 1.0f / (float)kTileCountX;
-constexpr float kTilesUVOffsetY = 1.0f / (float)kTileCountY;
+constexpr int kTileTextureCountX = 16;
+constexpr int kTileTextureCountY = 16 + 8;
+
+constexpr int kTilesSizeX = kTileTextureCountX * kTileSizeX;
+constexpr int kTilesSizeY = kTileTextureCountY * kTileSizeY;
+constexpr float kTilesUVOffsetX = 1.0f / (float)kTileTextureCountX;
+constexpr float kTilesUVOffsetY = 1.0f / (float)kTileTextureCountY;
 
 // We render the whole background and decide which part to show.
 constexpr int kBGSizeX = 32 * kTileSizeX;
@@ -49,14 +48,18 @@ struct Textures {
 
 std::unique_ptr<Textures> CreateTextures(Game*);
 
-void UpdateTileTexture(Game*, Memory*, Texture*);
+// Update Texture Functions ------------------------------------------------------------------------
+//
+// These functions WILL NOT re-upload to the renderer. That has to be done by the caller.
 
 // Will override the contents of the texture with a "transparent" pattern.
-// This WILL NOT re-upload to the renderer.
 void FillInTransparent(Texture*);
 
-void UpdateSpritesDebugTexture(Memory*, Texture*);
+void UpdateTileTexture(Memory*, Texture*);
+void UpdateBackgroundTexture(Memory*, Texture*);
+void UpdateWindowTexture(Memory*, Texture*);
 void UpdateSpritesTexture(Texture*);
+void UpdateSpritesDebugTexture(Memory*, Texture*);
 
 }  // namespace emulator
 }  // namespace rothko
