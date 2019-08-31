@@ -7,8 +7,12 @@
 
 #include <string>
 
+#include "cpu_instructions.h"
+
 namespace rothko {
 namespace emulator {
+
+struct CPU;
 
 // Registers ---------------------------------------------------------------------------------------
 
@@ -52,6 +56,11 @@ inline uint8_t ClearBit(uint8_t reg, int bit) { return reg & ~(0b1 << bit); }
 // 6    n     -   -    Add/Sub-Flag (BCD). Previous instruction was addition or subtraction.
 // 7    zf    Z   NZ   Zero Flag
 
+constexpr uint8_t kCPUFlagsCMask = 0b00010000;
+constexpr uint8_t kCPUFlagsHMask = 0b00100000;
+constexpr uint8_t kCPUFlagsNMask = 0b01000000;
+constexpr uint8_t kCPUFlagsZMask = 0b10000000;
+
 #define CPU_FLAGS_GET_C(cpu)    GetBit(CPU_GET_FLAGS(cpu), 4)
 #define CPU_FLAGS_GET_H(reg)    GetBit(CPU_GET_FLAGS(cpu), 5)
 #define CPU_FLAGS_GET_N(reg)    GetBit(CPU_GET_FLAGS(cpu), 6)
@@ -69,36 +78,14 @@ inline uint8_t ClearBit(uint8_t reg, int bit) { return reg & ~(0b1 << bit); }
 
 // Instruction -------------------------------------------------------------------------------------
 
-struct Instruction {
-  const char* name;
-  const char* description;
-
-  // Most functions the ticks are only advanced when the instruction executes.
-  // But for some functions (conditional jumps and some two-stage instructions), there are some
-  // ticks that are run after the instruction.
-  uint8_t pre_ticks = 0;
-  uint8_t post_ticks = 0;
-
-  uint8_t length;     // Length in bytes.
-
-  // The actual bytes this instruction represents.
-  // NOTE: CB instructions are two-bytes: the 0xcb prefix and then the "opcode".
-  //       In our representation, the 0xcb prefix will be the first byte.
-  union OpCode {
-    uint16_t opcode;
-    struct {
-      uint8_t low;
-      uint8_t high;
-    };
-  } opcode;
-  static_assert(sizeof(Instruction::OpCode) == 2);
-};
-
-inline bool IsCBInstruction(const Instruction& i) { return i.opcode.low == 0xcb; }
-
 struct CPU {
   CPURegisters registers;
+
+  Instruction instructions[0xff + 1];
+  Instruction cb_instructions[0xff + 1];
 };
+
+void Init(CPU*);
 
 }  // namespace emulator
 }  // namespace rothko
