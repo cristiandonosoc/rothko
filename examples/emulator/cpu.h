@@ -26,7 +26,7 @@ struct CPURegisters {
 
   uint16_t pc;  // Program counter.
   uint16_t sp;  // Stack pointer.
-} registers;
+};
 
 std::string ToString(const CPURegisters&);
 
@@ -56,25 +56,32 @@ inline uint8_t ClearBit(uint8_t reg, int bit) { return reg & ~(0b1 << bit); }
 // 6    n     -   -    Add/Sub-Flag (BCD). Previous instruction was addition or subtraction.
 // 7    zf    Z   NZ   Zero Flag
 
-constexpr uint8_t kCPUFlagsCMask = 0b00010000;
-constexpr uint8_t kCPUFlagsHMask = 0b00100000;
-constexpr uint8_t kCPUFlagsNMask = 0b01000000;
-constexpr uint8_t kCPUFlagsZMask = 0b10000000;
+constexpr uint8_t kCPUFlagsCMask = (1 << 4);
+constexpr uint8_t kCPUFlagsCIndex = 4;
+
+constexpr uint8_t kCPUFlagsHMask = (1 << 5);
+constexpr uint8_t kCPUFlagsHIndex = 5;
+
+constexpr uint8_t kCPUFlagsNMask = (1 << 6);
+constexpr uint8_t kCPUFlagsNIndex = 6;
+
+constexpr uint8_t kCPUFlagsZMask = (1 << 7);
+constexpr uint8_t kCPUFlagsZIndex = 7;
 
 #define CPU_FLAGS_GET_C(cpu)    GetBit(CPU_GET_FLAGS(cpu), 4)
-#define CPU_FLAGS_GET_H(reg)    GetBit(CPU_GET_FLAGS(cpu), 5)
-#define CPU_FLAGS_GET_N(reg)    GetBit(CPU_GET_FLAGS(cpu), 6)
-#define CPU_FLAGS_GET_ZF(reg)   GetBit(CPU_GET_FLAGS(cpu), 7)
+#define CPU_FLAGS_GET_H(cpu)    GetBit(CPU_GET_FLAGS(cpu), 5)
+#define CPU_FLAGS_GET_N(cpu)    GetBit(CPU_GET_FLAGS(cpu), 6)
+#define CPU_FLAGS_GET_Z(cpu)    GetBit(CPU_GET_FLAGS(cpu), 7)
 
-#define CPU_FLAGS_SET_C(reg)    SetBit(CPU_GET_FLAGS(cpu), 4)
-#define CPU_FLAGS_SET_H(reg)    SetBit(CPU_GET_FLAGS(cpu), 5)
-#define CPU_FLAGS_SET_N(reg)    SetBit(CPU_GET_FLAGS(cpu), 6)
-#define CPU_FLAGS_SET_ZF(reg)   SetBit(CPU_GET_FLAGS(cpu), 7)
+#define CPU_FLAGS_SET_C(cpu)    SetBit(CPU_GET_FLAGS(cpu), 4)
+#define CPU_FLAGS_SET_H(cpu)    SetBit(CPU_GET_FLAGS(cpu), 5)
+#define CPU_FLAGS_SET_N(cpu)    SetBit(CPU_GET_FLAGS(cpu), 6)
+#define CPU_FLAGS_SET_Z(cpu)    SetBit(CPU_GET_FLAGS(cpu), 7)
 
-#define CPU_FLAGS_CLEAR_C(reg)  ClearBit(CPU_GET_FLAGS(cpu), 4)
-#define CPU_FLAGS_CLEAR_H(reg)  ClearBit(CPU_GET_FLAGS(cpu), 4)
-#define CPU_FLAGS_CLEAR_N(reg)  ClearBit(CPU_GET_FLAGS(cpu), 4)
-#define CPU_FLAGS_CLEAR_ZF(reg) ClearBit(CPU_GET_FLAGS(cpu), 4)
+#define CPU_FLAGS_CLEAR_C(cpu)  ClearBit(CPU_GET_FLAGS(cpu), 4)
+#define CPU_FLAGS_CLEAR_H(cpu)  ClearBit(CPU_GET_FLAGS(cpu), 4)
+#define CPU_FLAGS_CLEAR_N(cpu)  ClearBit(CPU_GET_FLAGS(cpu), 4)
+#define CPU_FLAGS_CLEAR_Z(cpu)  ClearBit(CPU_GET_FLAGS(cpu), 4)
 
 // Instruction -------------------------------------------------------------------------------------
 

@@ -6,7 +6,7 @@
 #include <third_party/catch2/catch.hpp>
 
 namespace rothko {
-
+namespace test {
 namespace {
 
 TEST_CASE("Bits") {
@@ -222,5 +222,5 @@ TEST_CASE("Mat4") {
 }
 
 }  // namespace
-
+}  // namespace test
 }  // namespace rothko

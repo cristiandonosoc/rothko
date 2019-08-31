@@ -7,6 +7,7 @@
 
 namespace rothko {
 namespace test {
+namespace {
 
 constexpr uint64_t BlockSize = 64u;
 
@@ -79,5 +80,6 @@ TEST_CASE("BlockAllocator") {
   REQUIRE(allocator.used_blocks == 0);
 }
 
+}  // namespace
 }  // namespace test
 }  // namespace rothko

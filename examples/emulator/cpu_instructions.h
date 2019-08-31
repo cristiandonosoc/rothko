@@ -29,14 +29,14 @@ struct Instruction {
   // The actual bytes this instruction represents.
   // NOTE: CB instructions are two-bytes: the 0xcb prefix and then the "opcode".
   //       In our representation, the 0xcb prefix will be the first byte.
-  union OpCode {
+  union Opcode {
     uint16_t opcode;
     struct {
       uint8_t low;
       uint8_t high;
     };
   } opcode;
-  static_assert(sizeof(Instruction::OpCode) == 2);
+  static_assert(sizeof(Instruction::Opcode) == 2);
 };
 static_assert(sizeof(Instruction) == 24);
 
@@ -48,17 +48,24 @@ void InitInstructions(CPU*);
 //
 // Used for comparing a condition (flag) to see how many more ticks an instruction should execute
 // upon that condition being true.
-// Exposed for testing purposes.
+//
+// The ConditionalTicks masked bit has to be the same in |flags| in order to |ct.extra_ticks| to
+// be returned. Returns 0 otherwise.
 
 struct ConditionalTicks {
   uint8_t mask;
-  uint8_t xor_comparator;
+  uint8_t xnor_comparator;
   uint8_t extra_ticks;
 };
 
-#define COND_TICKS_POSITIVE_FLAG(flag, ticks) {kCPUFlags##flag##Mask, kCPUFlags##flag##Mask, ticks}
+#define COND_TICKS_POSITIVE_FLAG(flag, ticks) \
+  { kCPUFlags##flag##Mask, kCPUFlags##flag##Mask, ticks }
 #define COND_TICKS_NEGATIVE_FLAG(flag, ticks) {kCPUFlags##flag##Mask, 0, ticks}
 
+uint8_t GetConditionalTicks(const Instruction&, uint8_t flags);
+
+// Exposed for testing purposes.
+uint8_t GetConditionalTicks(const ConditionalTicks& ct, uint8_t flags);
 
 }  // namespace emulator
 }  // namespace rothko

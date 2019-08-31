@@ -1,11 +1,10 @@
 # Copyright 2019, Cristián Donoso.
 # This code has a BSD license. See LICENSE.
 
-executable("emulator") {
+source_set("lib") {
   sources = [
     "display.cc",
     "display.h",
-    "main.cc",
     "memory.cc",
     "memory.h",
     "quad.cc",
@@ -14,6 +13,10 @@ executable("emulator") {
     "shader.h",
     "textures.cc",
     "textures.h",
+    "cpu.cc",
+    "cpu.h",
+    "cpu_instructions.cc",
+    "cpu_instructions.h",
   ]
 
   deps = [
@@ -21,5 +24,29 @@ executable("emulator") {
     "//rothko/graphics",
     "//rothko/ui:imgui",
     "//rothko/window:sdl_opengl",
+  ]
+}
+
+executable("emulator") {
+  sources = [
+    "main.cc",
+  ]
+
+  deps = [
+    ":lib",
+  ]
+}
+
+executable("tests") {
+  testonly = true
+  output_name = "emulator_tests"
+
+  sources = [
+    "tests.cc",
+  ]
+
+  deps = [
+    ":lib",
+    "//third_party/catch2",
   ]
 }

@@ -7,6 +7,7 @@
 
 namespace rothko {
 namespace test {
+namespace test {
 
 TEST_CASE("BeginsWith") {
   CHECK(BeginsWith("hola", ""));
@@ -115,5 +116,6 @@ TEST_CASE("Join") {
 
 }
 
+}  // namespace
 }  // namespace test
 }  // namespace rothko

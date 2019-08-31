@@ -6,7 +6,7 @@
 #include <rothko/math/math.h>
 
 namespace rothko {
-
+namespace test {
 namespace {
 
 #define DIFF(lhs, rhs) std::abs(rhs - lhs)
@@ -23,7 +23,6 @@ namespace {
 constexpr float kCos45 = kSqrt2 / 2;
 /* constexpr float kSin45 = Math::kSqrt2 / 2; */
 
-}  // namespace
 
 TEST_CASE("Direction From Euler") {
   Vec3 dir;
@@ -174,4 +173,6 @@ TEST_CASE("Euler from direction") {
   }
 }
 
+}  // namespace
+}  // namespace test
 }  // namespace rothko

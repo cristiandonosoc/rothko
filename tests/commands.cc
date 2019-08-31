@@ -6,6 +6,7 @@
 #include <rothko/graphics/commands.h>
 
 namespace rothko {
+namespace test {
 namespace {
 
 TEST_CASE("Lines") {
@@ -29,4 +30,5 @@ TEST_CASE("Line Strip") {
 }
 
 }  // namespace
+}  // namespace test
 }  // namespace rothko

@@ -2,7 +2,7 @@
 # This code has a BSD license. See LICENSE.
 
 # Put all the tests to be run here.
-source_set("tests_lib") {
+source_set("lib") {
   testonly = true
   sources = [
     "commands.cc",
@@ -28,10 +28,13 @@ source_set("tests_lib") {
 
 executable("tests") {
   testonly = true
+  output_name = "rothko_tests"
+
   sources = [
     "test_main.cc",
   ]
+
   deps = [
-    ":tests_lib",
+    ":lib",
   ]
 }

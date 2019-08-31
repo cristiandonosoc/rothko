@@ -7,6 +7,7 @@
 
 namespace rothko {
 namespace test {
+namespace {
 
 TEST_CASE("Defer") {
   bool called = false;
@@ -31,5 +32,6 @@ TEST_CASE("Move defer") {
   REQUIRE(call_count == 1);
 }
 
+}  // namespace
 }  // namespace test
 }  // namespace rothko
