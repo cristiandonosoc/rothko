@@ -14,6 +14,8 @@ namespace {
 
 constexpr uint8_t kReturnedTicks = 4;
 
+// Conditional Ticks -------------------------------------------------------------------------------
+
 TEST_CASE("Conditional Ticks") {
   SECTION("Z Flag") {
     uint8_t z_not_set = 0;
@@ -44,45 +46,25 @@ TEST_CASE("Conditional Ticks") {
   }
 }
 
-// Normal Instruction Conditional Ticks ------------------------------------------------------------
-
-struct InstructionConditionalTicks {
-  Instruction::Opcode opcode;
-  uint8_t expected_ticks;
-};
 
 // clang-format off
-constexpr InstructionConditionalTicks kKnownNormalOpcodes[] = {
-  {{0x20},  4},
-  {{0x28},  4},
-  {{0x30},  4},
-  {{0x38},  4},
-  {{0xc0}, 12},
-  {{0xc2},  4},
-  {{0xc4}, 12},
-  {{0xc8}, 12},
-  {{0xca},  4},
-  {{0xcc}, 12},
-  {{0xd0}, 12},
-  {{0xd2},  4},
-  {{0xd4}, 12},
-  {{0xd8}, 12},
-  {{0xda},  4},
-  {{0xdc}, 12},
+constexpr uint8_t kKnownNormalOpcodes[] = {
+  0x20, 0x28, 0x30, 0x38, 0xc0, 0xc2, 0xc4, 0xc8,
+  0xca, 0xcc, 0xd0, 0xd2, 0xd4, 0xd8, 0xda, 0xdc,
 };
 // clang-format on
 
 inline bool IsWithinKnownNormalOpcodes(uint8_t opcode) {
-  for (auto& known_cond_tick : kKnownNormalOpcodes) {
-    if (known_cond_tick.opcode.low == opcode)
+  for (uint8_t known_opcode : kKnownNormalOpcodes) {
+    if (opcode == known_opcode)
       return true;
   }
 
   return false;
 }
 
-TEST_CASE("Normal Instructions Conditional Ticks") {
-  SECTION("No known instruction should give 0") {
+TEST_CASE("Instruction Conditional Ticks") {
+  SECTION("Non-conditional normal instructions should give 0") {
     Instruction instruction;
 
     for (uint16_t opcode = 0; opcode < 0x100; opcode++) {
@@ -103,7 +85,20 @@ TEST_CASE("Normal Instructions Conditional Ticks") {
     }
   }
 
-  SECTION("Known instructions") {
+  SECTION("CB instructions all return 0") {
+    Instruction instruction;
+    instruction.opcode.high = 0xcb;
+    for (uint16_t opcode = 0; opcode < 0x100; opcode++) {
+      INFO("Opcode 0x" << std::hex << instruction.opcode.opcode);
+      instruction.opcode.low = opcode;
+
+      // Both no flags and all set flags should return 0.
+      CHECK(GetConditionalTicks(instruction, 0) == 0);
+      CHECK(GetConditionalTicks(instruction, 0xff) == 0);
+    }
+  }
+
+  SECTION("Conditional normal instructions should return ticks with correct flags") {
     Instruction instruction;
 
     uint8_t z_not_set = 0;
@@ -238,6 +233,94 @@ TEST_CASE("Normal Instructions Conditional Ticks") {
       INFO("Opcode 0x" << std::hex << instruction.opcode.opcode);
       CHECK(GetConditionalTicks(instruction, c_not_set) == 12);
       CHECK(GetConditionalTicks(instruction, c_set ) == 0);
+    }
+  }
+}
+
+// Instruction Fetch -------------------------------------------------------------------------------
+
+inline void SetData(uint8_t* data, uint8_t a, uint8_t b, uint8_t c) {
+  data[0] = a;
+  data[1] = b;
+  data[2] = c;
+}
+
+constexpr uint8_t kInvalidOpcodes[] = {
+    0xD3, 0xDB, 0xDD, 0xE3,
+    0xE4, 0xEB, 0xEC, 0xED,
+    0xF4, 0xFC, 0xFD,
+};
+
+TEST_CASE("FetchAndDecode") {
+  SECTION("Valid normal decoding") {
+    uint8_t data[3];
+    Instruction instruction;
+
+    // NOTE: FetchAndDecode will insert in the operands even if they're not needed.
+
+    // 0x00: NOP.
+    SetData(data, 0x00, 0x0a, 0x0b);
+    REQUIRE(FetchAndDecode(&instruction, data) == true);
+    CHECK(instruction.opcode.opcode == 0x0000);
+    CHECK(instruction.length == 1u);
+    CHECK(instruction.ticks == 4u);
+    CHECK(*(uint16_t*)instruction.operands == 0x0b0a);
+
+
+    // 0x03: INC BC.
+    SetData(data, 0x03, 0xa0, 0x0b);
+    REQUIRE(FetchAndDecode(&instruction, data) == true);
+    CHECK(instruction.opcode.opcode == 0x0003);
+    CHECK(instruction.length == 1u);
+    CHECK(instruction.ticks == 8u);
+    CHECK(*(uint16_t*)instruction.operands == 0x0ba0);
+
+    // 0x3e: LD L, d8.
+    SetData(data, 0x3e, 0xad, 0xde);
+    REQUIRE(FetchAndDecode(&instruction, data) == true);
+    CHECK(instruction.opcode.opcode == 0x003e);
+    CHECK(instruction.length == 2u);
+    CHECK(instruction.ticks == 8u);
+    CHECK(*(uint16_t*)instruction.operands == 0xdead);
+
+    // 0ca: JP Z, a16.
+    SetData(data, 0xca, 0xef, 0xbe);
+    REQUIRE(FetchAndDecode(&instruction, data) == true);
+    CHECK(instruction.opcode.opcode == 0x00ca);
+    CHECK(instruction.length == 3u);
+    CHECK(instruction.ticks == 12u);  // This is conditional, but that's not part of decode.
+    CHECK(*(uint16_t*)instruction.operands == 0xbeef);
+  }
+
+  SECTION("Invalid decoding should fail") {
+    uint8_t data[3];
+    Instruction instruction;
+
+    for (uint8_t invalid_opcode : kInvalidOpcodes) {
+      INFO("FetchAndDecode 0x" << std::hex << invalid_opcode);
+
+      SetData(data, invalid_opcode, 0xff, 0xff);
+      CHECK(FetchAndDecode(&instruction, data) == false);
+    }
+  }
+
+  SECTION("CB instructions are all same length") {
+    uint8_t data[3];
+    Instruction instruction;
+
+    for (uint16_t i = 0; i < 0x100; i++) {
+      uint16_t cb_opcode = 0xcb00 | i;
+
+      INFO("FetchAndDecode 0x" << std::hex << cb_opcode);
+      SetData(data, 0xcb, (uint8_t)i, 0xff);
+
+      REQUIRE(FetchAndDecode(&instruction, data) == true);
+      REQUIRE(instruction.opcode.opcode == cb_opcode);
+      REQUIRE(IsCBInstruction(instruction) == true);
+      CHECK(instruction.length == 2u);
+
+      // cb instructions have no operands.
+      CHECK(*(uint16_t*)instruction.operands == 0u);
     }
   }
 }

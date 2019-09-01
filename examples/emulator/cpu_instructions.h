@@ -11,20 +11,9 @@ namespace emulator {
 struct CPU;
 
 struct Instruction {
-  // NOTE(Cristian): Using a callback on each instruction is probably not the most efficient way to
-  //                 go about this.
-  using InstructionCallback = void(*)(CPU*, Instruction*);
-
-  InstructionCallback* pre_execution = nullptr;
-  InstructionCallback* post_execution = nullptr;
-
-  // Most functions the ticks are only advanced when the instruction executes.
-  // But for some functions (conditional jumps and some two-stage instructions), there are some
-  // ticks that are run after the instruction.
-  uint8_t pre_ticks = 0;
-  uint8_t post_ticks = 0;
-
-  uint8_t length;     // Length in bytes.
+  uint8_t ticks = 0;
+  uint8_t length = 0;         // In bytes.
+  uint8_t operands[2] = {};   // Always filled in. Should be used correctly according to length.
 
   // The actual bytes this instruction represents.
   // NOTE: CB instructions are two-bytes: the 0xcb prefix and then the "opcode".
@@ -38,9 +27,9 @@ struct Instruction {
   } opcode;
   static_assert(sizeof(Instruction::Opcode) == 2);
 };
-static_assert(sizeof(Instruction) == 24);
+static_assert(sizeof(Instruction) == 6);
 
-inline bool IsCBInstruction(const Instruction& i) { return i.opcode.low == 0xcb; }
+inline bool IsCBInstruction(const Instruction& i) { return i.opcode.high == 0xcb; }
 
 void InitInstructions(CPU*);
 
@@ -66,6 +55,10 @@ uint8_t GetConditionalTicks(const Instruction&, uint8_t flags);
 
 // Exposed for testing purposes.
 uint8_t GetConditionalTicks(const ConditionalTicks& ct, uint8_t flags);
+
+// We give all the possible data an instruction decoding might need, as instructions are at most
+// three bytes long.
+bool FetchAndDecode(Instruction*, const uint8_t data[3]);
 
 }  // namespace emulator
 }  // namespace rothko
