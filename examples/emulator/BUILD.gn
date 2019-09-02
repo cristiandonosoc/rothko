@@ -3,12 +3,15 @@
 
 source_set("lib") {
   sources = [
+    "audio.cc",
+    "audio.h",
     "cpu.cc",
     "cpu.h",
     "cpu_instructions.cc",
     "cpu_instructions.h",
     "display.cc",
     "display.h",
+    "gameboy.h",
     "memory.cc",
     "memory.h",
     "memory_bank_controllers.cc",

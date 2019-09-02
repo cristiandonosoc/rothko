@@ -13,6 +13,7 @@
 namespace rothko {
 namespace emulator {
 
+struct Gameboy;
 struct Textures;
 
 // Amount of tiles in the tilemap (in VRAM).
@@ -44,6 +45,8 @@ struct Display {
 Color ShadeToColor(uint32_t shade);
 
 bool InitDisplay(Game*, Display* out);
+
+void OnDisplayIO(Gameboy*, uint64_t address);
 
 std::unique_ptr<Mesh> CreateBackgroundMesh(Game* game);
 

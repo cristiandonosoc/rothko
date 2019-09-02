@@ -8,7 +8,7 @@
 namespace rothko {
 namespace emulator {
 
-struct Memory;
+struct Gameboy;
 
 enum class MBCType {
   kBasic,
@@ -17,9 +17,9 @@ enum class MBCType {
 const char* ToString(MBCType);
 
 struct MBCApi{
-  using ReadFunction = uint8_t (*)(Memory*, uint64_t address);
+  using ReadFunction = uint8_t (*)(Gameboy*, uint64_t address);
   template <typename T>
-  using WriteFunction = void (*)(Memory*, uint64_t address, T value);
+  using WriteFunction = void (*)(Gameboy*, uint64_t address, T value);
 
   MBCType type = MBCType::kLast;
 

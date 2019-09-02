@@ -67,6 +67,14 @@ bool InitDisplay(Game* game, Display* out) {
   return true;
 }
 
+// OnDisplayIO -------------------------------------------------------------------------------------
+
+void OnDisplayIO(Gameboy* gameboy, uint64_t address) {
+  (void)gameboy;
+  (void)address;
+  /* this.display.HandleMemoryChange((MMR)address, value); */
+}
+
 // Background Mesh ---------------------------------------------------------------------------------
 
 namespace {

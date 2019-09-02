@@ -3,6 +3,8 @@
 
 #include "memory_bank_controllers.h"
 
+#include "gameboy.h"
+
 #include <rothko/logging/logging.h>
 
 namespace rothko {
@@ -17,8 +19,8 @@ namespace emulator {
 
 namespace {
 
-uint8_t LowLevelRead(Memory* memory, uint64_t address);
-void LowLevelWrite(Memory* memory, uint64_t address, uint8_t value);
+uint8_t LowLevelRead(Gameboy* gameboy, uint64_t address);
+void LowLevelWrite(Gameboy* gameboy, uint64_t address, uint8_t value);
 
 }  // namespace
 
@@ -26,14 +28,14 @@ void LowLevelWrite(Memory* memory, uint64_t address, uint8_t value);
 
 namespace {
 
-void BasicMBCWriteByte(Memory* memory, uint64_t address, uint8_t value) {
-  LowLevelWrite(memory, address, value);
+void BasicMBCWriteByte(Gameboy* gameboy, uint64_t address, uint8_t value) {
+  LowLevelWrite(gameboy, address, value);
 }
 
-void BasicMBCWriteShort(Memory* memory, uint64_t address, uint16_t value) {
+void BasicMBCWriteShort(Gameboy* gameboy, uint64_t address, uint16_t value) {
   uint8_t* ptr = (uint8_t*)&value;
-  BasicMBCWriteByte(memory, address++, *ptr++);
-  BasicMBCWriteByte(memory, address, *ptr);
+  BasicMBCWriteByte(gameboy, address++, *ptr++);
+  BasicMBCWriteByte(gameboy, address, *ptr);
 }
 
 MBCApi GetBasicMBC() {
@@ -64,13 +66,13 @@ MBCApi GetMBCApi(MBCType type) {
 
 namespace {
 
-uint8_t LowLevelRead(Memory* memory, uint64_t address) {
-  uint8_t* base_ptr = (uint8_t*)&memory;
+uint8_t LowLevelRead(Gameboy* gameboy, uint64_t address) {
+  uint8_t* base_ptr = (uint8_t*)&gameboy->memory;
   return base_ptr[address];
 }
 
-void LowLevelWrite(Memory* memory, uint64_t address, uint8_t value) {
-  uint8_t* base_ptr = (uint8_t*)&memory;
+void LowLevelWrite(Gameboy* gameboy, uint64_t address, uint8_t value) {
+  uint8_t* base_ptr = (uint8_t*)&gameboy->memory;
 
   // [0x0000 - 0x7fff]: ROM Bank 0, ROM Bank 1
   // Do nothing, not writeable!
@@ -163,14 +165,12 @@ void LowLevelWrite(Memory* memory, uint64_t address, uint8_t value) {
     return;
   }
 
+  // ******* SOUND *******
+
   // [0xff10 - 0xff26]: Sound registers.
-  if ((0xff10 <= address) && (address <= 0xff26)) {
-    // NOTE(Cristian): Memory change in the sound register area are very specific, so all the
-    //                 changes to the actual values are made by the APU and sound channels
-    //                 themselves.
-    // TODO(Cristian): See if the above is the way we want to go.
-    /* this.apu.HandleMemoryChange((MMR)address, value); */
-    NOT_IMPLEMENTED();
+  if (address < 0xff27) {
+    base_ptr[address] = value;
+    OnAudioIO(gameboy, address);
     return;
   }
 
@@ -183,24 +183,25 @@ void LowLevelWrite(Memory* memory, uint64_t address, uint8_t value) {
   // [0xff30-0xff3f]: Waveform data.
   if (address < 0xff40) {
     base_ptr[address] = value;
-    // TODO(Cristian): See if this requires special handling by the APU.
-    /* this.apu.HandleWaveWrite(address, value); */
-    NOT_IMPLEMENTED();
+    OnAudioIO(gameboy, address);
     return;
   }
+
+  // ******* VIDEO *******
 
   // [0xff40]: LCDC register.
   if (address == 0xff40) {
     base_ptr[address] = value;
     // We handle display memory changes
     // TODO(Cristian): See if the trigger is what we want.
-    /* this.display.HandleMemoryChange((MMR)address, value); */
-    NOT_IMPLEMENTED();
+    OnDisplayIO(gameboy, address);
+    return;
   }
 
   // [0xff41-0xff45]: LCD STAT, SCY, SCX, LY, LYC.
   if (address < 0xff46) {
     base_ptr[address] = value;
+    OnDisplayIO(gameboy, address);
     return;
   }
 
@@ -213,6 +214,7 @@ void LowLevelWrite(Memory* memory, uint64_t address, uint8_t value) {
   // [0xff47-0xff4b]: BGP, OBP0, OBP1, WY, WX.
   if (address < 0xff4c) {
     base_ptr[address] = value;
+    OnDisplayIO(gameboy, address);
     return;
   }
 

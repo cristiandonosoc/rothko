@@ -16,13 +16,22 @@ struct CPU;
 
 // Registers ---------------------------------------------------------------------------------------
 
+#define CREATE_CPU_REGISTER_UNION(reg1, reg2) \
+  union {                                     \
+    uint16_t reg1##reg2;                      \
+    struct {                                  \
+      uint8_t reg2;                           \
+      uint8_t reg1;                           \
+    };                                        \
+  };
+
 struct CPURegisters {
   // All these registers can be accessed as a 16-bit value or as two separate 8-bit value:
   // bc = 16-bit. b = top 8-bits. c = bottom 8-bit.
-  uint16_t af;  // Accumulator / Flags.
-  uint16_t bc;  // b and c registers.
-  uint16_t de;  // d and e registers.
-  uint16_t hl;  // h and l registers.
+  CREATE_CPU_REGISTER_UNION(a, f);      // Accumulator / Flags.
+  CREATE_CPU_REGISTER_UNION(b, c);      // b and c registers.
+  CREATE_CPU_REGISTER_UNION(d, e);      // d and e registers.
+  CREATE_CPU_REGISTER_UNION(h, l);      // h and l registers.
 
   uint16_t pc;  // Program counter.
   uint16_t sp;  // Stack pointer.
@@ -68,29 +77,34 @@ constexpr uint8_t kCPUFlagsNIndex = 6;
 constexpr uint8_t kCPUFlagsZMask = (1 << 7);
 constexpr uint8_t kCPUFlagsZIndex = 7;
 
-#define CPU_FLAGS_GET_C(cpu)    GetBit(CPU_GET_FLAGS(cpu), 4)
-#define CPU_FLAGS_GET_H(cpu)    GetBit(CPU_GET_FLAGS(cpu), 5)
-#define CPU_FLAGS_GET_N(cpu)    GetBit(CPU_GET_FLAGS(cpu), 6)
-#define CPU_FLAGS_GET_Z(cpu)    GetBit(CPU_GET_FLAGS(cpu), 7)
-
-#define CPU_FLAGS_SET_C(cpu)    SetBit(CPU_GET_FLAGS(cpu), 4)
-#define CPU_FLAGS_SET_H(cpu)    SetBit(CPU_GET_FLAGS(cpu), 5)
-#define CPU_FLAGS_SET_N(cpu)    SetBit(CPU_GET_FLAGS(cpu), 6)
-#define CPU_FLAGS_SET_Z(cpu)    SetBit(CPU_GET_FLAGS(cpu), 7)
-
-#define CPU_FLAGS_CLEAR_C(cpu)  ClearBit(CPU_GET_FLAGS(cpu), 4)
-#define CPU_FLAGS_CLEAR_H(cpu)  ClearBit(CPU_GET_FLAGS(cpu), 4)
-#define CPU_FLAGS_CLEAR_N(cpu)  ClearBit(CPU_GET_FLAGS(cpu), 4)
-#define CPU_FLAGS_CLEAR_Z(cpu)  ClearBit(CPU_GET_FLAGS(cpu), 4)
-
 // Instruction -------------------------------------------------------------------------------------
 
 struct CPU {
   CPURegisters registers;
-
-  Instruction instructions[0xff + 1];
-  Instruction cb_instructions[0xff + 1];
 };
+
+inline uint8_t CPUFlagsGetC(const CPU& cpu) { return GetBit(cpu.registers.f, 4); }
+inline uint8_t CPUFlagsGetH(const CPU& cpu) { return GetBit(cpu.registers.f, 5); }
+inline uint8_t CPUFlagsGetN(const CPU& cpu) { return GetBit(cpu.registers.f, 6); }
+inline uint8_t CPUFlagsGetZ(const CPU& cpu) { return GetBit(cpu.registers.f, 7); }
+
+inline uint8_t _CPUSetFlag(CPU* cpu, uint8_t bit) {
+  cpu->registers.f = SetBit(cpu->registers.f, bit);
+  return cpu->registers.f;
+}
+inline uint8_t CPUFlagsSetC(CPU* cpu) { return _CPUSetFlag(cpu, 4); }
+inline uint8_t CPUFlagsSetH(CPU* cpu) { return _CPUSetFlag(cpu, 5); }
+inline uint8_t CPUFlagsSetN(CPU* cpu) { return _CPUSetFlag(cpu, 6); }
+inline uint8_t CPUFlagsSetZ(CPU* cpu) { return _CPUSetFlag(cpu, 7); }
+
+inline uint8_t _CPUClearFlag(CPU* cpu, uint8_t bit) {
+  cpu->registers.f = ClearBit(cpu->registers.f, bit);
+  return cpu->registers.f;
+}
+inline uint8_t CPUFlagsClearC(CPU* cpu) { return _CPUClearFlag(cpu, 4); }
+inline uint8_t CPUFlagsClearH(CPU* cpu) { return _CPUClearFlag(cpu, 5); }
+inline uint8_t CPUFlagsClearN(CPU* cpu) { return _CPUClearFlag(cpu, 6); }
+inline uint8_t CPUFlagsClearZ(CPU* cpu) { return _CPUClearFlag(cpu, 7); }
 
 void Init(CPU*);
 
