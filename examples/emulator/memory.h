@@ -62,56 +62,56 @@ struct VRAM {
 // MappedIO are memory mapped memory to functionality registers (sound, joystick, etc.).
 
 struct MappedIO {
-    uint8_t joypad;   // 0xff00: Joystick. TODO(Cristian): Do access macros.
+    uint8_t joypad;     // 0xff00: Joystick. TODO(Cristian): Do access macros.
 
     // Serial communication registers.
-    uint8_t sb;       // 0xff01: Serial transfer data (R/W).
-    uint8_t sc;       // 0xff02: Serial transfer control. // TODO(Cristian): Do access macros.
+    uint8_t sb;         // 0xff01: Serial transfer data (R/W).
+    uint8_t sc;         // 0xff02: Serial transfer control. // TODO(Cristian): Do access macros.
 
-    uint8_t __pad0;
+    uint8_t __pad0;     // 0xff03: Unused.
 
     // Timer registers.
-    uint8_t div;      // 0xff04: Frequency divider; upper 8 bits of the 16 bit clock counter.
-    uint8_t tima;     // 0xff05: Timer counter.
-    uint8_t tma;      // 0xff06:  Timer modulo.
-    uint8_t tac;      // 0xff07:  Timer controller.
+    uint8_t div;        // 0xff04: Divider register. Upper 8 bits of the 16 bit clock counter.
+    uint8_t tima;       // 0xff05: Timer counter (TIMA).
+    uint8_t tma;        // 0xff06: Timer modulo (TMA).
+    uint8_t tac;        // 0xff07: Timer controller (TAC).
 
-    uint8_t __pad1[7];
+    uint8_t __pad1[7];  // [0xff08-0xff0e]: Unused.
 
-    uint8_t ifr;      // 0xff0f: Interrupt frag.  // TODO(Cristian): Do access macros.
+    uint8_t ifr;        // 0xff0f: Interrupt frag.  // TODO(Cristian): Do access macros.
 
     // sound registers.
-    uint8_t nr10;     // 0xff10
-    uint8_t nr11;     // 0xff11
-    uint8_t nr12;     // 0xff12
-    uint8_t nr13;     // 0xff13
-    uint8_t nr14;     // 0xff14
+    uint8_t nr10;       // 0xff10
+    uint8_t nr11;       // 0xff11
+    uint8_t nr12;       // 0xff12
+    uint8_t nr13;       // 0xff13
+    uint8_t nr14;       // 0xff14
 
-    uint8_t __pad2;
+    uint8_t __pad2;     // 0xff15: Unused.
 
-    uint8_t nr21;     // 0xff16
-    uint8_t nr22;     // 0xff17
-    uint8_t nr23;     // 0xff18
-    uint8_t nr24;     // 0xff19
+    uint8_t nr21;       // 0xff16
+    uint8_t nr22;       // 0xff17
+    uint8_t nr23;       // 0xff18
+    uint8_t nr24;       // 0xff19
 
-    uint8_t nr30;     // 0xff1a
-    uint8_t nr31;     // 0xff1b
-    uint8_t nr32;     // 0xff1c
-    uint8_t nr33;     // 0xff1d
-    uint8_t nr34;     // 0xff1e
+    uint8_t nr30;       // 0xff1a
+    uint8_t nr31;       // 0xff1b
+    uint8_t nr32;       // 0xff1c
+    uint8_t nr33;       // 0xff1d
+    uint8_t nr34;       // 0xff1e
 
-    uint8_t __pad3;
+    uint8_t __pad3;     // 0xff1f: Unused.
 
-    uint8_t nr41;     // 0xff20
-    uint8_t nr42;     // 0xff21
-    uint8_t nr43;     // 0xff22
-    uint8_t nr44;     // 0xff23
+    uint8_t nr41;       // 0xff20
+    uint8_t nr42;       // 0xff21
+    uint8_t nr43;       // 0xff22
+    uint8_t nr44;       // 0xff23
 
-    uint8_t nr50;     // 0xff24
-    uint8_t nr51;     // 0xff25
-    uint8_t nr52;     // 0xff26
+    uint8_t nr50;       // 0xff24
+    uint8_t nr51;       // 0xff25
+    uint8_t nr52;       // 0xff26
 
-    uint8_t __pad4[9];
+    uint8_t __pad4[9];  // [0xff27-0xff2f]: Unused.
 
     // 0xff30 - 0xff3f: Waveform storage for arbitrary sound data.
     //                  Holds 32 4-bit samples that are play back upper 4 bits first.
@@ -146,15 +146,15 @@ struct MappedIO {
 // Whether the display is enabled or not.
 #define LCDC_DISPLAY_ENABLE(lcdc)                       (lcdc & 0b10000000)
 
-    uint8_t stat;     // 0xff41: LCD Status. TODO(Cristian): Do access macros.
-    uint8_t scy;      // 0xff42: BG Scroll Y. Window automatically wraps borders.
-    uint8_t scx;      // 0xff43: BG Scroll X. Window automatically wraps borders.
-    uint8_t ly;       // 0xff44: LCD Y-coord. Indicates which line is being transfered.
-                      //         Values 144-153 indicate V-Blank period.
-    uint8_t lyc;      // 0xff45: LY Compare. When |ly| == |lyc|, a bit in |stat| is set.
-    uint8_t dma;      // 0xff46: DMA Transfer address.
+    uint8_t stat;       // 0xff41: LCD Status. TODO(Cristian): Do access macros.
+    uint8_t scy;        // 0xff42: BG Scroll Y. Window automatically wraps borders.
+    uint8_t scx;        // 0xff43: BG Scroll X. Window automatically wraps borders.
+    uint8_t ly;         // 0xff44: LCD Y-coord. Indicates which line is being transfered.
+                        //         Values 144-153 indicate V-Blank period.
+    uint8_t lyc;        // 0xff45: LY Compare. When |ly| == |lyc|, a bit in |stat| is set.
+    uint8_t dma;        // 0xff46: DMA Transfer address.
 
-    uint8_t bgp;      // 0xff47: BG Palette data. Determines colors for BG and window pixels.
+    uint8_t bgp;        // 0xff47: BG Palette data. Determines colors for BG and window pixels.
 
 #define LCDC_BGP_GET_COLOR0(bgp)  ((bgp >> 0) & 0b11)   // Bit 0-1 - Color for shade number 0
 #define LCDC_BGP_GET_COLOR1(bgp)  ((bgp >> 2) & 0b11)   // Bit 2-3 - Color for shade number 1
@@ -163,16 +163,16 @@ struct MappedIO {
 
     // For |obp0| and |obp1|, work the same as |bgp|, except the lower 2 bits are not used, as
     // sprite data 00 is transparent.
-    uint8_t obp0;     // 0xff48: Object Palette 0. Colors for sprite pixels in palette 0.
-    uint8_t obp1;     // 0xff49: Object Palette 1. Colors for sprite pixels in palette 1.
+    uint8_t obp0;       // 0xff48: Object Palette 0. Colors for sprite pixels in palette 0.
+    uint8_t obp1;       // 0xff49: Object Palette 1. Colors for sprite pixels in palette 1.
 
     // Window is visible (if enable) when |wx| in [0, 166] and |wy| in [0, 143].
     // The window is offset, so a position of (7, 0) locates the window in the upper left corner,
     // completely covering normal background.
-    uint8_t wy;       // 0xff4a: Window Y.
-    uint8_t wx;       // 0xff4b: Window X - 7.
+    uint8_t wy;         // 0xff4a: Window Y.
+    uint8_t wx;         // 0xff4b: Window X - 7.
 
-    uint8_t __pad_final[52];
+    uint8_t _pad3[52];  // [0xff4c-0xff7f]: Unused.
 };
 // Extracts palette colors |bgp|, |obp0| and |obp1|. Valid indices are 0-3.
 // NOTE: |obp0| and |obp1| lower 2 bits (PALLETE_COLOR(<reg>, 0) is unused, as those bits are
@@ -219,8 +219,8 @@ bool SpriteIsHidden(Memory*, const OAMEntry& sprite);
 // GB Memory Layout --------------------------------------------------------------------------------
 
 struct Memory {
-  uint8_t rom_bank0[KILOBYTES(16)];
-  uint8_t rom_banks[KILOBYTES(16)];
+  uint8_t rom_bank0[KILOBYTES(16)];   // [0x0000-0x3ffff]
+  uint8_t rom_banks[KILOBYTES(16)];   // [0x4000-0x7ffff]
 
   VRAM vram;
 

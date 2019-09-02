@@ -42,3 +42,16 @@ source_set("imguizmo") {
   # We don't care about the warnings of this library.
   configs -= [ "//gn_config/compilers:default_warnings" ]
 }
+
+source_set("imgui_extras") {
+  public = [
+    "imgui_extras/imgui_memory_editor.h",
+  ]
+
+  configs += [ ":imgui_config" ]
+
+  include_dirs = [ "//third_party/imgui_extras" ]
+
+  # We don't care about the warnings of this library.
+  configs -= [ "//gn_config/compilers:default_warnings" ]
+}

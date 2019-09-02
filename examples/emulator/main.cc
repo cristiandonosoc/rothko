@@ -13,6 +13,8 @@
 #include "quad.h"
 #include "textures.h"
 
+#include <third_party/imgui_extras/imgui_memory_editor.h>
+
 using namespace rothko;
 using namespace rothko::imgui;
 
@@ -36,6 +38,8 @@ int main(int argc, char* argv[]) {
   }
 
   printf("Log to stdout %d\n", log_to_stdout);
+
+  bool memory_loaded = false;
 
   Game game;
   InitWindowConfig window_config = {};
@@ -108,7 +112,10 @@ int main(int argc, char* argv[]) {
           if (!ReadWholeFile(path, &data)) {
             ERROR(App, "Could not read %s", path.c_str());
           }
+
           ASSERT_MSG(data.size() >= KILOBYTES(64), "Got size %zu", data.size());
+
+          memory_loaded = true;
 
           memcpy(&memory, data.data(), KILOBYTES(64));
 
@@ -133,6 +140,11 @@ int main(int argc, char* argv[]) {
       }
 
       ImGui::EndMainMenuBar();
+    }
+
+    if (memory_loaded) {
+      static MemoryEditor memory_editor;
+      memory_editor.DrawWindow("Memory Editor", &memory, sizeof(memory));
     }
 
     ImGui::ShowDemoWindow();

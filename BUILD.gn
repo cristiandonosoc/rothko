@@ -25,8 +25,8 @@ group("tests") {
   testonly = true
 
   deps = [
-    "//tests",
     "//examples/emulator:tests",
+    "//tests",
   ]
 }
 

@@ -12,7 +12,7 @@ source_set("scene") {
   ]
 
   deps = [
-    "//rothko/math",
     "//rothko/graphics",
+    "//rothko/math",
   ]
 }

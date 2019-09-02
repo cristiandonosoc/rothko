@@ -3,20 +3,22 @@
 
 source_set("lib") {
   sources = [
+    "cpu.cc",
+    "cpu.h",
+    "cpu_instructions.cc",
+    "cpu_instructions.h",
     "display.cc",
     "display.h",
     "memory.cc",
     "memory.h",
+    "memory_bank_controllers.cc",
+    "memory_bank_controllers.h",
     "quad.cc",
     "quad.h",
     "shader.cc",
     "shader.h",
     "textures.cc",
     "textures.h",
-    "cpu.cc",
-    "cpu.h",
-    "cpu_instructions.cc",
-    "cpu_instructions.h",
   ]
 
   deps = [
@@ -24,6 +26,7 @@ source_set("lib") {
     "//rothko/graphics",
     "//rothko/ui:imgui",
     "//rothko/window:sdl_opengl",
+    "//third_party:imgui_extras",
   ]
 }
 
