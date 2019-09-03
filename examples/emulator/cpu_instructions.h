@@ -13,7 +13,10 @@ struct CPU;
 struct Instruction {
   uint8_t ticks = 0;
   uint8_t length = 0;         // In bytes.
-  uint8_t operands[2] = {};   // Always filled in. Should be used correctly according to length.
+  union {
+    uint8_t operands[2];   // Always filled in. Should be used correctly according to length.
+    uint16_t operand;
+  };
 
   // The actual bytes this instruction represents.
   // NOTE: CB instructions are two-bytes: the 0xcb prefix and then the "opcode".

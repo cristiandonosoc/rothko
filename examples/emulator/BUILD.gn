@@ -9,6 +9,8 @@ source_set("lib") {
     "cpu.h",
     "cpu_instructions.cc",
     "cpu_instructions.h",
+    "disassembler.cc",
+    "disassembler.h",
     "display.cc",
     "display.h",
     "gameboy.h",

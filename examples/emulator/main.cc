@@ -2,18 +2,17 @@
 // This code has a BSD license. See LICENSE.
 
 #include <rothko/game.h>
+#include <rothko/math/math.h>
 #include <rothko/platform/platform.h>
 #include <rothko/ui/imgui.h>
 #include <rothko/utils/file.h>
-#include <rothko/math/math.h>
-
-#include "display.h"
-#include "memory.h"
-#include "shader.h"
-#include "quad.h"
-#include "textures.h"
-
 #include <third_party/imgui_extras/imgui_memory_editor.h>
+
+#include "disassembler.h"
+#include "gameboy.h"
+#include "quad.h"
+#include "shader.h"
+#include "textures.h"
 
 using namespace rothko;
 using namespace rothko::imgui;
@@ -83,7 +82,8 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  rothko::emulator::Memory memory = {};
+  rothko::emulator::Gameboy gameboy = {};
+  rothko::emulator::Disassembler disassembler = {};
 
   bool running = true;
   while (running) {
@@ -117,14 +117,14 @@ int main(int argc, char* argv[]) {
 
           memory_loaded = true;
 
-          memcpy(&memory, data.data(), KILOBYTES(64));
+          memcpy(&gameboy.memory, data.data(), KILOBYTES(64));
 
-          LOG(App, "0x%x", *(uint32_t*)(memory.rom_bank0 + 0x104));
+          LOG(App, "0x%x", *(uint32_t*)(gameboy.memory.rom_bank0 + 0x104));
 
-          UpdateTileTexture(&memory, &textures->tiles);
-          UpdateBackgroundTexture(&memory, &textures->background);
-          UpdateWindowTexture(&memory, &textures->window);
-          UpdateSpritesDebugTexture(&memory, &textures->sprites_debug);
+          UpdateTileTexture(&gameboy.memory, &textures->tiles);
+          UpdateBackgroundTexture(&gameboy.memory, &textures->background);
+          UpdateWindowTexture(&gameboy.memory, &textures->window);
+          UpdateSpritesDebugTexture(&gameboy.memory, &textures->sprites_debug);
 
           RendererSubTexture(game.renderer.get(), &textures->tiles);
           RendererSubTexture(game.renderer.get(), &textures->background);
@@ -132,8 +132,10 @@ int main(int argc, char* argv[]) {
           RendererSubTexture(game.renderer.get(), &textures->sprites_debug);
 
           // Generate the background mesh.
-          CreateBackgroundMesh(game.renderer.get(), &display, &memory, &textures->tiles,
+          CreateBackgroundMesh(game.renderer.get(), &display, &gameboy.memory, &textures->tiles,
                                normal_shader.get(), (uint8_t*)&normal_ubo);
+
+          Disassemble(gameboy, &disassembler);
         }
 
         ImGui::EndMenu();
@@ -144,12 +146,12 @@ int main(int argc, char* argv[]) {
 
     if (memory_loaded) {
       static MemoryEditor memory_editor;
-      memory_editor.DrawWindow("Memory Editor", &memory, sizeof(memory));
+      memory_editor.DrawWindow("Memory Editor", &gameboy.memory, sizeof(gameboy.memory));
     }
 
     ImGui::ShowDemoWindow();
 
-    CreateDisplayImgui(&memory, textures.get());
+    CreateDisplayImgui(&gameboy.memory, textures.get());
 
     // window.
     {
@@ -165,6 +167,32 @@ int main(int argc, char* argv[]) {
       ImGui::Image(&textures->tiles, {200, 200 * 1.5f});
 
       ImGui::End();
+    }
+
+    // Disassembler window.
+    {
+      if (Valid(disassembler)) {
+        ImGui::Begin("Disassemble");
+
+        for (auto& [opcode, dis_inst] : disassembler.instructions) {
+          auto& inst = dis_inst.instruction;
+          if (!IsCBInstruction(inst)) {
+            ImGui::Text("0x%x: OPCODE 0x%x, LENGTH: %u, TICKS: %u",
+                        dis_inst.address,
+                        inst.opcode.low,
+                        inst.length,
+                        inst.ticks);
+          } else {
+            ImGui::Text("0x%x: OPCODE 0x%x, LENGTH: %u, TICKS: %u",
+                        dis_inst.address,
+                        inst.opcode.opcode,
+                        inst.length,
+                        inst.ticks);
+          }
+        }
+
+        ImGui::End();
+      }
     }
 
     PerFrameVector<RenderCommand> commands;
