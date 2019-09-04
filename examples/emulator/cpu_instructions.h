@@ -34,7 +34,9 @@ static_assert(sizeof(Instruction) == 6);
 
 inline bool IsCBInstruction(const Instruction& i) { return i.opcode.high == 0xcb; }
 
-void InitInstructions(CPU*);
+
+const char* GetName(const Instruction& opcode);
+const char* GetDescription(const Instruction& opcode);
 
 // Conditional Ticks -------------------------------------------------------------------------------
 //

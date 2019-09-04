@@ -111,6 +111,7 @@ int main(int argc, char* argv[]) {
           std::vector<uint8_t> data;
           if (!ReadWholeFile(path, &data)) {
             ERROR(App, "Could not read %s", path.c_str());
+            return 1;
           }
 
           ASSERT_MSG(data.size() >= KILOBYTES(64), "Got size %zu", data.size());
@@ -177,14 +178,16 @@ int main(int argc, char* argv[]) {
         for (auto& [opcode, dis_inst] : disassembler.instructions) {
           auto& inst = dis_inst.instruction;
           if (!IsCBInstruction(inst)) {
-            ImGui::Text("0x%x: OPCODE 0x%x, LENGTH: %u, TICKS: %u",
+            ImGui::Text("0x%x: %s (0x%x), LENGTH: %u, TICKS: %u",
                         dis_inst.address,
+                        GetName(dis_inst.instruction),
                         inst.opcode.low,
                         inst.length,
                         inst.ticks);
           } else {
-            ImGui::Text("0x%x: OPCODE 0x%x, LENGTH: %u, TICKS: %u",
+            ImGui::Text("0x%x: %s (0x%x), LENGTH: %u, TICKS: %u",
                         dis_inst.address,
+                        GetName(dis_inst.instruction),
                         inst.opcode.opcode,
                         inst.length,
                         inst.ticks);

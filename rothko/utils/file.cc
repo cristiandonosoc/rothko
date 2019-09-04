@@ -25,7 +25,7 @@ bool ReadWholeFile(const std::string& path, std::string* out, bool add_extra_zer
   size_t file_size;
 
   auto trimmed_path = Trim(path, kCharsToTrim);
-  file = fopen(trimmed_path.c_str(), "r");
+  file = fopen(trimmed_path.c_str(), "rb");
   if (file == NULL) {
     printf("Could not open file %s: %s\n", trimmed_path.c_str(), strerror(errno));
     fflush(stdout);
@@ -44,7 +44,10 @@ bool ReadWholeFile(const std::string& path, std::string* out, bool add_extra_zer
   out->resize(file_size + pad);
   auto result = fread(out->data(), 1, file_size, file);
   if (result != file_size) {
-    printf("Could not read file: %s", path.c_str());
+    printf("[%s:%d]: Error reading file %s. Expected: %zu, Got: %zu\n", __FUNCTION__, __LINE__,
+                                                                        path.c_str(),
+                                                                        file_size,
+                                                                        result);
     fflush(stdout);
     return false;
   }
@@ -60,7 +63,7 @@ bool ReadWholeFile(const std::string& path, std::vector<uint8_t>* out) {
   size_t file_size;
 
   auto trimmed_path = Trim(path, kCharsToTrim);
-  file = fopen(trimmed_path.c_str(), "r");
+  file = fopen(trimmed_path.c_str(), "rb");
   if (file == NULL) {
     printf("Could not open file %s: %s\n", trimmed_path.c_str(), strerror(errno));
     fflush(stdout);
@@ -78,7 +81,10 @@ bool ReadWholeFile(const std::string& path, std::vector<uint8_t>* out) {
   out->resize(file_size);
   auto result = fread(out->data(), 1, file_size, file);
   if (result != file_size) {
-    printf("Could not read file: %s", path.c_str());
+    printf("[%s:%d]: Error reading file %s. Expected: %zu, Got: %zu\n", __FUNCTION__, __LINE__,
+                                                                        path.c_str(),
+                                                                        file_size,
+                                                                        result);
     fflush(stdout);
     return false;
   }
