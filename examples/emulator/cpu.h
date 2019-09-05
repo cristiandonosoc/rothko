@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <rothko/math/math.h>
 #include <stdint.h>
 
 #include <string>
@@ -41,10 +42,6 @@ std::string ToString(const CPURegisters&);
 
 inline uint8_t GetTopRegister(uint16_t reg) { return (reg >> 8); }
 inline uint8_t GetBottomRegister(uint16_t reg) { return reg & 0xff; }
-
-inline uint8_t GetBit(uint8_t reg, int bit) { return (reg >> bit) & 0b1; }
-inline uint8_t SetBit(uint8_t reg, int bit) { return reg | (0b1 << bit); }
-inline uint8_t ClearBit(uint8_t reg, int bit) { return reg & ~(0b1 << bit); }
 
 #define CPU_GET_A(cpu)          GetTopRegister(cpu.registers.af)
 #define CPU_GET_F(cpu)          GetBottomRegister(cpu.registers.af)
@@ -88,23 +85,32 @@ inline uint8_t CPUFlagsGetH(const CPU& cpu) { return GetBit(cpu.registers.f, 5);
 inline uint8_t CPUFlagsGetN(const CPU& cpu) { return GetBit(cpu.registers.f, 6); }
 inline uint8_t CPUFlagsGetZ(const CPU& cpu) { return GetBit(cpu.registers.f, 7); }
 
-inline uint8_t _CPUSetFlag(CPU* cpu, uint8_t bit) {
+inline uint8_t _Set(CPU* cpu, uint8_t bit) {
   cpu->registers.f = SetBit(cpu->registers.f, bit);
   return cpu->registers.f;
 }
-inline uint8_t CPUFlagsSetC(CPU* cpu) { return _CPUSetFlag(cpu, 4); }
-inline uint8_t CPUFlagsSetH(CPU* cpu) { return _CPUSetFlag(cpu, 5); }
-inline uint8_t CPUFlagsSetN(CPU* cpu) { return _CPUSetFlag(cpu, 6); }
-inline uint8_t CPUFlagsSetZ(CPU* cpu) { return _CPUSetFlag(cpu, 7); }
 
-inline uint8_t _CPUClearFlag(CPU* cpu, uint8_t bit) {
+inline uint8_t _Clear(CPU* cpu, uint8_t bit) {
   cpu->registers.f = ClearBit(cpu->registers.f, bit);
   return cpu->registers.f;
 }
-inline uint8_t CPUFlagsClearC(CPU* cpu) { return _CPUClearFlag(cpu, 4); }
-inline uint8_t CPUFlagsClearH(CPU* cpu) { return _CPUClearFlag(cpu, 5); }
-inline uint8_t CPUFlagsClearN(CPU* cpu) { return _CPUClearFlag(cpu, 6); }
-inline uint8_t CPUFlagsClearZ(CPU* cpu) { return _CPUClearFlag(cpu, 7); }
+
+inline uint8_t CPUFlagsSetC(CPU* cpu) { return _Set(cpu, 4); }
+inline uint8_t CPUFlagsSetC(CPU* cpu, uint8_t v) { return v ? _Set(cpu, 4) : _Clear(cpu, 4); }
+
+inline uint8_t CPUFlagsSetH(CPU* cpu) { return _Set(cpu, 5); }
+inline uint8_t CPUFlagsSetH(CPU* cpu, uint8_t v) { return v ? _Set(cpu, 5) : _Clear(cpu, 5); }
+
+inline uint8_t CPUFlagsSetN(CPU* cpu) { return _Set(cpu, 6); }
+inline uint8_t CPUFlagsSetN(CPU* cpu, uint8_t v) { return v ? _Set(cpu, 6) : _Clear(cpu, 6); }
+
+inline uint8_t CPUFlagsSetZ(CPU* cpu) { return _Set(cpu, 7); }
+inline uint8_t CPUFlagsSetZ(CPU* cpu, uint8_t v) { return v ? _Set(cpu, 7) : _Clear(cpu, 7); }
+
+inline uint8_t CPUFlagsClearC(CPU* cpu) { return _Clear(cpu, 4); }
+inline uint8_t CPUFlagsClearH(CPU* cpu) { return _Clear(cpu, 5); }
+inline uint8_t CPUFlagsClearN(CPU* cpu) { return _Clear(cpu, 6); }
+inline uint8_t CPUFlagsClearZ(CPU* cpu) { return _Clear(cpu, 7); }
 
 void Init(CPU*);
 
