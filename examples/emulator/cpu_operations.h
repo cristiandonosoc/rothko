@@ -11,6 +11,7 @@ namespace rothko {
 namespace emulator {
 
 struct CPU;
+struct Instruction;
 
 /* uint8_t TestBit(CPU*, uint8_t word, int bit); */
 /* uint8_t SetBit(CPU*, uint8_t word, int bit); */
@@ -69,6 +70,8 @@ uint8_t SwapNibbles(CPU* cpu, uint8_t* target);
 
 // Z=* N=1 H=* C=*
 void SBC(CPU*, uint8_t* substractee, uint8_t substractor, uint8_t extraSub);
+
+void Execute(CPU*, const Instruction&);
 
 }  // namespace emulator
 }  // namespace rothko
