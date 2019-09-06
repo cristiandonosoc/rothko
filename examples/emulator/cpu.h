@@ -78,6 +78,8 @@ constexpr uint8_t kCPUFlagsZIndex = 7;
 
 struct CPU {
   CPURegisters registers;
+
+  bool stopped = false;
 };
 
 inline uint8_t CPUFlagsGetC(const CPU& cpu) { return GetBit(cpu.registers.f, 4); }

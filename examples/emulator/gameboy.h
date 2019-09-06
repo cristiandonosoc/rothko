@@ -22,5 +22,17 @@ struct Gameboy {
 
 inline bool Valid(const Gameboy& gameboy) { return Valid(gameboy.mbc); }
 
+inline void WriteByte(Gameboy* gameboy, uint16_t address, uint8_t value) {
+  gameboy->mbc.WriteByte(gameboy, address, value);
+}
+
+inline void WriteShort(Gameboy* gameboy, uint16_t address, uint16_t value) {
+  gameboy->mbc.WriteShort(gameboy, address, value);
+}
+
+inline uint8_t Read(Gameboy* gameboy, uint16_t address) {
+  return gameboy->mbc.Read(gameboy, address);
+}
+
 }  // namespace emulator
 }  // namespace rothko
