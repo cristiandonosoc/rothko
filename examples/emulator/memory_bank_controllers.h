@@ -17,13 +17,17 @@ enum class MBCType {
 const char* ToString(MBCType);
 
 struct MBCApi{
-  using ReadFunction = uint8_t (*)(Gameboy*, uint64_t address);
   template <typename T>
-  using WriteFunction = void (*)(Gameboy*, uint64_t address, T value);
+  using ReadFunction = T (*)(Gameboy*, uint16_t address);
+
+  template <typename T>
+  using WriteFunction = void (*)(Gameboy*, uint16_t address, T value);
 
   MBCType type = MBCType::kLast;
 
-  ReadFunction Read = nullptr;
+  ReadFunction<uint8_t> ReadByte = nullptr;
+  ReadFunction<uint16_t> ReadShort = nullptr;
+
   WriteFunction<uint8_t> WriteByte = nullptr;
   WriteFunction<uint16_t> WriteShort = nullptr;
 };

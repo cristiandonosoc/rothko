@@ -19,8 +19,21 @@ namespace emulator {
 
 namespace {
 
-uint8_t LowLevelRead(Gameboy* gameboy, uint64_t address);
-void LowLevelWrite(Gameboy* gameboy, uint64_t address, uint8_t value);
+uint8_t LowLevelReadByte(Gameboy* gameboy, uint16_t address);
+
+uint16_t LowLevelReadShort(Gameboy* gameboy, uint16_t address) {
+  uint16_t res = LowLevelReadByte(gameboy, address++);
+  res += (((uint16_t)LowLevelReadByte(gameboy, address++)) << 8);
+  return res;
+}
+
+void LowLevelWriteByte(Gameboy* gameboy, uint16_t address, uint8_t value);
+
+inline void LowLevelWriteShort(Gameboy* gameboy, uint16_t address, uint16_t value) {
+  uint8_t* ptr = (uint8_t*)&value;
+  LowLevelWriteByte(gameboy, address++, *ptr++);
+  LowLevelWriteByte(gameboy, address, *ptr);
+}
 
 }  // namespace
 
@@ -28,22 +41,13 @@ void LowLevelWrite(Gameboy* gameboy, uint64_t address, uint8_t value);
 
 namespace {
 
-void BasicMBCWriteByte(Gameboy* gameboy, uint64_t address, uint8_t value) {
-  LowLevelWrite(gameboy, address, value);
-}
-
-void BasicMBCWriteShort(Gameboy* gameboy, uint64_t address, uint16_t value) {
-  uint8_t* ptr = (uint8_t*)&value;
-  BasicMBCWriteByte(gameboy, address++, *ptr++);
-  BasicMBCWriteByte(gameboy, address, *ptr);
-}
-
-MBCApi GetBasicMBC() {
+inline MBCApi GetBasicMBC() {
   MBCApi api = {};
   api.type = MBCType::kBasic;
-  api.Read = LowLevelRead;
-  api.WriteByte = BasicMBCWriteByte;
-  api.WriteShort = BasicMBCWriteShort;
+  api.ReadByte = LowLevelReadByte;
+  api.ReadShort = LowLevelReadShort;
+  api.WriteByte = LowLevelWriteByte;
+  api.WriteShort = LowLevelWriteShort;
 
   return api;
 }
@@ -66,12 +70,12 @@ MBCApi GetMBCApi(MBCType type) {
 
 namespace {
 
-uint8_t LowLevelRead(Gameboy* gameboy, uint64_t address) {
+uint8_t LowLevelReadByte(Gameboy* gameboy, uint16_t address) {
   uint8_t* base_ptr = (uint8_t*)&gameboy->memory;
   return base_ptr[address];
 }
 
-void LowLevelWrite(Gameboy* gameboy, uint64_t address, uint8_t value) {
+void LowLevelWriteByte(Gameboy* gameboy, uint16_t address, uint8_t value) {
   uint8_t* base_ptr = (uint8_t*)&gameboy->memory;
 
   // [0x0000 - 0x7fff]: ROM Bank 0, ROM Bank 1

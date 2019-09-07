@@ -8,8 +8,10 @@
 namespace rothko {
 namespace emulator {
 
+namespace {
+
 // Z=* N=0 H=1 C=/
-void TestBit(CPU* cpu, uint8_t word, int bit) {
+inline void TestBit(CPU* cpu, uint8_t word, int bit) {
   uint8_t mask = (uint8_t)(1 << bit);
 
   CPUFlagsSetZ(cpu, (word & mask) == 0);
@@ -18,19 +20,19 @@ void TestBit(CPU* cpu, uint8_t word, int bit) {
 }
 
 // Z=/ N=/ H=/ C=/
-uint8_t SetBit(uint8_t* target, int bit) {
+inline void SetBit(uint8_t* target, int bit) {
   uint8_t mask = (uint8_t)(1 << bit);
   *target |= mask;
 }
 
 // Z=/ N=/ H=/ C=/
-uint8_t ClearBit(uint8_t* target, int bit) {
+inline void ClearBit(uint8_t* target, int bit) {
   uint8_t mask = (uint8_t) ~(1 << bit);
   *target &= mask;
 }
 
 // Z=* N=0 H=0 C=*
-void RotateLeftThroughCarry(CPU* cpu, uint8_t* target, int count, int carry) {
+inline void RotateLeftThroughCarry(CPU* cpu, uint8_t* target, int count, int carry) {
   int carry_out = (*target >> 7) & 0x1;
   uint8_t value_shifted = *target << count;
   *target = value_shifted | carry;
@@ -42,7 +44,7 @@ void RotateLeftThroughCarry(CPU* cpu, uint8_t* target, int count, int carry) {
 }
 
 // Z=* N=0 H=0 C=*
-void RotateLeftAndCarry(CPU* cpu, uint8_t* target, int count) {
+inline void RotateLeftAndCarry(CPU* cpu, uint8_t* target, int count = 1) {
   int carry_out = (*target >> 7) & 0x1;
   uint8_t value_shifted = *target << count;
   *target = value_shifted | carry_out;
@@ -54,7 +56,7 @@ void RotateLeftAndCarry(CPU* cpu, uint8_t* target, int count) {
 }
 
 // Z=* N=0 H=0 C=*
-void RotateRightThroughCarry(CPU* cpu, uint8_t* target, int count, int carry) {
+inline void RotateRightThroughCarry(CPU* cpu, uint8_t* target, int count = 1, int carry = 0) {
   int carry_out = *target & 0x1;
   uint8_t value_shifted = *target >> count;
   *target = value_shifted | (carry << 7);
@@ -66,7 +68,7 @@ void RotateRightThroughCarry(CPU* cpu, uint8_t* target, int count, int carry) {
 }
 
 // Z=* N=0 H=0 C=*
-void RotateRightAndCarry(CPU* cpu, uint8_t* target, int count) {
+inline void RotateRightAndCarry(CPU* cpu, uint8_t* target, int count = 1) {
   uint8_t carry_out = *target & 0x1;
   uint8_t value_shifted = *target >> count;
   *target = value_shifted | (carry_out << 7);
@@ -78,7 +80,7 @@ void RotateRightAndCarry(CPU* cpu, uint8_t* target, int count) {
 }
 
 // Z=* N=0 H=0 C=*
-void ShiftLeft(CPU* cpu, uint8_t* target, int count) {
+inline void ShiftLeft(CPU* cpu, uint8_t* target, int count = 1) {
   int carry_out = (*target >> 7) & 0x1;
   *target = (uint8_t)(*target << count);
 
@@ -89,7 +91,7 @@ void ShiftLeft(CPU* cpu, uint8_t* target, int count) {
 }
 
 // Z=* N=0 H=0 C=*
-void ShiftRightLogic(CPU* cpu, uint8_t* target, int count) {
+inline void ShiftRightLogic(CPU* cpu, uint8_t* target, int count = 1) {
   int carry_out = *target & 0x1;
   *target = *target >> count;
 
@@ -100,7 +102,7 @@ void ShiftRightLogic(CPU* cpu, uint8_t* target, int count) {
 }
 
 // Z=* N=0 H=0 C=*
-void ShiftRightArithmetic(CPU* cpu, uint8_t* target, int count) {
+inline void ShiftRightArithmetic(CPU* cpu, uint8_t* target, int count = 1) {
   int carry_out = *target & 0x1;
   uint8_t msb = *target & 0x80;
   *target = (*target >> count) | msb;
@@ -112,7 +114,7 @@ void ShiftRightArithmetic(CPU* cpu, uint8_t* target, int count) {
 }
 
 // Z=* N=0 H=0 C=0
-uint8_t SwapNibbles(CPU* cpu, uint8_t* target) {
+inline void SwapNibbles(CPU* cpu, uint8_t* target) {
   uint8_t highNibble = (uint8_t)((*target >> 4) & 0x0f);
   uint8_t lowNibble = (uint8_t)((*target << 4) & 0xf0);
   *target = (uint8_t)(highNibble | lowNibble);
@@ -124,7 +126,7 @@ uint8_t SwapNibbles(CPU* cpu, uint8_t* target) {
 }
 
 // Z=* N=1 H=* C=*
-void SBC(CPU* cpu, uint8_t* substractee, uint8_t substractor, uint8_t extra_sub) {
+inline void SBC(CPU* cpu, uint8_t* substractee, uint8_t substractor, uint8_t extra_sub) {
   // Need more range for flags
   int A = *substractee;
   int B = substractor;
@@ -177,6 +179,11 @@ inline void Add(CPU* cpu, uint8_t* target, uint8_t value) {
   CPUFlagsSetC(cpu, sum > 0xff);
 }
 
+// Z=* N=1 H=* C=*
+inline void Sub(CPU* cpu, uint8_t* target, uint8_t value) {
+  SBC(cpu, target, value, 0);
+}
+
 // Z=* N=0 H=* C=*
 inline void Adc(CPU* cpu, uint8_t* target, uint8_t value) {
   uint16_t sum = *target;
@@ -191,6 +198,95 @@ inline void Adc(CPU* cpu, uint8_t* target, uint8_t value) {
   CPUFlagsSetH(cpu, set_c);
   CPUFlagsSetC(cpu, sum > 0xff);
 }
+
+// Z=* N=0 H=1 C=0
+inline void And(CPU* cpu, uint8_t* target, uint8_t value) {
+  *target &= value;
+
+  CPUFlagsSetZ(cpu, *target == 0);
+  CPUFlagsClearN(cpu);
+  CPUFlagsSetH(cpu);
+  CPUFlagsSetC(cpu);
+}
+
+// Z=* N=0 H=0 C=0
+inline void Xor(CPU* cpu, uint8_t* target, uint8_t value) {
+  *target ^= value;
+
+  CPUFlagsSetZ(cpu, *target == 0);
+  CPUFlagsClearN(cpu);
+  CPUFlagsClearH(cpu);
+  CPUFlagsClearC(cpu);
+}
+
+// Z=* N=0 H=0 C=0
+inline void Or(CPU* cpu, uint8_t* target, uint8_t value) {
+  *target |= value;
+
+  CPUFlagsSetZ(cpu, *target == 0);
+  CPUFlagsClearN(cpu);
+  CPUFlagsClearH(cpu);
+  CPUFlagsClearC(cpu);
+}
+
+// Z=* N=1 H=* C=*
+inline void Cp(CPU* cpu, uint8_t* target, uint8_t value) {
+  int set_c = 0;
+  if (*target == value) {
+    CPUFlagsSetZ(cpu);
+  } else {
+    CPUFlagsClearZ(cpu);
+    if (*target < value) {
+      set_c = 1;
+    }
+  }
+
+  CPUFlagsSetN(cpu);
+
+  int set_h = ((*target & 0x0F) < (value & 0x0F));
+  CPUFlagsSetH(cpu, set_h);
+
+  CPUFlagsSetC(cpu, set_c);
+}
+
+inline void Call(Gameboy* gameboy, uint16_t address) {
+  CPU* cpu = &gameboy->cpu;
+
+  // Write into the stack.
+  cpu->registers.sp -= 2;
+  WriteShort(gameboy, cpu->registers.sp, cpu->registers.pc);
+
+  // Jump.
+  cpu->registers.pc = address;
+}
+
+inline void Ret(Gameboy* gameboy) {
+  CPU* cpu = &gameboy->cpu;
+
+  cpu->registers.pc = ReadShort(gameboy, cpu->registers.sp);
+  cpu->registers.sp += 2;
+}
+
+inline void Pop(Gameboy* gameboy, uint16_t* target) {
+  CPU* cpu = &gameboy->cpu;
+
+  *target = ReadShort(gameboy, cpu->registers.sp);
+  cpu->registers.sp += 2;
+}
+
+inline void Push(Gameboy* gameboy, uint16_t target) {
+  CPU* cpu = &gameboy->cpu;
+
+  cpu->registers.sp -= 2;
+  WriteShort(gameboy, cpu->registers.sp, target);
+}
+
+inline void Ldh(Gameboy* gameboy, uint8_t offset, uint8_t value) {
+  uint16_t address = (uint16_t)(0xff00 | offset);
+  WriteByte(gameboy, address, value);
+}
+
+}  // namespace
 
 // Execute -----------------------------------------------------------------------------------------
 
@@ -209,7 +305,6 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     // INC BC: Increment 16-bit BC
     case 0x03: cpu->registers.bc++; break;
     // INC B: Increment B.
-    // Z=* N=0 H=* C=/
     case 0x04: IncrementByteRegister(cpu, &cpu->registers.b); break;
     // DEC B: Decrement B
     case 0x05: DecrementByteRegister(cpu, &cpu->registers.b); break;
@@ -231,12 +326,9 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
       break;
     }
     // LD A,(BC): Load A from address pointed to by BC
-    case 0x0A: cpu->registers.a = Read(gameboy, cpu->registers.bc); break;
+    case 0x0A: cpu->registers.a = ReadByte(gameboy, cpu->registers.bc); break;
     // DEC BC: Decrement 16-bit BC
-    case 0x0B: {
-      cpu->registers.bc--;
-      break;
-    }
+    case 0x0B: cpu->registers.bc--; break;
     // INC C: Increment C
     case 0x0C: IncrementByteRegister(cpu, &cpu->registers.c); break;
     // DEC C: Decrement C
@@ -275,7 +367,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
       break;
     }
     // LD A,(DE): Load A from address pointed to by DE
-    case 0x1A: cpu->registers.a = Read(gameboy, cpu->registers.de); break;
+    case 0x1A: cpu->registers.a = ReadByte(gameboy, cpu->registers.de); break;
     // DEC DE: Decrement 16-bit DE
     case 0x1B: cpu->registers.de--; break;
     // INC E: Increment E
@@ -308,15 +400,15 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     case 0x27: {
       int value = cpu->registers.a;
 
-      if (CPUFlagsGetN(*cpu) != 0)  // ADD, ADC, INC
-      {
+      // ADD, ADC, INC
+      if (CPUFlagsGetN(*cpu) != 0) {
         if (CPUFlagsGetH(*cpu) != 0)
           value = (value - 0x06) & 0xFF;
 
         if (CPUFlagsGetC(*cpu) != 0)
           value -= 0x60;
-      } else  // SUB, SBC, DEC, NEG
-      {
+      } else {
+        // SUB, SBC, DEC, NEG
         if ((CPUFlagsGetH(*cpu) != 0) || ((value & 0x0F) > 0x09))
           value += 0x06;
 
@@ -352,7 +444,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
       break;
     }
     // LDI A,(HL): Load A from address pointed to by HL, and increment HL
-    case 0x2A: cpu->registers.a = Read(gameboy, cpu->registers.hl++); break;
+    case 0x2A: cpu->registers.a = ReadByte(gameboy, cpu->registers.hl++); break;
     // DEC HL: Decrement 16-bit HL
     case 0x2B: cpu->registers.hl--; break;
     // INC L: Increment L
@@ -381,16 +473,15 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     case 0x32: WriteByte(gameboy, cpu->registers.hl--, cpu->registers.a); break;
     // INC SP: Increment 16-bit HL
     case 0x33: cpu->registers.sp++; break;
-
     // INC (HL): Increment value pointed by HL
     case 0x34: {
-      uint8_t val = Read(gameboy, cpu->registers.hl) + 1;
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl) + 1;
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
     }
     // DEC (HL): Decrement value pointed by HL
     case 0x35: {
-      uint8_t val = Read(gameboy, cpu->registers.hl) - 1;
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl) - 1;
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
     }
@@ -421,7 +512,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
       break;
     }
     // LDD A,(HL): Load A from address pointed to by HL, and decrement HL
-    case 0x3A: cpu->registers.a = Read(gameboy, cpu->registers.hl--); break;
+    case 0x3A: cpu->registers.a = ReadByte(gameboy, cpu->registers.hl--); break;
     // DEC SP: Decrement 16-bit SP
     case 0x3B: cpu->registers.sp--; break;
     // INC A: Increment A
@@ -450,7 +541,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     // LD B,L: Copy L to B
     case 0x45: cpu->registers.b = cpu->registers.l; break;
     // LD B,(HL): Copy value pointed by HL to B
-    case 0x46: cpu->registers.b = Read(gameboy, cpu->registers.hl); break;
+    case 0x46: cpu->registers.b = ReadByte(gameboy, cpu->registers.hl); break;
     // LD B,A: Copy A to B
     case 0x47: cpu->registers.b = cpu->registers.a; break;
     // LD C,B: Copy B to
@@ -458,7 +549,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     // LD C,C: Copy C to C
     case 0x49: break;
     // LD C,D: Copy D to
-    case 0x4A: cpu->registers.c = cpu->registers.d;
+    case 0x4A: cpu->registers.c = cpu->registers.d; break;
     // LD C,E: Copy E to C
     case 0x4B: cpu->registers.c = cpu->registers.e; break;
     // LD C,H: Copy H to C
@@ -466,7 +557,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     // LD C,L: Copy L to C
     case 0x4D: cpu->registers.c = cpu->registers.l; break;
     // LD C,(HL): Copy value pointed by HL to C
-    case 0x4E: cpu->registers.c = Read(gameboy, cpu->registers.hl); break;
+    case 0x4E: cpu->registers.c = ReadByte(gameboy, cpu->registers.hl); break;
     // LD C,A: Copy A to C
     case 0x4F: cpu->registers.c = cpu->registers.a; break;
     // LD D,B: Copy B to D
@@ -482,7 +573,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     // LD D,L: Copy L to D
     case 0x55: cpu->registers.d = cpu->registers.l; break;
     // LD D,(HL): Copy value pointed by HL to D
-    case 0x56: cpu->registers.d = Read(gameboy, cpu->registers.hl); break;
+    case 0x56: cpu->registers.d = ReadByte(gameboy, cpu->registers.hl); break;
     // LD D,A: Copy A to D
     case 0x57: cpu->registers.d = cpu->registers.a; break;
     // LD E,B: Copy B to E
@@ -498,7 +589,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     // LD E,L: Copy L to E
     case 0x5D: cpu->registers.e = cpu->registers.l; break;
     // LD E,(HL): Copy value pointed by HL to E
-    case 0x5E: cpu->registers.e = Read(gameboy, cpu->registers.hl); break;
+    case 0x5E: cpu->registers.e = ReadByte(gameboy, cpu->registers.hl); break;
     // LD E,A: Copy A to E
     case 0x5F: cpu->registers.e = cpu->registers.a; break;
     // LD H,B: Copy B to H
@@ -514,7 +605,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     // LD H,L: Copy L to H
     case 0x65: cpu->registers.h = cpu->registers.l; break;
     // LD H,(HL): Copy value pointed by HL to H
-    case 0x66: cpu->registers.h = Read(gameboy, cpu->registers.hl); break;
+    case 0x66: cpu->registers.h = ReadByte(gameboy, cpu->registers.hl); break;
     // LD H,A: Copy A to H
     case 0x67: cpu->registers.h = cpu->registers.a; break;
     // LD L,B: Copy B to L
@@ -530,7 +621,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     // LD L,L: Copy L to L
     case 0x6D: break;
     // LD L,(HL): Copy value pointed by HL to L
-    case 0x6E: cpu->registers.l = Read(gameboy, cpu->registers.hl); break;
+    case 0x6E: cpu->registers.l = ReadByte(gameboy, cpu->registers.hl); break;
     // LD L,A: Copy A to L
     case 0x6F: cpu->registers.l = cpu->registers.a; break;
     // LD (HL),B: Copy B to address pointed by HL
@@ -571,7 +662,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     // LD A,L: Copy L to A
     case 0x7D: cpu->registers.a = cpu->registers.l; break;
     // LD A,(HL): Copy value pointed by HL to A
-    case 0x7E: cpu->registers.a = Read(gameboy, cpu->registers.hl); break;
+    case 0x7E: cpu->registers.a = ReadByte(gameboy, cpu->registers.hl); break;
     // LD A,A: Copy A to A
     case 0x7F: break;
     // ADD A,B: Add B to A
@@ -587,7 +678,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     // ADD A,L: Add L to A
     case 0x85: Add(cpu, &cpu->registers.a, cpu->registers.l); break;
     // ADD A,(HL): Add value pointed by HL to A
-    case 0x86: Add(cpu, &cpu->registers.a, Read(gameboy, cpu->registers.hl)); break;
+    case 0x86: Add(cpu, &cpu->registers.a, ReadByte(gameboy, cpu->registers.hl)); break;
     // ADD A,A: Add A to A
     case 0x87: Add(cpu, &cpu->registers.a, cpu->registers.a); break;
     // ADC A,B: Add B and carry flag to A
@@ -603,7 +694,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     // ADC A,L: Add and carry flag L to A
     case 0x8D: Adc(cpu, &cpu->registers.a, cpu->registers.l); break;
     // ADC A,(HL): Add value pointed by HL and carry flag to A
-    case 0x8E: Adc(cpu, &cpu->registers.a, Read(gameboy, cpu->registers.hl)); break;
+    case 0x8E: Adc(cpu, &cpu->registers.a, ReadByte(gameboy, cpu->registers.hl)); break;
     // ADC A,A: Add A and carry flag to A
     case 0x8F: Adc(cpu, &cpu->registers.a, cpu->registers.a); break;
     // SUB A,B: Subtract B from A
@@ -619,7 +710,7 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     // SUB A,L: Subtract L from A
     case 0x95: SBC(cpu, &cpu->registers.a, cpu->registers.l, 0); break;
     // SUB A,(HL): Subtract value pointed by HL from A
-    case 0x96: SBC(cpu, &cpu->registers.a, Read(gameboy, cpu->registers.hl), 0); break;
+    case 0x96: SBC(cpu, &cpu->registers.a, ReadByte(gameboy, cpu->registers.hl), 0); break;
     // SUB A,A: Subtract A from A
     case 0x97: SBC(cpu, &cpu->registers.a, cpu->registers.a, 0); break;
     // SBC A,B: Subtract B and carry flag from A
@@ -636,958 +727,318 @@ void ExecuteNormalInstruction(Gameboy* gameboy, const Instruction& instruction) 
     case 0x9D: SBC(cpu, &cpu->registers.a, cpu->registers.l, CPUFlagsGetC(*cpu)); break;
     // SBC A,(HL): Subtract value pointed by HL and carry flag from A
     case 0x9E: {
-      SBC(cpu, &cpu->registers.a, Read(gameboy, cpu->registers.hl), CPUFlagsGetC(*cpu));
+      SBC(cpu, &cpu->registers.a, ReadByte(gameboy, cpu->registers.hl), CPUFlagsGetC(*cpu));
       break;
     }
     // SBC A,A: Subtract A and carry flag from A
     case 0x9F: SBC(cpu, &cpu->registers.a, cpu->registers.a, CPUFlagsGetC(*cpu)); break;
-
-#ifdef COMPLETE
-
     // AND B: Logical AND B against A
-    case 0xA0: {
-      cpu->registers.a &= cpu->registers.b;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)1;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xA0: And(cpu, &cpu->registers.a, cpu->registers.b); break;
     // AND C: Logical AND C against A
-    case 0xA1: {
-      cpu->registers.a &= cpu->registers.c;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)1;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xA1: And(cpu, &cpu->registers.a, cpu->registers.c); break;
     // AND D: Logical AND D against A
-    case 0xA2: {
-      cpu->registers.a &= cpu->registers.d;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)1;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xA2: And(cpu, &cpu->registers.a, cpu->registers.d); break;
     // AND E: Logical AND E against A
-    case 0xA3: {
-      cpu->registers.a &= cpu->registers.e;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)1;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xA3: And(cpu, &cpu->registers.a, cpu->registers.e); break;
     // AND H: Logical AND H against A
-    case 0xA4: {
-      cpu->registers.a &= cpu->registers.h;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)1;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xA4: And(cpu, &cpu->registers.a, cpu->registers.h); break;
     // AND L: Logical AND L against A
-    case 0xA5: {
-      cpu->registers.a &= cpu->registers.l;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)1;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xA5: And(cpu, &cpu->registers.a, cpu->registers.l); break;
     // AND (HL): Logical AND value pointed by HL against A
-    case 0xA6: {
-      cpu->registers.a &= cpu._memory.Read(cpu->registers.hl);
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)1;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xA6: And(cpu, &cpu->registers.a, ReadByte(gameboy, cpu->registers.hl)); break;
     // AND A: Logical AND A against A
-    case 0xA7: {
-      cpu->registers.a &= cpu->registers.a;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)1;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
-
+    case 0xA7: And(cpu, &cpu->registers.a, cpu->registers.a); break;
     // XOR B: Logical XOR B against A
-    case 0xA8: {
-      cpu->registers.a ^= cpu->registers.b;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xA8: Xor(cpu, &cpu->registers.a, cpu->registers.b); break;
     // XOR C: Logical XOR C against A
-    case 0xA9: {
-      cpu->registers.a ^= cpu->registers.c;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xA9: Xor(cpu, &cpu->registers.a, cpu->registers.c); break;
     // XOR D: Logical XOR D against A
-    case 0xAA: {
-      cpu->registers.a ^= cpu->registers.d;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xAA: Xor(cpu, &cpu->registers.a, cpu->registers.d); break;
     // XOR E: Logical XOR E against A
-    case 0xAB: {
-      cpu->registers.a ^= cpu->registers.e;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xAB: Xor(cpu, &cpu->registers.a, cpu->registers.e); break;
     // XOR H: Logical XOR H against A
-    case 0xAC: {
-      cpu->registers.a ^= cpu->registers.h;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xAC: Xor(cpu, &cpu->registers.a, cpu->registers.h); break;
     // XOR L: Logical XOR L against A
-    case 0xAD: {
-      cpu->registers.a ^= cpu->registers.l;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xAD: Xor(cpu, &cpu->registers.a, cpu->registers.l); break;
     // XOR (HL): Logical XOR value pointed by HL against A
-    case 0xAE: {
-      cpu->registers.a ^= cpu._memory.Read(cpu->registers.hl);
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xAE: Xor(cpu, &cpu->registers.a, ReadByte(gameboy, cpu->registers.hl)); break;
     // XOR A: Logical XOR A against A
-    case 0xAF: {
-      cpu->registers.a ^= cpu->registers.a;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xAF: Xor(cpu, &cpu->registers.a, cpu->registers.a); break;
     // OR B: Logical OR B against A
-    case 0xB0: {
-      cpu->registers.a |= cpu->registers.b;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xB0: Or(cpu, &cpu->registers.a, cpu->registers.b); break;
     // OR C: Logical OR C against A
-    case 0xB1: {
-      cpu->registers.a |= cpu->registers.c;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xB1: Or(cpu, &cpu->registers.a, cpu->registers.c); break;
     // OR D: Logical OR D against A
-    case 0xB2: {
-      cpu->registers.a |= cpu->registers.d;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xB2: Or(cpu, &cpu->registers.a, cpu->registers.d); break;
     // OR E: Logical OR E against A
-    case 0xB3: {
-      cpu->registers.a |= cpu->registers.e;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xB3: Or(cpu, &cpu->registers.a, cpu->registers.e); break;
     // OR H: Logical OR H against A
-    case 0xB4: {
-      cpu->registers.a |= cpu->registers.h;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xB4: Or(cpu, &cpu->registers.a, cpu->registers.h); break;
     // OR L: Logical OR L against A
-    case 0xB5: {
-      cpu->registers.a |= cpu->registers.l;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xB5: Or(cpu, &cpu->registers.a, cpu->registers.l); break;
     // OR (HL): Logical OR value pointed by HL against A
-    case 0xB6: {
-      cpu->registers.a |= cpu._memory.Read(cpu->registers.hl);
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xB6: Or(cpu, &cpu->registers.a, ReadByte(gameboy, cpu->registers.hl)); break;
     // OR A: Logical OR A against A
-    case 0xB7: {
-      cpu->registers.a |= cpu->registers.a;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xB7: Or(cpu, &cpu->registers.a, cpu->registers.a); break;
     // CP B: Compare B against A
-    case 0xB8: {
-      byte operand = cpu->registers.b;
-      cpu->registers.fn = 1;
-      cpu->registers.fc = 0;  // cpu flag might get changed
-      cpu->registers.fh = (byte)(((cpu->registers.a & 0x0F) < (operand & 0x0F)) ? 1 : 0);
-
-      if (cpu->registers.a == operand) {
-        cpu->registers.fz = 1;
-      } else {
-        cpu->registers.fz = 0;
-        if (cpu->registers.a < operand) {
-          cpu->registers.fc = 1;
-        }
-      }
-      break;
-    }
-
+    case 0xB8: Cp(cpu, &cpu->registers.a, cpu->registers.b); break;
     // CP C: Compare C against A
-    case 0xB9: {
-      byte operand = cpu->registers.c;
-      cpu->registers.fn = 1;
-      cpu->registers.fc = 0;  // cpu flag might get changed
-      cpu->registers.fh = (byte)(((cpu->registers.a & 0x0F) < (operand & 0x0F)) ? 1 : 0);
-
-      if (cpu->registers.a == operand) {
-        cpu->registers.fz = 1;
-      } else {
-        cpu->registers.fz = 0;
-        if (cpu->registers.a < operand) {
-          cpu->registers.fc = 1;
-        }
-      }
-      break;
-    }
-
+    case 0xB9: Cp(cpu, &cpu->registers.a, cpu->registers.c); break;
     // CP D: Compare D against A
-    case 0xBA: {
-      byte operand = cpu->registers.d;
-      cpu->registers.fn = 1;
-      cpu->registers.fc = 0;  // cpu flag might get changed
-      cpu->registers.fh = (byte)(((cpu->registers.a & 0x0F) < (operand & 0x0F)) ? 1 : 0);
-
-      if (cpu->registers.a == operand) {
-        cpu->registers.fz = 1;
-      } else {
-        cpu->registers.fz = 0;
-        if (cpu->registers.a < operand) {
-          cpu->registers.fc = 1;
-        }
-      }
-      break;
-    }
-
+    case 0xBA: Cp(cpu, &cpu->registers.a, cpu->registers.d); break;
     // CP E: Compare E against A
-    case 0xBB: {
-      byte operand = cpu->registers.e;
-      cpu->registers.fn = 1;
-      cpu->registers.fc = 0;  // cpu flag might get changed
-      cpu->registers.fh = (byte)(((cpu->registers.a & 0x0F) < (operand & 0x0F)) ? 1 : 0);
-
-      if (cpu->registers.a == operand) {
-        cpu->registers.fz = 1;
-      } else {
-        cpu->registers.fz = 0;
-        if (cpu->registers.a < operand) {
-          cpu->registers.fc = 1;
-        }
-      }
-      break;
-    }
-
+    case 0xBB: Cp(cpu, &cpu->registers.a, cpu->registers.e); break;
     // CP H: Compare H against A
-    case 0xBC: {
-      byte operand = cpu->registers.h;
-      cpu->registers.fn = 1;
-      cpu->registers.fc = 0;  // cpu flag might get changed
-      cpu->registers.fh = (byte)(((cpu->registers.a & 0x0F) < (operand & 0x0F)) ? 1 : 0);
-
-      if (cpu->registers.a == operand) {
-        cpu->registers.fz = 1;
-      } else {
-        cpu->registers.fz = 0;
-        if (cpu->registers.a < operand) {
-          cpu->registers.fc = 1;
-        }
-      }
-      break;
-    }
-
+    case 0xBC: Cp(cpu, &cpu->registers.a, cpu->registers.h); break;
     // CP L: Compare L against A
-    case 0xBD: {
-      byte operand = cpu->registers.l;
-      cpu->registers.fn = 1;
-      cpu->registers.fc = 0;  // cpu flag might get changed
-      cpu->registers.fh = (byte)(((cpu->registers.a & 0x0F) < (operand & 0x0F)) ? 1 : 0);
-
-      if (cpu->registers.a == operand) {
-        cpu->registers.fz = 1;
-      } else {
-        cpu->registers.fz = 0;
-        if (cpu->registers.a < operand) {
-          cpu->registers.fc = 1;
-        }
-      }
-      break;
-    }
-
+    case 0xBD: Cp(cpu, &cpu->registers.a, cpu->registers.l); break;
     // CP (HL): Compare value pointed by HL against A
-    case 0xBE: {
-      byte operand = cpu._memory.Read(cpu->registers.hl);
-      cpu->registers.fn = 1;
-      cpu->registers.fc = 0;  // cpu flag might get changed
-      cpu->registers.fh = (byte)(((cpu->registers.a & 0x0F) < (operand & 0x0F)) ? 1 : 0);
-
-      if (cpu->registers.a == operand) {
-        cpu->registers.fz = 1;
-      } else {
-        cpu->registers.fz = 0;
-        if (cpu->registers.a < operand) {
-          cpu->registers.fc = 1;
-        }
-      }
-      break;
-    }
-
+    case 0xBE: Cp(cpu, &cpu->registers.a, ReadByte(gameboy, cpu->registers.hl)); break;
     // CP A: Compare A against A
-    case 0xBF: {
-      byte operand = cpu->registers.a;
-      cpu->registers.fn = 1;
-      cpu->registers.fc = 0;  // cpu flag might get changed
-      cpu->registers.fh = (byte)(((cpu->registers.a & 0x0F) < (operand & 0x0F)) ? 1 : 0);
-
-      if (cpu->registers.a == operand) {
-        cpu->registers.fz = 1;
-      } else {
-        cpu->registers.fz = 0;
-        if (cpu->registers.a < operand) {
-          cpu->registers.fc = 1;
-        }
-      }
-      break;
-    }
-
+    case 0xBF: Cp(cpu, &cpu->registers.a, cpu->registers.a); break;
     // RET NZ: Return if last result was not zero
     case 0xC0: {
-      if (cpu->registers.fz != 0) {
+      if (CPUFlagsGetZ(*cpu) == 0)
         break;
-      }
-      // We load the program counter (high byte is in higher address)
-      cpu.NextPC = cpu._memory.Read(cpu->registers.sp++);
-      cpu.NextPC += (ushort)(cpu._memory.Read(cpu->registers.sp++) << 8);
-      cpu.InternalCurrentInstruction.Ticks = 20;
+      Ret(gameboy);
       break;
     }
-
     // POP BC: Pop 16-bit value from stack into BC
-    case 0xC1: {
-      ushort res = cpu._memory.Read(cpu->registers.sp++);
-      res += (ushort)(cpu._memory.Read(cpu->registers.sp++) << 8);
-      cpu->registers.bc = res;
-      break;
-    }
-
+    case 0xC1: Pop(gameboy, &cpu->registers.bc); break;
     // JP NZ,nn: Absolute jump to 16-bit location if last result was not zero
     case 0xC2: {
-      if (cpu->registers.fz != 0) {
+      if (CPUFlagsGetZ(*cpu) == 0)
         break;
-      }
 
-      ushort target = n;
-      cpu.NextPC = target;
-      cpu.InternalCurrentInstruction.Ticks = 16;
+      cpu->registers.pc = instruction.operand;
       break;
     }
-
     // JP nn: Absolute jump to 16-bit location
-    case 0xC3: {
-      ushort target = n;
-      cpu.NextPC = target;
-      break;
-    }
-
+    case 0xC3: cpu->registers.pc = instruction.operand; break;
     // CALL NZ,nn: Call routine at 16-bit location if last result was not zero
     case 0xC4: {
-      if (cpu->registers.fz != 0) {
+      if (CPUFlagsGetZ(*cpu) == 0)
         break;
-      }
-
-      ushort target = n;
-      cpu->registers.sp -= 2;
-      cpu._memory.Write(cpu->registers.sp, cpu.NextPC);
-
-      // We jump
-      cpu.NextPC = target;
-      cpu.InternalCurrentInstruction.Ticks = 24;
+      Call(gameboy, instruction.operand);
       break;
     }
-
     // PUSH BC: Push 16-bit BC onto stack
-    case 0xC5: {
-      cpu->registers.sp -= 2;
-      cpu._memory.Write(cpu->registers.sp, cpu->registers.bc);
-      break;
-    }
-
+    case 0xC5: Push(gameboy, cpu->registers.bc); break;
     // ADD A,n: Add 8-bit immediate to A
-    case 0xC6: {
-      byte initial = cpu->registers.a;
-      byte toSum = (byte)n;
-      int sum = initial + toSum;
-      cpu->registers.a += toSum;
-      // Update flags
-      cpu->registers.fc = (byte)((sum > 255) ? 1 : 0);
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)(((cpu->registers.a ^ toSum ^ initial) & 0x10) == 0 ? 0 : 1);
-      cpu->registers.fn = 0;
-      break;
-    }
-
+    case 0xC6: Add(cpu, &cpu->registers.a, instruction.operands[0]); break;
     // RST 0: Call routine at address 0000h
-    case 0xC7: {
-      RunInstruction(cpu, 0xCD, 0);
-      break;
-    }
-
+    case 0xC7: Call(gameboy, 0x0000); break;
     // RET Z: Return if last result was zero
     case 0xC8: {
-      if (cpu->registers.fz == 0) {
+      if (CPUFlagsGetZ(*cpu) != 0)
         break;
-      }
-      // We load the program counter (high byte is in higher address)
-      cpu.NextPC = cpu._memory.Read(cpu->registers.sp++);
-      cpu.NextPC += (ushort)(cpu._memory.Read(cpu->registers.sp++) << 8);
-      cpu.InternalCurrentInstruction.Ticks = 20;
+      Ret(gameboy);
       break;
     }
-
     // RET: Return to calling routine
-    case 0xC9: {
-      // We load the program counter (high byte is in higher address)
-      cpu.NextPC = cpu._memory.Read(cpu->registers.sp++);
-      cpu.NextPC += (ushort)(cpu._memory.Read(cpu->registers.sp++) << 8);
-      break;
-    }
-
+    case 0xC9: Ret(gameboy); break;
     // JP Z,nn: Absolute jump to 16-bit location if last result was zero
     case 0xCA: {
-      if (cpu->registers.fz == 0) {
+      if (CPUFlagsGetZ(*cpu) != 0)
         break;
-      }
-
-      ushort target = n;
-      cpu.NextPC = target;
-      cpu.InternalCurrentInstruction.Ticks = 16;
+      cpu->registers.pc = instruction.operand;
       break;
     }
-
     // Ext ops: Extended operations (two-byte instruction code)
-    case 0xCB: {
-      throw new InvalidInstructionException("Ext ops (0xCB)");
-    }
-
+    case 0xCB: NOT_REACHED(); break;
     // CALL Z,nn: Call routine at 16-bit location if last result was zero
     case 0xCC: {
-      if (cpu->registers.fz == 0) {
+      if (CPUFlagsGetZ(*cpu) != 0)
         break;
-      }
-
-      ushort target = n;
-      cpu->registers.sp -= 2;
-      cpu._memory.Write(cpu->registers.sp, cpu.NextPC);
-
-      // We jump
-      cpu.NextPC = target;
-      cpu.InternalCurrentInstruction.Ticks = 24;
+      Call(gameboy, instruction.operand);
       break;
     }
-
     // CALL nn: Call routine at 16-bit location
-    case 0xCD: {
-      ushort target = n;
-      cpu->registers.sp -= 2;
-      cpu._memory.Write(cpu->registers.sp, cpu.NextPC);
-
-      // We jump
-      cpu.NextPC = target;
-      break;
-    }
-
+    case 0xCD: Call(gameboy, instruction.operand); break;
     // ADC A,n: Add 8-bit immediate and carry to A
-    case 0xCE: {
-      ushort A = cpu->registers.a;
-      byte initial = cpu->registers.a;
-      A += n;
-      A += cpu->registers.fc;
-      cpu->registers.a = (byte)A;
-
-      // Update flags
-      cpu->registers.fc = (byte)((A > 255) ? 1 : 0);
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)(((cpu->registers.a ^ n ^ initial) & 0x10) == 0 ? 0 : 1);
-      cpu->registers.fn = 0;
-      break;
-    }
-
+    case 0xCE: Adc(cpu, &cpu->registers.a, instruction.operands[0]); break;
     // RST 8: Call routine at address 0008h
-    case 0xCF: {
-      RunInstruction(cpu, 0xCD, 0x08);
-      break;
-    }
-
+    case 0xCF: Call(gameboy, 0x08); break;
     // RET NC: Return if last result caused no carry
     case 0xD0: {
-      if (cpu->registers.fc != 0) {
+      if (CPUFlagsGetC(*cpu) != 0)
         break;
-      }
-      // We load the program counter (high byte is in higher address)
-      cpu.NextPC = cpu._memory.Read(cpu->registers.sp++);
-      cpu.NextPC += (ushort)(cpu._memory.Read(cpu->registers.sp++) << 8);
-      cpu.InternalCurrentInstruction.Ticks = 20;
+      Ret(gameboy);
       break;
     }
-
     // POP DE: Pop 16-bit value from stack into DE
-    case 0xD1: {
-      ushort res = cpu._memory.Read(cpu->registers.sp++);
-      res += (ushort)(cpu._memory.Read(cpu->registers.sp++) << 8);
-      cpu->registers.de = res;
-      break;
-    }
-
+    case 0xD1: Pop(gameboy, &cpu->registers.de); break;
     // JP NC,nn: Absolute jump to 16-bit location if last result caused no carry
     case 0xD2: {
-      if (cpu->registers.fc != 0) {
+      if (CPUFlagsGetC(*cpu) == 0)
         break;
-      }
-
-      ushort target = n;
-      cpu.NextPC = target;
-      cpu.InternalCurrentInstruction.Ticks = 16;
-      break;
+      cpu->registers.pc = instruction.operand;
     }
-
     // XX: Operation removed in cpu CPU
-    case 0xD3: {
-      throw new InvalidInstructionException("XX (0xD3)");
-    }
-
+    case 0xD3: NOT_REACHED(); break;
     // CALL NC,nn: Call routine at 16-bit location if last result caused no carry
     case 0xD4: {
-      if (cpu->registers.fc != 0) {
+      if (CPUFlagsGetC(*cpu) != 0)
         break;
-      }
-
-      ushort target = n;
-      cpu->registers.sp -= 2;
-      cpu._memory.Write(cpu->registers.sp, cpu.NextPC);
-
-      // We jump
-      cpu.NextPC = target;
-      cpu.InternalCurrentInstruction.Ticks = 24;
-      break;
+      Call(gameboy, instruction.operand);
     }
-
     // PUSH DE: Push 16-bit DE onto stack
-    case 0xD5: {
-      cpu->registers.sp -= 2;
-      cpu._memory.Write(cpu->registers.sp, cpu->registers.de);
-      break;
-    }
-
+    case 0xD5: Push(gameboy, cpu->registers.de); break;
     // SUB A,n: Subtract 8-bit immediate from A
-    case 0xD6: {
-      byte subtractor = (byte)n;
-      UtilFuncs.SBC(cpu->registers, ref cpu->registers.a, subtractor, 0);
-      break;
-    }
-
+    case 0xD6: Sub(cpu, &cpu->registers.a, instruction.operands[0]); break;
     // RST 10: Call routine at address 0010h
-    case 0xD7: {
-      RunInstruction(cpu, 0xCD, 0x10);
-      break;
-    }
-
+    case 0xD7: Call(gameboy, 0x10); break;
     // RET C: Return if last result caused carry
     case 0xD8: {
-      if (cpu->registers.fc == 0) {
+      if (CPUFlagsGetC(*cpu) == 0)
         break;
-      }
-      // We load the program counter (high byte is in higher address)
-      cpu.NextPC = cpu._memory.Read(cpu->registers.sp++);
-      cpu.NextPC += (ushort)(cpu._memory.Read(cpu->registers.sp++) << 8);
-      cpu.InternalCurrentInstruction.Ticks = 20;
-      break;
+      Ret(gameboy);
     }
-
     // RETI: Enable interrupts and return to calling routine
     case 0xD9: {
-      cpu._interruptController.InterruptMasterEnable = true;
+      /* cpu._interruptController.InterruptMasterEnable = true; */
 
-      // We load the program counter (high byte is in higher address)
-      cpu.NextPC = cpu._memory.Read(cpu->registers.sp++);
-      cpu.NextPC += (ushort)(cpu._memory.Read(cpu->registers.sp++) << 8);
+      /* // We load the program counter (high byte is in higher address) */
+      /* cpu.NextPC = cpu._memory.Read(cpu->registers.sp++); */
+      /* cpu.NextPC += (ushort)(cpu._memory.Read(cpu->registers.sp++) << 8); */
+      /* break; */
+      NOT_IMPLEMENTED();
       break;
     }
-
     // JP C,nn: Absolute jump to 16-bit location if last result caused carry
     case 0xDA: {
-      if (cpu->registers.fc == 0) {
+      if (CPUFlagsGetC(*cpu) == 0)
         break;
-      }
-
-      ushort target = n;
-      cpu.NextPC = target;
-      cpu.InternalCurrentInstruction.Ticks = 16;
+      cpu->registers.pc = instruction.operand;
       break;
     }
-
     // XX: Operation removed in cpu CPU
-    case 0xDB: {
-      throw new InvalidInstructionException("XX (0xDB)");
-    }
-
+    case 0xDB: NOT_REACHED(); break;
     // CALL C,nn: Call routine at 16-bit location if last result caused carry
     case 0xDC: {
-      if (cpu->registers.fc == 0) {
+      if (CPUFlagsGetC(*cpu) == 0)
         break;
-      }
-
-      ushort target = n;
-      cpu->registers.sp -= 2;
-      cpu._memory.Write(cpu->registers.sp, cpu.NextPC);
-
-      // We jump
-      cpu.NextPC = target;
-      cpu.InternalCurrentInstruction.Ticks = 24;
+      Call(gameboy, instruction.operand);
       break;
     }
-
     // XX: Operation removed in cpu CPU
-    case 0xDD: {
-      throw new InvalidInstructionException("XX (0xDD)");
-    }
-
+    case 0xDD: NOT_REACHED(); break;
     // SBC A,n: Subtract 8-bit immediate and carry from A
-    case 0xDE: {
-      byte substractor = 0;
-      unchecked { substractor = (byte)n; }
-      UtilFuncs.SBC(cpu->registers, ref cpu->registers.a, substractor, cpu->registers.fc);
-      break;
-    }
-
+    case 0xDE: SBC(cpu, &cpu->registers.a, instruction.operands[0], CPUFlagsGetC(*cpu)); break;
     // RST 18: Call routine at address 0018h
-    case 0xDF: {
-      RunInstruction(cpu, 0xCD, 0x18);
-      break;
-    }
-
+    case 0xDF: Call(gameboy, 0x18); break;
     // LDH (n),A: Save A at address pointed to by (FF00h + 8-bit immediate)
-    case 0xE0: {
-      ushort address = (ushort)(0xFF00 | (byte)n);
-      cpu._memory.Write(address, cpu->registers.a);
-      break;
-    }
-
+    case 0xE0: Ldh(gameboy, instruction.operands[0], cpu->registers.a); break;
     // POP HL: Pop 16-bit value from stack into HL
-    case 0xE1: {
-      ushort res = cpu._memory.Read(cpu->registers.sp++);
-      res += (ushort)(cpu._memory.Read(cpu->registers.sp++) << 8);
-      cpu->registers.hl = res;
-      break;
-    }
-
+    case 0xE1: Pop(gameboy, &cpu->registers.hl); break;
     // LDH (C),A: Save A at address pointed to by (FF00h + C)
-    case 0xE2: {
-      ushort address = (ushort)(0xFF00 | cpu->registers.c);
-      cpu._memory.Write(address, cpu->registers.a);
-      break;
-    }
-
+    case 0xE2: Ldh(gameboy, cpu->registers.c, cpu->registers.a); break;
     // XX: Operation removed in cpu CPU
-    case 0xE3: {
-      throw new InvalidInstructionException("XX (0xE3)");
-    }
-
+    case 0xE3: NOT_REACHED(); break;
     // XX: Operation removed in cpu CPU
-    case 0xE4: {
-      throw new InvalidInstructionException("XX (0xE4)");
-    }
-
+    case 0xE4: NOT_REACHED(); break;
     // PUSH HL: Push 16-bit HL onto stack
-    case 0xE5: {
-      cpu->registers.sp -= 2;
-      cpu._memory.Write(cpu->registers.sp, cpu->registers.hl);
-      break;
-    }
-
+    case 0xE5: Push(gameboy, cpu->registers.hl); break;
     // AND n: Logical AND 8-bit immediate against A
-    case 0xE6: {
-      cpu->registers.a &= (byte)n;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)1;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xE6: And(cpu, &cpu->registers.a, instruction.operands[0]); break;
     // RST 20: Call routine at address 0020h
-    case 0xE7: {
-      RunInstruction(cpu, 0xCD, 0x20);
-      break;
-    }
-
+    case 0xE7: Call(gameboy, 0x20); break;
     // ADD SP,d: Add signed 8-bit immediate to SP
     case 0xE8: {
-      // We determine the short offset
-      sbyte sn = 0;
-      unchecked { sn = (sbyte)n; }
+      int8_t s = (int8_t)instruction.operands[0];
 
-      // We set the cpu->registers
-      cpu.registers.FZ = 0;
-      cpu->registers.fn = 0;
+      // We set the flags.
+      CPUFlagsClearZ(cpu);
+      CPUFlagsClearN(cpu);
 
-      cpu->registers.fh = (byte)(((cpu->registers.sp & 0x0F) + (sn & 0x0F) > 0x0F) ? 1 : 0);
-      cpu->registers.fc = (byte)(((cpu->registers.sp & 0xFF) + (sn & 0xFF) > 0xFF) ? 1 : 0);
+      int set_h = ((cpu->registers.sp & 0x0f) + (s & 0x0f) > 0x0f);
+      CPUFlagsSetH(cpu, set_h);
 
-      // We make the sum
-      cpu->registers.sp = (ushort)(cpu->registers.sp + sn);
+      int set_c = ((cpu->registers.sp & 0xff) + (s & 0xff) > 0xff);
+      CPUFlagsSetC(cpu, set_c);
+
+      cpu->registers.sp += s;
       break;
     }
-
     // JP (HL): Jump to 16-bit value pointed by HL
-    case 0xE9: {
-      ushort target = cpu->registers.hl;
-      cpu.NextPC = target;
-      break;
-    }
-
+    case 0xE9: cpu->registers.pc = cpu->registers.hl; break;
     // LD (nn),A: Save A at given 16-bit address
-    case 0xEA: {
-      cpu._memory.Write(n, cpu->registers.a);
-      break;
-    }
-
+    case 0xEA: WriteByte(gameboy, instruction.operand, cpu->registers.a); break;
     // XX: Operation removed in cpu CPU
-    case 0xEB: {
-      throw new InvalidInstructionException("XX (0xEB)");
-    }
-
+    case 0xEB: NOT_REACHED(); break;
     // XX: Operation removed in cpu CPU
-    case 0xEC: {
-      throw new InvalidInstructionException("XX (0xEC)");
-    }
-
+    case 0xEC: NOT_REACHED(); break;
     // XX: Operation removed in cpu CPU
-    case 0xED: {
-      throw new InvalidInstructionException("XX (0xED)");
-    }
-
+    case 0xED: NOT_REACHED(); break;
     // XOR n: Logical XOR 8-bit immediate against A
-    case 0xEE: {
-      cpu->registers.a ^= (byte)n;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xEE: Xor(cpu, &cpu->registers.a, instruction.operands[0]); break;
     // RST 28: Call routine at address 0028h
-    case 0xEF: {
-      RunInstruction(cpu, 0xCD, 0x28);
-      break;
-    }
-
+    case 0xEF: Call(gameboy, 0x28); break;
     // LDH A,(n): Load A from address pointed to by (FF00h + 8-bit immediate)
     case 0xF0: {
-      ushort address = (ushort)(0xFF00 | (byte)n);
-      cpu->registers.a = cpu._memory.Read(address);
+      uint16_t address = (uint16_t)(0xff00 | instruction.operands[0]);
+      cpu->registers.a = ReadByte(gameboy, address);
       break;
     }
-
     // POP AF: Pop 16-bit value from stack into AF
-    case 0xF1: {
-      ushort res = cpu._memory.Read(cpu->registers.sp++);
-      res += (ushort)(cpu._memory.Read(cpu->registers.sp++) << 8);
-      cpu->registers.af = res;
-      break;
-    }
-
+    case 0xF1: Pop(gameboy, &cpu->registers.af); break;
     // LDH A, (C): Operation removed in cpu CPU? (Or Load into A cpu.memory from FF00 + C?)
     case 0xF2: {
-      ushort address = (ushort)(0xFF00 | cpu->registers.c);
-      cpu->registers.a = cpu._memory.Read(address);
+      uint16_t address = (uint16_t)(0xff00 | cpu->registers.c);
+      cpu->registers.a = ReadByte(gameboy, address);
       break;
     }
-
     // DI: DIsable interrupts
     case 0xF3: {
-      cpu._interruptController.InterruptMasterEnable = false;
+      /* cpu._interruptController.InterruptMasterEnable = false; */
+      NOT_IMPLEMENTED();
       break;
     }
-
     // XX: Operation removed in cpu CPU
-    case 0xF4: {
-      throw new InvalidInstructionException("XX (0xF4)");
-    }
-
+    case 0xF4: NOT_REACHED(); break;
     // PUSH AF: Push 16-bit AF onto stack
-    case 0xF5: {
-      cpu->registers.sp -= 2;
-      cpu._memory.Write(cpu->registers.sp, cpu->registers.af);
-      break;
-    }
-
+    case 0xF5: Push(gameboy, cpu->registers.af); break;
     // OR n: Logical OR 8-bit immediate against A
-    case 0xF6: {
-      cpu->registers.a |= (byte)n;
-      cpu->registers.fz = (byte)(cpu->registers.a == 0 ? 1 : 0);
-      cpu->registers.fh = (byte)0;
-      cpu->registers.fn = (byte)0;
-      cpu->registers.fc = (byte)0;
-      break;
-    }
-
+    case 0xF6: Or(cpu, &cpu->registers.a, instruction.operands[0]); break;
     // RST 30: Call routine at address 0030h
-    case 0xF7: {
-      RunInstruction(cpu, 0xCD, 0x30);
-      break;
-    }
-
+    case 0xF7: Call(gameboy, 0x30); break;
     // LDHL SP,d: Add signed 8-bit immediate to SP and save result in HL
     case 0xF8: {
-      // We determine the short offset
-      sbyte sn = 0;
-      unchecked { sn = (sbyte)n; }
+      int8_t s = (int8_t)instruction.operands[0];
 
-      // We set the cpu->registers
-      cpu.registers.FZ = 0;
-      cpu->registers.fn = 0;
-      cpu->registers.fh = (byte)(((cpu->registers.sp & 0x0F) + (sn & 0x0F) > 0x0F) ? 1 : 0);
-      cpu->registers.fc = (byte)(((cpu->registers.sp & 0xFF) + (sn & 0xFF) > 0xFF) ? 1 : 0);
+      // We set the flags.
+      CPUFlagsClearZ(cpu);
+      CPUFlagsClearN(cpu);
+
+      int set_h = ((cpu->registers.sp & 0x0f) + (s & 0x0f) > 0x0f);
+      CPUFlagsSetH(cpu, set_h);
+
+      int set_c = ((cpu->registers.sp & 0xff) + (s & 0xff) > 0xff);
+      CPUFlagsSetC(cpu, set_c);
 
       // We make the sum
-      cpu->registers.hl = (ushort)(cpu->registers.sp + sn);
+      cpu->registers.hl = (uint16_t)(cpu->registers.sp + s);
       break;
     }
-
     // LD SP,HL: Copy HL to SP
-    case 0xF9: {
-      cpu->registers.sp = cpu->registers.hl;
-      break;
-    }
-
+    case 0xF9: cpu->registers.sp = cpu->registers.hl; break;
     // LD A,(nn): Load A from given 16-bit address
-    case 0xFA: {
-      cpu->registers.a = cpu._memory.Read(n);
-      break;
-    }
-
+    case 0xFA: cpu->registers.a = ReadByte(gameboy, instruction.operand); break;
     // EI: Enable interrupts
     case 0xFB: {
-      cpu._interruptController.InterruptMasterEnable = true;
+      /* cpu._interruptController.InterruptMasterEnable = true; */
+      NOT_IMPLEMENTED();
       break;
     }
-
     // XX: Operation removed in cpu CPU
-    case 0xFC: {
-      throw new InvalidInstructionException("XX (0xFC)");
-    }
-
+    case 0xFC: NOT_REACHED(); break;
     // XX: Operation removed in cpu CPU
-    case 0xFD: {
-      throw new InvalidInstructionException("XX (0xFD)");
-    }
-
+    case 0xFD: NOT_REACHED(); break;
     // CP n: Compare 8-bit immediate against A
-    case 0xFE: {
-      byte operand = (byte)n;
-      cpu->registers.fn = 1;
-      cpu->registers.fc = 0;  // cpu flag might get changed
-      cpu->registers.fh = (byte)(((cpu->registers.a & 0x0F) < (operand & 0x0F)) ? 1 : 0);
-
-      if (cpu->registers.a == operand) {
-        cpu->registers.fz = 1;
-      } else {
-        cpu->registers.fz = 0;
-        if (cpu->registers.a < operand) {
-          cpu->registers.fc = 1;
-        }
-      }
-      break;
-    }
-
+    case 0xFE: Cp(cpu, &cpu->registers.a, instruction.operands[0]); break;
     // RST 38: Call routine at address 0038h
-    case 0xFF: {
-      RunInstruction(cpu, 0xCD, 0x38);
-      break;
-    }
-
-#endif
-    }
+    case 0xFF: Call(gameboy, 0x38); break;
+  }
 }
 
 void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
@@ -1609,7 +1060,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // RLC (HL): Rotate value pointed by HL left with carry
     case 0x06: {
       uint16_t address = gameboy->cpu.registers.hl;
-      uint8_t val = Read(gameboy, address);
+      uint8_t val = ReadByte(gameboy, address);
       RotateLeftAndCarry(cpu, &val);
       WriteByte(gameboy, address, val);
       break;
@@ -1631,7 +1082,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // RRC (HL): Rotate value pointed by HL right with carry
     case 0x0E: {
       uint16_t address = gameboy->cpu.registers.hl;
-      uint8_t val = Read(gameboy, address);
+      uint8_t val = ReadByte(gameboy, address);
       RotateRightAndCarry(cpu, &val);
       WriteByte(gameboy, address, val);
       break;
@@ -1653,7 +1104,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // RL (HL): Rotate value pointed by HL left
     case 0x16: {
       uint16_t address = gameboy->cpu.registers.hl;
-      uint8_t val = Read(gameboy, address);
+      uint8_t val = ReadByte(gameboy, address);
       RotateLeftThroughCarry(cpu, &val, 1, CPUFlagsGetC(*cpu));
       WriteByte(gameboy, address, val);
       break;
@@ -1675,7 +1126,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // RR (HL): Rotate value pointed by HL right
     case 0x1E: {
       uint16_t address = gameboy->cpu.registers.hl;
-      uint8_t val = Read(gameboy, address);
+      uint8_t val = ReadByte(gameboy, address);
       RotateRightThroughCarry(cpu, &val, 1, CPUFlagsGetC(*cpu));
       WriteByte(gameboy, address, val);
       break;
@@ -1697,7 +1148,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // SLA (HL): Shift value pointed by HL left preserving sign
     case 0x26: {
       uint16_t address = gameboy->cpu.registers.hl;
-      uint8_t val = Read(gameboy, address);
+      uint8_t val = ReadByte(gameboy, address);
       ShiftLeft(cpu, &val);
       WriteByte(gameboy, address, val);
       break;
@@ -1719,7 +1170,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // SRA (HL): Shift value pointed by HL right preserving sign
     case 0x2E: {
       uint16_t address = gameboy->cpu.registers.hl;
-      uint8_t val = Read(gameboy, address);
+      uint8_t val = ReadByte(gameboy, address);
       ShiftRightArithmetic(cpu, &val);
       WriteByte(gameboy, address, val);
       break;
@@ -1741,7 +1192,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // SWAP (HL): Swap nybbles in value pointed by HL
     case 0x36: {
       uint16_t address = gameboy->cpu.registers.hl;
-      uint8_t val = Read(gameboy, address);
+      uint8_t val = ReadByte(gameboy, address);
       SwapNibbles(cpu, &val);
       WriteByte(gameboy, address, val);
       break;
@@ -1763,7 +1214,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // SRL (HL): Shift value pointed by HL right
     case 0x3E: {
       uint16_t address = gameboy->cpu.registers.hl;
-      uint8_t val = Read(gameboy, address);
+      uint8_t val = ReadByte(gameboy, address);
       ShiftRightLogic(cpu, &val);
       WriteByte(gameboy, address, val);
       break;
@@ -1783,7 +1234,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // BIT 0,L: Test bit 0 of L
     case 0x45: TestBit(cpu, cpu->registers.l, 0); break;
     // BIT 0,(HL): Test bit 0 of value pointed by HL
-    case 0x46: TestBit(cpu, Read(gameboy, cpu->registers.hl), 0); break;
+    case 0x46: TestBit(cpu, ReadByte(gameboy, cpu->registers.hl), 0); break;
     // BIT 0,A: Test bit 0 of A
     case 0x47: TestBit(cpu, cpu->registers.a, 0); break;
     // BIT 1,B: Test bit 1 of B
@@ -1799,7 +1250,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // BIT 1,L: Test bit 1 of L
     case 0x4D: TestBit(cpu, cpu->registers.l, 1); break;
     // BIT 1,(HL): Test bit 1 of value pointed by HL
-    case 0x4E: TestBit(cpu, Read(gameboy, cpu->registers.hl), 1); break;
+    case 0x4E: TestBit(cpu, ReadByte(gameboy, cpu->registers.hl), 1); break;
     // BIT 1,A: Test bit 1 of A
     case 0x4F: TestBit(cpu, cpu->registers.a, 1); break;
     // BIT 2,B: Test bit 2 of B
@@ -1815,7 +1266,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // BIT 2,L: Test bit 2 of L
     case 0x55: TestBit(cpu, cpu->registers.l, 2); break;
     // BIT 2,(HL): Test bit 2 of value pointed by HL
-    case 0x56: TestBit(cpu, Read(gameboy, cpu->registers.hl), 2); break;
+    case 0x56: TestBit(cpu, ReadByte(gameboy, cpu->registers.hl), 2); break;
     // BIT 2,A: Test bit 2 of A
     case 0x57: TestBit(cpu, cpu->registers.a, 2); break;
     // BIT 3,B: Test bit 3 of B
@@ -1831,7 +1282,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // BIT 3,L: Test bit 3 of L
     case 0x5D: TestBit(cpu, cpu->registers.l, 3); break;
     // BIT 3,(HL): Test bit 3 of value pointed by HL
-    case 0x5E: TestBit(cpu, Read(gameboy, cpu->registers.hl), 3); break;
+    case 0x5E: TestBit(cpu, ReadByte(gameboy, cpu->registers.hl), 3); break;
     // BIT 3,A: Test bit 3 of A
     case 0x5F: TestBit(cpu, cpu->registers.a, 3); break;
     // BIT 4,B: Test bit 4 of B
@@ -1847,7 +1298,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // BIT 4,L: Test bit 4 of L
     case 0x65: TestBit(cpu, cpu->registers.l, 4); break;
     // BIT 4,(HL): Test bit 4 of value pointed by HL
-    case 0x66: TestBit(cpu, Read(gameboy, cpu->registers.hl), 4); break;
+    case 0x66: TestBit(cpu, ReadByte(gameboy, cpu->registers.hl), 4); break;
     // BIT 4,A: Test bit 4 of A
     case 0x67: TestBit(cpu, cpu->registers.a, 4); break;
     // BIT 5,B: Test bit 5 of B
@@ -1863,7 +1314,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // BIT 5,L: Test bit 5 of L
     case 0x6D: TestBit(cpu, cpu->registers.l, 5); break;
     // BIT 5,(HL): Test bit 5 of value pointed by HL
-    case 0x6E: TestBit(cpu, Read(gameboy, cpu->registers.hl), 5); break;
+    case 0x6E: TestBit(cpu, ReadByte(gameboy, cpu->registers.hl), 5); break;
     // BIT 5,A: Test bit 5 of A
     case 0x6F: TestBit(cpu, cpu->registers.a, 5); break;
     // BIT 6,B: Test bit 6 of B
@@ -1879,7 +1330,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // BIT 6,L: Test bit 6 of L
     case 0x75: TestBit(cpu, cpu->registers.l, 6); break;
     // BIT 6,(HL): Test bit 6 of value pointed by HL
-    case 0x76: TestBit(cpu, Read(gameboy, cpu->registers.hl), 6); break;
+    case 0x76: TestBit(cpu, ReadByte  (gameboy, cpu->registers.hl), 6); break;
     // BIT 6,A: Test bit 6 of A
     case 0x77: TestBit(cpu, cpu->registers.a, 6); break;
     // BIT 7,B: Test bit 7 of B
@@ -1895,7 +1346,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     // BIT 7,L: Test bit 7 of L
     case 0x7D: TestBit(cpu, cpu->registers.l, 7); break;
     // BIT 7,(HL): Test bit 7 of value pointed by HL
-    case 0x7E: TestBit(cpu, Read(gameboy, cpu->registers.hl), 7); break;
+    case 0x7E: TestBit(cpu, ReadByte  (gameboy, cpu->registers.hl), 7); break;
     // BIT 7,A: Test bit 7 of A
     case 0x7F: TestBit(cpu, cpu->registers.a, 7); break;
     // RES 0,B: Clear (reset) bit 0 of B
@@ -1912,7 +1363,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0x85: ClearBit(&cpu->registers.l, 0); break;
     // RES 0,(HL): Clear (reset) bit 0 of value pointed by HL
     case 0x86: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       ClearBit(&val, 0);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -1933,7 +1384,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0x8D: ClearBit(&cpu->registers.l, 1); break;
     // RES 1,(HL): Clear (reset) bit 1 of value pointed by HL
     case 0x8E: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       ClearBit(&val, 1);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -1954,7 +1405,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0x95: ClearBit(&cpu->registers.l, 2); break;
     // RES 2,(HL): Clear (reset) bit 2 of value pointed by HL
     case 0x96: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       ClearBit(&val, 2);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -1975,7 +1426,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0x9D: ClearBit(&cpu->registers.l, 3); break;
     // RES 3,(HL): Clear (reset) bit 3 of value pointed by HL
     case 0x9E: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       ClearBit(&val, 3);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -1996,7 +1447,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0xA5: ClearBit(&cpu->registers.l, 4); break;
     // RES 4,(HL): Clear (reset) bit 4 of value pointed by HL
     case 0xA6: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       ClearBit(&val, 4);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -2017,7 +1468,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0xAD: ClearBit(&cpu->registers.l, 5); break;
     // RES 5,(HL): Clear (reset) bit 5 of value pointed by HL
     case 0xAE: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       ClearBit(&val, 5);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -2038,7 +1489,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0xB5: ClearBit(&cpu->registers.l, 6); break;
     // RES 6,(HL): Clear (reset) bit 6 of value pointed by HL
     case 0xB6: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       ClearBit(&val, 6);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -2059,7 +1510,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0xBD: ClearBit(&cpu->registers.l, 7); break;
     // RES 7,(HL): Clear (reset) bit 7 of value pointed by HL
     case 0xBE: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       ClearBit(&val, 7);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -2080,7 +1531,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0xC5: SetBit(&cpu->registers.l, 0); break;
     // SET 0,(HL): Set bit 0 of value pointed by HL
     case 0xC6: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       SetBit(&val, 0);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -2101,7 +1552,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0xCD: SetBit(&cpu->registers.l, 1); break;
     // SET 1,(HL): Set bit 1 of value pointed by HL
     case 0xCE: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       SetBit(&val, 1);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -2122,7 +1573,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0xD5: SetBit(&cpu->registers.l, 2); break;
     // SET 2,(HL): Set bit 2 of value pointed by HL
     case 0xD6: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       SetBit(&val, 2);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -2143,7 +1594,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0xDD: SetBit(&cpu->registers.l, 3); break;
     // SET 3,(HL): Set bit 3 of value pointed by HL
     case 0xDE: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       SetBit(&val, 3);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -2164,7 +1615,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0xE5: SetBit(&cpu->registers.l, 4); break;
     // SET 4,(HL): Set bit 4 of value pointed by HL
     case 0xE6: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       SetBit(&val, 4);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -2185,7 +1636,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0xED: SetBit(&cpu->registers.l, 5); break;
     // SET 5,(HL): Set bit 5 of value pointed by HL
     case 0xEE: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       SetBit(&val, 5);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -2206,7 +1657,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0xF5: SetBit(&cpu->registers.l, 6); break;
     // SET 6,(HL): Set bit 6 of value pointed by HL
     case 0xF6: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       SetBit(&val, 6);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -2227,7 +1678,7 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
     case 0xFD: SetBit(&cpu->registers.l, 7); break;
     // SET 7,(HL): Set bit 7 of value pointed by HL
     case 0xFE: {
-      uint8_t val = Read(gameboy, cpu->registers.hl);
+      uint8_t val = ReadByte(gameboy, cpu->registers.hl);
       SetBit(&val, 7);
       WriteByte(gameboy, cpu->registers.hl, val);
       break;
@@ -2238,6 +1689,14 @@ void ExecuteCBInstruction(Gameboy* gameboy, const Instruction& instruction) {
 }
 
 }  // namespace
+
+void ExecuteInstruction(Gameboy* gameboy, const Instruction& instruction) {
+  if (!IsCBInstruction(instruction)) {
+    ExecuteNormalInstruction(gameboy, instruction);
+  } else {
+    ExecuteCBInstruction(gameboy, instruction);
+  }
+}
 
 }  // namespace emulator
 }  // namespace rothko
