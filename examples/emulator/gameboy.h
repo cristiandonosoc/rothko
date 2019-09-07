@@ -30,6 +30,7 @@ inline void WriteShort(Gameboy* gameboy, uint16_t address, uint16_t value) {
   gameboy->mbc.WriteShort(gameboy, address, value);
 }
 
+NO_DISCARD
 inline uint8_t Read(Gameboy* gameboy, uint16_t address) {
   return gameboy->mbc.Read(gameboy, address);
 }

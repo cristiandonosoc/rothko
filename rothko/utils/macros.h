@@ -16,10 +16,31 @@
 #define MACOS 1
 #endif
 
-#ifdef _WIN32
+#ifdef WINDOWS
 #define FILEPATH_SEPARATOR '\\'
 #else
 #define FILEPATH_SEPARATOR '/'
+#endif
+
+#ifdef _MSC_VER
+#define MSVC 1
+#endif
+
+#ifdef __GNUC__
+#define GCC 1
+#endif
+
+#ifdef __clang__
+#define CLANG 1
+#endif
+
+// [[nodiscard]]
+#if defined(MSVC) && _MSC_VER >= 1911
+#define NO_DISCARD [[nodiscard]]
+#elif defined(GCC) || defined(CLANG)
+#define NO_DISCARD [[nodiscard]]
+#else
+#define NO_DISCARD
 #endif
 
 // Hack to have variadic macros work with 0 arguments.
