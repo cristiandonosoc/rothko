@@ -21,7 +21,7 @@ dir_blacklist = [
 extension_groups = [
     {"id": "c_headers", "extensions": ["h", "hpp"],             "title": "C/C++ Headers"},
     {"id": "c_code",    "extensions": ["c", "cc", "cpp"],       "title": "C/C++ Code"},
-    # {"id": "cs_code",   "extensions": ["cs"],                   "title": "C# Code"},
+    {"id": "cs_code",   "extensions": ["cs"],                   "title": "C# Code"},
     {"id": "python",    "extensions": ["py"],                   "title": "Python"},
     {"id": "gn",        "extensions": ["gn"],                   "title": "GN"},
     {"id": "extras",    "extensions": ["license", "txt", "md"], "title": "Other"},

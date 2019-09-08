@@ -14,6 +14,7 @@ namespace rothko {
 namespace emulator {
 
 struct CPU;
+struct Gameboy;
 
 // Registers ---------------------------------------------------------------------------------------
 
@@ -115,6 +116,8 @@ inline uint8_t CPUFlagsClearN(CPU* cpu) { return _Clear(cpu, 6); }
 inline uint8_t CPUFlagsClearZ(CPU* cpu) { return _Clear(cpu, 7); }
 
 void Init(CPU*);
+
+uint8_t StepCPU(Gameboy*);
 
 }  // namespace emulator
 }  // namespace rothko

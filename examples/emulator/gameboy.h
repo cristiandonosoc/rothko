@@ -4,10 +4,10 @@
 #pragma once
 
 #include "audio.h"
+#include "catridge.h"
 #include "cpu.h"
 #include "display.h"
 #include "memory.h"
-#include "memory_bank_controllers.h"
 
 namespace rothko {
 namespace emulator {
@@ -20,7 +20,11 @@ struct Gameboy {
   MBCApi mbc;
 };
 
-inline bool Valid(const Gameboy& gameboy) { return Valid(gameboy.mbc); }
+inline bool Loaded(const Gameboy& gameboy) { return Valid(gameboy.mbc); }
+
+void StepInstruction(Gameboy*);
+
+// I/O ---------------------------------------------------------------------------------------------
 
 inline void WriteByte(Gameboy* gameboy, uint16_t address, uint8_t value) {
   gameboy->mbc.WriteByte(gameboy, address, value);
