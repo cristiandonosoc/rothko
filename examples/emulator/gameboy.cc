@@ -6,6 +6,14 @@
 namespace rothko {
 namespace emulator {
 
+bool Init(Game* game, Gameboy* gameboy) {
+  if (!Init(game, &gameboy->textures))
+    return false;
+
+  return true;
+}
+
+
 void StepInstruction(Gameboy*);
 
 }  // namespace emulator

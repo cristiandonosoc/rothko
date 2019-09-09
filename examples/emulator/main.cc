@@ -6,6 +6,7 @@
 #include <rothko/platform/platform.h>
 #include <rothko/ui/imgui.h>
 #include <rothko/utils/file.h>
+#include <rothko/utils/strings.h>
 #include <third_party/imgui_extras/imgui_memory_editor.h>
 
 #include "disassembler.h"
@@ -16,6 +17,7 @@
 
 using namespace rothko;
 using namespace rothko::imgui;
+using namespace rothko::emulator;
 
 namespace {
 
@@ -25,6 +27,33 @@ uint32_t VecToColor(ImVec4 color) {
          ((uint8_t)(color.y * 255.0f) << 16) |
          ((uint8_t)(color.z * 255.0f) << 8) |
          ((uint8_t)(color.w * 255.0f));
+}
+
+void LoadROM(Gameboy* gameboy) {
+  std::string path = OpenFileDialog();
+  Catridge catridge;
+  if (!Load(&catridge, path)) {
+    ERROR(App, "Could not read ROM %s", path.c_str());
+    return;
+  }
+
+  gameboy->catridge = std::move(catridge);
+}
+
+void LoadDump(Game* game, Gameboy* gameboy) {
+  std::string path = OpenFileDialog();
+  std::vector<uint8_t> data;
+  if (!ReadWholeFile(path, &data)) {
+    ERROR(App, "Could not read file %s", path.c_str());
+    return;
+  }
+
+  ASSERT_MSG(data.size() >= KILOBYTES(64), "Got size %zu", data.size());
+
+  memcpy(&gameboy->memory, data.data(), KILOBYTES(64));
+
+  UpdateTextures(game->renderer.get(), &gameboy->memory, &gameboy->textures);
+  Disassemble(gameboy->memory, &gameboy->disassembler);
 }
 
 }  // namespace
@@ -76,14 +105,11 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  auto textures = rothko::emulator::CreateTextures(&game);
-  if (!textures) {
-    ERROR(App, "Could not create textures.");
+  Gameboy gameboy = {};
+  if (!Init(&game, &gameboy)) {
+    ERROR(App, "Coult not initialize gameboy.");
     return 1;
   }
-
-  rothko::emulator::Gameboy gameboy = {};
-  rothko::emulator::Disassembler disassembler = {};
 
   bool running = true;
   while (running) {
@@ -106,41 +132,31 @@ int main(int argc, char* argv[]) {
 
     if (ImGui::BeginMainMenuBar()) {
       if (ImGui::BeginMenu("File")) {
-        if (ImGui::MenuItem("Open")) {
-          std::string path = OpenFileDialog();
-          std::vector<uint8_t> data;
-          if (!ReadWholeFile(path, &data)) {
-            ERROR(App, "Could not read %s", path.c_str());
-            return 1;
-          }
+        if (ImGui::MenuItem("Load ROM")) {
+          LoadROM(&gameboy);
+        }
 
-          ASSERT_MSG(data.size() >= KILOBYTES(64), "Got size %zu", data.size());
-
-          memory_loaded = true;
-
-          memcpy(&gameboy.memory, data.data(), KILOBYTES(64));
-
-          LOG(App, "0x%x", *(uint32_t*)(gameboy.memory.rom_bank0 + 0x104));
-
-          UpdateTileTexture(&gameboy.memory, &textures->tiles);
-          UpdateBackgroundTexture(&gameboy.memory, &textures->background);
-          UpdateWindowTexture(&gameboy.memory, &textures->window);
-          UpdateSpritesDebugTexture(&gameboy.memory, &textures->sprites_debug);
-
-          RendererSubTexture(game.renderer.get(), &textures->tiles);
-          RendererSubTexture(game.renderer.get(), &textures->background);
-          RendererSubTexture(game.renderer.get(), &textures->window);
-          RendererSubTexture(game.renderer.get(), &textures->sprites_debug);
-
-          // Generate the background mesh.
-          CreateBackgroundMesh(game.renderer.get(), &display, &gameboy.memory, &textures->tiles,
-                               normal_shader.get(), (uint8_t*)&normal_ubo);
-
-          Disassemble(gameboy, &disassembler);
+        if (ImGui::MenuItem("Load Dump")) {
+          LoadDump(&game, &gameboy);
         }
 
         ImGui::EndMenu();
       }
+
+      if (ImGui::BeginMenu("Options")) {
+        ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
+        ImGui::EndMenu();
+      }
+
+      auto framerate_str = StringPrintf("Application average %.3f ms/frame (%.1f FPS)",
+                                        1000.0f / ImGui::GetIO().Framerate,
+                                        ImGui::GetIO().Framerate);
+      float framerate_str_width = framerate_str.length() * imgui.font_size.x;
+
+      ImGui::GetWindowWidth();
+
+      ImGui::SetCursorPosX(ImGui::GetWindowWidth() - framerate_str_width);
+      ImGui::Text("%s", framerate_str.c_str());
 
       ImGui::EndMainMenuBar();
     }
@@ -152,50 +168,45 @@ int main(int argc, char* argv[]) {
 
     ImGui::ShowDemoWindow();
 
-    CreateDisplayImgui(&gameboy.memory, textures.get());
+    CreateDisplayImgui(&gameboy.memory, &gameboy.textures);
 
-    // window.
-    {
-      ImGui::Begin("Emulator");
-      ImGui::ColorEdit3("clear color", (float*)&clear_color);  // Edit 3 floats representing a color
-
-      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                  1000.0f / ImGui::GetIO().Framerate,
-                  ImGui::GetIO().Framerate);
-
-      ImGui::Separator();
-      ImGui::Text("Tile texture");
-      ImGui::Image(&textures->tiles, {200, 200 * 1.5f});
+    if (Valid(gameboy.catridge)) {
+      ImGui::Begin("Catridge");
+      ImGui::LabelText("Title", "%s", gameboy.catridge.title.c_str());
+      ImGui::LabelText("Gameboy Type", "%s", ToString(gameboy.catridge.gameboy_type));
+      ImGui::LabelText("Catridge Type", "%s", ToString(gameboy.catridge.catridge_type));
+      ImGui::LabelText("ROM Size (bytes)", "%u", gameboy.catridge.rom_size);
+      ImGui::LabelText("RAM Size (bytes)", "%u", gameboy.catridge.ram_size);
 
       ImGui::End();
     }
 
     // Disassembler window.
     {
-      if (Valid(disassembler)) {
-        ImGui::Begin("Disassemble");
+      /* if (Valid(disassembler)) { */
+      /*   ImGui::Begin("Disassemble"); */
 
-        for (auto& [opcode, dis_inst] : disassembler.instructions) {
-          auto& inst = dis_inst.instruction;
-          if (!IsCBInstruction(inst)) {
-            ImGui::Text("0x%x: %s (0x%x), LENGTH: %u, TICKS: %u",
-                        dis_inst.address,
-                        GetName(dis_inst.instruction),
-                        inst.opcode.low,
-                        inst.length,
-                        inst.ticks);
-          } else {
-            ImGui::Text("0x%x: %s (0x%x), LENGTH: %u, TICKS: %u",
-                        dis_inst.address,
-                        GetName(dis_inst.instruction),
-                        inst.opcode.opcode,
-                        inst.length,
-                        inst.ticks);
-          }
-        }
+      /*   for (auto& [opcode, dis_inst] : disassembler.instructions) { */
+      /*     auto& inst = dis_inst.instruction; */
+      /*     if (!IsCBInstruction(inst)) { */
+      /*       ImGui::Text("0x%x: %s (0x%x), LENGTH: %u, TICKS: %u", */
+      /*                   dis_inst.address, */
+      /*                   GetName(dis_inst.instruction), */
+      /*                   inst.opcode.low, */
+      /*                   inst.length, */
+      /*                   inst.ticks); */
+      /*     } else { */
+      /*       ImGui::Text("0x%x: %s (0x%x), LENGTH: %u, TICKS: %u", */
+      /*                   dis_inst.address, */
+      /*                   GetName(dis_inst.instruction), */
+      /*                   inst.opcode.opcode, */
+      /*                   inst.length, */
+      /*                   inst.ticks); */
+      /*     } */
+      /*   } */
 
-        ImGui::End();
-      }
+      /*   ImGui::End(); */
+      /* } */
     }
 
     PerFrameVector<RenderCommand> commands;

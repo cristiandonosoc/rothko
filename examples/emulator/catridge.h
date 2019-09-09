@@ -72,6 +72,8 @@ struct Catridge {
 bool Load(Catridge*, const uint8_t* data, size_t size);
 bool Load(Catridge*, const std::string& path);
 
+inline bool Valid(const Catridge& c) { return c.catridge_type != CatridgeType::kLast; }
+
 // MBC (Memory Bank Controllers) -------------------------------------------------------------------
 //
 // MBCs are somewhat akin to "drivers". There are different formats a catridge can have within a GB,

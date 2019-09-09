@@ -136,6 +136,7 @@ void StartFrame(ImguiContext* imgui, Window* window, Time* time, Input* input) {
   ASSERT(Valid(window));
   ASSERT(Valid(imgui));
 
+
   imgui->io->DisplaySize = {(float)window->screen_size.width, (float)window->screen_size.height};
   imgui->io->DisplayFramebufferScale = {window->framebuffer_scale.width,
                                         window->framebuffer_scale.height};
@@ -143,11 +144,16 @@ void StartFrame(ImguiContext* imgui, Window* window, Time* time, Input* input) {
   // TODO(Cristian): Obtain time delta from platform!
   imgui->io->DeltaTime = time->frame_delta;
 
+
   RestartKeys(window, input, imgui->io);
 
   imgui->mouse_captured = imgui->io->WantCaptureMouse;
 
   ImGui::NewFrame();
+
+  auto imgui_size = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, "#");
+  imgui->font_size = ToVec2(imgui_size);
+
 }
 
 // End Frame -------------------------------------------------------------------

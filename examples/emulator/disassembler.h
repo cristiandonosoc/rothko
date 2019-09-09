@@ -10,7 +10,7 @@
 namespace rothko {
 namespace emulator {
 
-struct Gameboy;
+struct Memory;
 
 struct DisassembledInstruction {
   uint16_t address = 0;
@@ -22,7 +22,7 @@ struct Disassembler {
 };
 inline bool Valid(const Disassembler& d) { return !d.instructions.empty(); }
 
-void Disassemble(const Gameboy&, Disassembler*, uint16_t entry_point = 0x100);
+void Disassemble(const Memory&, Disassembler*, uint16_t entry_point = 0x100);
 
 }  // namespace emulator
 }  // namespace rothko

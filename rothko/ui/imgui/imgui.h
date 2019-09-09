@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "rothko/ui/imgui.h"
 #include "rothko/ui/imgui/imgui_renderer.h"
 #include "rothko/utils/macros.h"
 
@@ -26,6 +27,8 @@ struct ImguiContext {
 
   bool keyboard_captured = false;
   bool mouse_captured = false;
+
+  Vec2 font_size = {};
 
   ImguiRenderer imgui_renderer;
 };

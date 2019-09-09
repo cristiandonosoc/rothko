@@ -35,15 +35,14 @@ bool CreateTexture(Game* game, std::string name, Vec2 size, Texture* out) {
 
 }  // namespace
 
-std::unique_ptr<Textures> CreateTextures(Game* game) {
-  auto textures = std::make_unique<Textures>();
+bool Init(Game* game, Textures* textures) {
   if (!CreateTexture(game, "tiles-texture", {kTilesSizeX, kTilesSizeY}, &textures->tiles) ||
       !CreateTexture(game, "bg-texture", {kBGSizeX, kBGSizeY}, &textures->background) ||
       !CreateTexture(game, "window-texture", {kWindowSizeX, kWindowSizeY}, &textures->window) ||
       !CreateTexture(game, "sprites-texture", {kSpritesSizeX, kSpritesSizeY}, &textures->sprites) ||
       !CreateTexture(game, "sprites-debug-texture", {kSpritesSizeX, kSpritesSizeY},
                            &textures->sprites_debug)) {
-    return nullptr;
+    return false;
   }
 
   FillInTransparent(&textures->sprites);
@@ -259,6 +258,20 @@ void UpdateSpritesDebugTexture(Memory* memory, Texture* texture) {
     TileToTexture(memory->mapped_io.bgp, tile, sprite_color, true);
     PaintTilePixelOffset(texture, {sprite.x + 8, sprite.y + 8}, sprite_color, true);
   }
+}
+
+// Update Textures ---------------------------------------------------------------------------------
+
+void UpdateTextures(Renderer* renderer, Memory* memory, Textures* textures) {
+  UpdateTileTexture(memory, &textures->tiles);
+  UpdateBackgroundTexture(memory, &textures->background);
+  UpdateWindowTexture(memory, &textures->window);
+  UpdateSpritesDebugTexture(memory, &textures->sprites_debug);
+
+  RendererSubTexture(renderer, &textures->tiles);
+  RendererSubTexture(renderer, &textures->background);
+  RendererSubTexture(renderer, &textures->window);
+  RendererSubTexture(renderer, &textures->sprites_debug);
 }
 
 }  // namespace emulator

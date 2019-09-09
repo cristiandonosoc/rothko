@@ -45,8 +45,7 @@ struct Textures {
   Texture sprites;
   Texture sprites_debug;
 };
-
-std::unique_ptr<Textures> CreateTextures(Game*);
+bool Init(Game*, Textures*);
 
 // Update Texture Functions ------------------------------------------------------------------------
 //
@@ -60,6 +59,8 @@ void UpdateBackgroundTexture(Memory*, Texture*);
 void UpdateWindowTexture(Memory*, Texture*);
 void UpdateSpritesTexture(Texture*);
 void UpdateSpritesDebugTexture(Memory*, Texture*);
+
+void UpdateTextures(Renderer*, Memory*, Textures*);
 
 }  // namespace emulator
 }  // namespace rothko

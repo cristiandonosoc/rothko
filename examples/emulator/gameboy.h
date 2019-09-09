@@ -6,20 +6,32 @@
 #include "audio.h"
 #include "catridge.h"
 #include "cpu.h"
+#include "disassembler.h"
 #include "display.h"
 #include "memory.h"
+#include "textures.h"
 
 namespace rothko {
 namespace emulator {
 
 struct Gameboy {
   Audio audio;
+  Catridge catridge;
   CPU cpu;
-  Memory memory;
+  Disassembler disassembler;
   Display display;
   MBCApi mbc;
-};
+  Memory memory;
+  Textures textures;
 
+  bool initialized = false;
+
+  bool dump_loaded = false;
+  bool catridge_loaded = false;
+};
+bool Init(Game* game, Gameboy*);
+
+inline bool Valid(const Gameboy& gameboy) { return gameboy.initialized; }
 inline bool Loaded(const Gameboy& gameboy) { return Valid(gameboy.mbc); }
 
 void StepInstruction(Gameboy*);

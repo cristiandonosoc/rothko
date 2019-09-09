@@ -5,7 +5,7 @@
 
 #include <deque>
 
-#include "gameboy.h"
+#include "memory.h"
 
 namespace rothko {
 namespace emulator {
@@ -117,12 +117,12 @@ void DisassembleConditionalInstructions(DisassembledInstruction* dis_inst,
   }
 }
 
-bool DisassembleInstruction(const Gameboy& gameboy, DisassembledInstruction* dis_inst,
+bool DisassembleInstruction(const Memory& memory, DisassembledInstruction* dis_inst,
                             std::deque<uint16_t>* pending_queue, uint16_t address) {
 
   auto touched_map = std::make_unique<uint8_t[]>(0x10000);
 
-  const uint8_t* base_ptr = (const uint8_t*)&gameboy.memory;
+  const uint8_t* base_ptr = (const uint8_t*)&memory;
 
   dis_inst->address = address;
   if (!FetchAndDecode(&dis_inst->instruction, base_ptr + address))
@@ -167,7 +167,7 @@ bool DisassembleInstruction(const Gameboy& gameboy, DisassembledInstruction* dis
 }  // namespace
 
 
-void Disassemble(const Gameboy& gameboy, Disassembler* disassembler, uint16_t entry_point) {
+void Disassemble(const Memory& memory, Disassembler* disassembler, uint16_t entry_point) {
   // Reset the touched map.
   memset(gTouchedMap.get(), 0, 0x10000);
 
@@ -200,7 +200,7 @@ void Disassemble(const Gameboy& gameboy, Disassembler* disassembler, uint16_t en
       continue;
 
     DisassembledInstruction dis_inst = {};
-    if (!DisassembleInstruction(gameboy, &dis_inst, &pending_queue, address))
+    if (!DisassembleInstruction(memory, &dis_inst, &pending_queue, address))
       continue;
 
     // Finally we add it to the disassembled instructions.

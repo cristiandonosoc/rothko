@@ -15,6 +15,7 @@ source_set("lib") {
     "disassembler.h",
     "display.cc",
     "display.h",
+    "gameboy.cc",
     "gameboy.h",
     "memory.cc",
     "memory.h",
