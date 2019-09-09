@@ -27,6 +27,7 @@
 #include "rothko/ui/imgui/imgui_windows.h"
 
 namespace rothko {
+namespace imgui {
 
 inline ImVec2 ToImVec2(Int2 v) { return {(float)v.x, (float)v.y}; }
 inline ImVec2 ToImVec2(Vec2 v) { return {v.x, v.y}; }
@@ -37,6 +38,14 @@ inline ImVec4 ToImVec4(Vec4 v) { return {v.x, v.y, v.z, v.w}; }
 inline Vec2 ToVec2(ImVec2 v) { return {(float)v.x, (float)v.y}; }
 inline Vec4 ToVec4(ImVec4 v) { return {v.x, v.y, v.z, v.w}; }
 
+inline void ReadOnlyTextInput(const char* label, const char* str, size_t size) {
+  ImGui::InputText(label, (char*)str, size, ImGuiInputTextFlags_ReadOnly);
+}
+
+inline void ReadOnlyTextInput(const char* label, const std::string& str) {
+  ImGui::InputText(label, (char*)str.c_str(), str.length() + 1);
+}
 
 
+}  // namespace imgui
 }  // namespace rothko

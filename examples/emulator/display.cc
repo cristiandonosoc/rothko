@@ -10,6 +10,8 @@
 
 #include "textures.h"
 
+using namespace ::rothko::imgui;
+
 namespace rothko {
 namespace emulator {
 

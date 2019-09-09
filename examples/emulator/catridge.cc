@@ -37,7 +37,7 @@ uint32_t GetRamSize(uint8_t);  // Returns 0xff on failure.
 
 bool Load(Catridge* catridge, const uint8_t* data, size_t data_size) {
   // Verify the nintendo graphic.
-  if (memcpy((void*)(data + 0x104), kNintendoGraphic, sizeof(kNintendoGraphic)) != 0) {
+  if (memcmp((void*)(data + 0x104), kNintendoGraphic, sizeof(kNintendoGraphic)) != 0) {
       ERROR(App, "Catridge does not have valid nintendo graphic.");
       return false;
   }
@@ -57,7 +57,7 @@ bool Load(Catridge* catridge, const uint8_t* data, size_t data_size) {
   uint32_t rom_size = GetRomSize(data[0x148]);
   uint32_t ram_size = GetRamSize(data[0x149]);
   if (rom_size == 0 || ram_size == 0xff) {
-    ERROR(App, "Invalid ram/rom size values. Rom: 0x%x, Ram: 0x%x", data[0x148], data[0x149]);
+    ERROR(App, "Invalid rom/ram size values. Rom: 0x%x, Ram: 0x%x", data[0x148], data[0x149]);
     return false;
   }
 
@@ -425,16 +425,16 @@ CatridgeType GetCatridgeType(uint8_t value) {
 
 uint32_t GetRomSize(uint8_t value) {
   switch (value) {
-    case 0x00: KILOBYTES(32);    // 256 Kbit = 32 KByte = 2 banks
-    case 0x01: KILOBYTES(64);    // 512 Kbit = 64 KByte = 4 banks
-    case 0x02: KILOBYTES(128);   // 1 Mbit = 128 KByte = 8 banks
-    case 0x03: KILOBYTES(256);   // 2 Mbit = 256 KByte = 16 banks
-    case 0x04: KILOBYTES(512);   // 4 Mbit = 512 KByte = 32 banks
-    case 0x05: MEGABYTES(1);     // 8 Mbit = 1 MByte = 64 banks
-    case 0x06: MEGABYTES(2);     // 16 Mbit = 2 MByte = 128 banks
-    case 0x52: KILOBYTES(1152);  // 9 Mbit = 1.1 MByte = 72 banks
-    case 0x53: KILOBYTES(1280);  // 10 Mbit = 1.2 MByte = 80 banks
-    case 0x54: KILOBYTES(1536);  // 12 Mbit = 1.5 MByte = 96 banks
+    case 0x00: return KILOBYTES(32);    // 256 Kbit =  32 KByte =   2 banks
+    case 0x01: return KILOBYTES(64);    // 512 Kbit =  64 KByte =   4 banks
+    case 0x02: return KILOBYTES(128);   //   1 Mbit = 128 KByte =   8 banks
+    case 0x03: return KILOBYTES(256);   //   2 Mbit = 256 KByte =  16 banks
+    case 0x04: return KILOBYTES(512);   //   4 Mbit = 512 KByte =  32 banks
+    case 0x05: return MEGABYTES(1);     //   8 Mbit =   1 MByte =  64 banks
+    case 0x06: return MEGABYTES(2);     //  16 Mbit =   2 MByte = 128 banks
+    case 0x52: return KILOBYTES(1152);  //   9 Mbit = 1.1 MByte =  72 banks
+    case 0x53: return KILOBYTES(1280);  //  10 Mbit = 1.2 MByte =  80 banks
+    case 0x54: return KILOBYTES(1536);  //  12 Mbit = 1.5 MByte =  96 banks
     default: return 0;
   }
 }

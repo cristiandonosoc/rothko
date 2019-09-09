@@ -56,6 +56,35 @@ void LoadDump(Game* game, Gameboy* gameboy) {
   Disassemble(gameboy->memory, &gameboy->disassembler);
 }
 
+void DrawRegistersInput(uint16_t input, const char* names, bool decompose = true) {
+  ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f - 25);
+  ImGui::InputScalar(names, ImGuiDataType_U16, &input, nullptr, nullptr, "0x%04x",
+                     ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_ReadOnly);
+
+
+  ImGui::PopItemWidth();
+
+  if (!decompose)
+    return;
+
+  ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.25f - 25);
+
+  char buf[2] = {};
+  uint8_t* ptr = (uint8_t*)&input;
+
+  buf[0] = names[1];
+  ImGui::SameLine();
+  ImGui::InputScalar(buf, ImGuiDataType_U8, ptr + 1, nullptr, nullptr, "0x%02x",
+                     ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_ReadOnly);
+
+  buf[0] = names[0];
+  ImGui::SameLine();
+  ImGui::InputScalar(buf, ImGuiDataType_U8, ptr, nullptr, nullptr, "0x%02x",
+                     ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_ReadOnly);
+
+  ImGui::PopItemWidth();
+}
+
 }  // namespace
 
 int main(int argc, char* argv[]) {
@@ -171,12 +200,27 @@ int main(int argc, char* argv[]) {
     CreateDisplayImgui(&gameboy.memory, &gameboy.textures);
 
     if (Valid(gameboy.catridge)) {
-      ImGui::Begin("Catridge");
-      ImGui::LabelText("Title", "%s", gameboy.catridge.title.c_str());
-      ImGui::LabelText("Gameboy Type", "%s", ToString(gameboy.catridge.gameboy_type));
-      ImGui::LabelText("Catridge Type", "%s", ToString(gameboy.catridge.catridge_type));
-      ImGui::LabelText("ROM Size (bytes)", "%u", gameboy.catridge.rom_size);
-      ImGui::LabelText("RAM Size (bytes)", "%u", gameboy.catridge.ram_size);
+      ImGui::Begin("Gameboy");
+      ImGui::SetNextTreeNodeOpen(true, ImGuiCond_Once);
+      if (ImGui::CollapsingHeader("Catridge")) {
+        ReadOnlyTextInput("Title", gameboy.catridge.title);
+        ReadOnlyTextInput("Gameboy Type", ToString(gameboy.catridge.gameboy_type));
+        ReadOnlyTextInput("Catridge Type", ToString(gameboy.catridge.catridge_type));
+        ReadOnlyTextInput("ROM Size (bytes)", StringPrintf("%u", gameboy.catridge.rom_size));
+        ReadOnlyTextInput("RAM Size (bytes)", StringPrintf("%u", gameboy.catridge.ram_size));
+      }
+
+      ImGui::SetNextTreeNodeOpen(true, ImGuiCond_Once);
+      if (ImGui::CollapsingHeader("CPU")) {
+        DrawRegistersInput(gameboy.cpu.registers.af, "AF");
+        DrawRegistersInput(gameboy.cpu.registers.bc, "BC");
+        DrawRegistersInput(gameboy.cpu.registers.de, "DE");
+        DrawRegistersInput(gameboy.cpu.registers.hl, "HL");
+        DrawRegistersInput(gameboy.cpu.registers.af, "AF");
+
+        DrawRegistersInput(gameboy.cpu.registers.af, "PC", false);
+        DrawRegistersInput(gameboy.cpu.registers.sp, "SP", false);
+      }
 
       ImGui::End();
     }
