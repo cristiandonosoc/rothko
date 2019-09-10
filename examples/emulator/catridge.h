@@ -55,6 +55,31 @@ enum class CatridgeType : uint8_t {
 };
 const char* ToString(CatridgeType);
 
+// MBC (Memory Bank Controllers) -------------------------------------------------------------------
+//
+// MBCs are somewhat akin to "drivers". There are different formats a catridge can have within a GB,
+// each behaving differently to read/write commands. Some are basically ROM, others have more
+// memory that have to be swapped in/out of the address space.
+
+struct MBCApi{
+  template <typename T>
+  using ReadFunction = T (*)(Gameboy*, uint16_t address);
+
+  template <typename T>
+  using WriteFunction = void (*)(Gameboy*, uint16_t address, T value);
+
+  CatridgeType type = CatridgeType::kLast;
+
+  ReadFunction<uint8_t> ReadByte = nullptr;
+  ReadFunction<uint16_t> ReadShort = nullptr;
+
+  WriteFunction<uint8_t> WriteByte = nullptr;
+  WriteFunction<uint16_t> WriteShort = nullptr;
+};
+inline bool Valid(const MBCApi& mbc) { return mbc.type != CatridgeType::kLast; }
+
+// Catridge ----------------------------------------------------------------------------------------
+
 struct Catridge {
   std::string title;  // Extracted from address 0x134-0x142 of the catridge data.
 
@@ -63,6 +88,8 @@ struct Catridge {
 
   uint32_t rom_size = 0;   // In bytes. Address 0x148.
   uint32_t ram_size = 0;   // In bytes. Address 0x149.
+
+  MBCApi mbc = {};
 
   std::vector<uint8_t> data;
 };
@@ -73,37 +100,6 @@ bool Load(Catridge*, const uint8_t* data, size_t size);
 bool Load(Catridge*, const std::string& path);
 
 inline bool Valid(const Catridge& c) { return c.catridge_type != CatridgeType::kLast; }
-
-// MBC (Memory Bank Controllers) -------------------------------------------------------------------
-//
-// MBCs are somewhat akin to "drivers". There are different formats a catridge can have within a GB,
-// each behaving differently to read/write commands. Some are basically ROM, others have more
-// memory that have to be swapped in/out of the address space.
-
-enum class MBCType {
-  kBasic,
-  kLast,
-};
-const char* ToString(MBCType);
-
-struct MBCApi{
-  template <typename T>
-  using ReadFunction = T (*)(Gameboy*, uint16_t address);
-
-  template <typename T>
-  using WriteFunction = void (*)(Gameboy*, uint16_t address, T value);
-
-  MBCType type = MBCType::kLast;
-
-  ReadFunction<uint8_t> ReadByte = nullptr;
-  ReadFunction<uint16_t> ReadShort = nullptr;
-
-  WriteFunction<uint8_t> WriteByte = nullptr;
-  WriteFunction<uint16_t> WriteShort = nullptr;
-};
-inline bool Valid(const MBCApi& mbc) { return mbc.type != MBCType::kLast; }
-
-MBCApi GetMBCApi(MBCType);
 
 }  // namespace emulator
 }  // namespace rothko

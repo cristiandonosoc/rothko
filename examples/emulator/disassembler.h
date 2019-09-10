@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <map>
+#include <vector>
 
 #include "cpu_instructions.h"
 
@@ -12,17 +12,17 @@ namespace emulator {
 
 struct Memory;
 
-struct DisassembledInstruction {
-  uint16_t address = 0;
-  Instruction instruction;
-};
-
 struct Disassembler {
-  std::map<uint64_t, DisassembledInstruction> instructions;
+  Instruction instructions[64*1024];
 };
-inline bool Valid(const Disassembler& d) { return !d.instructions.empty(); }
 
 void Disassemble(const Memory&, Disassembler*, uint16_t entry_point = 0x100);
+
+// Returns the index of first valid instruction before the given |address|. -1 if none.
+int PrevInstructionIndex(const Disassembler&, uint16_t address);
+
+// Returns the index of first valid instruction after the given |address|. -1 if none.
+int NextInstructionIndex(const Disassembler&, uint64_t address);
 
 }  // namespace emulator
 }  // namespace rothko

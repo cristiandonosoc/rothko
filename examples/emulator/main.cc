@@ -37,7 +37,8 @@ void LoadROM(Gameboy* gameboy) {
     return;
   }
 
-  gameboy->catridge = std::move(catridge);
+  LoadCatridge(gameboy, std::move(catridge));
+  Disassemble(gameboy->memory, &gameboy->disassembler);
 }
 
 void LoadDump(Game* game, Gameboy* gameboy) {
@@ -83,6 +84,18 @@ void DrawRegistersInput(uint16_t input, const char* names, bool decompose = true
                      ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_ReadOnly);
 
   ImGui::PopItemWidth();
+}
+
+inline void DrawIntructionDisasm(const Instruction& instruction, uint16_t address) {
+  if (!IsCBInstruction(instruction)) {
+    ImGui::Text("0x%x: %s (0x%x), LENGTH: %u, TICKS: %u",
+                address, GetName(instruction), instruction.opcode.low,
+                instruction.length, instruction.ticks);
+  } else {
+    ImGui::Text("0x%x: %s (0x%x), LENGTH: %u, TICKS: %u",
+                address, GetName(instruction), instruction.opcode.opcode,
+                instruction.length, instruction.ticks);
+  }
 }
 
 }  // namespace
@@ -220,6 +233,52 @@ int main(int argc, char* argv[]) {
 
         DrawRegistersInput(gameboy.cpu.registers.af, "PC", false);
         DrawRegistersInput(gameboy.cpu.registers.sp, "SP", false);
+      }
+
+      ImGui::SetNextTreeNodeOpen(true, ImGuiCond_Once);
+      if (ImGui::CollapsingHeader("Disasm")) {
+        // Print the previous instructions.
+        int addresses[5] = {};
+        for (int i = 0; i < ARRAY_SIZE(addresses); i++) {
+          addresses[i] = -1;
+        }
+
+        for (int i = 0; i < ARRAY_SIZE(addresses); i++) {
+          int index = PrevInstructionIndex(gameboy.disassembler, gameboy.cpu.registers.pc);
+          if (index == -1)
+            break;
+          addresses[i] = index;
+        }
+
+        // Set the previous instructions backwards.
+        for (int i = ARRAY_SIZE(addresses) - 1; i >= 0; i--) {
+          DrawIntructionDisasm(gameboy.disassembler.instructions[i], i);
+        }
+
+        // The current instruction.
+        ImGui::Separator();
+        auto& instruction = gameboy.disassembler.instructions[gameboy.cpu.registers.pc];
+        ASSERT(Valid(instruction));
+
+        DrawIntructionDisasm(instruction, gameboy.cpu.registers.pc);
+
+        ImGui::Separator();
+
+        // Print the next instructions.
+        for (int i = 0; i < ARRAY_SIZE(addresses); i++) {
+          addresses[i] = -1;
+        }
+
+        for (int i = 0; i < ARRAY_SIZE(addresses); i++) {
+          int index = NextInstructionIndex(gameboy.disassembler, gameboy.cpu.registers.pc);
+          if (index == -1)
+            break;
+          addresses[i] = index;
+        }
+
+        for (int i = 0; i < ARRAY_SIZE(addresses); i++) {
+          DrawIntructionDisasm(gameboy.disassembler.instructions[i], i);
+        }
       }
 
       ImGui::End();

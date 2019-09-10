@@ -33,6 +33,8 @@ CatridgeType GetCatridgeType(uint8_t t);
 uint32_t GetRomSize(uint8_t);
 uint32_t GetRamSize(uint8_t);  // Returns 0xff on failure.
 
+MBCApi GetMBCApi(CatridgeType type);  // Defined later in the file.
+
 }  // namespace
 
 bool Load(Catridge* catridge, const uint8_t* data, size_t data_size) {
@@ -76,6 +78,8 @@ bool Load(Catridge* catridge, const uint8_t* data, size_t data_size) {
   catridge->data.resize(data_size);
   catridge->data.insert(catridge->data.end(), data, data + data_size);
 
+  catridge->mbc = GetMBCApi(catridge->catridge_type);
+
   return true;
 }
 
@@ -88,8 +92,6 @@ bool Load(Catridge* catridge, const std::string& path) {
 
   return Load(catridge, data.data(), data.size());
 }
-
-
 
 // Low Level Memory "API" --------------------------------------------------------------------------
 //
@@ -122,9 +124,9 @@ inline void LowLevelWriteShort(Gameboy* gameboy, uint16_t address, uint16_t valu
 
 namespace {
 
-inline MBCApi GetBasicMBC() {
+inline MBCApi RomOnlyMBC() {
   MBCApi api = {};
-  api.type = MBCType::kBasic;
+  api.type = CatridgeType::kROM_ONLY;
   api.ReadByte = LowLevelReadByte;
   api.ReadShort = LowLevelReadShort;
   api.WriteByte = LowLevelWriteByte;
@@ -137,15 +139,45 @@ inline MBCApi GetBasicMBC() {
 
 // GETMBCApi ---------------------------------------------------------------------------------------
 
-MBCApi GetMBCApi(MBCType type) {
+namespace {
+
+MBCApi GetMBCApi(CatridgeType type) {
   switch (type) {
-    case MBCType::kBasic: return GetBasicMBC();
-    case MBCType::kLast: break;
+    case CatridgeType::kROM_ONLY: return RomOnlyMBC();
+    case CatridgeType::kROM_MBC1:
+    case CatridgeType::kROM_MBC1_RAM:
+    case CatridgeType::kROM_MBC1_RAM_BATT:
+    case CatridgeType::kROM_MBC2:
+    case CatridgeType::kROM_MBC2_BATTERY:
+    case CatridgeType::kROM_RAM:
+    case CatridgeType::kROM_RAM_BATTERY:
+    case CatridgeType::kROM_MMM01:
+    case CatridgeType::kROM_MMM01_SRAM:
+    case CatridgeType::kROM_MMM01_SRAM_BATT:
+    case CatridgeType::kROM_MBC3_TIMER_BATT:
+    case CatridgeType::kROM_MBC3_TIMER_RAM_BATT:
+    case CatridgeType::kROM_MBC3:
+    case CatridgeType::kROM_MBC3_RAM:
+    case CatridgeType::kROM_MBC3_RAM_BATT:
+    case CatridgeType::kROM_MBC5:
+    case CatridgeType::kROM_MBC5_RAM:
+    case CatridgeType::kROM_MBC5_RAM_BATT:
+    case CatridgeType::kROM_MBC5_RUMBLE:
+    case CatridgeType::kROM_MBC5_RUMBLE_SRAM:
+    case CatridgeType::kROM_MBC5_RUMBLE_SRAM_BATT:
+    case CatridgeType::kPocket_Camera:
+    case CatridgeType::kBandai_TAMA5:
+    case CatridgeType::kHudson_HuC3:
+    case CatridgeType::kHudson_HuC1:
+    case CatridgeType::kLast:
+      NOT_REACHED_MSG("Unsupported catridge type: %s", ToString(type));
   }
 
   NOT_REACHED();
   return {};
 }
+
+}  // namespace
 
 // ****************************************** INTERNALS ********************************************
 

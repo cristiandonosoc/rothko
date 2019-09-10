@@ -32,6 +32,7 @@ struct Instruction {
 };
 static_assert(sizeof(Instruction) == 6);
 
+inline bool Valid(const Instruction& i) { return i.ticks > 0; }
 inline bool IsCBInstruction(const Instruction& i) { return i.opcode.high == 0xcb; }
 
 

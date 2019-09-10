@@ -20,7 +20,6 @@ struct Gameboy {
   CPU cpu;
   Disassembler disassembler;
   Display display;
-  MBCApi mbc;
   Memory memory;
   Textures textures;
 
@@ -32,26 +31,28 @@ struct Gameboy {
 bool Init(Game* game, Gameboy*);
 
 inline bool Valid(const Gameboy& gameboy) { return gameboy.initialized; }
-inline bool Loaded(const Gameboy& gameboy) { return Valid(gameboy.mbc); }
+inline bool Loaded(const Gameboy& gameboy) { return Valid(gameboy.catridge); }
+
+void LoadCatridge(Gameboy* gameboy, Catridge&&);
 
 void StepInstruction(Gameboy*);
 
 // I/O ---------------------------------------------------------------------------------------------
 
 inline void WriteByte(Gameboy* gameboy, uint16_t address, uint8_t value) {
-  gameboy->mbc.WriteByte(gameboy, address, value);
+  gameboy->catridge.mbc.WriteByte(gameboy, address, value);
 }
 
 inline void WriteShort(Gameboy* gameboy, uint16_t address, uint16_t value) {
-  gameboy->mbc.WriteShort(gameboy, address, value);
+  gameboy->catridge.mbc.WriteShort(gameboy, address, value);
 }
 
 NO_DISCARD inline uint8_t ReadByte(Gameboy* gameboy, uint16_t address) {
-  return gameboy->mbc.ReadByte(gameboy, address);
+  return gameboy->catridge.mbc.ReadByte(gameboy, address);
 }
 
 NO_DISCARD inline uint16_t ReadShort(Gameboy* gameboy, uint16_t address) {
-  return gameboy->mbc.ReadShort(gameboy, address);
+  return gameboy->catridge.mbc.ReadShort(gameboy, address);
 }
 
 }  // namespace emulator

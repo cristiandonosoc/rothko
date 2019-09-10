@@ -4,6 +4,7 @@
 #include "disassembler.h"
 
 #include <deque>
+#include <map>
 
 #include "memory.h"
 
@@ -76,30 +77,30 @@ std::unique_ptr<uint8_t[]> gTouchedMap = std::make_unique<uint8_t[]>(0x10000);
 const std::map<uint16_t, ConditionalInstruction> kConditionalInstructions =
     CreateConditionalInstructions();
 
-void DisassembleConditionalInstructions(DisassembledInstruction* dis_inst,
+void DisassembleConditionalInstructions(Instruction* dis_inst,
                                         const ConditionalInstruction& cond_inst,
                                         std::deque<uint16_t>* pending_queue,
                                         uint16_t address) {
   // |next_address| was already verified.
-  uint16_t next_address = address + dis_inst->instruction.length;
+  uint16_t next_address = address + dis_inst->length;
 
   // We already verified that the conditional instruction is there.
   if (cond_inst.next_inst_valid)
     PushToQueue(pending_queue, next_address);
 
   // See if this is a relative/absolute jump.
-  if (dis_inst->instruction.length == 2) {
+  if (dis_inst->length == 2) {
     // Relative jump. The one-byte offset is signed.
-    int8_t offset = (int8_t)dis_inst->instruction.operands[0];
+    int8_t offset = (int8_t)dis_inst->operands[0];
     uint16_t rel_address = address + offset;
     LOG(App, "Got relative offset %d to address 0x%x. Jump to 0x%x", offset, address, rel_address);
     if (gTouchedMap[rel_address] == 0){
       gTouchedMap[rel_address] = 1;
       PushToQueue(pending_queue, rel_address);
     }
-  } else if(dis_inst->instruction.length == 3) {
+  } else if(dis_inst->length == 3) {
     // Absolute jump.
-    uint16_t abs_address = dis_inst->instruction.operand;
+    uint16_t abs_address = dis_inst->operand;
     if (gTouchedMap[abs_address] == 0) {
       gTouchedMap[abs_address] = 1;
       PushToQueue(pending_queue, abs_address);
@@ -117,27 +118,23 @@ void DisassembleConditionalInstructions(DisassembledInstruction* dis_inst,
   }
 }
 
-bool DisassembleInstruction(const Memory& memory, DisassembledInstruction* dis_inst,
+bool DisassembleInstruction(const Memory& memory, Instruction* dis_inst,
                             std::deque<uint16_t>* pending_queue, uint16_t address) {
 
   auto touched_map = std::make_unique<uint8_t[]>(0x10000);
 
   const uint8_t* base_ptr = (const uint8_t*)&memory;
 
-  dis_inst->address = address;
-  if (!FetchAndDecode(&dis_inst->instruction, base_ptr + address))
+  if (!FetchAndDecode(dis_inst, base_ptr + address))
     return false;
 
   LOG(App,
       "Address 0x%x: Decoded %s (0x%x), Op low: 0x%x, Op high: 0x%x",
-      dis_inst->address,
-      GetName(dis_inst->instruction),
-      dis_inst->instruction.opcode.opcode,
-      dis_inst->instruction.operands[0],
-      dis_inst->instruction.operands[1]);
+      address, GetName(*dis_inst), dis_inst->opcode.opcode,
+      dis_inst->operands[0], dis_inst->operands[1]);
 
   // See if this address or any of the next have been already touched.
-  uint16_t next_address = address + dis_inst->instruction.length;
+  uint16_t next_address = address + dis_inst->length;
   ASSERT_MSG(next_address > address, "Address: 0x%x, NEXT ADDRESS: 0x%x", address, next_address);
   for (uint16_t a = address; a <= next_address; a++) {
     if (touched_map[a] == 1) {
@@ -151,8 +148,8 @@ bool DisassembleInstruction(const Memory& memory, DisassembledInstruction* dis_i
   // TODO: Obtain name and description of instructions.
 
   // Only normal instruction can be conditional.
-  if (!IsCBInstruction(dis_inst->instruction)) {
-    auto it = kConditionalInstructions.find(dis_inst->instruction.opcode.low);
+  if (!IsCBInstruction(*dis_inst)) {
+    auto it = kConditionalInstructions.find(dis_inst->opcode.low);
     if (it != kConditionalInstructions.end()) {
       DisassembleConditionalInstructions(dis_inst, it->second, pending_queue, address);
       return true;
@@ -174,8 +171,8 @@ void Disassemble(const Memory& memory, Disassembler* disassembler, uint16_t entr
   // Addresses that are still pending to be disassembled.
   std::deque<uint16_t> pending_queue;
 
-  auto& instructions = disassembler->instructions;
-  instructions.clear();
+  // Clear the instructions.
+  memset(disassembler->instructions, 0, sizeof(disassembler->instructions));
 
   // Add always add the gameboy begin point. And then also add the |entry_point|.
   PushToQueue(&pending_queue, 0x100);
@@ -191,15 +188,11 @@ void Disassemble(const Memory& memory, Disassembler* disassembler, uint16_t entr
     uint64_t address = pending_queue.front();
     pending_queue.pop_front();
 
-    // If we cannot take 3 bytes of context, we do not disassemble.
-    if (address == 0xffff - 1)
-      continue;
-
     // If we already disassembled this instruction, we don't continue.
-    if (instructions.find(address) != instructions.end())
+    if (gTouchedMap[address] == 0)
       continue;
 
-    DisassembledInstruction dis_inst = {};
+    Instruction dis_inst = {};
     if (!DisassembleInstruction(memory, &dis_inst, &pending_queue, address))
       continue;
 
@@ -208,6 +201,29 @@ void Disassemble(const Memory& memory, Disassembler* disassembler, uint16_t entr
   }
 }
 
+// Getters -----------------------------------------------------------------------------------------
+
+int PrevInstructionIndex(const Disassembler& disassembler, uint16_t start) {
+  int address = (int)start - 1;
+  while (address >= 0) {
+    if (Valid(disassembler.instructions[address]))
+      return address;
+    address--;
+  }
+
+  return -1;
+}
+
+int NextInstructionIndex(const Disassembler& disassembler, uint64_t start) {
+  int address = (int)start - 1;
+  while (address <= 0xff) {
+    if (Valid(disassembler.instructions[address]))
+      return address;
+    address++;
+  }
+
+  return -1;
+}
 
 }  // namespace emulator
 }  // namespace rothko
