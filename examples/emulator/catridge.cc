@@ -120,13 +120,19 @@ inline void LowLevelWriteShort(Gameboy* gameboy, uint16_t address, uint16_t valu
 
 }  // namespace
 
-// Basic MBC ---------------------------------------------------------------------------------------
+// ROM ONLY ----------------------------------------------------------------------------------------
 
 namespace {
+
+void RomOnlyLoad(Gameboy* gameboy) {
+  // Rom only maps the first 32 KBs into the ROM part of the memory.
+  memcpy(&gameboy->memory, gameboy->catridge.data.data(), KILOBYTES(32));
+}
 
 inline MBCApi RomOnlyMBC() {
   MBCApi api = {};
   api.type = CatridgeType::kROM_ONLY;
+  api.Load = RomOnlyLoad;
   api.ReadByte = LowLevelReadByte;
   api.ReadShort = LowLevelReadShort;
   api.WriteByte = LowLevelWriteByte;

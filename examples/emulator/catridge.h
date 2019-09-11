@@ -62,6 +62,8 @@ const char* ToString(CatridgeType);
 // memory that have to be swapped in/out of the address space.
 
 struct MBCApi{
+  using LoadFunction = void(*)(Gameboy*);
+
   template <typename T>
   using ReadFunction = T (*)(Gameboy*, uint16_t address);
 
@@ -69,6 +71,8 @@ struct MBCApi{
   using WriteFunction = void (*)(Gameboy*, uint16_t address, T value);
 
   CatridgeType type = CatridgeType::kLast;
+
+  LoadFunction Load = nullptr;  // Assumes |Gameboy.catridge| is already set.
 
   ReadFunction<uint8_t> ReadByte = nullptr;
   ReadFunction<uint16_t> ReadShort = nullptr;

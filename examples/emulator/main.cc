@@ -258,7 +258,7 @@ int main(int argc, char* argv[]) {
         // The current instruction.
         ImGui::Separator();
         auto& instruction = gameboy.disassembler.instructions[gameboy.cpu.registers.pc];
-        ASSERT(Valid(instruction));
+        /* ASSERT(Valid(instruction)); */
 
         DrawIntructionDisasm(instruction, gameboy.cpu.registers.pc);
 
@@ -282,34 +282,30 @@ int main(int argc, char* argv[]) {
       }
 
       ImGui::End();
+
+      ImGui::Begin("Disassemble");
+
+      for (uint32_t i = 0; i < 0x100; i++) {
+        uint16_t address = (uint16_t)i;
+        auto& inst = gameboy.disassembler.instructions[address];
+        if (!Valid(inst))
+          continue;
+
+        if (!IsCBInstruction(inst)) {
+          ImGui::Text("0x%x: %s (0x%x), LENGTH: %u, TICKS: %u", address, GetName(inst),
+                      inst.opcode.low, inst.length, inst.ticks);
+        } else {
+          ImGui::Text("0x%x: %s (0x%x), LENGTH: %u, TICKS: %u", address, GetName(inst),
+                      inst.opcode.opcode, inst.length, inst.ticks);
+        }
+      }
+
+      ImGui::End();
     }
 
     // Disassembler window.
     {
-      /* if (Valid(disassembler)) { */
-      /*   ImGui::Begin("Disassemble"); */
 
-      /*   for (auto& [opcode, dis_inst] : disassembler.instructions) { */
-      /*     auto& inst = dis_inst.instruction; */
-      /*     if (!IsCBInstruction(inst)) { */
-      /*       ImGui::Text("0x%x: %s (0x%x), LENGTH: %u, TICKS: %u", */
-      /*                   dis_inst.address, */
-      /*                   GetName(dis_inst.instruction), */
-      /*                   inst.opcode.low, */
-      /*                   inst.length, */
-      /*                   inst.ticks); */
-      /*     } else { */
-      /*       ImGui::Text("0x%x: %s (0x%x), LENGTH: %u, TICKS: %u", */
-      /*                   dis_inst.address, */
-      /*                   GetName(dis_inst.instruction), */
-      /*                   inst.opcode.opcode, */
-      /*                   inst.length, */
-      /*                   inst.ticks); */
-      /*     } */
-      /*   } */
-
-      /*   ImGui::End(); */
-      /* } */
     }
 
     PerFrameVector<RenderCommand> commands;

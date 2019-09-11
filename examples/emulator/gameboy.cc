@@ -23,7 +23,6 @@ bool Init(Game* game, Gameboy* gameboy) {
 
 // LoadCatridge ----------------------------------------------------------------------------------
 
-
 void LoadCatridge(Gameboy* gameboy, Catridge&& catridge) {
   Reset(gameboy);
   gameboy->catridge = std::move(catridge);
@@ -72,6 +71,8 @@ void LoadCatridge(Gameboy* gameboy, Catridge&& catridge) {
   mem_ptr[0xff4a] = 0x00;  // WY
   mem_ptr[0xff4b] = 0x00;  // WX
   mem_ptr[0xffff] = 0x00;  // IE
+
+  gameboy->catridge.mbc.Load(gameboy);
 }
 
 void StepInstruction(Gameboy*);

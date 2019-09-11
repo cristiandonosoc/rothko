@@ -67,9 +67,8 @@ std::string OpenFileDialog() {
   char filename[1024];
   FILE* f = popen("zenity --file-selection", "r");
   fgets(filename, 1024, f);
-  int res = pclose(f);
-  assert(res == 0);
-
+  if (pclose(f) != 0)
+    return {};
   return filename;
 }
 
