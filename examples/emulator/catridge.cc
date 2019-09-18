@@ -79,6 +79,7 @@ bool Load(Catridge* catridge, const uint8_t* data, size_t data_size) {
   catridge->data.insert(catridge->data.end(), data, data + data_size);
 
   catridge->mbc = GetMBCApi(catridge->catridge_type);
+  ASSERT(Valid(catridge->mbc));
 
   return true;
 }
@@ -184,6 +185,14 @@ MBCApi GetMBCApi(CatridgeType type) {
 }
 
 }  // namespace
+
+bool Valid(const MBCApi& api) {
+  if (api.type == CatridgeType::kLast)
+    return false;
+  if (!api.Load || !api.ReadByte || !api.ReadShort || !api.WriteByte || !api.WriteShort)
+    return false;
+  return true;
+}
 
 // ****************************************** INTERNALS ********************************************
 

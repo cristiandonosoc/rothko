@@ -72,7 +72,8 @@ struct MBCApi{
 
   CatridgeType type = CatridgeType::kLast;
 
-  LoadFunction Load = nullptr;  // Assumes |Gameboy.catridge| is already set.
+  // Requires a catridge to already be loaded within the gameboy.
+  LoadFunction Load = nullptr;
 
   ReadFunction<uint8_t> ReadByte = nullptr;
   ReadFunction<uint16_t> ReadShort = nullptr;
@@ -80,7 +81,7 @@ struct MBCApi{
   WriteFunction<uint8_t> WriteByte = nullptr;
   WriteFunction<uint16_t> WriteShort = nullptr;
 };
-inline bool Valid(const MBCApi& mbc) { return mbc.type != CatridgeType::kLast; }
+bool Valid(const MBCApi& mbc);
 
 // Catridge ----------------------------------------------------------------------------------------
 

@@ -120,11 +120,7 @@ void DisassembleConditionalInstructions(Instruction* dis_inst,
 
 bool DisassembleInstruction(const Memory& memory, Instruction* dis_inst,
                             std::deque<uint16_t>* pending_queue, uint16_t address) {
-
-  auto touched_map = std::make_unique<uint8_t[]>(0x10000);
-
   const uint8_t* base_ptr = (const uint8_t*)&memory;
-
   if (!FetchAndDecode(dis_inst, base_ptr + address))
     return false;
 
@@ -137,12 +133,12 @@ bool DisassembleInstruction(const Memory& memory, Instruction* dis_inst,
   uint16_t next_address = address + dis_inst->length;
   ASSERT_MSG(next_address > address, "Address: 0x%x, NEXT ADDRESS: 0x%x", address, next_address);
   for (uint16_t a = address; a <= next_address; a++) {
-    if (touched_map[a] == 1) {
+    if (gTouchedMap[a] == 1) {
       NOT_REACHED_MSG("Instruction 0x%x already disassembled.", a);
       return false;
     }
 
-    touched_map[a] = 1;
+    gTouchedMap[a] = 1;
   }
 
   // TODO: Obtain name and description of instructions.
@@ -176,20 +172,20 @@ void Disassemble(const Memory& memory, Disassembler* disassembler, uint16_t entr
 
   // Add always add the gameboy begin point. And then also add the |entry_point|.
   PushToQueue(&pending_queue, 0x100);
-  gTouchedMap[0x100] = 1;
+  /* gTouchedMap[0x100] = 1; */
   if (entry_point != 0x100) {
     LOG(App, "Adding entry point 0x%x", entry_point);
     PushToQueue(&pending_queue, entry_point);
-    gTouchedMap[entry_point] = 1;
+    /* gTouchedMap[entry_point] = 1; */
   }
 
   while (!pending_queue.empty()) {
     // Take the first address of the queue.
-    uint64_t address = pending_queue.front();
+    uint16_t address = pending_queue.front();
     pending_queue.pop_front();
 
     // If we already disassembled this instruction, we don't continue.
-    if (gTouchedMap[address] == 0)
+    if (gTouchedMap[address] == 1)
       continue;
 
     Instruction dis_inst = {};
@@ -197,6 +193,7 @@ void Disassemble(const Memory& memory, Disassembler* disassembler, uint16_t entr
       continue;
 
     // Finally we add it to the disassembled instructions.
+    /* LOG(App, "0x%x", address); */
     disassembler->instructions[address] = std::move(dis_inst);
   }
 }

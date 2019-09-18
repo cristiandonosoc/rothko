@@ -35,7 +35,7 @@ void LoadCatridge(Gameboy* gameboy, Catridge&& catridge) {
   gameboy->cpu.registers.hl = 0x014d;
 
   gameboy->cpu.registers.pc = 0x0100;
-  gameboy->cpu.registers.pc = 0xfffe;
+  gameboy->cpu.registers.sp = 0xfffe;
 
   // Set the initial memory values.
   uint8_t* mem_ptr = (uint8_t*)&gameboy->memory;
