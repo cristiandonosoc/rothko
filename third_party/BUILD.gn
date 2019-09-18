@@ -1,7 +1,7 @@
 # Copyright 2019, Cristián Donoso.
 # This code has a BSD license. See LICENSE.
 
-# IMGUI --------------------------------------------------------------------------------------------
+# Imgui --------------------------------------------------------------------------------------------
 
 config("imgui_config") {
   include_dirs = [ "//third_party/imgui" ]
@@ -55,3 +55,7 @@ source_set("imgui_extras") {
   # We don't care about the warnings of this library.
   configs -= [ "//gn_config/compilers:default_warnings" ]
 }
+
+# Ozz animation ------------------------------------------------------------------------------------
+
+

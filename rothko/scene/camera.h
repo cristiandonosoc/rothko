@@ -9,6 +9,8 @@
 
 namespace rothko {
 
+struct PushCamera;
+
 enum class ProjectionType {
   kProjection,
   kOrthographic,
@@ -50,14 +52,9 @@ Mat4 GetView(const OrbitCamera& camera);
 Mat4 GetPerspective(const OrbitCamera&);
 Mat4 GetOrtho(const OrbitCamera&);
 
-inline Mat4 GetProjection(const OrbitCamera& camera) {
-  switch (camera.projection_type) {
-    case ProjectionType::kProjection: return GetPerspective(camera);
-    case ProjectionType::kOrthographic: return GetOrtho(camera);
-  }
+// Returns either ortho or perspective projection, depending on the camera type.
+Mat4 GetProjection(const OrbitCamera&);
 
-  NOT_REACHED();
-  return Mat4::Identity();
-}
+PushCamera GetCommand(const OrbitCamera&);
 
 }  // namespace rothko

@@ -1,0 +1,19 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+executable("ozz") {
+  sources = [
+    "main.cc",
+  ]
+
+  deps = [
+    "//rothko:game",
+    "//rothko/graphics",
+    "//rothko/ui:imgui",
+    "//rothko/window:sdl_opengl",
+    "//third_party:imgui_extras",
+
+    "//third_party/ozz:animation",
+  ]
+}
+

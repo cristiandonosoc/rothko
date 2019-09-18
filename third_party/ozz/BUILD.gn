@@ -1,0 +1,47 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+config("ozz_config") {
+  include_dirs = [ "//third_party" ]
+}
+
+source_set("base") {
+  sources = [
+    "impl/ozz_base.cc",
+  ]
+
+  public_configs = [ ":ozz_config" ]
+
+  # We don't care about the warnings of this library.
+  configs -= [ "//gn_config/compilers:default_warnings" ]
+}
+
+source_set("animation") {
+  sources = [
+    "impl/ozz_animation.cc",
+  ]
+
+  deps = [
+    ":base",
+  ]
+
+  public_configs = [ ":ozz_config" ]
+
+  # We don't care about the warnings of this library.
+  configs -= [ "//gn_config/compilers:default_warnings" ]
+}
+
+source_set("geometry") {
+  sources = [
+    "impl/ozz_geometry.cc",
+  ]
+
+  deps = [
+    ":base",
+  ]
+
+  public_configs = [ ":ozz_config" ]
+
+  # We don't care about the warnings of this library.
+  configs -= [ "//gn_config/compilers:default_warnings" ]
+}
