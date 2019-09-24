@@ -7,6 +7,7 @@
 source_set("stb") {
   public = [
     "stb_image.h",
+    "stb_image_write.h",
     "stb_sprintf.h",
   ]
 
@@ -16,6 +17,17 @@ source_set("stb") {
     "implementations.cc",
   ]
 
+  public_configs = [
+    ":includes"
+  ]
+
   # We don't care about the warnings of this library.
   configs -= [ "//gn_config/compilers:default_warnings" ]
+}
+
+
+config("includes") {
+  include_dirs = [
+    "//third_party",
+  ]
 }

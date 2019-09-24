@@ -18,10 +18,11 @@
  *       macros. Read each library for more documentation.
  */
 
-// Import images.
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-// Quick n' simple sprintf
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"

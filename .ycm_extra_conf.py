@@ -21,6 +21,8 @@ flags = [
 
 flags += local_flags
 
+filepath = os.path.dirname(os.path.abspath(__file__))
+
 flags += [
     '-I', os.path.join(os.getcwd()),
 
@@ -28,11 +30,13 @@ flags += [
     '-D', 'ROTHKO_VULKAN_ENABLED',
     '-D', 'ROTHKO_OPENGL_ENABLED',
 
-    '-isystem', os.path.join(os.getcwd(), 'third_party'),
-    '-isystem', os.path.join(os.getcwd(), 'third_party', 'include'),
-    '-isystem', os.path.join(os.getcwd(), 'third_party', 'imgui'),
-    '-isystem', os.path.join(os.getcwd(), 'third_party', 'imgui', 'examples'),
-    '-isystem', os.path.join(os.getcwd(), 'third_party', 'catch2'),
+    '-isystem', os.path.join(filepath, 'third_party'),
+    '-isystem', os.path.join(filepath, 'third_party', 'include'),
+    '-isystem', os.path.join(filepath, 'third_party', 'imgui'),
+    '-isystem', os.path.join(filepath, 'third_party', 'imgui', 'examples'),
+    '-isystem', os.path.join(filepath, 'third_party', 'catch2'),
+    '-isystem', os.path.join(filepath, 'third_party', 'json'),
+    '-isystem', os.path.join(filepath, 'third_party', 'tiny_gltf'),
 ]
 
 

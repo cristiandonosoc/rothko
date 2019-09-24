@@ -1,0 +1,14 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+source_set("json") {
+  public_configs = [
+    ":includes",
+  ]
+}
+
+config("includes") {
+  include_dirs = [
+    "//third_party/json",
+  ]
+}

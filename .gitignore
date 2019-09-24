@@ -8,5 +8,6 @@ sdl_source
 warhol
 gbsharp
 third_party/include/glm
+ozz-animation
 
 ycm_extra_conf_local.py

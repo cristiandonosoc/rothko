@@ -1,0 +1,15 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+executable("gltf") {
+  sources = [
+    "main.cc",
+  ]
+
+  deps = [
+    "//rothko:game",
+    "//third_party/tiny_gltf",
+    "//rothko/window:sdl_opengl",
+  ]
+
+}

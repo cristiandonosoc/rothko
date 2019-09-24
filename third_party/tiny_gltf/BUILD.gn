@@ -1,0 +1,31 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+source_set("tiny_gltf") {
+  public = [
+    "tiny_gltf.h"
+  ]
+
+  sources = [
+    "tiny_gltf_internal.h",
+    "impl.cc",
+  ]
+
+  deps = [
+    "//third_party/json",
+    "//third_party/stb",
+  ]
+
+  public_configs = [
+    ":includes",
+  ]
+
+  # We don't care about the warnings of this library.
+  configs -= [ "//gn_config/compilers:default_warnings" ]
+}
+
+config("includes") {
+  include_dirs = [
+    "//third_party",
+  ]
+}
