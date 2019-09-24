@@ -9,9 +9,9 @@ namespace rothko {
 
 const char* ToString(VertexType type) {
   switch (type) {
-    case VertexType::kDefault: return "Default";
     case VertexType::k2dUVColor: return "2d UV Color";
     case VertexType::k3dColor: return "3d Color";
+    case VertexType::k3dNormalUV: return "3d Normal UV";
     case VertexType::k3dUV: return "3d UV";
     case VertexType::k3dUVColor: return "3D UV Color";
     case VertexType::kLast: return "Last";
@@ -23,9 +23,9 @@ const char* ToString(VertexType type) {
 
 uint32_t ToSize(VertexType type) {
   switch (type) {
-    case VertexType::kDefault: return sizeof(VertexDefault);
     case VertexType::k2dUVColor: return sizeof(Vertex2dUVColor);
     case VertexType::k3dColor: return sizeof(Vertex3dColor);
+    case VertexType::k3dNormalUV: return sizeof(Vertex3DNormalUV);
     case VertexType::k3dUV: return sizeof(Vertex3dUV);
     case VertexType::k3dUVColor: return sizeof(Vertex3dUVColor);
     case VertexType::kLast: break;

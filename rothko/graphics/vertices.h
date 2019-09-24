@@ -10,11 +10,11 @@
 namespace rothko {
 
 enum class VertexType : uint32_t {
-  kDefault,       // VertexDefault.
-  k2dUVColor,     // Vertex2dUvColor.
-  k3dColor,       // Vertex3dColor.
-  k3dUV,          // Vertex3dUV.
-  k3dUVColor,     // Vertex3dUVColor.
+  k2dUVColor,
+  k3dColor,
+  k3dNormalUV,
+  k3dUV,
+  k3dUVColor,
   kLast,
 };
 const char* ToString(VertexType);
@@ -31,14 +31,14 @@ uint32_t ToSize(VertexType);
 //       OpenGL, it is something we want in order to tightly pack the buffer sent to the GPU.
 #pragma pack(push, 1)
 
-struct VertexDefault {
-  static constexpr VertexType kVertexType = VertexType::kDefault;
+struct Vertex3DNormalUV {
+  static constexpr VertexType kVertexType = VertexType::k3dNormalUV;
 
   Vec3 pos;
   Vec3 normal;
   Vec2 uv;
 };
-static_assert(sizeof(VertexDefault) == 32);
+static_assert(sizeof(Vertex3DNormalUV) == 32);
 
 struct Vertex2dUVColor{
   static constexpr VertexType kVertexType = VertexType::k2dUVColor;
