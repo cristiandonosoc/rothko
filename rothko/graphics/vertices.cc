@@ -25,7 +25,7 @@ uint32_t ToSize(VertexType type) {
   switch (type) {
     case VertexType::k2dUVColor: return sizeof(Vertex2dUVColor);
     case VertexType::k3dColor: return sizeof(Vertex3dColor);
-    case VertexType::k3dNormalUV: return sizeof(Vertex3DNormalUV);
+    case VertexType::k3dNormalUV: return sizeof(Vertex3dNormalUV);
     case VertexType::k3dUV: return sizeof(Vertex3dUV);
     case VertexType::k3dUVColor: return sizeof(Vertex3dUVColor);
     case VertexType::kLast: break;

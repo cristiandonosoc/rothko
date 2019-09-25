@@ -51,16 +51,18 @@ void UnbindMeshHandles() {
 // The static_asserts are here to ensure that if the vertices change, this code has to change too.
 void StageAttributes(Mesh* mesh) {
   switch (mesh->vertex_type) {
-    case VertexType::kDefault: {
-      static_assert(sizeof(VertexDefault) == 32);
-      GLsizei stride = sizeof(VertexDefault);
+    case VertexType::k3dNormalUV: {
+      static_assert(sizeof(Vertex3dNormalUV) == 32);
+      GLsizei stride = sizeof(Vertex3dNormalUV);
       glEnableVertexAttribArray(0);
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, pos));
+      glVertexAttribPointer(
+          0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dNormalUV, pos));
       glEnableVertexAttribArray(1);
-      glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
-                            (void*)offsetof(VertexDefault, normal));
+      glVertexAttribPointer(
+          1, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dNormalUV, normal));
       glEnableVertexAttribArray(2);
-      glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VertexDefault, uv));
+      glVertexAttribPointer(
+          2, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(Vertex3dNormalUV, uv));
       return;
     }
     case VertexType::k2dUVColor: {

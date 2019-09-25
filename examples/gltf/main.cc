@@ -10,6 +10,29 @@
 
 using namespace rothko;
 
+namespace {
+
+void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node) {
+  if (node.mesh == -1) {
+    WARNING(App, "Node %s has no mesh.", node.name.c_str());
+    return;
+  }
+
+  const tinygltf::Mesh& mesh = model.meshes[node.mesh];
+  for (const tinygltf::Primitive& primitive : mesh.primitives) {
+    (void)primitive;
+  }
+}
+
+void ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node) {
+  ProcessNode(model, node);
+  for (int node_index : node.children) {
+    ProcessNodes(model, model.nodes[node_index]);
+  }
+}
+
+}  // namespace
+
 int main() {
   Game game = {};
   InitWindowConfig window_config = {};
@@ -42,4 +65,9 @@ int main() {
 
   LOG(App, "Loaded model!");
 
+  // Go over the scene.
+  auto& scene = model.scenes[model.defaultScene];
+  for (int node_index : scene.nodes) {
+    ProcessNodes(model, model.nodes[node_index]);
+  }
 }
