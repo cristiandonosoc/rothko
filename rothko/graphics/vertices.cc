@@ -12,6 +12,7 @@ const char* ToString(VertexType type) {
     case VertexType::k2dUVColor: return "2d UV Color";
     case VertexType::k3dColor: return "3d Color";
     case VertexType::k3dNormalUV: return "3d Normal UV";
+    case VertexType::k3dNormalTangentUV: return "3d Normal Tangent UV";
     case VertexType::k3dUV: return "3d UV";
     case VertexType::k3dUVColor: return "3D UV Color";
     case VertexType::kLast: return "Last";
@@ -26,6 +27,7 @@ uint32_t ToSize(VertexType type) {
     case VertexType::k2dUVColor: return sizeof(Vertex2dUVColor);
     case VertexType::k3dColor: return sizeof(Vertex3dColor);
     case VertexType::k3dNormalUV: return sizeof(Vertex3dNormalUV);
+    case VertexType::k3dNormalTangentUV: return sizeof(Vertex3dNormalTangentUV);
     case VertexType::k3dUV: return sizeof(Vertex3dUV);
     case VertexType::k3dUVColor: return sizeof(Vertex3dUVColor);
     case VertexType::kLast: break;
@@ -35,6 +37,23 @@ uint32_t ToSize(VertexType type) {
   return 0;
 }
 
+VertexType ToVertexType(uint32_t t) {
+  VertexType type = (VertexType)t;
 
+  switch (type) {
+    case VertexType::k2dUVColor:
+    case VertexType::k3dColor:
+    case VertexType::k3dNormalUV:
+    case VertexType::k3dUV:
+    case VertexType::k3dUVColor:
+    case VertexType::k3dNormalTangentUV:
+    case VertexType::kLast:
+      return type;
+  }
+
+
+  WARNING(Graphics, "Unrecognized vertex type: 0x%x", t);
+  return VertexType::kLast;
+}
 
 }  // namespace rothko

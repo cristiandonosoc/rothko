@@ -2,6 +2,7 @@
 # This code has a BSD license. See LICENSE.
 
 executable("gltf_viewer") {
+  output_name = "gltf"
   sources = [
     "main.cc",
   ]
