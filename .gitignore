@@ -9,5 +9,6 @@ warhol
 gbsharp
 third_party/include/glm
 ozz-animation
+tinygltf_link
 
 ycm_extra_conf_local.py

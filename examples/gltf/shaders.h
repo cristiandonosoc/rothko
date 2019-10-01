@@ -8,7 +8,7 @@
 namespace rothko {
 namespace gltf {
 
-std::unique_ptr<Shader> CreateNormalShader(Renderer*);
+Shader CreateNormalShader(Renderer*);
 
 }  // namespace gltf
 }  // namespace
