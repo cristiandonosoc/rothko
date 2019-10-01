@@ -10,46 +10,71 @@
 namespace rothko {
 
 // Detection occurs according to bits.
-constexpr uint32_t kVertCompPos2d   = (1 << 1);             // Vec2
-constexpr uint32_t kVertCompPos3d   = (1 << 2);             // Vec3
 
-constexpr uint32_t kVertCompNormal  = (1 << 4);             // Vec3
-constexpr uint32_t kVertCompTangent = (1 << 5);             // Vec4
+enum class VertComponent : uint32_t {
+  kPos2d   = (1 << 1),             // Vec2
+  kPos3d   = (1 << 2),             // Vec3
 
-constexpr uint32_t kVertCompUV0_byte   = (1 << 8);          // uint8_t[2] / uint16_t
-constexpr uint32_t kVertCompUV0_short  = (1 << 9);          // uint16_t[2] / uint32_t
-constexpr uint32_t kVertCompUV0_float  = (1 << 10);         // Vec2
+  kNormal  = (1 << 4),             // Vec3
+  kTangent = (1 << 5),             // Vec4
 
-constexpr uint32_t kVertCompUV1_byte   = (1 << 11);         // uint8_t[2] / uint16_t
-constexpr uint32_t kVertCompUV1_short  = (1 << 12);         // uint16_t[2] / uint32_t
-constexpr uint32_t kVertCompUV1_float  = (1 << 13);         // Vec2
+  kUV0_byte   = (1 << 8),          // uint8_t[2] / uint16_t
+  kUV0_short  = (1 << 9),          // uint16_t[2] / uint32_t
+  kUV0_float  = (1 << 10),         // Vec2
 
-constexpr uint32_t kVertCompColorRGB_byte   = (1 << 14);    // uint8_t[3]
-constexpr uint32_t kVertCompColorRGB_short  = (1 << 15);    // uint16_t[3]
-constexpr uint32_t kVertCompColorRGB_float  = (1 << 16);    // Vec3
+  kUV1_byte   = (1 << 11),         // uint8_t[2] / uint16_t
+  kUV1_short  = (1 << 12),         // uint16_t[2] / uint32_t
+  kUV1_float  = (1 << 13),         // Vec2
 
-constexpr uint32_t kVertCompColorRGBA_byte   = (1 << 17);   // uint8_t[4] / uint32_t
-constexpr uint32_t kVertCompColorRGBA_short  = (1 << 18);   // uint16_t[4] / uint64_t
-constexpr uint32_t kVertCompColorRGBA_float  = (1 << 19);   // Vec4
+  kColorRGB_byte   = (1 << 14),    // uint8_t[3]
+  kColorRGB_short  = (1 << 15),    // uint16_t[3]
+  kColorRGB_float  = (1 << 16),    // Vec3
 
-constexpr uint32_t kVertCompJoints_byte = (1 << 20);        // uint8_t[4] / uint32_t
-constexpr uint32_t kVertCompJoints_short = (1 << 21);       // uint16_t[4] / uint64_t
+  kColorRGBA_byte   = (1 << 17),   // uint8_t[4] / uint32_t
+  kColorRGBA_short  = (1 << 18),   // uint16_t[4] / uint64_t
+  kColorRGBA_float  = (1 << 19),   // Vec4
 
-constexpr uint32_t kVertCompWeights_byte   = (1 << 22);     // uint8_t[4] / uint32_t
-constexpr uint32_t kVertCompWeights_short  = (1 << 23);     // uint16_t[4] / uint64_t
-constexpr uint32_t kVertCompWeights_float  = (1 << 24);     // Vec4
+  kJoints_byte = (1 << 20),        // uint8_t[4] / uint32_t
+  kJoints_short = (1 << 21),       // uint16_t[4] / uint64_t
 
-const char* VertCompToString(uint32_t);
+  kWeights_byte   = (1 << 22),     // uint8_t[4] / uint32_t
+  kWeights_short  = (1 << 23),     // uint16_t[4] / uint64_t
+  kWeights_float  = (1 << 24),     // Vec4
 
-enum class VertexType : uint32_t {
-  k2dUVColor = kVertCompPos2d | kVertCompUV0_float | kVertCompColorRGBA_byte,
-  k3dColor = kVertCompPos3d | kVertCompColorRGBA_byte,
-  k3dNormalUV = kVertCompPos3d | kVertCompNormal | kVertCompUV0_float,
-  k3dUV = kVertCompPos3d | kVertCompUV0_float,
-  k3dUVColor = kVertCompPos3d | kVertCompUV0_float | kVertCompColorRGBA_byte,
-  k3dNormalTangentUV = kVertCompPos3d | kVertCompNormal | kVertCompTangent | kVertCompUV0_float,
   kLast = (uint32_t)-1,
 };
+
+const char* ToString(VertComponent);
+uint32_t ToSize(VertComponent);
+
+// clang-format off
+enum class VertexType : uint32_t {
+  k2dUVColor = (uint32_t)VertComponent::kPos2d |
+               (uint32_t)VertComponent::kUV0_float |
+               (uint32_t)VertComponent::kColorRGBA_byte,
+
+  k3dColor = (uint32_t)VertComponent::kPos3d |
+             (uint32_t)VertComponent::kColorRGBA_byte,
+
+  k3dNormalUV = (uint32_t)VertComponent::kPos3d |
+                (uint32_t)VertComponent::kNormal |
+                (uint32_t)VertComponent::kUV0_float,
+
+  k3dUV = (uint32_t)VertComponent::kPos3d |
+          (uint32_t)VertComponent::kUV0_float,
+
+  k3dUVColor = (uint32_t)VertComponent::kPos3d |
+               (uint32_t)VertComponent::kUV0_float |
+               (uint32_t)VertComponent::kColorRGBA_byte,
+
+  k3dNormalTangentUV = (uint32_t)VertComponent::kPos3d |
+                       (uint32_t)VertComponent::kNormal |
+                       (uint32_t)VertComponent::kTangent |
+                       (uint32_t)VertComponent::kUV0_float,
+  kLast = (uint32_t)-1,
+};
+// clang-format on
+
 VertexType ToVertexType(uint32_t);
 const char* ToString(VertexType);
 uint32_t ToSize(VertexType);

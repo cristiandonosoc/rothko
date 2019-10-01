@@ -2,6 +2,7 @@
 // This code has a BSD license. See LICENSE.
 
 #include <rothko/game.h>
+#include <rothko/graphics/vertices.h>
 #include <rothko/platform/platform.h>
 #include <stdio.h>
 #include <third_party/tiny_gltf/tiny_gltf.h>
@@ -42,6 +43,21 @@ enum class ComponentType : int {
   kFloat  = 5126,
   kDouble = 5130,
 };
+uint32_t ToSize(ComponentType component_type) {
+  switch (component_type) {
+    case ComponentType::kInt8:    return 1;
+    case ComponentType::kUint8:   return 1;
+    case ComponentType::kInt16:   return 2;
+    case ComponentType::kUint16:  return 2;
+    case ComponentType::kInt32:   return 4;
+    case ComponentType::kUInt32:  return 4;
+    case ComponentType::kFloat:   return 4;
+    case ComponentType::kDouble:  return 8;
+  }
+
+  NOT_REACHED();
+  return 0;
+}
 
 enum class AccessorKind : int {
   kPosition,
@@ -99,9 +115,9 @@ const char* ToString(AccessorType type) {
   return "<unknown>";
 }
 
-inline
-
-VertexType DetectVertexType(const tinygltf::Model& model, const tinygltf::Primitive& primitive) {
+VertexType DetectVertexType(const tinygltf::Model& model,
+                            const tinygltf::Primitive& primitive,
+                            std::map<VertComponent, const tinygltf::Accessor*>* accessors) {
   uint32_t types = 0;
   for (auto& [attr_name, attr_accessor_index] : primitive.attributes) {
     const tinygltf::Accessor& accessor = model.accessors[attr_accessor_index];
@@ -110,71 +126,154 @@ VertexType DetectVertexType(const tinygltf::Model& model, const tinygltf::Primit
     ComponentType comp_type = (ComponentType)accessor.componentType;
     AccessorType accessor_type = (AccessorType)accessor.type;
 
+    VertComponent component = VertComponent::kLast;
+
     switch (accessor_kind) {
-      case AccessorKind::kPosition: types |= kVertCompPos3d; continue;
-      case AccessorKind::kNormal:   types |= kVertCompNormal; continue;
-      case AccessorKind::kTangent:  types |= kVertCompTangent; continue;
+      case AccessorKind::kPosition: component = VertComponent::kPos3d; break;
+      case AccessorKind::kNormal:   component = VertComponent::kNormal; break;
+      case AccessorKind::kTangent:  component = VertComponent::kTangent; break;
       case AccessorKind::kTexcoord0: {
         switch (comp_type) {
-          case ComponentType::kUint8:   types |= kVertCompUV0_byte; continue;
-          case ComponentType::kUint16:  types |= kVertCompUV0_short; continue;
-          case ComponentType::kFloat:   types |= kVertCompUV0_float; continue;
+          case ComponentType::kUint8:   component = VertComponent::kUV0_byte; break;
+          case ComponentType::kUint16:  component = VertComponent::kUV0_short; break;
+          case ComponentType::kFloat:   component = VertComponent::kUV0_float; break;
           default: NOT_REACHED();
         }
-        continue;
+        break;
       }
       case AccessorKind::kTexcoord1: {
         switch (comp_type) {
-          case ComponentType::kUint8:   types |= kVertCompUV1_byte; continue;
-          case ComponentType::kUint16:  types |= kVertCompUV1_short; continue;
-          case ComponentType::kFloat:   types |= kVertCompUV1_float; continue;
+          case ComponentType::kUint8:   component = VertComponent::kUV1_byte; break;
+          case ComponentType::kUint16:  component = VertComponent::kUV1_short; break;
+          case ComponentType::kFloat:   component = VertComponent::kUV1_float; break;
           default: NOT_REACHED();
         }
-        continue;
+        break;
       }
       case AccessorKind::kColor: {
         if (accessor_type == AccessorType::kVec3) {
           switch (comp_type) {
-            case ComponentType::kUint8:   types |= kVertCompColorRGB_byte; continue;
-            case ComponentType::kUint16:  types |= kVertCompColorRGB_short; continue;
-                                          io
-            case ComponentType::kFloat:   types |= kVertCompColorRGB_float; continue;
+            case ComponentType::kUint8:   component = VertComponent::kColorRGB_byte; break;
+            case ComponentType::kUint16:  component = VertComponent::kColorRGB_short; break;
+            case ComponentType::kFloat:   component = VertComponent::kColorRGB_float; break;
             default: NOT_REACHED();
           }
         } else if (accessor_type == AccessorType::kVec4) {
           switch (comp_type) {
-            case ComponentType::kUint8:   types |= kVertCompColorRGBA_byte; continue;
-            case ComponentType::kUint16:  types |= kVertCompColorRGBA_short; continue;
-            case ComponentType::kFloat:   types |= kVertCompColorRGBA_float; continue;
+            case ComponentType::kUint8:   component = VertComponent::kColorRGBA_byte; break;
+            case ComponentType::kUint16:  component = VertComponent::kColorRGBA_short; break;
+            case ComponentType::kFloat:   component = VertComponent::kColorRGBA_float; break;
             default: NOT_REACHED();
           }
         }
-        continue;
+        break;
       }
       case AccessorKind::kJoints: {
         switch (comp_type) {
-          case ComponentType::kUint8:   types |= kVertCompJoints_byte; continue;
-          case ComponentType::kUint16:  types |= kVertCompJoints_short; continue;
+          case ComponentType::kUint8:   component = VertComponent::kJoints_byte; break;
+          case ComponentType::kUint16:  component = VertComponent::kJoints_short; break;
           default: NOT_REACHED();
         }
-        continue;
+        break;
       }
       case AccessorKind::kWeights: {
         switch (comp_type) {
-          case ComponentType::kUint8:   types |= kVertCompWeights_byte; continue;
-          case ComponentType::kUint16:  types |= kVertCompWeights_short; continue;
-          case ComponentType::kFloat:   types |= kVertCompWeights_float; continue;
+          case ComponentType::kUint8: component = VertComponent::kWeights_byte; break;
+          case ComponentType::kUint16: component = VertComponent::kWeights_short; break;
+          case ComponentType::kFloat: component = VertComponent::kWeights_float; break;
           default: NOT_REACHED();
         }
-        continue;
+        break;
       }
-      case AccessorKind::kLast:
-        NOT_REACHED();
-        continue;
+      case AccessorKind::kLast: NOT_REACHED(); break;
     }
+
+    ASSERT(component != VertComponent::kLast);
+    types |= (uint32_t)component;
+    (*accessors)[component] = &accessor;
   }
 
   return ToVertexType(types);
+}
+
+std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
+                                     const tinygltf::Primitive& primitive) {
+  std::map<VertComponent, const tinygltf::Accessor*> accessors;
+  VertexType vertex_type = DetectVertexType(model, primitive, &accessors);
+  ASSERT(vertex_type != VertexType::kLast);
+  ASSERT(!accessors.empty());
+
+  // Go over each vertex component and add it to a buffer.
+  auto accessor_it = accessors.begin();
+  uint64_t vertices_size = accessor_it->second->count * ToSize(vertex_type);
+
+  std::vector<uint8_t> vertices;
+  vertices.reserve(vertices_size);
+
+  // Accessors are already sorted to where they are in the buffer.
+  uint32_t component_offset = 0;
+  for(; accessor_it != accessors.end(); accessor_it++) {
+    const VertComponent& vert_component = accessor_it->first;
+    uint32_t component_size = ToSize(vert_component);
+
+    auto& accessor = accessor_it->second;
+    const tinygltf::BufferView& buffer_view = model.bufferViews[accessor->bufferView];
+    const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
+
+    uint8_t* vertices_ptr = vertices.data() + component_offset;
+    uint8_t* vertices_end = vertices.data() + vertices_size;
+    const uint8_t* buffer_ptr = (const uint8_t*)buffer.data.data() + accessor->byteOffset;
+    const uint8_t* buffer_end = (const uint8_t*)buffer.data.data() + buffer.data.size();
+
+    // Copy over the data to the buffer.
+    for (size_t i = 0; i < accessor->count; i++) {
+      ASSERT(vertices_ptr < vertices_end);
+      ASSERT(buffer_ptr < buffer_end);
+
+      // Copy over the component value.
+      for (size_t j = 0; j < component_size; j++) {
+        *vertices_ptr++ = *buffer_ptr++;
+      }
+
+      // Advance by the stride.
+      buffer_ptr += buffer_view.byteStride;
+    }
+
+    component_offset += component_size;
+  }
+
+  return vertices;
+}
+
+std::vector<uint8_t> ExtractIndices(const tinygltf::Model& model,
+                                    const tinygltf::Primitive& primitive) {
+  const tinygltf::Accessor& accessor = model.accessors[primitive.indices];
+  ComponentType component_type = (ComponentType)accessor.componentType;
+  uint32_t index_size = ToSize(component_type);
+  uint64_t indices_size = index_size * accessor.count;
+
+  const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
+  const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
+
+
+  std::vector<uint8_t> indices;
+  indices.reserve(indices_size);
+
+  uint8_t* indices_ptr = indices.data();
+  uint8_t* indices_end = indices_ptr + indices_size;
+  const uint8_t* buffer_ptr = (const uint8_t*)buffer.data.data() + accessor.byteOffset;
+  const uint8_t* buffer_end = (const uint8_t*)buffer.data.data() + buffer.data.size();
+
+  for (size_t i = 0; i < accessor.count; i++) {
+    ASSERT(indices_ptr < indices_end);
+    ASSERT(buffer_ptr < buffer_end);
+
+    for (size_t j = 0; j < index_size; j++) {
+      *indices_ptr++ = *buffer_ptr++;
+    }
+  }
+
+  return indices;
 }
 
 void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node) {
@@ -195,8 +294,6 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node) {
     const tinygltf::Primitive& primitive = mesh.primitives[primitive_i];
     ss << "  Primitive " << primitive_i << std::endl;
 
-    VertexType vertex_type = DetectVertexType(model, primitive);
-    ss << "    Vertex Type: " << ToString(vertex_type) << std::endl;
 
     ss << "    Indices -> Accessor " << primitive.indices << std::endl;
 
@@ -218,6 +315,13 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node) {
       ss << "        target: " << bv.target << " (" << ToString((BufferViewTarget)bv.target) << ")"
          << std::endl;
     }
+
+
+    std::vector<uint8_t> vertices = ExtractVertices(model, primitive);
+    std::vector<uint8_t> indices = ExtractIndices(model, primitive);
+
+    ss << "    VERTICES: " << vertices.size() << std::endl;
+    ss << "    INDICES: " << indices.size() << std::endl;
   }
 
   LOG(App, "%s", ss.str().c_str());
