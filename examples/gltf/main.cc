@@ -13,11 +13,29 @@ using namespace rothko;
 
 namespace {
 
-struct Mesh {
-  std::vector<uint8_t> buffers;
+// Serialization Targets ---------------------------------------------------------------------------
 
+struct MeshAsset {
+  uint32_t asset_id = (uint32_t)-1;
+
+  std::string name;
+  std::vector<uint8_t> buffers;
   std::vector<uint8_t> indices;
 };
+
+struct ModelPrimitiveAsset {
+  uint32_t asset_id = (uint32_t)-1;
+
+  MeshAsset* mesh = nullptr;
+};
+
+
+struct ModelAsset {
+  std::vector<MeshAsset> meshes;
+  std::vector<ModelPrimitiveAsset> primitives;
+};
+
+// Parsing Code ------------------------------------------------------------------------------------
 
 enum class BufferViewTarget : int {
   kArrayBuffer = 34962,
@@ -115,9 +133,10 @@ const char* ToString(AccessorType type) {
   return "<unknown>";
 }
 
-VertexType DetectVertexType(const tinygltf::Model& model,
-                            const tinygltf::Primitive& primitive,
-                            std::map<VertComponent, const tinygltf::Accessor*>* accessors) {
+VertexType
+DetectVertexType(const tinygltf::Model& model,
+                 const tinygltf::Primitive& primitive,
+                 std::map<VertComponent, const tinygltf::Accessor*>* accessors = nullptr) {
   uint32_t types = 0;
   for (auto& [attr_name, attr_accessor_index] : primitive.attributes) {
     const tinygltf::Accessor& accessor = model.accessors[attr_accessor_index];
@@ -190,16 +209,20 @@ VertexType DetectVertexType(const tinygltf::Model& model,
 
     ASSERT(component != VertComponent::kLast);
     types |= (uint32_t)component;
-    (*accessors)[component] = &accessor;
+
+    if (accessors)
+      (*accessors)[component] = &accessor;
   }
 
   return ToVertexType(types);
 }
 
 std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
-                                     const tinygltf::Primitive& primitive) {
+                                     const tinygltf::Primitive& primitive,
+                                     VertexType vertex_type = VertexType::kLast) {
   std::map<VertComponent, const tinygltf::Accessor*> accessors;
-  VertexType vertex_type = DetectVertexType(model, primitive, &accessors);
+  vertex_type = DetectVertexType(model, primitive, &accessors);
+
   ASSERT(vertex_type != VertexType::kLast);
   ASSERT(!accessors.empty());
 
@@ -208,7 +231,7 @@ std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
   uint64_t vertices_size = accessor_it->second->count * ToSize(vertex_type);
 
   std::vector<uint8_t> vertices;
-  vertices.reserve(vertices_size);
+  vertices.resize(vertices_size);   // We're going to overwrite the contents.
 
   // Accessors are already sorted to where they are in the buffer.
   uint32_t component_offset = 0;
@@ -246,7 +269,8 @@ std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
 }
 
 std::vector<uint8_t> ExtractIndices(const tinygltf::Model& model,
-                                    const tinygltf::Primitive& primitive) {
+                                    const tinygltf::Primitive& primitive,
+                                    ComponentType* out = nullptr) {
   const tinygltf::Accessor& accessor = model.accessors[primitive.indices];
   ComponentType component_type = (ComponentType)accessor.componentType;
   uint32_t index_size = ToSize(component_type);
@@ -255,9 +279,8 @@ std::vector<uint8_t> ExtractIndices(const tinygltf::Model& model,
   const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
   const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
 
-
   std::vector<uint8_t> indices;
-  indices.reserve(indices_size);
+  indices.resize(indices_size);   // We're going to overwrite the contents.
 
   uint8_t* indices_ptr = indices.data();
   uint8_t* indices_end = indices_ptr + indices_size;
@@ -272,6 +295,9 @@ std::vector<uint8_t> ExtractIndices(const tinygltf::Model& model,
       *indices_ptr++ = *buffer_ptr++;
     }
   }
+
+  if (out)
+    *out = component_type;
 
   return indices;
 }
@@ -294,6 +320,9 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node) {
     const tinygltf::Primitive& primitive = mesh.primitives[primitive_i];
     ss << "  Primitive " << primitive_i << std::endl;
 
+    VertexType vertex_type = DetectVertexType(model, primitive);
+    ss << "    Vertex Type: " << ToString(vertex_type) << ", Size: " << ToSize(vertex_type)
+       << std::endl;
 
     ss << "    Indices -> Accessor " << primitive.indices << std::endl;
 
@@ -318,10 +347,14 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node) {
 
 
     std::vector<uint8_t> vertices = ExtractVertices(model, primitive);
-    std::vector<uint8_t> indices = ExtractIndices(model, primitive);
 
-    ss << "    VERTICES: " << vertices.size() << std::endl;
-    ss << "    INDICES: " << indices.size() << std::endl;
+    ComponentType component_type;
+    std::vector<uint8_t> indices = ExtractIndices(model, primitive, &component_type);
+
+    ss << "    VERTICES: " << vertices.size() << " bytes (" << vertices.size() / ToSize(vertex_type)
+       << " vertices)." << std::endl;
+    ss << "    INDICES: " << indices.size() << " bytes (" << indices.size() / ToSize(component_type)
+       << " indices)." << std::endl;
   }
 
   LOG(App, "%s", ss.str().c_str());
@@ -370,6 +403,8 @@ int main() {
   }
 
   LOG(App, "Loaded model!");
+
+  ModelAsset model_asset = {};
 
   // Go over the scene.
   auto& scene = model.scenes[model.defaultScene];

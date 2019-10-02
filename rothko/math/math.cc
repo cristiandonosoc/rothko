@@ -256,4 +256,44 @@ Vec2 EulerFromDirection(const Vec3& direction) {
   return result;
 }
 
+// Quaternion ======================================================================================
+
+Quaternion Slerp(const Quaternion& q1, const Quaternion& q2, float t) {
+  float cos_angle = Dot(q1, q2);
+  float angle = Acos(cos_angle);
+
+  float s1 = Sin((1.0f - t) * angle);
+  float s2 = Sin(t * angle);
+  float i = 1.0f / Sin(angle);
+
+  Quaternion left = q1 * s1;
+  Quaternion right = q2 * s2;
+
+  Quaternion res = left + right;
+  res *= i;
+
+  return res;
+}
+
+/* Mat4 ToMat4(const Quaternion& q) { */
+/*   Quaternion n = Normalize(q); */
+
+/*   float xx = n.x * n.x; */
+/*   float yy = n.y * n.y; */
+/*   float zz = n.z * n.z; */
+/*   float xy = n.x * n.y; */
+/*   float xz = n.x * n.z; */
+/*   float yz = n.y * n.z; */
+/*   float xw = n.x * n.w; */
+/*   float yw = n.y * n.w; */
+/*   float zw = n.z * n.w; */
+
+/*   // clang-format off */
+/*   return Mat4({1 - 2 * yy - 2 * zz,     2 * xy - 2 * zw,     2 * xz + 2 * yw,         0}, */
+/*               {    2 * xy + 2 * zw, 1 - 2 * xx - 2 * zz,     2 * yz - 2 * xw,         0}, */
+/*               {    2 * xz - 2 * yw,     2 * yz + 2 * xw, 1 - 2 * xx - 2 * yy,         0}, */
+/*               {                  0,                   0,                   0,         0}); */
+/*   // clang-format on */
+/* } */
+
 }  // namespace rothko

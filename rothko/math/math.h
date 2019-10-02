@@ -62,6 +62,9 @@ inline int Random(int min, int max) {
   return rand() % diff + min;   // [min, min + diff + 1) = [min, max + 1)
 }
 
+// |t| is interpolation value. t is in the [0, 1] range.
+inline float Lerp(float a, float b, float t) { return (1.0f - t) * a - t * b; }
+
 // =================================================================================================
 // Bits
 // =================================================================================================
@@ -510,5 +513,86 @@ inline Vec2 EulerFromDirectionDeg(const Vec3& direction) {
   Vec2 euler= EulerFromDirection(direction);
   return {ToDegrees(euler.x), ToDegrees(euler.y)};
 }
+
+// =================================================================================================
+// Quaternion
+// =================================================================================================
+
+union Quaternion {
+  // Members.
+
+  struct {
+    union {
+      Vec3 dir;
+      struct {
+        float x, y, z;
+      };
+      float w;
+    };
+  };
+  Vec4 elements;
+
+  // Constructor.
+
+  Quaternion() = default;
+  Quaternion(const Vec4& v) { elements = v; }
+
+  // Operators.
+
+  Quaternion operator+(const Quaternion& q) const { return elements + q.elements; }
+  void operator+=(const Quaternion& q) { elements += q.elements; }
+
+  Quaternion operator-(const Quaternion& q) const { return elements - q.elements; }
+  void operator-=(const Quaternion& q) { elements -= q.elements; }
+
+  // clang-format off
+  Quaternion operator*(const Quaternion& q) const {
+    Quaternion res;
+    res.x = ( x * q.w) + (y * q.z) - (z * q.y) + (w * q.x);
+    res.y = (-x * q.z) + (y * q.w) + (z * q.x) + (w * q.y);
+    res.z = ( x * q.y) - (y * q.x) + (z * q.w) + (w * q.z);
+    res.w = (-x * q.x) - (y * q.y) - (z * q.z) + (w * q.w);
+
+    return res;
+  };
+
+  void operator*=(const Quaternion& q) {
+    x = ( x * q.w) + (y * q.z) - (z * q.y) + (w * q.x);
+    y = (-x * q.z) + (y * q.w) + (z * q.x) + (w * q.y);
+    z = ( x * q.y) - (y * q.x) + (z * q.w) + (w * q.z);
+    w = (-x * q.x) - (y * q.y) - (z * q.z) + (w * q.w);
+  }
+  // clang-format on
+
+  Quaternion operator*(float s) const { return elements * s; };
+  void operator*=(float s) { elements * s; }
+
+  Quaternion operator/(float s) const { return elements / s; };
+  void operator/=(float s) { elements / s; }
+};
+
+inline float Dot(const Quaternion& q1, const Quaternion& q2) {
+  return Dot(q1.elements, q2.elements);
+}
+
+Quaternion Inverse(const Quaternion&);
+
+Quaternion Normalize(const Quaternion& q);
+
+// |t| is between [0, 1].
+// The returned quaternion is normalized.
+inline Quaternion NLerp(const Quaternion& q1, const Quaternion& q2, float t) {
+  Quaternion res;
+  res.x = Lerp(q1.x, q2.x, t);
+  res.y = Lerp(q1.y, q2.y, t);
+  res.z = Lerp(q1.z, q2.z, t);
+  res.w = Lerp(q1.w, q2.w, t);
+
+  return Normalize(res);
+}
+
+Quaternion Slerp(const Quaternion& q1, const Quaternion& q2, float t);
+
+Mat4 ToMat4(const Quaternion&);
 
 }  // rothko
