@@ -127,13 +127,14 @@ void DoLogging(LogCategory category, LogSeverity severity, Location, const char*
   } while (false)
 
 // You shouldn't be calling this directly.
-#define INTERNAL_LOG(category, severity, ...)                                                     \
-  {                                                                                               \
-    constexpr Location location{                                                                  \
-        StrAfterToken(__FILE__, FILEPATH_SEPARATOR), __LINE__, StrAfterToken(__FUNCTION__, ':')}; \
-    ::rothko::DoLogging(::rothko::LogCategory::k##category,                                       \
-                        ::rothko::LogSeverity::k##severity,                                       \
-                        location VA_ARGS(__VA_ARGS__));                                           \
+#define INTERNAL_LOG(category, severity, ...)                                                    \
+  {                                                                                              \
+    constexpr ::rothko::Location location{::rothko::StrAfterToken(__FILE__, FILEPATH_SEPARATOR), \
+                                          __LINE__,                                              \
+                                          rothko::StrAfterToken(__FUNCTION__, ':')};             \
+    ::rothko::DoLogging(::rothko::LogCategory::k##category,                                      \
+                        ::rothko::LogSeverity::k##severity,                                      \
+                        location VA_ARGS(__VA_ARGS__));                                          \
   }
 
 #else

@@ -11,6 +11,7 @@ source_set("game") {
   deps = [
     "//rothko/logging",
     "//rothko/math",
+    "//rothko/models",
     "//rothko/platform",
     "//rothko/scene",
     "//rothko/utils",

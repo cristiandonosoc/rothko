@@ -1,0 +1,14 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+executable("scene_graph") {
+  sources = [
+    "main.cc",
+  ]
+
+  deps = [
+    "//rothko:game",
+    "//rothko/graphics/default_shaders",
+    "//rothko/window:sdl_opengl",
+  ]
+}

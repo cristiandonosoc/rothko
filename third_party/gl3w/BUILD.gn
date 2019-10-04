@@ -12,7 +12,7 @@ source_set("gl3w") {
   ]
 
   if (target_os == "linux") {
-    libs = [ "-ldl" ]
+    libs = [ "dl" ]
   }
 
   configs += [ ":gl3w_config" ]

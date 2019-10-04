@@ -154,7 +154,7 @@ void SetUniforms(const OpenGLRendererBackend& opengl, const RenderMesh& render_m
 void SetTextures(const OpenGLRendererBackend& opengl,
                  const ShaderHandles& shader_handles,
                  const RenderMesh& render_mesh) {
-  ASSERT(render_mesh.shader->texture_count == render_mesh.textures.size());
+  /* ASSERT(render_mesh.shader->texture_count == render_mesh.textures.size()); */
   for (size_t i = 0; i < render_mesh.textures.size(); i++) {
     Texture* texture = render_mesh.textures[i];
     auto tex_it = opengl.loaded_textures.find(texture->uuid.value);

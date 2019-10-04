@@ -57,6 +57,7 @@ struct Shader {
   std::string vert_src;
   std::string frag_src;
 };
+inline bool Valid(const Shader& s) { return s.vertex_type != VertexType::kLast; }
 inline bool Loaded(const Shader& s) { return !s.vert_src.empty() && !s.frag_src.empty(); }
 inline bool Staged(const Shader& s) { return s.renderer && s.uuid.has_value(); }
 

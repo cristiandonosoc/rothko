@@ -3,6 +3,7 @@
 
 executable("gltf_viewer") {
   output_name = "gltf"
+
   sources = [
     "main.cc",
   ]

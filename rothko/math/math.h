@@ -414,6 +414,18 @@ union _mat4 {
 
     return res;
   }
+
+  void operator*=(const _mat4<T>& m) {
+    _v4<T> r0 = row(0);
+    _v4<T> r1 = row(1);
+    _v4<T> r2 = row(2);
+    _v4<T> r3 = row(3);
+
+    cols[0] = {Dot(r0, m.col(0)), Dot(r1, m.col(0)), Dot(r2, m.col(0)), Dot(r3, m.col(0))};
+    cols[1] = {Dot(r0, m.col(1)), Dot(r1, m.col(1)), Dot(r2, m.col(1)), Dot(r3, m.col(1))};
+    cols[2] = {Dot(r0, m.col(2)), Dot(r1, m.col(2)), Dot(r2, m.col(2)), Dot(r3, m.col(2))};
+    cols[3] = {Dot(r0, m.col(3)), Dot(r1, m.col(3)), Dot(r2, m.col(3)), Dot(r3, m.col(3))};
+  };
 };
 
 using IntMat4 = _mat4<int>;

@@ -6,9 +6,10 @@
 #include <variant>
 
 #include "rothko/containers/vector.h"
+#include "rothko/graphics/color.h"
+#include "rothko/graphics/mesh.h"
 #include "rothko/math/math.h"
 #include "rothko/utils/macros.h"
-#include "rothko/graphics/mesh.h"
 
 namespace rothko {
 
@@ -47,6 +48,9 @@ const char* ToString(PrimitiveType);
 
 struct ClearFrame {
   static constexpr RenderCommandType kType = RenderCommandType::kClearFrame;
+
+  static ClearFrame FromColor(uint32_t);
+  static ClearFrame FromColor(Color color) { return FromColor(ToUint32(color)); }
 
   bool clear_depth = true;
   bool clear_color = true;

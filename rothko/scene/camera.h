@@ -9,12 +9,15 @@
 
 namespace rothko {
 
+struct Input;
 struct PushCamera;
 
 enum class ProjectionType {
   kProjection,
   kOrthographic,
 };
+
+// OrbitCamera -------------------------------------------------------------------------------------
 
 struct OrbitCamera {
   // |fov| is in radians.
@@ -56,5 +59,7 @@ Mat4 GetOrtho(const OrbitCamera&);
 Mat4 GetProjection(const OrbitCamera&);
 
 PushCamera GetCommand(const OrbitCamera&);
+
+void DefaultUpdateOrbitCamera(const Input&, OrbitCamera*);
 
 }  // namespace rothko

@@ -1,0 +1,14 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+source_set("default_shaders") {
+  sources = [
+    "default_shaders.cc",
+    "default_shaders.h",
+  ]
+
+  deps = [
+    "//rothko/graphics",
+  ]
+}
+

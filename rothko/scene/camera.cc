@@ -3,8 +3,9 @@
 
 #include "rothko/scene/camera.h"
 
-#include "rothko/logging/logging.h"
 #include "rothko/graphics/commands.h"
+#include "rothko/input/input.h"
+#include "rothko/logging/logging.h"
 
 namespace rothko {
 
@@ -68,6 +69,39 @@ PushCamera GetCommand(const OrbitCamera& camera) {
   push_camera.projection = GetProjection(camera);
 
   return push_camera;
+}
+
+static constexpr float kMouseSensibility = 0.007f;
+static float kMaxPitch = ToRadians(89.0f);
+
+void DefaultUpdateOrbitCamera(const Input& input, OrbitCamera* camera) {
+  if (input.mouse.right) {
+    if (!IsZero(input.mouse_offset)) {
+      camera->angles.x -= input.mouse_offset.y * kMouseSensibility;
+      if (camera->angles.x > kMaxPitch) {
+        camera->angles.x = kMaxPitch;
+      } else if (camera->angles.x < -kMaxPitch) {
+        camera->angles.x = -kMaxPitch;
+      }
+
+      camera->angles.y += input.mouse_offset.x * kMouseSensibility;
+      if (camera->angles.y > kRadians360) {
+        camera->angles.y -= kRadians360;
+      } else if (camera->angles.y < 0) {
+        camera->angles.y += kRadians360;
+      }
+    }
+  }
+
+  // Zoom.
+  if (input.mouse.wheel.y != 0) {
+    // We actually want to advance a percentage of the distance.
+    camera->distance -= input.mouse.wheel.y * camera->distance * camera->zoom_speed;
+    if (camera->distance < 0.5f)
+      camera->distance = 0.5f;
+  }
+
+  Update(camera);
 }
 
 }  // namespace rothko

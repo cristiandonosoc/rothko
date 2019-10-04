@@ -24,18 +24,20 @@ struct Color {
   uint8_t r, g, b, a;
 
   // Pre-defined colors.
-  static Color Transparent() { return Color{0, 0, 0, 0}; }
+  // clang-format off
+  static Color Black()        { return Color{0x00, 0x00, 0x00}; }
+  static Color Blue()         { return Color{0x00, 0x00, 0xff}; }
+  static Color Green()        { return Color{0x00, 0xff, 0x00}; }
+  static Color Red()          { return Color{0xff, 0x00, 0x00}; }
+  static Color White()        { return Color{0xff, 0xff, 0xff}; }
+  static Color LightGray()    { return Color{0x66, 0x66, 0x66}; }
+  static Color Gray33()       { return Color{0x33, 0x33, 0x33}; }
+  static Color Gray66()       { return Color{0x66, 0x66, 0x66}; }
+  static Color Gray99()       { return Color{0x99, 0x99, 0x99}; }
+  static Color Graycc()       { return Color{0xcc, 0xcc, 0xcc}; }
 
-  static Color Black() { return Color{0, 0, 0}; }
-  static Color Blue() { return Color{0, 0, 0xff}; }
-  static Color Green() { return Color{0, 0xff, 0}; }
-  static Color Red() { return Color{0xff, 0, 0}; }
-  static Color White() { return Color{0xff, 0xff, 0xff}; }
-  static Color LightGray() { return Color{0x66, 0x66, 0x66}; }
-  static Color Gray33() { return Color{0x33, 0x33, 0x33}; }
-  static Color Gray66() { return Color{0x66, 0x66, 0x66}; }
-  static Color Gray99() { return Color{0x99, 0x99, 0x99}; }
-  static Color Graycc() { return Color{0xcc, 0xcc, 0xcc}; }
+  static Color Transparent()  { return Color{0x00, 0x00, 0x00, 0x00}; }
+  // clang-format on
 };
 static_assert(sizeof(Color) == 4);
 

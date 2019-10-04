@@ -10,5 +10,6 @@ gbsharp
 third_party/include/glm
 ozz-animation
 tinygltf_link
+*.link
 
 ycm_extra_conf_local.py

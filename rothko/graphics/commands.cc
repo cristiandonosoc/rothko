@@ -47,6 +47,12 @@ std::string ToString(const ClearFrame& clear_frame) {
   return ss.str();
 }
 
+ClearFrame ClearFrame::FromColor(uint32_t color) {
+  ClearFrame clear = {};
+  clear.color = color;
+  return clear;
+}
+
 // Config Renderer ---------------------------------------------------------------------------------
 
 std::string ToString(const ConfigRenderer& config_renderer) {
