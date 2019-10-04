@@ -1,15 +1,9 @@
 out/*
 imgui.ini
 .DS_Store
-doom_vulkan
-sdl_source
 *.log
 .vscode/ipch
-warhol
-gbsharp
 third_party/include/glm
-ozz-animation
-tinygltf_link
 *.link
 
 ycm_extra_conf_local.py

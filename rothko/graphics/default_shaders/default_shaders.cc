@@ -40,7 +40,8 @@ uniform sampler2D tex0;
 uniform sampler2D tex1;
 
 void main() {
-  out_color = mix(texture(tex0, f_uv), texture(tex1, f_uv), 0.5f) * f_color;
+  /* out_color = mix(texture(tex0, f_uv), texture(tex1, f_uv), 0.5f) * f_color; */
+  out_color = f_color;
 }
 )";
 

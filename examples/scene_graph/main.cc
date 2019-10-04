@@ -6,6 +6,7 @@
 #include <rothko/models/cube.h>
 #include <rothko/scene/camera.h>
 #include <rothko/scene/grid.h>
+#include <rothko/scene/scene_graph.h>
 
 using namespace rothko;
 
@@ -34,8 +35,8 @@ int main() {
   if (!RendererStageMesh(game.renderer.get(), &cube))
     return 1;
 
-  Mat4 model_matrix = Mat4::Identity();
-
+  auto scene_graph = std::make_unique<SceneGraph>();
+  Transform* transform = AddTransform(scene_graph.get());
 
   bool running = true;
   while (running) {
@@ -55,12 +56,13 @@ int main() {
     DefaultUpdateOrbitCamera(game.input, &camera);
 
     float angle = game.time.seconds * ToRadians(20.0f);
-    model_matrix = Rotate({1, 2, 3}, angle);
+    /* model_matrix = Rotate({1, 2, 3}, angle); */
+    transform->rotation.y = angle;
+    Update(nullptr, transform);
 
     PerFrameVector<RenderCommand> commands;
-    commands.push_back(ClearFrame::FromColor(Color::Blue()));
+    commands.push_back(ClearFrame::FromColor(Color::Graycc()));
     commands.push_back(GetCommand(camera));
-    /* commands.push_back(grid.render_command); */
 
     RenderMesh render_cube = {};
     render_cube.mesh = &cube;
@@ -68,10 +70,11 @@ int main() {
     render_cube.primitive_type = PrimitiveType::kTriangles;
     render_cube.cull_faces = false;
     render_cube.indices_size = cube.index_count;
-    render_cube.vert_ubo_data = (uint8_t*)&model_matrix;
+    render_cube.vert_ubo_data = (uint8_t*)&transform->world_matrix;
     /* render_cube.textures.push_back(tex1); */
     /* render_cube.textures.push_back(tex0); */
     commands.push_back(render_cube);
+    commands.push_back(grid.render_command);
 
     RendererExecuteCommands(game.renderer.get(), std::move(commands));
 
