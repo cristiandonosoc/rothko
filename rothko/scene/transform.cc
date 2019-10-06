@@ -21,20 +21,20 @@ Mat4 GetLocalTransformMatrix(const Transform& transform) {
   return result;
 }
 
-Mat4 GetWorlTransformMatrix(const SceneGraph* scene_graph, const Transform& transform) {
-  if (!scene_graph || transform.parent_index == Transform::kInvalidIndex)
+Mat4 GetWorlTransformMatrix(const Transform& transform, const Transform* parent) {
+  if (!parent || transform.parent_index == Transform::kInvalidIndex)
     return GetLocalTransformMatrix(transform);
 
-  Mat4 parent_transform = transform.parent_index == Transform::kInvalidIndex
-                              ? Mat4::Identity()
-                              : scene_graph->transforms[transform.index].world_matrix;
+  /* Mat4 parent_transform = transform.parent_index == Transform::kInvalidIndex */
+  /*                             ? Mat4::Identity() */
+  /*                             : scene_graph->transforms[transform.index].world_matrix; */
   Mat4 local_transform = GetLocalTransformMatrix(transform);
 
-  return local_transform * parent_transform;
+  return local_transform * parent->world_matrix;
 }
 
-void Update(const SceneGraph* scene_graph, Transform* transform) {
-  transform->world_matrix = GetWorlTransformMatrix(scene_graph, *transform);
+void Update(Transform* transform, const Transform* parent) {
+  transform->world_matrix = GetWorlTransformMatrix(*transform, parent);
 }
 
 }  // namespace rothko

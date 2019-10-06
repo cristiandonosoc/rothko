@@ -95,10 +95,10 @@ Mat4 FromColumns(Vec3 x, Vec3 y, Vec3 z) {
 
 Mat4 Translate(const Vec3& v) {
   // clang-format off
-  return Mat4({  1,   0,   0, 0},
-              {  0,   1,   0, 0},
-              {  0,   0,   1, 0},
-              { v.x, v.y, v.z,   1});
+  return Mat4({   1,   0,   0,  v.x},
+              {   0,   1,   0,  v.y},
+              {   0,   0,   1,  v.z},
+              {   0,   0,   0,    1});
   // clang-format on
 }
 

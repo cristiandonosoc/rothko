@@ -11,8 +11,6 @@
 
 namespace rothko {
 
-struct SceneGraph;
-
 #pragma pack(push, 1)
 struct Transform {
   static constexpr uint32_t kInvalidIndex = (uint32_t)-1;
@@ -44,11 +42,11 @@ Mat4 GetLocalTransformMatrix(const Transform&);
 // Calculates the overall world transformation. |LocalTransform| * |parent's world transform|.
 // Assumes |parent.world_matrix_| is updated.
 // If |scene_graph| is null or if |transform.parent| is not set, will return the local transform.
-Mat4 GetWorlTransformMatrix(const SceneGraph*, const Transform&);
+Mat4 GetWorlTransformMatrix(const Transform&, const Transform* parent);
 
 // Calculates |matrix_| from the transform data.
 // If |scene_graph| is null or if |transform.parent| is not set, will use the local transform.
-void Update(const SceneGraph*, Transform*);
+void Update(Transform*, const Transform* parent = nullptr);
 
 
 }  // namespace rothko

@@ -10,6 +10,25 @@
 
 using namespace rothko;
 
+namespace {
+
+RenderMesh GetCubeRenderCommand(Mesh* mesh, Shader* shader, Transform* transform) {
+  RenderMesh render_mesh = {};
+
+  render_mesh.mesh = mesh;
+  render_mesh.shader = shader;
+  render_mesh.primitive_type = PrimitiveType::kTriangles;
+  render_mesh.cull_faces = false;
+  render_mesh.indices_size = mesh->index_count;
+  render_mesh.vert_ubo_data = (uint8_t*)&transform->world_matrix;
+  /* render_mesh.textures.push_back(tex1); */
+  /* render_mesh.textures.push_back(tex0); */
+
+  return render_mesh;
+}
+
+}  // namespace
+
 int main() {
   InitWindowConfig window_config = {};
   window_config.type = WindowType::kSDLOpenGL;
@@ -37,6 +56,14 @@ int main() {
 
   auto scene_graph = std::make_unique<SceneGraph>();
   Transform* transform = AddTransform(scene_graph.get());
+  /* transform->position = {0, 3, 0}; */
+  /* transform->scale = {0.5f, 0.5f, 0.5f}; */
+
+  Transform* child = AddTransform(scene_graph.get(), transform);
+  child->scale = {0.3f, 0.3f, 0.3f};
+
+  Transform* grand_child = AddTransform(scene_graph.get(), child);
+  grand_child->scale = {0.7f, 0.3f, 1.3f};
 
   bool running = true;
   while (running) {
@@ -55,25 +82,25 @@ int main() {
 
     DefaultUpdateOrbitCamera(game.input, &camera);
 
-    float angle = game.time.seconds * ToRadians(20.0f);
-    /* model_matrix = Rotate({1, 2, 3}, angle); */
-    transform->rotation.y = angle;
-    Update(nullptr, transform);
+    /* float angle = game.time.seconds * ToRadians(20.0f); */
+    /* transform->rotation.y = angle; */
+
+    float child_angle = game.time.seconds * ToRadians(33.0f);
+    child->position = {2 * Cos(child_angle), 0, 2 * Sin(child_angle)};
+
+    /* grand_child->position = {0, 0.5f * Cos(2 * child_angle), 0.5f * Sin(2 * child_angle)}; */
+    grand_child->position = {0, 1, 0};
+    Update(transform);
+    Update(child, transform);
+    Update(grand_child, child);
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Graycc()));
     commands.push_back(GetCommand(camera));
 
-    RenderMesh render_cube = {};
-    render_cube.mesh = &cube;
-    render_cube.shader = &default_shader;
-    render_cube.primitive_type = PrimitiveType::kTriangles;
-    render_cube.cull_faces = false;
-    render_cube.indices_size = cube.index_count;
-    render_cube.vert_ubo_data = (uint8_t*)&transform->world_matrix;
-    /* render_cube.textures.push_back(tex1); */
-    /* render_cube.textures.push_back(tex0); */
-    commands.push_back(render_cube);
+    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, transform));
+    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, child));
+    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, grand_child));
     commands.push_back(grid.render_command);
 
     RendererExecuteCommands(game.renderer.get(), std::move(commands));

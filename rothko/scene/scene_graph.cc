@@ -19,7 +19,7 @@ inline uint64_t FindOpenSlot(std::bitset<SIZE>& bitset, uint64_t size) {
   for (uint64_t i = 0; i < size; i++) {
     if (!bitset[i]) {
       bitset[i] = 1;
-      return 1;
+      return i;
     }
   }
 
@@ -30,7 +30,6 @@ inline uint64_t FindOpenSlot(std::bitset<SIZE>& bitset, uint64_t size) {
 
 Transform* AddTransform(SceneGraph* scene_graph, uint32_t parent_index) {
   ASSERT(scene_graph->count < kSceneGraphSize);
-  ASSERT(scene_graph->used[parent_index]);
 
   uint64_t index = FindOpenSlot(scene_graph->used, kSceneGraphSize);
   ASSERT(index < kSceneGraphSize);
@@ -39,6 +38,8 @@ Transform* AddTransform(SceneGraph* scene_graph, uint32_t parent_index) {
   Transform* transform = scene_graph->transforms + index;
   *transform = {};
   transform->index = index;
+
+  ASSERT(parent_index == Transform::kInvalidIndex || scene_graph->used[parent_index]);
   transform->parent_index = parent_index;
 
   return transform;

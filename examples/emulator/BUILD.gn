@@ -29,7 +29,7 @@ source_set("lib") {
     "textures.h",
   ]
 
-  deps = [
+  public_deps = [
     "//rothko:game",
     "//rothko/graphics",
     "//rothko/ui:imgui",
