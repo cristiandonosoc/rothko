@@ -8,6 +8,7 @@ executable("scene_graph") {
 
   deps = [
     "//rothko:game",
+    "//rothko/ui:imgui",
     "//rothko/graphics/default_shaders",
     "//rothko/window:sdl_opengl",
   ]

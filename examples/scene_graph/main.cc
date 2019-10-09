@@ -7,12 +7,14 @@
 #include <rothko/scene/camera.h>
 #include <rothko/scene/grid.h>
 #include <rothko/scene/scene_graph.h>
+#include <rothko/ui/imgui.h>
 
 using namespace rothko;
+using namespace rothko::imgui;
 
 namespace {
 
-RenderMesh GetCubeRenderCommand(Mesh* mesh, Shader* shader, Transform* transform) {
+RenderMesh GetCubeRenderCommand(Mesh* mesh, Shader* shader, SceneNode* node) {
   RenderMesh render_mesh = {};
 
   render_mesh.mesh = mesh;
@@ -20,7 +22,7 @@ RenderMesh GetCubeRenderCommand(Mesh* mesh, Shader* shader, Transform* transform
   render_mesh.primitive_type = PrimitiveType::kTriangles;
   render_mesh.cull_faces = false;
   render_mesh.indices_size = mesh->index_count;
-  render_mesh.vert_ubo_data = (uint8_t*)&transform->world_matrix;
+  render_mesh.vert_ubo_data = (uint8_t*)&node->transform.world_matrix;
   /* render_mesh.textures.push_back(tex1); */
   /* render_mesh.textures.push_back(tex0); */
 
@@ -55,15 +57,21 @@ int main() {
     return 1;
 
   auto scene_graph = std::make_unique<SceneGraph>();
-  Transform* transform = AddTransform(scene_graph.get());
-  /* transform->position = {0, 3, 0}; */
-  /* transform->scale = {0.5f, 0.5f, 0.5f}; */
+  SceneNode* root = AddNode(scene_graph.get());
 
-  Transform* child = AddTransform(scene_graph.get(), transform);
-  child->scale = {0.3f, 0.3f, 0.3f};
+  SceneNode* child = AddTransform(scene_graph.get(), root);
+  child->transform.scale = {0.3f, 0.3f, 0.3f};
 
-  Transform* grand_child = AddTransform(scene_graph.get(), child);
-  grand_child->scale = {0.7f, 0.3f, 1.3f};
+  SceneNode* child2 = AddTransform(scene_graph.get(), root);
+  child2->transform.scale = {0.1f, 0.1f, 0.1f};
+
+  SceneNode* grand_child = AddTransform(scene_graph.get(), child);
+  grand_child->transform.scale = {0.7f, 0.3f, 1.3f};
+
+
+  ImguiContext imgui;
+  if (!InitImgui(game.renderer.get(), &imgui))
+    return 1;
 
   bool running = true;
   while (running) {
@@ -80,28 +88,43 @@ int main() {
       break;
     }
 
+    StartFrame(&imgui, &game.window, &game.time, &game.input);
+
+    ImGui::Begin("Cube Example");
+
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                1000.0f / ImGui::GetIO().Framerate,
+                ImGui::GetIO().Framerate);
+
+    ImGui::End();
+
+
+
     DefaultUpdateOrbitCamera(game.input, &camera);
 
-    /* float angle = game.time.seconds * ToRadians(20.0f); */
-    /* transform->rotation.y = angle; */
+    float angle = game.time.seconds * ToRadians(20.0f);
+    root->transform.rotation.x = -angle;
+    root->transform.rotation.y = angle;
 
     float child_angle = game.time.seconds * ToRadians(33.0f);
-    child->position = {2 * Cos(child_angle), 0, 2 * Sin(child_angle)};
+    child->transform.position = {2 * Cos(child_angle), 0, 2 * Sin(child_angle)};
+    child2->transform.position = {0, 2 * Cos(2 * child_angle), 2 * Sin(2 * child_angle)};
+    grand_child->transform.position = {0, 1, 0};
 
-    /* grand_child->position = {0, 0.5f * Cos(2 * child_angle), 0.5f * Sin(2 * child_angle)}; */
-    grand_child->position = {0, 1, 0};
-    Update(transform);
-    Update(child, transform);
-    Update(grand_child, child);
+    Update(scene_graph.get());
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Graycc()));
     commands.push_back(GetCommand(camera));
 
-    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, transform));
+    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, root));
     commands.push_back(GetCubeRenderCommand(&cube, &default_shader, child));
+    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, child2));
     commands.push_back(GetCubeRenderCommand(&cube, &default_shader, grand_child));
     commands.push_back(grid.render_command);
+
+    auto imgui_commands = EndFrame(&imgui);
+    commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
 
     RendererExecuteCommands(game.renderer.get(), std::move(commands));
 

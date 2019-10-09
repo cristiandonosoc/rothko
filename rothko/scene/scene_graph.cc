@@ -7,6 +7,19 @@
 
 namespace rothko {
 
+// SceneNode ---------------------------------------------------------------------------------------
+
+Mat4 GetWorlTransformMatrix(const SceneNode& node, const SceneNode* parent) {
+  Mat4 local_transform = CalculateTransformMatrix(node.transform);
+  if (!parent)
+    return local_transform;
+  return parent->transform.world_matrix * local_transform;
+}
+
+void Update(SceneNode* node, const SceneNode* parent) {
+  node->transform.world_matrix = GetWorlTransformMatrix(*node, parent);
+}
+
 // Add Transform -----------------------------------------------------------------------------------
 
 namespace {
@@ -28,21 +41,26 @@ inline uint64_t FindOpenSlot(std::bitset<SIZE>& bitset, uint64_t size) {
 
 }  // namespace
 
-Transform* AddTransform(SceneGraph* scene_graph, uint32_t parent_index) {
+SceneNode* AddNode(SceneGraph* scene_graph, uint32_t parent_index) {
   ASSERT(scene_graph->count < kSceneGraphSize);
 
   uint64_t index = FindOpenSlot(scene_graph->used, kSceneGraphSize);
   ASSERT(index < kSceneGraphSize);
 
-  // Clear the transform.
-  Transform* transform = scene_graph->transforms + index;
-  *transform = {};
-  transform->index = index;
+  // Clear the node.
+  SceneNode* node = scene_graph->nodes + index;
+  *node = {};
+  node->index = index;
 
-  ASSERT(parent_index == Transform::kInvalidIndex || scene_graph->used[parent_index]);
-  transform->parent_index = parent_index;
+  node->parent = parent_index;
+  if (parent_index != SceneNode::kInvalidIndex) {
+    ASSERT(scene_graph->used[parent_index]);
+    SceneNode* parent = scene_graph->nodes + parent_index;
+    parent->children.push_back(index);
+  }
 
-  return transform;
+  scene_graph->count++;
+  return node;
 }
 
 // Delete Transform --------------------------------------------------------------------------------
@@ -56,22 +74,22 @@ void DeleteTransform(SceneGraph* scene_graph, uint32_t index, uint32_t parent_in
   ASSERT(scene_graph->count > 0);
   ASSERT(scene_graph->used[index]);
 
-  Transform* transform = scene_graph->transforms + index;
+  SceneNode* node = scene_graph->nodes + index;
 
   // Mark the transform as not used anymore.
   scene_graph->used[index] = 0;
-  scene_graph->dirty[index] = 0;
+  scene_graph->count--;
 
   // All children should be deleted too.
-  for (uint32_t child_index : transform->children) {
+  for (uint32_t child_index : node->children) {
     // We don't want to delete the parent again.
-    DeleteTransform(scene_graph, child_index, Transform::kInvalidIndex);
+    DeleteTransform(scene_graph, child_index, SceneNode::kInvalidIndex);
   }
 
   // Check if we need to update the parent as well.
-  if (parent_index != Transform::kInvalidIndex) {
+  if (parent_index != SceneNode::kInvalidIndex) {
     ASSERT(scene_graph->used[parent_index]);
-    Transform* parent = scene_graph->transforms + parent_index;
+    SceneNode* parent = scene_graph->nodes + parent_index;
 
     bool child_found = false;
     auto it = parent->children.begin();
@@ -86,6 +104,30 @@ void DeleteTransform(SceneGraph* scene_graph, uint32_t index, uint32_t parent_in
     }
     ASSERT(child_found);
   }
+
+}
+
+// Update ------------------------------------------------------------------------------------------
+
+namespace {
+
+void UpdateNode(SceneGraph* scene_graph, SceneNode* node, SceneNode* parent) {
+  Update(node, parent);
+
+  for (uint32_t child_index : node->children) {
+    SceneNode* child = scene_graph->nodes + child_index;
+    UpdateNode(scene_graph, child, node);
+  }
+}
+
+}  // namespace
+
+void Update(SceneGraph* scene_graph) {
+  if (scene_graph->count == 0)
+    return;
+
+  SceneNode* current_node = scene_graph->nodes;
+  UpdateNode(scene_graph, current_node, nullptr);
 }
 
 }  // namespace rothko
