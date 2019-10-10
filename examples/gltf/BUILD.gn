@@ -5,6 +5,8 @@ executable("gltf_viewer") {
   output_name = "gltf"
 
   sources = [
+    "loader.cc",
+    "loader.h",
     "main.cc",
   ]
 

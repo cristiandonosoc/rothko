@@ -13,7 +13,7 @@ config("sdl2_config") {
   }
   if (target_os == "win" && compiler == "msvc") {
     if ("$sdl_lib_path" != "") {
-      libs = [ "${sdl_lib_path}/SDL2/SDL2.lib" ]
+      libs = [ "${sdl_lib_path}" ]
     }
     handled = true
   } else if (target_os == "mac" && compiler == "clang") {
