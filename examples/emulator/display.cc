@@ -46,16 +46,15 @@ bool InitDisplay(Game* game, Display* out) {
   out->background.name = "background-texture";
   out->background.type = TextureType::kRGBA;
   out->background.size = kTextureDim;
+  out->background.mipmaps = 0;
+  out->background.min_filter = TextureFilterMode::kNearest;
+  out->background.mag_filter = TextureFilterMode::kNearest;
 
   size_t size = sizeof(Color) * kTextureDim.width * kTextureDim.height;
-  out->background.data = (uint8_t*)malloc(size);
-  out->background.free_function = free;
+  out->background.data = std::make_unique<uint8_t[]>(size);
+  out->background.data_size = size;
 
-  StageTextureConfig config = {};
-  config.generate_mipmaps = false;
-  config.min_filter = StageTextureConfig::Filter::kNearest;
-  config.max_filter = StageTextureConfig::Filter::kNearest;
-  if (!RendererStageTexture(game->renderer.get(), &out->background, config))
+  if (!RendererStageTexture(game->renderer.get(), &out->background))
     return false;
 
   // Init the quad manager (which we will use to output textured quads).

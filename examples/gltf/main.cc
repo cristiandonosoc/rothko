@@ -11,28 +11,6 @@ using namespace rothko;
 
 namespace {
 
-// Serialization Targets ---------------------------------------------------------------------------
-
-struct MeshAsset {
-  uint32_t asset_id = (uint32_t)-1;
-
-  std::string name;
-  std::vector<uint8_t> buffers;
-  std::vector<uint8_t> indices;
-};
-
-struct ModelPrimitiveAsset {
-  uint32_t asset_id = (uint32_t)-1;
-
-  MeshAsset* mesh = nullptr;
-};
-
-
-struct ModelAsset {
-  std::vector<MeshAsset> meshes;
-  std::vector<ModelPrimitiveAsset> primitives;
-};
-
 // Parsing Code ------------------------------------------------------------------------------------
 
 }  // namespace
@@ -72,11 +50,11 @@ int main() {
 
   LOG(App, "Loaded model!");
 
-  ModelAsset model_asset = {};
+  gltf::Scene out_scene;
 
   // Go over the scene.
   auto& scene = model.scenes[model.defaultScene];
   LOG(App, "Processing scene %s", scene.name.c_str());
 
-  gltf::ProcessScene(model, scene);
+  gltf::ProcessScene(model, scene, &out_scene);
 }

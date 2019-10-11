@@ -13,7 +13,7 @@ namespace rothko {
 Texture::~Texture() {
   if (Staged(this))
     RendererUnstageTexture(this->renderer, this);
-  UnloadTexture(this);
+  data.reset();
 }
 
 // LoadTexture -----------------------------------------------------------------
@@ -37,27 +37,28 @@ bool STBLoadTexture(const std::string& path, TextureType texture_type, Texture* 
   // TODO(Cristian): Support other rendering backends.
   stbi_set_flip_vertically_on_load(true);
 
-  Texture tmp;
+  Texture tmp = {};
   int channels;
-  tmp.data = stbi_load(path.c_str(), &tmp.size.x, &tmp.size.y, &channels,
-                       TextureTypeToChannels(texture_type));
-  if (!tmp.data.value) {
+
+  void* data = stbi_load(path.c_str(), &tmp.size.x, &tmp.size.y, &channels,
+                         TextureTypeToChannels(texture_type));
+  if (!data) {
     ERROR(Graphics, "Could not load texture in %s: %s", path.c_str(), stbi_failure_reason());
     return false;
   }
 
-  *out= std::move(tmp);
-  out->free_function = stbi_image_free;
+
+  tmp.data_size = tmp.size.x * tmp.size.y * channels;
+  tmp.data = std::make_unique<uint8_t[]>(tmp.data_size);
+  memcpy(tmp.data.get(), data, tmp.data_size);
+
+  *out = std::move(tmp);
+
+  // Free the STB data.
+  stbi_image_free(data);
   return true;
 }
 
 // Unload Texture ----------------------------------------------------------------------------------
-
-void UnloadTexture(Texture* texture) {
-  if (texture->data.has_value() && texture->free_function) {
-    texture->free_function(texture->data.value);
-    texture->data.clear();
-  }
-}
 
 }  // namespace rothko

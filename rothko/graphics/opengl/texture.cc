@@ -36,25 +36,26 @@ GLenum TextureTypeToGL(TextureType type) {
 
 // Stage Texture -----------------------------------------------------------------------------------
 
-GLenum WrapToGL(StageTextureConfig::Wrap wrap) {
+GLenum WrapToGL(TextureWrapMode wrap) {
   switch (wrap) {
-    case StageTextureConfig::Wrap::kClampToEdge: return GL_CLAMP_TO_EDGE;
-    case StageTextureConfig::Wrap::kMirroredRepeat: return GL_MIRRORED_REPEAT;
-    case StageTextureConfig::Wrap::kRepeat: return GL_REPEAT;
+    case TextureWrapMode::kClampToBorder: return GL_CLAMP_TO_BORDER;
+    case TextureWrapMode::kClampToEdge: return GL_CLAMP_TO_EDGE;
+    case TextureWrapMode::kMirroredRepeat: return GL_MIRRORED_REPEAT;
+    case TextureWrapMode::kRepeat: return GL_REPEAT;
   }
 
   NOT_REACHED();
   return 0;
 }
 
-GLenum FilterToGL(StageTextureConfig::Filter filter) {
+GLenum FilterToGL(TextureFilterMode filter) {
   switch (filter) {
-    case StageTextureConfig::Filter::kNearest: return GL_NEAREST;
-    case StageTextureConfig::Filter::kLinear: return GL_LINEAR;
-    case StageTextureConfig::Filter::kNearestMipmapNearest: return GL_NEAREST_MIPMAP_NEAREST;
-    case StageTextureConfig::Filter::kNearestMipmapLinear: return GL_NEAREST_MIPMAP_LINEAR;
-    case StageTextureConfig::Filter::kLinearMipmapNearest: return GL_LINEAR_MIPMAP_NEAREST;
-    case StageTextureConfig::Filter::kLinearMipampLinear: return GL_LINEAR_MIPMAP_LINEAR;
+    case TextureFilterMode::kNearest: return GL_NEAREST;
+    case TextureFilterMode::kLinear: return GL_LINEAR;
+    case TextureFilterMode::kNearestMipmapNearest: return GL_NEAREST_MIPMAP_NEAREST;
+    case TextureFilterMode::kNearestMipmapLinear: return GL_NEAREST_MIPMAP_LINEAR;
+    case TextureFilterMode::kLinearMipmapNearest: return GL_LINEAR_MIPMAP_NEAREST;
+    case TextureFilterMode::kLinearMipampLinear: return GL_LINEAR_MIPMAP_LINEAR;
   }
 
   NOT_REACHED();
@@ -63,8 +64,7 @@ GLenum FilterToGL(StageTextureConfig::Filter filter) {
 
 }  // namespace
 
-bool OpenGLStageTexture(OpenGLRendererBackend* opengl, Texture* texture,
-                        const StageTextureConfig& config) {
+bool OpenGLStageTexture(OpenGLRendererBackend* opengl, Texture* texture) {
   uint32_t uuid = GetNextTextureUUID();
   auto it = opengl->loaded_textures.find(uuid);
   if (it != opengl->loaded_textures.end()) {
@@ -77,10 +77,10 @@ bool OpenGLStageTexture(OpenGLRendererBackend* opengl, Texture* texture,
   glBindTexture(GL_TEXTURE_2D, handle);
 
   // Setup wrapping/filtering options.
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, WrapToGL(config.wrap_u));
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, WrapToGL(config.wrap_v));
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, FilterToGL(config.min_filter));
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, FilterToGL(config.max_filter));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, WrapToGL(texture->wrap_mode_u));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, WrapToGL(texture->wrap_mode_v));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, FilterToGL(texture->min_filter));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, FilterToGL(texture->mag_filter));
 
   // Send the bits over.
   glTexImage2D(GL_TEXTURE_2D,         // target
@@ -91,9 +91,9 @@ bool OpenGLStageTexture(OpenGLRendererBackend* opengl, Texture* texture,
                0,                     // border
                GL_RGBA,               // format
                GL_UNSIGNED_BYTE,      // type,
-               texture->data.value);
+               texture->data.get());
 
-  if (config.generate_mipmaps)
+  if (texture->mipmaps)
     glGenerateMipmap(GL_TEXTURE_2D);
 
   TextureHandles handles;
@@ -128,7 +128,7 @@ void OpenGLSubTexture(OpenGLRendererBackend* opengl, Texture* texture, void* dat
     range = texture->size;
 
   if (data == nullptr)
-    data = texture->data.value;
+    data = texture->data.get();
 
   auto it = opengl->loaded_textures.find(texture->uuid.value);
   ASSERT(it != opengl->loaded_textures.end());

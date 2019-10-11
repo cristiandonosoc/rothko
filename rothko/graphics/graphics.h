@@ -6,6 +6,7 @@
 // Proxy header to include all the common graphics functionality.
 #include "rothko/graphics/color.h"
 #include "rothko/graphics/commands.h"
+#include "rothko/graphics/material.h"
 #include "rothko/graphics/mesh.h"
 #include "rothko/graphics/renderer.h"
 #include "rothko/graphics/shader.h"

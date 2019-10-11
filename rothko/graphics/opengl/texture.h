@@ -13,7 +13,7 @@ namespace opengl {
 
 struct OpenGLRendererBackend;
 
-bool OpenGLStageTexture(OpenGLRendererBackend*, Texture*, const StageTextureConfig&);
+bool OpenGLStageTexture(OpenGLRendererBackend*, Texture*);
 void OpenGLUnstageTexture(OpenGLRendererBackend*, Texture*);
 void OpenGLSubTexture(OpenGLRendererBackend*, Texture*, void* data, Int2 offset, Int2 range);
 

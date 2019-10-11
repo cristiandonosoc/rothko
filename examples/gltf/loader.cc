@@ -3,11 +3,13 @@
 
 #include "loader.h"
 
-#include <sstream>
-
+#include <rothko/graphics/graphics.h>
 #include <rothko/graphics/vertices.h>
-#include <third_party/tiny_gltf/tiny_gltf.h>
 #include <rothko/logging/logging.h>
+#include <rothko/utils/strings.h>
+#include <third_party/tiny_gltf/tiny_gltf.h>
+
+#include <sstream>
 
 namespace rothko {
 namespace gltf {
@@ -279,7 +281,7 @@ std::vector<uint8_t> ExtractIndices(const tinygltf::Model& model,
   return indices;
 }
 
-void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node) {
+void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene* out_scene) {
   LOG(App, "Processing Node %s", node.name.c_str());
   if (node.mesh == -1) {
     WARNING(App, "Node %s has no mesh.", node.name.c_str());
@@ -293,7 +295,7 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node) {
   ss << "Primitives: " << std::endl;
 
   // Process the primitives.
-  for (size_t primitive_i = 0; primitive_i < mesh.primitives.size(); primitive_i++) {
+  for (uint32_t primitive_i = 0; primitive_i < mesh.primitives.size(); primitive_i++) {
     const tinygltf::Primitive& primitive = mesh.primitives[primitive_i];
     ss << "  Primitive " << primitive_i << std::endl;
 
@@ -322,16 +324,63 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node) {
          << std::endl;
     }
 
-
     std::vector<uint8_t> vertices = ExtractVertices(model, primitive);
+    uint32_t vertex_count = vertices.size() / ToSize(vertex_type);
 
     ComponentType component_type;
     std::vector<uint8_t> indices = ExtractIndices(model, primitive, &component_type);
+    uint32_t index_count = indices.size() / ToSize(component_type);
 
-    ss << "    VERTICES: " << vertices.size() << " bytes (" << vertices.size() / ToSize(vertex_type)
-       << " vertices)." << std::endl;
-    ss << "    INDICES: " << indices.size() << " bytes (" << indices.size() / ToSize(component_type)
-       << " indices)." << std::endl;
+    ss << "    VERTICES: " << vertices.size() << " bytes (" << vertex_count << " vertices)."
+       << std::endl;
+    ss << "    INDICES: " << indices.size() << " bytes (" << index_count << " indices)."
+       << std::endl;
+
+    (void)out_scene;
+
+#ifdef COMPLETE_ME
+    // Create the mesh.
+    auto rothko_mesh = std::make_unique<Mesh>();
+    rothko_mesh->name = StringPrintf("%s-%u", mesh.name.c_str(), primitive_i);
+    rothko_mesh->vertex_type = vertex_type;
+    rothko_mesh->vertices = std::move(vertices);
+    rothko_mesh->vertex_count = vertex_count;
+    rothko_mesh->indices = std::move(indices);
+    rothko_mesh->index_count = index_count;
+
+    const tinygltf::Material& material = model.materials[primitive.material];
+
+    const tinygltf::Texture& base_texture =
+        model.textures[material.pbrMetallicRoughness.baseColorTexture.index];
+
+    const tinygltf::Sampler& base_sampler = model.samplers[base_texture.sampler];
+    const tinygltf::Image& base_image = model.images[base_texture.source];
+
+    // TODO(Cristian): Do tinygltf -> rothko modes translation instead of hardcoding.
+    auto rothko_texture = std::make_unique<Texture>();
+    rothko_texture->type = TextureType::kRGBA;
+    rothko_texture->wrap_mode_s = TextureWrapMode::kRepeat;
+    rothko_texture->wrap_mode_t = TextureWrapMode::kRepeat;
+    rothko_texture->min_filter = TextureFilterMode::kLinear;
+    rothko_texture->mag_filter = TextureFilterMode::kLinear;
+
+
+
+
+
+    auto rothko_material = std::make_unique<Material>();
+
+
+    rothko_material->base_texture = material.pbrMetallicRoughness.baseColorTexture.
+
+    SceneNode scene_node;
+    scene_node.mesh = rothko_mesh.get();
+
+
+
+    out_scene->meshes.push_back(std::move(rothko_mesh));
+
+#endif
   }
 
   LOG(App, "%s", ss.str().c_str());
@@ -339,19 +388,19 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node) {
 
 
 
-void ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node) {
-  ProcessNode(model, node);
+void ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node, Scene* out_scene) {
+  ProcessNode(model, node, out_scene);
   for (int node_index : node.children) {
-    ProcessNodes(model, model.nodes[node_index]);
+    ProcessNodes(model, model.nodes[node_index], out_scene);
   }
 }
 
 }  // namespace
 
 
-void ProcessScene(const tinygltf::Model& model, const tinygltf::Scene& scene) {
+void ProcessScene(const tinygltf::Model& model, const tinygltf::Scene& scene, Scene* out_scene) {
   for (int node_index : scene.nodes) {
-    ProcessNodes(model, model.nodes[node_index]);
+    ProcessNodes(model, model.nodes[node_index], out_scene);
   }
 }
 

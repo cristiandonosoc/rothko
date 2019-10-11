@@ -192,8 +192,8 @@ void RendererUnstageShader(Renderer*, Shader* shader) {
 
 // Textures ----------------------------------------------------------------------------------------
 
-bool RendererStageTexture(Renderer*, Texture* texture, const StageTextureConfig& config) {
-  return OpenGLStageTexture(gBackend.get(), texture, config);
+bool RendererStageTexture(Renderer*, Texture* texture) {
+  return OpenGLStageTexture(gBackend.get(), texture);
 }
 
 void RendererUnstageTexture(Renderer*, Texture* texture) {

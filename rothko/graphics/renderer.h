@@ -59,32 +59,7 @@ bool RendererUploadMeshRange(Renderer*, Mesh*, Int2 vertex_range = {}, Int2 inde
 bool RendererStageShader(Renderer*, Shader*);
 void RendererUnstageShader(Renderer*, Shader*);
 
-// Textures.
-struct StageTextureConfig {
-  enum class Wrap {
-    kClampToEdge,
-    kMirroredRepeat,
-    kRepeat,
-  };
-
-  enum class Filter {
-    kNearest,
-    kLinear,
-    kNearestMipmapNearest,
-    kNearestMipmapLinear,
-    kLinearMipmapNearest,
-    kLinearMipampLinear,
-  };
-
-  bool generate_mipmaps = true;
-
-  Wrap wrap_u = Wrap::kRepeat;
-  Wrap wrap_v = Wrap::kRepeat;
-
-  Filter min_filter = Filter::kLinear;
-  Filter max_filter = Filter::kLinear;
-};
-bool RendererStageTexture(Renderer*, Texture*, const StageTextureConfig&);
+bool RendererStageTexture(Renderer*, Texture*);
 void RendererUnstageTexture(Renderer*, Texture*);
 
 // |data| being nullptr means upload the data that's currently in the |texture.data.value|.

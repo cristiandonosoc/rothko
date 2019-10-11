@@ -19,16 +19,16 @@ bool CreateTexture(Game* game, std::string name, Vec2 size, Texture* out) {
   out->name = std::move(name);
   out->type = TextureType::kRGBA;
   out->size = {(int)size.x, (int)size.y};
+  out->mipmaps = 0;
+
+  out->min_filter = TextureFilterMode::kNearest;
+  out->mag_filter = TextureFilterMode::kNearest;
 
   size_t alloc_size = sizeof(Color) * size.x * size.y;
-  out->data = (uint8_t*)malloc(alloc_size);
-  out->free_function = free;
+  out->data = std::make_unique<uint8_t[]>(alloc_size);
+  out->data_size = alloc_size;
 
-  StageTextureConfig config = {};
-  config.generate_mipmaps = false;
-  config.min_filter = StageTextureConfig::Filter::kNearest;
-  config.max_filter = StageTextureConfig::Filter::kNearest;
-  if (!RendererStageTexture(game->renderer.get(), out, config))
+  if (!RendererStageTexture(game->renderer.get(), out))
     return false;
   return true;
 }
@@ -58,7 +58,7 @@ void FillInTransparent(Texture* texture) {
 
   Color gray = CreateGray(0xdd);
 
-  Color* color = (Color*)texture->data.value;
+  Color* color = (Color*)texture->data.get();
   Color* end = color + texture->size.x * texture->size.y;
   for (int y = 0; y < texture->size.height; y++) {
     int tile_y = y / kSquareSize;
@@ -110,7 +110,7 @@ void PaintTile(Color* data, Int2 coord, const Color* tile_data) {
 
 void PaintTilePixelOffset(Texture* texture, Int2 pos, const Color* tile_data, bool debug) {
   (void)tile_data;
-  Color* base = (Color*)texture->data.value;
+  Color* base = (Color*)texture->data.get();
   Color* end = base + texture->size.width * texture->size.height;
 
   Color* sprite_base = base + pos.y * texture->size.width + pos.x;
@@ -193,7 +193,7 @@ void TileToTexture(uint8_t palette, const void* data, Color* out, bool sprite) {
 void UpdateTileTexture(Memory* memory, Texture* tile_texture) {
   // Fill in the texture.
   Color tile_color[64];
-  Color* base_color = (Color*)tile_texture->data.value;
+  Color* base_color = (Color*)tile_texture->data.get();
 
   for (int y = 0; y < kTileTextureCountY; y++) {
     for (int x = 0; x < kTileTextureCountX; x++) {

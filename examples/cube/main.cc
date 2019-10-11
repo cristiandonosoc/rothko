@@ -38,8 +38,7 @@ Texture LoadTexture(Renderer* renderer, const std::string& path) {
   if (!STBLoadTexture(path, TextureType::kRGBA, &texture))
     return {};
 
-  StageTextureConfig config = {};
-  if (!RendererStageTexture(renderer, &texture, config))
+  if (!RendererStageTexture(renderer, &texture))
     return {};
 
   return texture;

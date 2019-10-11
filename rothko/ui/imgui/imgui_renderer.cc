@@ -70,10 +70,11 @@ bool CreateFontTexture(Renderer* renderer, ImguiRenderer* imgui) {
   Texture texture;
   texture.name = "Imgui Font";
   texture.size = {width, height};
-  texture.data = pixels;
 
-  StageTextureConfig config = {};   // Defaults are sensible.
-  if (!RendererStageTexture(renderer, &texture, config))
+  texture.data_size = width * height * 4;
+  texture.data = std::make_unique<uint8_t[]>(texture.data_size);
+  memcpy(texture.data.get(), pixels, texture.data_size);
+  if (!RendererStageTexture(renderer, &texture))
     return false;
 
   // Imgui wants a way of tracking the font texture id to relay it back to use on render time.
