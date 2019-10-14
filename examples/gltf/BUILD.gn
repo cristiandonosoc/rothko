@@ -1,7 +1,7 @@
 # Copyright 2019, Cristián Donoso.
 # This code has a BSD license. See LICENSE.
 
-executable("gltf_viewer") {
+executable("gltf") {
   output_name = "gltf"
 
   sources = [
@@ -14,22 +14,6 @@ executable("gltf_viewer") {
     "//rothko:game",
     "//third_party/tiny_gltf",
     "//rothko/window:sdl_opengl",
-  ]
-}
-
-executable("gltf2rothko") {
-  sources = [
-    "gltf2rothko.cc",
-  ]
-
-  deps = [
-    "//rothko:game",
-  ]
-}
-
-group("gltf") {
-  deps = [
-    ":gltf_viewer",
-    ":gltf2rothko",
+    "//rothko/graphics/default_shaders",
   ]
 }

@@ -48,7 +48,7 @@ int main() {
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;
   OrbitCamera camera = OrbitCamera::FromLookAt({5, 5, 5}, {}, ToRadians(60.0f), aspect_ratio);
 
-  Shader default_shader = CreateDefaultShader(VertexType::k3dNormalUV);
+  Shader default_shader = CreateDefaultShader(VertexType::k3dUVColor);
   if (!Valid(default_shader) || !RendererStageShader(game.renderer.get(), &default_shader))
     return 1;
 

@@ -324,6 +324,7 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
          << std::endl;
     }
 
+    /* VertexType vertex_type = DetectVertexType(model, primitive); */
     std::vector<uint8_t> vertices = ExtractVertices(model, primitive);
     uint32_t vertex_count = vertices.size() / ToSize(vertex_type);
 
@@ -338,7 +339,6 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
 
     (void)out_scene;
 
-#ifdef COMPLETE_ME
     // Create the mesh.
     auto rothko_mesh = std::make_unique<Mesh>();
     rothko_mesh->name = StringPrintf("%s-%u", mesh.name.c_str(), primitive_i);
@@ -348,6 +348,12 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
     rothko_mesh->indices = std::move(indices);
     rothko_mesh->index_count = index_count;
 
+    auto* vertex_ptr = (Vertex3dNormalTangentUV*)rothko_mesh->vertices.data();
+    for (uint32_t i = 0; i < rothko_mesh->vertex_count; i++) {
+      LOG(App, "Pos: %s", ToString(vertex_ptr->pos).c_str());
+      vertex_ptr++;
+    }
+
     const tinygltf::Material& material = model.materials[primitive.material];
 
     const tinygltf::Texture& base_texture =
@@ -356,31 +362,37 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
     const tinygltf::Sampler& base_sampler = model.samplers[base_texture.sampler];
     const tinygltf::Image& base_image = model.images[base_texture.source];
 
-    // TODO(Cristian): Do tinygltf -> rothko modes translation instead of hardcoding.
     auto rothko_texture = std::make_unique<Texture>();
+    rothko_texture->name = base_image.name;
+    rothko_texture->size = { base_image.width, base_image.height };
+    // TODO(Cristian): Do tinygltf -> rothko modes translation instead of hardcoding.
+    //                 This is obtained from |base_sampler|.
+    (void)base_sampler;
     rothko_texture->type = TextureType::kRGBA;
-    rothko_texture->wrap_mode_s = TextureWrapMode::kRepeat;
-    rothko_texture->wrap_mode_t = TextureWrapMode::kRepeat;
+    rothko_texture->wrap_mode_u = TextureWrapMode::kRepeat;
+    rothko_texture->wrap_mode_v = TextureWrapMode::kRepeat;
     rothko_texture->min_filter = TextureFilterMode::kLinear;
     rothko_texture->mag_filter = TextureFilterMode::kLinear;
 
-
-
-
+    ASSERT(DataSize(*rothko_texture) == base_image.image.size());
+    rothko_texture->data = std::make_unique<uint8_t[]>(base_image.image.size());
+    memcpy(rothko_texture->data.get(), base_image.image.data(), base_image.image.size());
 
     auto rothko_material = std::make_unique<Material>();
 
-
-    rothko_material->base_texture = material.pbrMetallicRoughness.baseColorTexture.
+    rothko_material->base_texture = rothko_texture.get();
+    ASSERT(material.pbrMetallicRoughness.baseColorFactor.size() == 4u);
+    rothko_material->base_color.r = material.pbrMetallicRoughness.baseColorFactor[0];
+    rothko_material->base_color.g = material.pbrMetallicRoughness.baseColorFactor[1];
+    rothko_material->base_color.b = material.pbrMetallicRoughness.baseColorFactor[2];
+    rothko_material->base_color.a = material.pbrMetallicRoughness.baseColorFactor[3];
 
     SceneNode scene_node;
     scene_node.mesh = rothko_mesh.get();
-
-
+    scene_node.material = rothko_material.get();
 
     out_scene->meshes.push_back(std::move(rothko_mesh));
-
-#endif
+    out_scene->textures.push_back(std::move(rothko_texture));
   }
 
   LOG(App, "%s", ss.str().c_str());

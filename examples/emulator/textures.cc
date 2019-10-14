@@ -26,7 +26,6 @@ bool CreateTexture(Game* game, std::string name, Vec2 size, Texture* out) {
 
   size_t alloc_size = sizeof(Color) * size.x * size.y;
   out->data = std::make_unique<uint8_t[]>(alloc_size);
-  out->data_size = alloc_size;
 
   if (!RendererStageTexture(game->renderer.get(), out))
     return false;

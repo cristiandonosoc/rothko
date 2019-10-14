@@ -52,7 +52,6 @@ bool InitDisplay(Game* game, Display* out) {
 
   size_t size = sizeof(Color) * kTextureDim.width * kTextureDim.height;
   out->background.data = std::make_unique<uint8_t[]>(size);
-  out->background.data_size = size;
 
   if (!RendererStageTexture(game->renderer.get(), &out->background))
     return false;

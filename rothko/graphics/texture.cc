@@ -7,8 +7,11 @@
 
 #include "rothko/graphics/renderer.h"
 #include "rothko/logging/logging.h"
+#include "rothko/platform/platform.h"
 
 namespace rothko {
+
+// Texture -----------------------------------------------------------------------------------------
 
 Texture::~Texture() {
   if (Staged(this))
@@ -16,7 +19,7 @@ Texture::~Texture() {
   data.reset();
 }
 
-// LoadTexture -----------------------------------------------------------------
+// LoadTexture -------------------------------------------------------------------------------------
 
 namespace  {
 
@@ -38,7 +41,10 @@ bool STBLoadTexture(const std::string& path, TextureType texture_type, Texture* 
   stbi_set_flip_vertically_on_load(true);
 
   Texture tmp = {};
+  tmp.name = GetBasename(path);
+  tmp.type = texture_type;
   int channels;
+
 
   void* data = stbi_load(path.c_str(), &tmp.size.x, &tmp.size.y, &channels,
                          TextureTypeToChannels(texture_type));
@@ -48,9 +54,9 @@ bool STBLoadTexture(const std::string& path, TextureType texture_type, Texture* 
   }
 
 
-  tmp.data_size = tmp.size.x * tmp.size.y * channels;
-  tmp.data = std::make_unique<uint8_t[]>(tmp.data_size);
-  memcpy(tmp.data.get(), data, tmp.data_size);
+  uint32_t data_size = DataSize(tmp);
+  tmp.data = std::make_unique<uint8_t[]>(data_size);
+  memcpy(tmp.data.get(), data, data_size);
 
   *out = std::move(tmp);
 
@@ -59,6 +65,16 @@ bool STBLoadTexture(const std::string& path, TextureType texture_type, Texture* 
   return true;
 }
 
-// Unload Texture ----------------------------------------------------------------------------------
+// Extras ------------------------------------------------------------------------------------------
+
+uint32_t ToSize(TextureType type) {
+  switch (type) {
+    case TextureType::kRGBA: return 4;
+    case TextureType::kLast: return 0;
+  }
+
+  NOT_REACHED();
+  return 0;
+}
 
 }  // namespace rothko

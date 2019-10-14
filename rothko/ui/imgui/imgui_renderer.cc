@@ -71,9 +71,9 @@ bool CreateFontTexture(Renderer* renderer, ImguiRenderer* imgui) {
   texture.name = "Imgui Font";
   texture.size = {width, height};
 
-  texture.data_size = width * height * 4;
-  texture.data = std::make_unique<uint8_t[]>(texture.data_size);
-  memcpy(texture.data.get(), pixels, texture.data_size);
+  uint32_t data_size = width * height * 4;
+  texture.data = std::make_unique<uint8_t[]>(data_size);
+  memcpy(texture.data.get(), pixels, data_size);
   if (!RendererStageTexture(renderer, &texture))
     return false;
 

@@ -21,6 +21,7 @@ enum class TextureType : uint8_t {
   kLast,
 };
 const char* ToString(TextureType);
+uint32_t ToSize(TextureType type);
 
 enum class TextureWrapMode : uint8_t {
   kClampToBorder,
@@ -46,6 +47,9 @@ struct Texture {
   Renderer* renderer = nullptr;
   ClearOnMove<uint32_t> uuid = 0;
 
+  std::string name;
+  Int2 size;
+
   TextureType type = TextureType::kLast;
 
   TextureWrapMode wrap_mode_u = TextureWrapMode::kRepeat;
@@ -56,15 +60,13 @@ struct Texture {
 
   uint8_t mipmaps = 1;
 
-  std::string name;
-  Int2 size;
-
   std::unique_ptr<uint8_t[]> data;
-  uint32_t data_size;
 };
 
 inline bool Loaded(Texture* t) { return !!t->data; }
 inline bool Staged(Texture* t) { return t->uuid.has_value(); }
+
+inline uint32_t DataSize(const Texture& t) { return t.size.x * t.size.y * ToSize(t.type); }
 
 bool STBLoadTexture(const std::string& path, TextureType, Texture* out);
 
