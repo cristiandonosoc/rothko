@@ -1,0 +1,2 @@
+- Move the Scene Graph free detection to use empty slot free list instead of a "used" bit field.
+  - https://ourmachinery.com/post/data-structures-part-1-bulk-data/

@@ -19,7 +19,13 @@ namespace {
 
 }  // namespace
 
-int main() {
+int main(int argc, const char* argv[]) {
+
+  std::string path;
+  if (argc == 2)
+    path = argv[1];
+
+
   Game game = {};
   InitWindowConfig window_config = {};
   window_config.type = WindowType::kSDLOpenGL;
@@ -29,11 +35,15 @@ int main() {
   if (!InitGame(&game, &window_config, true))
     return 1;
 
-  std::string path = OpenFileDialog();
   if (path.empty()) {
-    ERROR(App, "Could not get model path.");
-    return 1;
+    path = OpenFileDialog();
+    if (path.empty()) {
+      ERROR(App, "Could not get model path.");
+      return 1;
+    }
   }
+
+  LOG(App, "Path: %s", path.c_str());
 
   std::string err, warn;
 

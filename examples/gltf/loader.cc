@@ -201,13 +201,18 @@ std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
                                      VertexType vertex_type = VertexType::kLast) {
   std::map<VertComponent, const tinygltf::Accessor*> accessors;
   vertex_type = DetectVertexType(model, primitive, &accessors);
+  uint32_t vertex_size = ToSize(vertex_type);
+
 
   ASSERT(vertex_type != VertexType::kLast);
   ASSERT(!accessors.empty());
 
   // Go over each vertex component and add it to a buffer.
   auto accessor_it = accessors.begin();
-  uint64_t vertices_size = accessor_it->second->count * ToSize(vertex_type);
+  uint32_t vertices_size = accessor_it->second->count * vertex_size;
+  /* printf("Vertices size: %u, Vertex Size: %u, Count: %lu\n", vertices_size, vertex_size, */
+  /*                                                            accessor_it->second->count); */
+  /* fflush(stdout); */
 
   std::vector<uint8_t> vertices;
   vertices.resize(vertices_size);   // We're going to overwrite the contents.
@@ -218,7 +223,7 @@ std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
     const VertComponent& vert_component = accessor_it->first;
     uint32_t component_size = ToSize(vert_component);
 
-    auto& accessor = accessor_it->second;
+    const tinygltf::Accessor* accessor = accessor_it->second;
     const tinygltf::BufferView& buffer_view = model.bufferViews[accessor->bufferView];
     const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
 
@@ -228,17 +233,26 @@ std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
     const uint8_t* buffer_end = (const uint8_t*)buffer.data.data() + buffer.data.size();
 
     // Copy over the data to the buffer.
+    LOG(App, "Writing accessor %s", ToString(accessor_it->first));
     for (size_t i = 0; i < accessor->count; i++) {
       ASSERT(vertices_ptr < vertices_end);
       ASSERT(buffer_ptr < buffer_end);
 
       // Copy over the component value.
+      uint8_t* write_ptr = vertices_ptr;
       for (size_t j = 0; j < component_size; j++) {
-        *vertices_ptr++ = *buffer_ptr++;
+        *write_ptr++ = *buffer_ptr++;
       }
+
+      if (accessor_it->first == VertComponent::kPos3d) {
+        Vec3* pos = (Vec3*)vertices_ptr;
+        LOG(App, "Wrote pos3d: %s", ToString(*pos).c_str());
+      }
+
 
       // Advance by the stride.
       buffer_ptr += buffer_view.byteStride;
+      vertices_ptr += vertex_size;
     }
 
     component_offset += component_size;
@@ -248,35 +262,36 @@ std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
 }
 
 std::vector<uint8_t> ExtractIndices(const tinygltf::Model& model,
-                                    const tinygltf::Primitive& primitive,
-                                    ComponentType* out = nullptr) {
-  const tinygltf::Accessor& accessor = model.accessors[primitive.indices];
-  ComponentType component_type = (ComponentType)accessor.componentType;
-  uint32_t index_size = ToSize(component_type);
-  uint64_t indices_size = index_size * accessor.count;
+                                    const tinygltf::Primitive& primitive) {
+  auto& accessor = model.accessors[primitive.attributes.begin()->second];
+  uint32_t index_count = accessor.count;
 
-  const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
+  uint32_t index_size = 2;
+  uint64_t indices_size = index_size * index_count;
+
+  const tinygltf::BufferView& buffer_view = model.bufferViews[primitive.indices];
   const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
 
   std::vector<uint8_t> indices;
   indices.resize(indices_size);   // We're going to overwrite the contents.
 
   uint8_t* indices_ptr = indices.data();
-  uint8_t* indices_end = indices_ptr + indices_size;
+  /* uint8_t* indices_end = indices_ptr + indices_size; */
   const uint8_t* buffer_ptr = (const uint8_t*)buffer.data.data() + accessor.byteOffset;
-  const uint8_t* buffer_end = (const uint8_t*)buffer.data.data() + buffer.data.size();
+  /* const uint8_t* buffer_end = (const uint8_t*)buffer.data.data() + buffer.data.size(); */
 
-  for (size_t i = 0; i < accessor.count; i++) {
-    ASSERT(indices_ptr < indices_end);
-    ASSERT(buffer_ptr < buffer_end);
+  memcpy(indices_ptr, buffer_ptr, indices_size);
 
-    for (size_t j = 0; j < index_size; j++) {
-      *indices_ptr++ = *buffer_ptr++;
-    }
-  }
 
-  if (out)
-    *out = component_type;
+
+  /* for (size_t i = 0; i < accessor.count; i++) { */
+  /*   ASSERT(indices_ptr < indices_end); */
+  /*   ASSERT(buffer_ptr < buffer_end); */
+
+  /*   for (size_t j = 0; j < index_size; j++) { */
+  /*     *indices_ptr++ = *buffer_ptr++; */
+  /*   } */
+  /* } */
 
   return indices;
 }
@@ -328,9 +343,8 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
     std::vector<uint8_t> vertices = ExtractVertices(model, primitive);
     uint32_t vertex_count = vertices.size() / ToSize(vertex_type);
 
-    ComponentType component_type;
-    std::vector<uint8_t> indices = ExtractIndices(model, primitive, &component_type);
-    uint32_t index_count = indices.size() / ToSize(component_type);
+    std::vector<uint8_t> indices = ExtractIndices(model, primitive);
+    uint32_t index_count = indices.size() / 2;
 
     ss << "    VERTICES: " << vertices.size() << " bytes (" << vertex_count << " vertices)."
        << std::endl;
@@ -348,11 +362,11 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
     rothko_mesh->indices = std::move(indices);
     rothko_mesh->index_count = index_count;
 
-    auto* vertex_ptr = (Vertex3dNormalTangentUV*)rothko_mesh->vertices.data();
-    for (uint32_t i = 0; i < rothko_mesh->vertex_count; i++) {
-      LOG(App, "Pos: %s", ToString(vertex_ptr->pos).c_str());
-      vertex_ptr++;
-    }
+    /* auto* vertex_ptr = (Vertex3dNormalTangentUV*)rothko_mesh->vertices.data(); */
+    /* for (uint32_t i = 0; i < rothko_mesh->vertex_count; i++) { */
+    /*   LOG(App, "Pos: %s", ToString(vertex_ptr->pos).c_str()); */
+    /*   vertex_ptr++; */
+    /* } */
 
     const tinygltf::Material& material = model.materials[primitive.material];
 
