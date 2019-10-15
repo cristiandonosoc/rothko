@@ -224,16 +224,26 @@ std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
     uint32_t component_size = ToSize(vert_component);
 
     const tinygltf::Accessor* accessor = accessor_it->second;
+
     const tinygltf::BufferView& buffer_view = model.bufferViews[accessor->bufferView];
     const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
 
+
     uint8_t* vertices_ptr = vertices.data() + component_offset;
     uint8_t* vertices_end = vertices.data() + vertices_size;
-    const uint8_t* buffer_ptr = (const uint8_t*)buffer.data.data() + accessor->byteOffset;
+    const uint8_t* buffer_ptr =
+        (const uint8_t*)buffer.data.data() + buffer_view.byteOffset + accessor->byteOffset;
     const uint8_t* buffer_end = (const uint8_t*)buffer.data.data() + buffer.data.size();
 
+    LOG(App,
+        "Component %s -> Buffer View: %u, Buffer: %u, Offset: %u",
+        ToString(vert_component),
+        accessor->bufferView,
+        buffer_view.buffer,
+        component_offset);
+
     // Copy over the data to the buffer.
-    LOG(App, "Writing accessor %s", ToString(accessor_it->first));
+    /* LOG(App, "Writing accessor %s", ToString(accessor_it->first)); */
     for (size_t i = 0; i < accessor->count; i++) {
       ASSERT(vertices_ptr < vertices_end);
       ASSERT(buffer_ptr < buffer_end);
@@ -243,12 +253,6 @@ std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
       for (size_t j = 0; j < component_size; j++) {
         *write_ptr++ = *buffer_ptr++;
       }
-
-      if (accessor_it->first == VertComponent::kPos3d) {
-        Vec3* pos = (Vec3*)vertices_ptr;
-        LOG(App, "Wrote pos3d: %s", ToString(*pos).c_str());
-      }
-
 
       // Advance by the stride.
       buffer_ptr += buffer_view.byteStride;
@@ -261,39 +265,35 @@ std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
   return vertices;
 }
 
-std::vector<uint8_t> ExtractIndices(const tinygltf::Model& model,
+template <typename T>
+std::vector<uint32_t> ObtainIndices(const uint8_t* data, uint32_t count) {
+  std::vector<uint32_t> indices;
+  indices.reserve(count);
+
+  const T* ptr = (const T*)data;
+  for (uint32_t i = 0; i < count; i++) {
+    indices.push_back(*ptr++);
+  }
+
+  return indices;
+}
+
+
+std::vector<uint32_t> ExtractIndices(const tinygltf::Model& model,
                                     const tinygltf::Primitive& primitive) {
-  auto& accessor = model.accessors[primitive.attributes.begin()->second];
+  const tinygltf::Accessor& accessor = model.accessors[primitive.indices];
   uint32_t index_count = accessor.count;
 
-  uint32_t index_size = 2;
-  uint64_t indices_size = index_size * index_count;
+  ComponentType component_type = (ComponentType)accessor.componentType;
+  ASSERT(component_type == ComponentType::kUint16 || component_type == ComponentType::kUInt32);
 
   const tinygltf::BufferView& buffer_view = model.bufferViews[primitive.indices];
   const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
 
-  std::vector<uint8_t> indices;
-  indices.resize(indices_size);   // We're going to overwrite the contents.
+  const uint8_t* data = (const uint8_t*)buffer.data.data() + accessor.byteOffset;
 
-  uint8_t* indices_ptr = indices.data();
-  /* uint8_t* indices_end = indices_ptr + indices_size; */
-  const uint8_t* buffer_ptr = (const uint8_t*)buffer.data.data() + accessor.byteOffset;
-  /* const uint8_t* buffer_end = (const uint8_t*)buffer.data.data() + buffer.data.size(); */
-
-  memcpy(indices_ptr, buffer_ptr, indices_size);
-
-
-
-  /* for (size_t i = 0; i < accessor.count; i++) { */
-  /*   ASSERT(indices_ptr < indices_end); */
-  /*   ASSERT(buffer_ptr < buffer_end); */
-
-  /*   for (size_t j = 0; j < index_size; j++) { */
-  /*     *indices_ptr++ = *buffer_ptr++; */
-  /*   } */
-  /* } */
-
-  return indices;
+  return component_type == ComponentType::kUint16 ? ObtainIndices<uint16_t>(data, index_count) :
+                                                    ObtainIndices<uint32_t>(data, index_count);
 }
 
 void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene* out_scene) {
@@ -306,50 +306,58 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
   const tinygltf::Mesh& mesh = model.meshes[node.mesh];
   LOG(App, "Processing mesh %s", mesh.name.c_str());
 
-  std::stringstream ss;
-  ss << "Primitives: " << std::endl;
+  /* std::stringstream ss; */
+  /* ss << "Primitives: " << std::endl; */
 
   // Process the primitives.
   for (uint32_t primitive_i = 0; primitive_i < mesh.primitives.size(); primitive_i++) {
+
     const tinygltf::Primitive& primitive = mesh.primitives[primitive_i];
-    ss << "  Primitive " << primitive_i << std::endl;
-
     VertexType vertex_type = DetectVertexType(model, primitive);
-    ss << "    Vertex Type: " << ToString(vertex_type) << ", Size: " << ToSize(vertex_type)
-       << std::endl;
 
-    ss << "    Indices -> Accessor " << primitive.indices << std::endl;
 
-    for (auto& [attr_name, attr_accessor_index] : primitive.attributes) {
-      ss << "    " << "Attribute " << attr_name << " -> Accessor " << attr_accessor_index;
+    /* ss << "  Primitive " << primitive_i << std::endl; */
 
-      const tinygltf::Accessor& accessor = model.accessors[attr_accessor_index];
-      if (!accessor.name.empty())
-        ss << " (" << accessor.name << ")";
-      ss << std::endl;
-      ss << "      Type: " << ToString((AccessorType)accessor.type) << std::endl;
+    /* ss << "    Vertex Type: " << ToString(vertex_type) << ", Size: " << ToSize(vertex_type) */
+    /*    << std::endl; */
 
-      const tinygltf::BufferView bv = model.bufferViews[accessor.bufferView];
+    /* ss << "    Indices -> Accessor " << primitive.indices << std::endl; */
 
-      ss << "      Buffer view " << bv.name << std::endl;
-      ss << "        offset: " << bv.byteOffset << std::endl;
-      ss << "        length: " << bv.byteLength << std::endl;
-      ss << "        stride: " << bv.byteStride << std::endl;
-      ss << "        target: " << bv.target << " (" << ToString((BufferViewTarget)bv.target) << ")"
-         << std::endl;
-    }
+    /* for (auto& [attr_name, attr_accessor_index] : primitive.attributes) { */
+    /*   ss << "    " << "Attribute " << attr_name << " -> Accessor " << attr_accessor_index; */
 
-    /* VertexType vertex_type = DetectVertexType(model, primitive); */
+    /*   const tinygltf::Accessor& accessor = model.accessors[attr_accessor_index]; */
+    /*   if (!accessor.name.empty()) */
+    /*     ss << " (" << accessor.name << ")"; */
+    /*   ss << std::endl; */
+    /*   ss << "      Type: " << ToString((AccessorType)accessor.type) << std::endl; */
+
+    /*   const tinygltf::BufferView bv = model.bufferViews[accessor.bufferView]; */
+
+    /*   ss << "      Buffer view " << bv.name << std::endl; */
+    /*   ss << "        offset: " << bv.byteOffset << std::endl; */
+    /*   ss << "        length: " << bv.byteLength << std::endl; */
+    /*   ss << "        stride: " << bv.byteStride << std::endl; */
+    /*   ss << "        target: " << bv.target << " (" << ToString((BufferViewTarget)bv.target) << ")" */
+    /*      << std::endl; */
+    /* } */
+
+    /* /1* VertexType vertex_type = DetectVertexType(model, primitive); *1/ */
     std::vector<uint8_t> vertices = ExtractVertices(model, primitive);
     uint32_t vertex_count = vertices.size() / ToSize(vertex_type);
 
-    std::vector<uint8_t> indices = ExtractIndices(model, primitive);
-    uint32_t index_count = indices.size() / 2;
+    std::vector<uint32_t> indices = ExtractIndices(model, primitive);
 
-    ss << "    VERTICES: " << vertices.size() << " bytes (" << vertex_count << " vertices)."
-       << std::endl;
-    ss << "    INDICES: " << indices.size() << " bytes (" << index_count << " indices)."
-       << std::endl;
+    /* ss << "    VERTICES: " << vertices.size() << " bytes (" << vertex_count << " vertices)." */
+    /*    << std::endl; */
+    /* ss << "    INDICES: " << indices.size() * sizeof(Mesh::IndexType) << " bytes (" */
+    /*    << indices.size() << " indices)." << std::endl; */
+
+    auto* vertex_ptr = (Vertex3dNormalTangentUV*)vertices.data();
+    for (uint32_t i = 0; i < vertex_count; i++) {
+      LOG(App, "Vertex %u: %s", i, ToString(*vertex_ptr++).c_str());
+    }
+
 
     (void)out_scene;
 
@@ -359,14 +367,7 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
     rothko_mesh->vertex_type = vertex_type;
     rothko_mesh->vertices = std::move(vertices);
     rothko_mesh->vertex_count = vertex_count;
-    /* rothko_mesh->indices = std::move(indices); */
-    /* rothko_mesh->index_count = index_count; */
-
-    /* auto* vertex_ptr = (Vertex3dNormalTangentUV*)rothko_mesh->vertices.data(); */
-    /* for (uint32_t i = 0; i < rothko_mesh->vertex_count; i++) { */
-    /*   LOG(App, "Pos: %s", ToString(vertex_ptr->pos).c_str()); */
-    /*   vertex_ptr++; */
-    /* } */
+    rothko_mesh->indices = std::move(indices);
 
     const tinygltf::Material& material = model.materials[primitive.material];
 
@@ -409,7 +410,7 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
     out_scene->textures.push_back(std::move(rothko_texture));
   }
 
-  LOG(App, "%s", ss.str().c_str());
+  /* LOG(App, "%s", ss.str().c_str()); */
 }
 
 
