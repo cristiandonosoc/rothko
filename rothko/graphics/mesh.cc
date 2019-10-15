@@ -21,9 +21,9 @@ bool StageWithCapacity(Renderer* renderer, Mesh* mesh, VertexType vertex_type,
 
   Reset(mesh);
   mesh->vertex_type = vertex_type;
-  mesh->vertices = std::vector<uint8_t>(ToSize(vertex_type) * vertex_count);
-  mesh->indices = std::vector<uint8_t>(sizeof(Mesh::IndexType) * index_count);
+  mesh->vertices.resize(ToSize(vertex_type) * vertex_count);
 
+  mesh->indices.resize(index_count);
 
   bool staged = RendererStageMesh(renderer, mesh);
   if (!staged)
@@ -34,26 +34,6 @@ bool StageWithCapacity(Renderer* renderer, Mesh* mesh, VertexType vertex_type,
   mesh->indices.clear();
 
   return true;
-}
-
-void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t offset) {
-  mesh->indices.reserve((mesh->index_count + count) * sizeof(Mesh::IndexType));
-
-  Mesh::IndexType* ptr = data;
-  Mesh::IndexType* end = data + count;
-
-  while (ptr != end) {
-    Mesh::IndexType val = *ptr + offset;
-
-    // We add each byte of the index.
-    uint8_t* tmp = (uint8_t*)&val;
-    uint8_t* tmp_end = (uint8_t*)(&val + 1);
-    mesh->indices.insert(mesh->indices.end(), tmp, tmp_end);
-
-    ptr++;
-  }
-
-  mesh->index_count += count;
 }
 
 }  // namespace rothko

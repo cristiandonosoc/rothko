@@ -359,8 +359,8 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
     rothko_mesh->vertex_type = vertex_type;
     rothko_mesh->vertices = std::move(vertices);
     rothko_mesh->vertex_count = vertex_count;
-    rothko_mesh->indices = std::move(indices);
-    rothko_mesh->index_count = index_count;
+    /* rothko_mesh->indices = std::move(indices); */
+    /* rothko_mesh->index_count = index_count; */
 
     /* auto* vertex_ptr = (Vertex3dNormalTangentUV*)rothko_mesh->vertices.data(); */
     /* for (uint32_t i = 0; i < rothko_mesh->vertex_count; i++) { */

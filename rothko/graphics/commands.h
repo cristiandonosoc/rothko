@@ -121,7 +121,7 @@ struct RenderMesh {
   Int2 scissor_size = {};
 
   uint32_t indices_offset = 0;
-  uint32_t indices_size = 0;
+  uint32_t indices_count = 0;
 
   // The size of the UBO is given by the description of the corresponding shader.
   // It is the responsability of the caller that these buffers match.

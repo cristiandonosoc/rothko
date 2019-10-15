@@ -126,7 +126,7 @@ bool Init(Renderer* renderer, Grid* grid, std::string name) {
   grid->render_command.shader = shader.get();
   grid->render_command.cull_faces = false;
   grid->render_command.blend_enabled = true;
-  grid->render_command.indices_size = grid->mesh.index_count;
+  grid->render_command.indices_count = grid->mesh.indices.size();
 
   return true;
 }

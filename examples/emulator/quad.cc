@@ -20,8 +20,8 @@ bool Init(Renderer* renderer, QuadManager* quads, const QuadManagerConfig& confi
 
 
   // Each quad is 6 vertices.
-  quads->mesh.indices = std::vector<uint8_t>(6 * sizeof(Mesh::IndexType) * config.capacity);
-  quads->mesh.index_count = 6 * config.capacity;
+  quads->mesh.indices.resize(6 * config.capacity);
+  /* quads->mesh.index_count = 6 * config.capacity; */
 
   if (!RendererStageMesh(renderer, &quads->mesh))
     return false;
@@ -101,7 +101,7 @@ void Push(QuadManager* quads, const QuadEntry& entry) {
     render_mesh.primitive_type = PrimitiveType::kTriangles;
     render_mesh.textures.push_back(entry.texture);
     render_mesh.indices_offset = quads->index_offset;
-    render_mesh.indices_size = 6;
+    render_mesh.indices_count = 6;
     render_mesh.vert_ubo_data = entry.vert_ubo;
     render_mesh.frag_ubo_data = entry.frag_ubo;
 
@@ -111,7 +111,7 @@ void Push(QuadManager* quads, const QuadEntry& entry) {
   } else {
     // We can expand the previous render command.
     auto& render_mesh = quads->render_commands.back().GetRenderMesh();
-    render_mesh.indices_size += 6;
+    render_mesh.indices_count += 6;
     quads->index_offset += 6;
   }
 

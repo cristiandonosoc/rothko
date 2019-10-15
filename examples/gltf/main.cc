@@ -141,7 +141,7 @@ int main(int argc, const char* argv[]) {
     render_mesh.mesh = mesh;
     render_mesh.shader = &default_shader;
     render_mesh.primitive_type = PrimitiveType::kTriangles;
-    render_mesh.indices_size = mesh->index_count;
+    render_mesh.indices_count = mesh->indices.size();
     render_mesh.vert_ubo_data = (uint8_t*)&model_mat;
 
     commands.push_back(std::move(render_mesh));

@@ -136,7 +136,9 @@ void StageVertices(Mesh* mesh, MeshHandles* handles) {
 
 void StageIndices(Mesh* mesh, MeshHandles* handles) {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles->ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size(), mesh->indices.data(), GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+               mesh->indices.size() * sizeof(Mesh::IndexType), mesh->indices.data(),
+               GL_STATIC_DRAW);
 }
 
 }  // namespace
@@ -162,9 +164,10 @@ bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
   UnbindMeshHandles();
 
   LOG(OpenGL,
-      "Staging mesh %s (uuid: %u, VAO: %u) [%u vertices (%zu bytes)] [%u indices (%zu bytes)]",
+      "Staging mesh %s (uuid: %u, VAO: %u) [%u vertices (%zu bytes)] [%lu indices (%zu bytes)]",
       mesh->name.c_str(), uuid, handles.vao,
-      mesh->vertex_count, mesh->vertices.size(), mesh->index_count, mesh->indices.size());
+      mesh->vertex_count, mesh->vertices.size(),
+      mesh->indices.size(), mesh->indices.size());
 
   opengl->loaded_meshes[uuid] = std::move(handles);
   mesh->uuid = uuid;
@@ -242,7 +245,7 @@ bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
     uint32_t offset = index_range.x;
     uint32_t size = index_range.y;
     if (size == 0)
-      size = mesh->index_count * sizeof(Mesh::IndexType);
+      size = mesh->indices.size() * sizeof(Mesh::IndexType);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handles.ebo);
 #if DEBUG_MODE

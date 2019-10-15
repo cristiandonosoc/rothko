@@ -159,16 +159,20 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
     //       normally PushIndices should work.
     static_assert(sizeof(ImDrawIdx) == 2);
     auto& mesh = imgui_renderer->mesh;
-    mesh.indices.reserve((mesh.index_count + cmd_list->IdxBuffer.Size) * sizeof(Mesh::IndexType));
+    mesh.indices.reserve((mesh.indices.size() + cmd_list->IdxBuffer.Size));
     for (int ii = 0; ii < cmd_list->IdxBuffer.Size; ii++) {
       // NOTE: |mesh.indices| is a uint8_t array, so we need to decompose the value into a series of
       //       bytes that we can append to the indices.
       Mesh::IndexType val = cmd_list->IdxBuffer[ii] + base_vertex_offset;
-      uint8_t* tmp = (uint8_t*)&val;
-      uint8_t* tmp_end = (uint8_t*)(&val + 1);
-      mesh.indices.insert(mesh.indices.end(), tmp, tmp_end);
+      mesh.indices.push_back(val);
     }
-    mesh.index_count += cmd_list->IdxBuffer.Size;
+
+
+      /* uint8_t* tmp = (uint8_t*)&val; */
+      /* uint8_t* tmp_end = (uint8_t*)(&val + 1); */
+      /* mesh.indices.insert(mesh.indices.end(), tmp, tmp_end); */
+    /* } */
+    /* mesh.index_count += cmd_list->IdxBuffer.Size; */
 
     // This will start appending drawing data into the mesh buffer that's
     // already staged into the renderer.
@@ -183,7 +187,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
       render_mesh.textures.push_back((Texture*)draw_cmd->TextureId);
 
       render_mesh.indices_offset = base_index_offset + index_offset;
-      render_mesh.indices_size = draw_cmd->ElemCount;
+      render_mesh.indices_count = draw_cmd->ElemCount;
 
       /* render_mesh.vert_ubo_data = (uint8_t*)&imgui_renderer->ubo; */
       render_mesh.blend_enabled = true;
@@ -207,7 +211,8 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
 
       render_commands.push_back(std::move(render_mesh));
 
-      index_offset += draw_cmd->ElemCount * sizeof(Mesh::IndexType);
+      /* index_offset += draw_cmd->ElemCount * sizeof(Mesh::IndexType); */
+      index_offset += draw_cmd->ElemCount;
     }
 
     // We advance the base according to how much data we added to the pool.
