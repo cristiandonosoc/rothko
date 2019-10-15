@@ -21,7 +21,7 @@ RenderMesh GetCubeRenderCommand(Mesh* mesh, Shader* shader, SceneNode* node) {
   render_mesh.shader = shader;
   render_mesh.primitive_type = PrimitiveType::kTriangles;
   render_mesh.cull_faces = false;
-  render_mesh.indices_size = mesh->index_count;
+  render_mesh.indices_count = mesh->indices.size();
   render_mesh.vert_ubo_data = (uint8_t*)&node->transform.world_matrix;
   /* render_mesh.textures.push_back(tex1); */
   /* render_mesh.textures.push_back(tex0); */

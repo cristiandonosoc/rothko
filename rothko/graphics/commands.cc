@@ -80,8 +80,8 @@ std::string ToString(const RenderMesh& render_mesh) {
   ss << std::boolalpha;
   ss << "Mesh: " << render_mesh.mesh->name << ", Shader: " << render_mesh.shader->name << std::endl;
 
-  ss << "Indices= Offset: " << render_mesh.indices_offset << ", Size: " << render_mesh.indices_size
-     << std::endl;
+  ss << "Indices= Offset: " << render_mesh.indices_offset
+     << ", Count: " << render_mesh.indices_count << std::endl;
 
   ss << std::hex;
   if (render_mesh.vert_ubo_data)

@@ -69,6 +69,12 @@ std::string OpenFileDialog() {
   fgets(filename, 1024, f);
   if (pclose(f) != 0)
     return {};
+
+  // Zenity adds a spurious '\n' at the end that we need to remove.
+  std::string path = filename;
+  printf("PATH: %s\n", path.c_str());
+  if (path.back() == '\n')
+    return path.substr(0, path.size() - 1);
   return filename;
 }
 

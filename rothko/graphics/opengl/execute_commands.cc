@@ -187,10 +187,7 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
     return;
   }
 
-  if (render_mesh.indices_size == 0) {
-    ERROR(OpenGL, "Received mesh render mesh comman with size 0");
-    return;
-  }
+  ASSERT_MSG(render_mesh.indices_count > 0, "Received mesh render mesh command with size 0");
 
   auto shader_it = opengl.loaded_shaders.find(render_mesh.shader->uuid.value);
   ASSERT(shader_it != opengl.loaded_shaders.end());
@@ -215,7 +212,9 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   }
 
   glBindVertexArray(mesh_handles.vao);
-  glDrawElements(ToGLEnum(render_mesh.primitive_type), render_mesh.indices_size, GL_UNSIGNED_INT,
+  glDrawElements(ToGLEnum(render_mesh.primitive_type),
+                 render_mesh.indices_count,
+                 GL_UNSIGNED_INT,
                  (void*)(uint64_t)render_mesh.indices_offset);
 
   glBindVertexArray(NULL);

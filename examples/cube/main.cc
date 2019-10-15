@@ -157,10 +157,10 @@ Mesh CreateMesh() {
   PushIndices(&mesh, indices, ARRAY_SIZE(indices));
 
   ASSERT_MSG(mesh.vertex_count == ARRAY_SIZE(vertices), "Count: %u", mesh.vertex_count);
-  ASSERT(mesh.vertices.size() == sizeof(vertices));
+  /* ASSERT(mesh.vertices.size() == sizeof(vertices)); */
 
-  ASSERT_MSG(mesh.index_count == ARRAY_SIZE(indices), "Count: %u", mesh.index_count);
-  ASSERT(mesh.indices.size() == sizeof(indices));
+  ASSERT_MSG(mesh.indices.size() == ARRAY_SIZE(indices), "Count: %lu", mesh.indices.size());
+  /* ASSERT(mesh.indices.size() == sizeof(indices)); */
 
   return mesh;
 }
@@ -175,7 +175,7 @@ GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   render_mesh.shader = shader;
   render_mesh.primitive_type = PrimitiveType::kTriangles;
   render_mesh.cull_faces = false;
-  render_mesh.indices_size = mesh->index_count;
+  render_mesh.indices_count = mesh->indices.size();
   render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
   render_mesh.textures.push_back(tex1);
   render_mesh.textures.push_back(tex0);

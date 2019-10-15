@@ -31,10 +31,9 @@ struct Mesh {
   VertexType vertex_type = VertexType::kLast;
 
   std::vector<uint8_t> vertices;
-  std::vector<uint8_t> indices;
-
   uint32_t vertex_count = 0;
-  uint32_t index_count = 0;
+
+  std::vector<IndexType> indices;
 };
 
 bool StageWithCapacity(Renderer*, Mesh*, VertexType, uint32_t vertex_count, uint32_t index_count);
@@ -43,8 +42,8 @@ inline bool Staged(const Mesh& m) { return m.uuid.has_value(); }
 inline void Reset(Mesh* mesh) {
   mesh->vertices.clear();
   mesh->vertex_count = 0;
+
   mesh->indices.clear();
-  mesh->index_count = 0;
 }
 
 template <typename VertexType>
@@ -66,6 +65,14 @@ void PushVertices(Mesh* mesh, VertexType* data, uint32_t count) {
 
 // Pushes an array of indices into the mesh.
 // The |offset| is a value that will be added to each element.
-void PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, uint32_t offset = 0);
+inline void
+PushIndices(Mesh* mesh, Mesh::IndexType* data, uint32_t count, Mesh::IndexType offset = 0) {
+  mesh->indices.reserve(mesh->indices.size() + count);
+
+  for (uint32_t i = 0; i < count; i++) {
+    Mesh::IndexType index = *data++ + offset;
+    mesh->indices.push_back(index);
+  }
+}
 
 }  // namespace rothko

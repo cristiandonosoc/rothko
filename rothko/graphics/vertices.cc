@@ -3,6 +3,8 @@
 
 #include "rothko/graphics/vertices.h"
 
+#include <sstream>
+
 #include "rothko/logging/logging.h"
 
 namespace rothko {
@@ -115,5 +117,18 @@ VertexType ToVertexType(uint32_t t) {
   WARNING(Graphics, "Unrecognized vertex type: 0x%x", t);
   return VertexType::kLast;
 }
+
+// ToString ----------------------------------------------------------------------------------------
+
+std::string ToString(const Vertex3dNormalTangentUV& vertex) {
+  std::stringstream ss;
+  ss << "Pos: " << ToString(vertex.pos)
+     << ", Normal: " << ToString(vertex.normal)
+     << ", Tangent: " << ToString(vertex.tangent)
+     << ", UV: " << ToString(vertex.uv);
+
+  return ss.str();
+}
+
 
 }  // namespace rothko

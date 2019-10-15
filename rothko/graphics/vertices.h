@@ -141,7 +141,8 @@ struct Vertex3dNormalTangentUV {
   Vec4 tangent;
   Vec2 uv;
 };
-static_assert(sizeof(Vertex3dNormalTangentUV) == 12 * sizeof(float));
+static_assert(sizeof(Vertex3dNormalTangentUV) == 48);
+std::string ToString(const Vertex3dNormalTangentUV&);
 
 #pragma pack(pop)
 

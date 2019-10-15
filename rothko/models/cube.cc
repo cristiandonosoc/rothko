@@ -80,10 +80,10 @@ Mesh CreateCubeMesh(const std::string& name, Vec3 extents) {
   PushIndices(&mesh, indices, ARRAY_SIZE(indices));
 
   ASSERT_MSG(mesh.vertex_count == ARRAY_SIZE(vertices), "Count: %u", mesh.vertex_count);
-  ASSERT(mesh.vertices.size() == sizeof(vertices));
+  /* ASSERT(mesh.vertices.size() == sizeof(vertices)); */
 
-  ASSERT_MSG(mesh.index_count == ARRAY_SIZE(indices), "Count: %u", mesh.index_count);
-  ASSERT(mesh.indices.size() == sizeof(indices));
+  ASSERT_MSG(mesh.indices.size() == ARRAY_SIZE(indices), "Count: %lu", mesh.indices.size());
+  /* ASSERT(mesh.indices.size() == sizeof(indices)); */
 
   return mesh;
 }
