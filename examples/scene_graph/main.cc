@@ -52,7 +52,7 @@ int main() {
   if (!Valid(default_shader) || !RendererStageShader(game.renderer.get(), &default_shader))
     return 1;
 
-  Mesh cube = CreateCubeMesh("cube");
+  Mesh cube = CreateCubeMesh(VertexType::k3dUVColor, "cube");
   if (!RendererStageMesh(game.renderer.get(), &cube))
     return 1;
 

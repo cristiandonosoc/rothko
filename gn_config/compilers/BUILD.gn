@@ -23,14 +23,14 @@ if (compiler == "msvc") {
 
   config("compiler") {
     defines = [
-      "NOMINMAX",                   # Remove windows stupid leaky defines.
-      "_ITERATOR_DEBUG_LEVEL=0",    # Remove MSVC C++ iterator checking.
+      "NOMINMAX",  # Remove windows stupid leaky defines.
+      "_ITERATOR_DEBUG_LEVEL=0",  # Remove MSVC C++ iterator checking.
     ]
 
     cflags_cc = [
       "/std:c++latest",
-      "/EHsc",                     # Disable exceptions.
-      "/GR-",                       # Disable RTTI.
+      "/EHsc",  # Disable exceptions.
+      "/GR-",  # Disable RTTI.
     ]
 
     ldflags = [

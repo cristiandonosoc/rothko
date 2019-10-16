@@ -75,6 +75,14 @@ void StageAttributes(Mesh* mesh) {
       glEnableVertexAttribArray(2);
       return;
     }
+    case VertexType::k3d: {
+      using VERT = Vertex3d;
+      static_assert(sizeof(VERT) == 12);
+      GLsizei stride = sizeof(VERT);
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VERT, pos));
+      glEnableVertexAttribArray(0);
+      return;
+    }
     case VertexType::k3dColor: {
       using VERT = Vertex3dColor;
       static_assert(sizeof(VERT) == 16);

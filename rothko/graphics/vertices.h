@@ -53,6 +53,8 @@ enum class VertexType : uint32_t {
                (uint32_t)VertComponent::kUV0_float |
                (uint32_t)VertComponent::kColorRGBA_byte,
 
+  k3d = (uint32_t)VertComponent::kPos3d,
+
   k3dColor = (uint32_t)VertComponent::kPos3d |
              (uint32_t)VertComponent::kColorRGBA_byte,
 
@@ -98,6 +100,13 @@ struct Vertex2dUVColor{
   uint32_t color;
 };
 static_assert(sizeof(Vertex2dUVColor) == 20);
+
+struct Vertex3d {
+  static constexpr VertexType kVertexType = VertexType::k3d;
+
+  Vec3 pos;
+};
+static_assert(sizeof(Vertex3d) == 12);
 
 struct Vertex3dNormalUV {
   static constexpr VertexType kVertexType = VertexType::k3dNormalUV;
@@ -145,8 +154,5 @@ static_assert(sizeof(Vertex3dNormalTangentUV) == 48);
 std::string ToString(const Vertex3dNormalTangentUV&);
 
 #pragma pack(pop)
-
-
-
 
 }  // namespace rothko

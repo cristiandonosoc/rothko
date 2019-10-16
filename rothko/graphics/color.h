@@ -32,6 +32,7 @@ struct Color {
   static Color Blue()         { return Color{0x00, 0x00, 0xff}; }
   static Color Green()        { return Color{0x00, 0xff, 0x00}; }
   static Color Red()          { return Color{0xff, 0x00, 0x00}; }
+  static Color Yellow()       { return Color{0xff, 0xff, 0x00}; }
   static Color White()        { return Color{0xff, 0xff, 0xff}; }
   static Color LightGray()    { return Color{0x66, 0x66, 0x66}; }
   static Color Gray33()       { return Color{0x33, 0x33, 0x33}; }
@@ -51,8 +52,17 @@ inline bool IsTransparent(const Color& c) { return c.a == 0; }
 // |level| = 0 -> black. |level| = 0xff -> white.
 inline Color CreateGray(uint8_t level) { return Color{level, level, level}; }
 
+inline Vec3 ToVec3(const Color& c) {
+  Vec3 res = {};
+  res.r = (float)c.r / 255.0f;
+  res.g = (float)c.g / 255.0f;
+  res.b = (float)c.b / 255.0f;
+
+  return res;
+}
+
 inline Vec4 ToVec4(const Color& c) {
-  Vec4 res;
+  Vec4 res = {};
   res.r = (float)c.r / 255.0f;
   res.g = (float)c.g / 255.0f;
   res.b = (float)c.b / 255.0f;

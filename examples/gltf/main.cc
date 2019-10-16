@@ -159,8 +159,4 @@ int main(int argc, const char* argv[]) {
 
     RendererEndFrame(game.renderer.get(), &game.window);
   }
-
-
-
-
 }

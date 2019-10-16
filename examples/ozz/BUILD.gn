@@ -12,8 +12,6 @@ executable("ozz") {
     "//rothko/ui:imgui",
     "//rothko/window:sdl_opengl",
     "//third_party:imgui_extras",
-
     "//third_party/ozz:animation",
   ]
 }
-

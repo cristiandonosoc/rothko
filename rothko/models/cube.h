@@ -8,6 +8,6 @@
 
 namespace rothko {
 
-Mesh CreateCubeMesh(const std::string& name, Vec3 extents = {1, 1, 1});
+Mesh CreateCubeMesh(VertexType, const std::string& name, Vec3 extents = {1, 1, 1});
 
 }  // namespace

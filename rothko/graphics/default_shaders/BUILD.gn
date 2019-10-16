@@ -11,4 +11,3 @@ source_set("default_shaders") {
     "//rothko/graphics",
   ]
 }
-

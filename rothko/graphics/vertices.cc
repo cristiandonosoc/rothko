@@ -72,6 +72,7 @@ uint32_t ToSize(VertComponent vert_component) {
 const char* ToString(VertexType type) {
   switch (type) {
     case VertexType::k2dUVColor: return "2d UV Color";
+    case VertexType::k3d: return "3d";
     case VertexType::k3dColor: return "3d Color";
     case VertexType::k3dNormalUV: return "3d Normal UV";
     case VertexType::k3dNormalTangentUV: return "3d Normal Tangent UV";
@@ -87,6 +88,7 @@ const char* ToString(VertexType type) {
 uint32_t ToSize(VertexType type) {
   switch (type) {
     case VertexType::k2dUVColor: return sizeof(Vertex2dUVColor);
+    case VertexType::k3d: return sizeof(Vertex3d);
     case VertexType::k3dColor: return sizeof(Vertex3dColor);
     case VertexType::k3dNormalUV: return sizeof(Vertex3dNormalUV);
     case VertexType::k3dNormalTangentUV: return sizeof(Vertex3dNormalTangentUV);
@@ -104,6 +106,7 @@ VertexType ToVertexType(uint32_t t) {
 
   switch (type) {
     case VertexType::k2dUVColor:
+    case VertexType::k3d:
     case VertexType::k3dColor:
     case VertexType::k3dNormalUV:
     case VertexType::k3dUV:
@@ -129,6 +132,5 @@ std::string ToString(const Vertex3dNormalTangentUV& vertex) {
 
   return ss.str();
 }
-
 
 }  // namespace rothko

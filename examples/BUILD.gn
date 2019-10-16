@@ -9,8 +9,9 @@ group("examples") {
       "cube",
       "emulator",
       "gltf",
-      "scene_graph",
       "ozz",
+      "scene_graph",
+      "simple_lighting",
     ]
   }
 }

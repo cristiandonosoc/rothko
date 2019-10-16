@@ -5,6 +5,8 @@ source_set("lib") {
   sources = [
     "audio.cc",
     "audio.h",
+    "catridge.cc",
+    "catridge.h",
     "cpu.cc",
     "cpu.h",
     "cpu_instructions.cc",
@@ -19,8 +21,6 @@ source_set("lib") {
     "gameboy.h",
     "memory.cc",
     "memory.h",
-    "catridge.cc",
-    "catridge.h",
     "quad.cc",
     "quad.h",
     "shader.cc",

@@ -99,11 +99,9 @@ uint32_t LinkProgram(uint32_t vert_handle, uint32_t frag_handle) {
 
 bool BindUBOs(const std::string& ubo_name, uint32_t ubo_size,
               uint32_t prog_handle,
-              ShaderHandles::UBO* binding) {
+              ShaderHandles::UBO* binding, int* current_binding) {
   if (ubo_size == 0)
     return true;
-
-  uint32_t current_binding = 0;
 
   // Obtain the block index.
   uint32_t index = glGetUniformBlockIndex(prog_handle, ubo_name.c_str());
@@ -112,7 +110,7 @@ bool BindUBOs(const std::string& ubo_name, uint32_t ubo_size,
     return false;
   }
 
-  glUniformBlockBinding(prog_handle, index, current_binding);
+  glUniformBlockBinding(prog_handle, index, *current_binding);
 
   // Generate the buffer that will hold the uniforms.
   uint32_t buffer_handle = 0;
@@ -123,8 +121,10 @@ bool BindUBOs(const std::string& ubo_name, uint32_t ubo_size,
   glBindBuffer(GL_UNIFORM_BUFFER, NULL);
 
   // Store the binding data.
-  binding->binding_index = current_binding;
+  binding->binding_index = *current_binding;
   binding->buffer_handle = buffer_handle;
+
+  *current_binding += 1;
 
   return true;
 }
@@ -171,8 +171,14 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
   // Camera pos is optional.
 
   // Get the uniform buffer object information.
-  if (!BindUBOs(shader->vert_ubo_name, shader->vert_ubo_size, prog_handle, &handles->vert_ubo) ||
-      !BindUBOs(shader->frag_ubo_name, shader->frag_ubo_size, prog_handle, &handles->frag_ubo)) {
+  int current_binding = 0;
+  if (!BindUBOs(shader->vert_ubo_name, shader->vert_ubo_size, prog_handle, &handles->vert_ubo,
+                &current_binding)) {
+    return false;
+  }
+
+  if (!BindUBOs(shader->frag_ubo_name, shader->frag_ubo_size, prog_handle, &handles->frag_ubo,
+                &current_binding)) {
     return false;
   }
 

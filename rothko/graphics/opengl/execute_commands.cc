@@ -146,7 +146,7 @@ void SetUniforms(const OpenGLRendererBackend& opengl, const RenderMesh& render_m
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
     glBufferData(GL_UNIFORM_BUFFER, shader->frag_ubo_size, render_mesh.frag_ubo_data,
                  GL_STREAM_DRAW);
-    //glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
+    glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
     glBindBuffer(GL_UNIFORM_BUFFER, NULL);
   }
 }
