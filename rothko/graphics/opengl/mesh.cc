@@ -93,6 +93,17 @@ void StageAttributes(Mesh* mesh) {
       glEnableVertexAttribArray(1);
       return;
     }
+    case VertexType::k3dNormal: {
+      using VERT = Vertex3dNormal;
+      static_assert(sizeof(VERT) == 24);
+      GLsizei stride = sizeof(VERT);
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VERT, pos));
+      glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(VERT, normal));
+      glEnableVertexAttribArray(1);
+      glEnableVertexAttribArray(2);
+      return;
+    }
     case VertexType::k3dUV: {
       using VERT = Vertex3dUV;
       static_assert(sizeof(VERT) == 20);

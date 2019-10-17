@@ -111,6 +111,14 @@ struct Vertex3d {
 };
 static_assert(sizeof(Vertex3d) == 12);
 
+struct Vertex3dNormal {
+  static constexpr VertexType kVertexType = VertexType::k3dNormal;
+
+  Vec3 pos;
+  Vec3 normal;
+};
+static_assert(sizeof(Vertex3dNormal) == 24);
+
 struct Vertex3dNormalUV {
   static constexpr VertexType kVertexType = VertexType::k3dNormalUV;
 

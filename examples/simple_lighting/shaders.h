@@ -15,12 +15,14 @@ struct ObjectShaderUBO {
     Mat4 model = Mat4::Identity();
   } vert;
 
+  // Due to std140 alignment, Vec3 are aligned to 4 floats, thus we need a padding.
+  // clang-format off
   struct Frag {
-    Vec3 object_color;
-    float _pad1;
-    Vec3 light_color;
-    float _pad2;
+    Vec3 object_color;  float _pad1;
+    Vec3 light_color;   float _pad2;
+    Vec3 light_pos;     float _pad3;
   } frag;
+  // clang format on
 };
 
 Shader CreateObjectShader(Renderer*);

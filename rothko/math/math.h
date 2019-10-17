@@ -302,6 +302,8 @@ float Length(const _v4<T>& v) { return SquareRoot(LengthSq(v)); }
 
 Vec4 Normalize(const Vec4& v);
 
+inline Vec3 ToVec3(const Vec4& v) { return Vec3{v.x, v.y, v.z}; }
+
 template <typename T>
 inline float Sum(const _v4<T>& v) { return v.x + v.y + v.z + v.w; }
 

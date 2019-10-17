@@ -57,16 +57,20 @@ int main() {
   if (!Init(game.renderer.get(), &grid, "main-grid"))
     return 1;
 
-  Mesh cube_mesh = CreateCubeMesh(VertexType::k3d, "cube");
+  Mesh cube_mesh = CreateCubeMesh(VertexType::k3dNormal, "cube");
   if (!RendererStageMesh(game.renderer.get(), &cube_mesh))
+    return 1;
+
+  Mesh light_cube_mesh = CreateCubeMesh(VertexType::k3d, "light-cube");
+  if (!RendererStageMesh(game.renderer.get(), &light_cube_mesh))
     return 1;
 
   auto scene_graph = std::make_unique<SceneGraph>();
 
   SceneNode* base_light = AddNode(scene_graph.get());
   SceneNode* light_node = AddNode(scene_graph.get(), base_light);
-  light_node->transform.position.x = 3;
-  light_node->transform.scale *= 0.3;
+  light_node->transform.position = {3, 2, 0};
+  light_node->transform.scale *= 0.2f;
 
   simple_lighting::ObjectShaderUBO object_ubo = {};
   object_ubo.frag.object_color = ToVec3(Color::Yellow());
@@ -96,14 +100,20 @@ int main() {
     base_light->transform.rotation.y = angle;
     Update(scene_graph.get());
 
+    // Update the UBOs.
+
+    /* Vec4 new_pos = light_node->transform.world_matrix * light_node->transform.position; */
+    Vec4 new_pos = light_node->transform.world_matrix * Vec3{};
+    object_ubo.frag.light_pos = ToVec3(new_pos);
     light_ubo.vert.model = light_node->transform.world_matrix;
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Gray66()));
     commands.push_back(GetCommand(camera));
 
+    // Draw the cubes.
     commands.push_back(CreateRenderCommand(&cube_mesh, &object_shader, object_ubo));
-    commands.push_back(CreateRenderCommand(&cube_mesh, &light_shader, light_ubo));
+    commands.push_back(CreateRenderCommand(&light_cube_mesh, &light_shader, light_ubo));
 
     commands.push_back(grid.render_command);
 
