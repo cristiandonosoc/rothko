@@ -58,6 +58,9 @@ enum class VertexType : uint32_t {
   k3dColor = (uint32_t)VertComponent::kPos3d |
              (uint32_t)VertComponent::kColorRGBA_byte,
 
+  k3dNormal = (uint32_t)VertComponent::kPos3d |
+              (uint32_t)VertComponent::kNormal,
+
   k3dNormalUV = (uint32_t)VertComponent::kPos3d |
                 (uint32_t)VertComponent::kNormal |
                 (uint32_t)VertComponent::kUV0_float,

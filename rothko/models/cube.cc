@@ -98,7 +98,17 @@ Mesh CreateCubeMesh_3d(const std::string& name, Vec3 extents) {
   return mesh;
 }
 
+}  // namespace
 
+// 3dNormal ----------------------------------------------------------------------------------------
+
+namespace {
+
+Vertex3dNormal CreateVertex_3dColor(Vec3 pos, Vec3 normal) {
+  Vertex3dNormal vertex = {};
+
+
+}
 
 }  // namespace
 
@@ -161,14 +171,9 @@ Mesh CreateCubeMesh_3dUVColor(const std::string& name, Vec3 extents) {
   }
 
   PushVertices(&mesh, vertices, ARRAY_SIZE(vertices));
-  /* PushIndices(&mesh, indices, ARRAY_SIZE(indices)); */
   mesh.indices = GetIndices();
 
   ASSERT_MSG(mesh.vertex_count == ARRAY_SIZE(vertices), "Count: %u", mesh.vertex_count);
-  /* ASSERT(mesh.vertices.size() == sizeof(vertices)); */
-
-  /* ASSERT_MSG(mesh.indices.size() == ARRAY_SIZE(indices), "Count: %lu", mesh.indices.size()); */
-  /* ASSERT(mesh.indices.size() == sizeof(indices)); */
 
   return mesh;
 }

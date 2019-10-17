@@ -33,7 +33,11 @@ layout (std140) uniform FragUniforms {
 };
 
 void main() {
-  out_color = vec4(object_color * light_color, 1);
+  float ambient_strength = 0.2f;
+  vec3 ambient_light = ambient_strength * light_color;
+
+  vec3 color = ambient_light * object_color;
+  out_color = vec4(color, 1);
 }
 
 )";

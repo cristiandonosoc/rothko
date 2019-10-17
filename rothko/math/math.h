@@ -118,7 +118,7 @@ union _v2 {
   void operator*=(const _v2& o) { x *= o.x; y *= o.y; }
 
   _v2 operator*(const T& t) const { return {x * t, y * t}; }
-  void operator*=(const T& t) const { x *= t; y *= t; }
+  void operator*=(const T& t) { x *= t; y *= t; }
 
   _v2 operator/(const _v2& o) const { return {x / o.x, y / o.y}; }
   void operator/=(const _v2& o) { x /= o.x; y /= o.y; }
@@ -191,7 +191,7 @@ union _v3 {
   void operator*=(const _v3& o) { x *= o.x; y *= o.y; z *= o.z; }
 
   _v3 operator*(const T& t) const { return {x * t, y * t, z * t}; }
-  void operator*=(const T& t) const { x *= t; y *= t; z *= t; }
+  void operator*=(const T& t) { x *= t; y *= t; z *= t; }
 
   _v3 operator/(const _v3& o) const { return {x / o.x, y / o.y, z / o.z}; }
   void operator/=(const _v3& o) { x /= o.x; y /= o.y; z /= o.z; }
@@ -273,7 +273,7 @@ union _v4 {
   void operator*=(const _v4& o) { x *= o.x; y *= o.y; z *= o.z; w *= o.w; }
 
   _v4 operator*(const T& t) const { return {x * t, y * t, z * t, w * t}; }
-  void operator*=(const T& t) const { x *= t; y *= t; z *= t; w *= t; }
+  void operator*=(const T& t) { x *= t; y *= t; z *= t; w *= t; }
 
   _v4 operator/(const _v4 &o) const { return {x / o.x, y / o.y, z / o.z, w / o.w}; }
   void operator/=(const _v4& o) { x /= o.x; y /= o.y; z /= o.z; w /= o.w; }

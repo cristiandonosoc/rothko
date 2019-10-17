@@ -59,15 +59,14 @@ int main() {
   auto scene_graph = std::make_unique<SceneGraph>();
   SceneNode* root = AddNode(scene_graph.get());
 
-  SceneNode* child = AddTransform(scene_graph.get(), root);
+  SceneNode* child = AddNode(scene_graph.get(), root);
   child->transform.scale = {0.3f, 0.3f, 0.3f};
 
-  SceneNode* child2 = AddTransform(scene_graph.get(), root);
+  SceneNode* child2 = AddNode(scene_graph.get(), root);
   child2->transform.scale = {0.1f, 0.1f, 0.1f};
 
-  SceneNode* grand_child = AddTransform(scene_graph.get(), child);
+  SceneNode* grand_child = AddNode(scene_graph.get(), child);
   grand_child->transform.scale = {0.7f, 0.3f, 1.3f};
-
 
   ImguiContext imgui;
   if (!InitImgui(game.renderer.get(), &imgui))
