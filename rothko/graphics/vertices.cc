@@ -74,6 +74,7 @@ const char* ToString(VertexType type) {
     case VertexType::k2dUVColor: return "2d UV Color";
     case VertexType::k3d: return "3d";
     case VertexType::k3dColor: return "3d Color";
+    case VertexType::k3dNormal: return "3d Normal";
     case VertexType::k3dNormalUV: return "3d Normal UV";
     case VertexType::k3dNormalTangentUV: return "3d Normal Tangent UV";
     case VertexType::k3dUV: return "3d UV";
@@ -90,6 +91,7 @@ uint32_t ToSize(VertexType type) {
     case VertexType::k2dUVColor: return sizeof(Vertex2dUVColor);
     case VertexType::k3d: return sizeof(Vertex3d);
     case VertexType::k3dColor: return sizeof(Vertex3dColor);
+    case VertexType::k3dNormal: return sizeof(Vertex3dNormal);
     case VertexType::k3dNormalUV: return sizeof(Vertex3dNormalUV);
     case VertexType::k3dNormalTangentUV: return sizeof(Vertex3dNormalTangentUV);
     case VertexType::k3dUV: return sizeof(Vertex3dUV);
@@ -108,6 +110,7 @@ VertexType ToVertexType(uint32_t t) {
     case VertexType::k2dUVColor:
     case VertexType::k3d:
     case VertexType::k3dColor:
+    case VertexType::k3dNormal:
     case VertexType::k3dNormalUV:
     case VertexType::k3dUV:
     case VertexType::k3dUVColor:

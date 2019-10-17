@@ -124,6 +124,7 @@ Shader CreateDefaultShader(VertexType vertex_type) {
     case VertexType::k2dUVColor: return {};
     case VertexType::k3d: return {};
     case VertexType::k3dColor: return {};
+    case VertexType::k3dNormal: return {};
     case VertexType::k3dNormalUV: return {};
     case VertexType::k3dUV: return {};
     case VertexType::k3dUVColor: return Vertex3dUVColorShader();

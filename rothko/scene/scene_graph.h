@@ -47,7 +47,7 @@ struct SceneGraph {
 // Gives a cleared transform. Comes with the correct |index| set.
 SceneNode* AddNode(SceneGraph*, uint32_t parent_index = SceneNode::kInvalidIndex);
 
-inline SceneNode* AddTransform(SceneGraph* scene_graph, SceneNode* parent) {
+inline SceneNode* AddNode(SceneGraph* scene_graph, SceneNode* parent) {
   return AddNode(scene_graph, parent->index);
 }
 

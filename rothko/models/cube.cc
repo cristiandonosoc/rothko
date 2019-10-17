@@ -50,6 +50,8 @@ Mesh CreateCubeMesh_3d(const std::string& name, Vec3 extents) {
   mesh.name = name;
 
   mesh.vertex_type = VertexType::k3d;
+
+  // clang-format off
   Vertex3d vertices[] = {
       // X
       CreateVertex_3d({-0.5f, -0.5f, -0.5f}),
@@ -84,6 +86,7 @@ Mesh CreateCubeMesh_3d(const std::string& name, Vec3 extents) {
       CreateVertex_3d({ 0.5f,  0.5f,  0.5f}),
       CreateVertex_3d({-0.5f,  0.5f,  0.5f}),
   };
+  // clang-format on
 
   // Apply the extents.
   for (Vertex3d& vertex : vertices) {
@@ -98,7 +101,75 @@ Mesh CreateCubeMesh_3d(const std::string& name, Vec3 extents) {
   return mesh;
 }
 
+}  // namespace
 
+// 3dNormal ----------------------------------------------------------------------------------------
+
+namespace {
+
+Vertex3dNormal CreateVertex_3dNormal(Vec3 pos, Vec3 normal) {
+  Vertex3dNormal vertex = {};
+
+  vertex.pos = pos;
+  vertex.normal = normal;
+
+  return vertex;
+}
+
+Mesh CreateCubeMesh_3dNormal(const std::string& name, Vec3 extents) {
+  Mesh mesh = {};
+  mesh.name = name;
+
+  mesh.vertex_type = VertexType::k3dNormal;
+  // clang-format off
+  Vertex3dNormal vertices[] = {
+      // X
+      CreateVertex_3dNormal({-0.5f, -0.5f, -0.5f}, {-1,  0,  0}),
+      CreateVertex_3dNormal({-0.5f, -0.5f,  0.5f}, {-1,  0,  0}),
+      CreateVertex_3dNormal({-0.5f,  0.5f,  0.5f}, {-1,  0,  0}),
+      CreateVertex_3dNormal({-0.5f,  0.5f, -0.5f}, {-1,  0,  0}),
+
+      CreateVertex_3dNormal({ 0.5f, -0.5f, -0.5f}, { 1,  0,  0}),
+      CreateVertex_3dNormal({ 0.5f, -0.5f,  0.5f}, { 1,  0,  0}),
+      CreateVertex_3dNormal({ 0.5f,  0.5f,  0.5f}, { 1,  0,  0}),
+      CreateVertex_3dNormal({ 0.5f,  0.5f, -0.5f}, { 1,  0,  0}),
+
+      // Y
+      CreateVertex_3dNormal({-0.5f, -0.5f, -0.5f}, { 0, -1,  0}),
+      CreateVertex_3dNormal({ 0.5f, -0.5f, -0.5f}, { 0, -1,  0}),
+      CreateVertex_3dNormal({ 0.5f, -0.5f,  0.5f}, { 0, -1,  0}),
+      CreateVertex_3dNormal({-0.5f, -0.5f,  0.5f}, { 0, -1,  0}),
+
+      CreateVertex_3dNormal({-0.5f,  0.5f, -0.5f}, { 0,  1,  0}),
+      CreateVertex_3dNormal({ 0.5f,  0.5f, -0.5f}, { 0,  1,  0}),
+      CreateVertex_3dNormal({ 0.5f,  0.5f,  0.5f}, { 0,  1,  0}),
+      CreateVertex_3dNormal({-0.5f,  0.5f,  0.5f}, { 0,  1,  0}),
+
+      // Z
+      CreateVertex_3dNormal({-0.5f, -0.5f, -0.5f}, { 0,  0, -1}),
+      CreateVertex_3dNormal({ 0.5f, -0.5f, -0.5f}, { 0,  0, -1}),
+      CreateVertex_3dNormal({ 0.5f,  0.5f, -0.5f}, { 0,  0, -1}),
+      CreateVertex_3dNormal({-0.5f,  0.5f, -0.5f}, { 0,  0, -1}),
+
+      CreateVertex_3dNormal({-0.5f, -0.5f,  0.5f}, { 0,  0,  1}),
+      CreateVertex_3dNormal({ 0.5f, -0.5f,  0.5f}, { 0,  0,  1}),
+      CreateVertex_3dNormal({ 0.5f,  0.5f,  0.5f}, { 0,  0,  1}),
+      CreateVertex_3dNormal({-0.5f,  0.5f,  0.5f}, { 0,  0,  1}),
+  };
+  // clang-format on
+
+  // Apply the extents.
+  for (Vertex3dNormal& vertex : vertices) {
+    vertex.pos *= extents;
+  }
+
+  PushVertices(&mesh, vertices, ARRAY_SIZE(vertices));
+  mesh.indices = GetIndices();
+
+  ASSERT_MSG(mesh.vertex_count == ARRAY_SIZE(vertices), "Count: %u", mesh.vertex_count);
+
+  return mesh;
+}
 
 }  // namespace
 
@@ -120,40 +191,43 @@ Mesh CreateCubeMesh_3dUVColor(const std::string& name, Vec3 extents) {
   mesh.name = name;
 
   mesh.vertex_type = VertexType::k3dUVColor;
+
+  // clang-format off
   Vertex3dUVColor vertices[] = {
       // X
       CreateVertex_3dUVColor({-0.5f, -0.5f, -0.5f}, {0, 0}, ToUint32(Color::Blue())),
-      CreateVertex_3dUVColor({-0.5f, -0.5f, 0.5f}, {0, 1}, ToUint32(Color::Green())),
-      CreateVertex_3dUVColor({-0.5f, 0.5f, 0.5f}, {1, 1}, ToUint32(Color::White())),
-      CreateVertex_3dUVColor({-0.5f, 0.5f, -0.5f}, {1, 0}, ToUint32(Color::Red())),
+      CreateVertex_3dUVColor({-0.5f, -0.5f,  0.5f}, {0, 1}, ToUint32(Color::Green())),
+      CreateVertex_3dUVColor({-0.5f,  0.5f,  0.5f}, {1, 1}, ToUint32(Color::White())),
+      CreateVertex_3dUVColor({-0.5f,  0.5f, -0.5f}, {1, 0}, ToUint32(Color::Red())),
 
-      CreateVertex_3dUVColor({0.5f, -0.5f, -0.5f}, {0, 0}, ToUint32(Color::Blue())),
-      CreateVertex_3dUVColor({0.5f, -0.5f, 0.5f}, {0, 1}, ToUint32(Color::Green())),
-      CreateVertex_3dUVColor({0.5f, 0.5f, 0.5f}, {1, 1}, ToUint32(Color::White())),
-      CreateVertex_3dUVColor({0.5f, 0.5f, -0.5f}, {1, 0}, ToUint32(Color::Red())),
+      CreateVertex_3dUVColor({ 0.5f, -0.5f, -0.5f}, {0, 0}, ToUint32(Color::Blue())),
+      CreateVertex_3dUVColor({ 0.5f, -0.5f,  0.5f}, {0, 1}, ToUint32(Color::Green())),
+      CreateVertex_3dUVColor({ 0.5f,  0.5f,  0.5f}, {1, 1}, ToUint32(Color::White())),
+      CreateVertex_3dUVColor({ 0.5f,  0.5f, -0.5f}, {1, 0}, ToUint32(Color::Red())),
 
       // Y
       CreateVertex_3dUVColor({-0.5f, -0.5f, -0.5f}, {0, 0}, ToUint32(Color::Blue())),
-      CreateVertex_3dUVColor({0.5f, -0.5f, -0.5f}, {0, 1}, ToUint32(Color::Green())),
-      CreateVertex_3dUVColor({0.5f, -0.5f, 0.5f}, {1, 1}, ToUint32(Color::White())),
-      CreateVertex_3dUVColor({-0.5f, -0.5f, 0.5f}, {1, 0}, ToUint32(Color::Red())),
+      CreateVertex_3dUVColor({ 0.5f, -0.5f, -0.5f}, {0, 1}, ToUint32(Color::Green())),
+      CreateVertex_3dUVColor({ 0.5f, -0.5f,  0.5f}, {1, 1}, ToUint32(Color::White())),
+      CreateVertex_3dUVColor({-0.5f, -0.5f,  0.5f}, {1, 0}, ToUint32(Color::Red())),
 
-      CreateVertex_3dUVColor({-0.5f, 0.5f, -0.5f}, {0, 0}, ToUint32(Color::Blue())),
-      CreateVertex_3dUVColor({0.5f, 0.5f, -0.5f}, {0, 1}, ToUint32(Color::Green())),
-      CreateVertex_3dUVColor({0.5f, 0.5f, 0.5f}, {1, 1}, ToUint32(Color::White())),
-      CreateVertex_3dUVColor({-0.5f, 0.5f, 0.5f}, {1, 0}, ToUint32(Color::Red())),
+      CreateVertex_3dUVColor({-0.5f,  0.5f, -0.5f}, {0, 0}, ToUint32(Color::Blue())),
+      CreateVertex_3dUVColor({ 0.5f,  0.5f, -0.5f}, {0, 1}, ToUint32(Color::Green())),
+      CreateVertex_3dUVColor({ 0.5f,  0.5f,  0.5f}, {1, 1}, ToUint32(Color::White())),
+      CreateVertex_3dUVColor({-0.5f,  0.5f,  0.5f}, {1, 0}, ToUint32(Color::Red())),
 
       // Z
       CreateVertex_3dUVColor({-0.5f, -0.5f, -0.5f}, {0, 0}, ToUint32(Color::Blue())),
-      CreateVertex_3dUVColor({0.5f, -0.5f, -0.5f}, {0, 1}, ToUint32(Color::Green())),
-      CreateVertex_3dUVColor({0.5f, 0.5f, -0.5f}, {1, 1}, ToUint32(Color::White())),
-      CreateVertex_3dUVColor({-0.5f, 0.5f, -0.5f}, {1, 0}, ToUint32(Color::Red())),
+      CreateVertex_3dUVColor({ 0.5f, -0.5f, -0.5f}, {0, 1}, ToUint32(Color::Green())),
+      CreateVertex_3dUVColor({ 0.5f,  0.5f, -0.5f}, {1, 1}, ToUint32(Color::White())),
+      CreateVertex_3dUVColor({-0.5f,  0.5f, -0.5f}, {1, 0}, ToUint32(Color::Red())),
 
-      CreateVertex_3dUVColor({-0.5f, -0.5f, 0.5f}, {0, 0}, ToUint32(Color::Blue())),
-      CreateVertex_3dUVColor({0.5f, -0.5f, 0.5f}, {0, 1}, ToUint32(Color::Green())),
-      CreateVertex_3dUVColor({0.5f, 0.5f, 0.5f}, {1, 1}, ToUint32(Color::White())),
-      CreateVertex_3dUVColor({-0.5f, 0.5f, 0.5f}, {1, 0}, ToUint32(Color::Red())),
+      CreateVertex_3dUVColor({-0.5f, -0.5f,  0.5f}, {0, 0}, ToUint32(Color::Blue())),
+      CreateVertex_3dUVColor({ 0.5f, -0.5f,  0.5f}, {0, 1}, ToUint32(Color::Green())),
+      CreateVertex_3dUVColor({ 0.5f,  0.5f,  0.5f}, {1, 1}, ToUint32(Color::White())),
+      CreateVertex_3dUVColor({-0.5f,  0.5f,  0.5f}, {1, 0}, ToUint32(Color::Red())),
   };
+  // clang-format on
 
   // Apply the extents.
   for (Vertex3dUVColor& vertex : vertices) {
@@ -161,14 +235,9 @@ Mesh CreateCubeMesh_3dUVColor(const std::string& name, Vec3 extents) {
   }
 
   PushVertices(&mesh, vertices, ARRAY_SIZE(vertices));
-  /* PushIndices(&mesh, indices, ARRAY_SIZE(indices)); */
   mesh.indices = GetIndices();
 
   ASSERT_MSG(mesh.vertex_count == ARRAY_SIZE(vertices), "Count: %u", mesh.vertex_count);
-  /* ASSERT(mesh.vertices.size() == sizeof(vertices)); */
-
-  /* ASSERT_MSG(mesh.indices.size() == ARRAY_SIZE(indices), "Count: %lu", mesh.indices.size()); */
-  /* ASSERT(mesh.indices.size() == sizeof(indices)); */
 
   return mesh;
 }
@@ -182,6 +251,7 @@ Mesh CreateCubeMesh(VertexType vertex_type, const std::string& name, Vec3 extent
     case VertexType::k2dUVColor: return {};
     case VertexType::k3d: return CreateCubeMesh_3d(name, extents);
     case VertexType::k3dColor: return {};
+    case VertexType::k3dNormal: return CreateCubeMesh_3dNormal(name, extents);
     case VertexType::k3dNormalUV: return {};
     case VertexType::k3dUV: return {};
     case VertexType::k3dUVColor: return CreateCubeMesh_3dUVColor(name, extents);

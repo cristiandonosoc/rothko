@@ -58,6 +58,9 @@ enum class VertexType : uint32_t {
   k3dColor = (uint32_t)VertComponent::kPos3d |
              (uint32_t)VertComponent::kColorRGBA_byte,
 
+  k3dNormal = (uint32_t)VertComponent::kPos3d |
+              (uint32_t)VertComponent::kNormal,
+
   k3dNormalUV = (uint32_t)VertComponent::kPos3d |
                 (uint32_t)VertComponent::kNormal |
                 (uint32_t)VertComponent::kUV0_float,
@@ -107,6 +110,14 @@ struct Vertex3d {
   Vec3 pos;
 };
 static_assert(sizeof(Vertex3d) == 12);
+
+struct Vertex3dNormal {
+  static constexpr VertexType kVertexType = VertexType::k3dNormal;
+
+  Vec3 pos;
+  Vec3 normal;
+};
+static_assert(sizeof(Vertex3dNormal) == 24);
 
 struct Vertex3dNormalUV {
   static constexpr VertexType kVertexType = VertexType::k3dNormalUV;
