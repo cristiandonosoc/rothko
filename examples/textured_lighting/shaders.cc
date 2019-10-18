@@ -14,6 +14,7 @@ constexpr char kObjectVertShader[] = R"(
 
 layout (location = 0) in vec3 in_pos;
 layout (location = 1) in vec3 in_normal;
+layout (location = 2) in vec2 in_uv;
 
 layout (std140) uniform VertUniforms {
   mat4 model;
@@ -21,6 +22,7 @@ layout (std140) uniform VertUniforms {
 
 out vec3 pos;
 out vec3 normal;
+out vec2 uv;
 
 void main() {
   gl_Position = camera_proj * camera_view * model * vec4(in_pos, 1.0);
@@ -28,6 +30,7 @@ void main() {
   // We want the frag position in world space, not view space. Only multiply by the model matrix.
   pos = vec3(model * vec4(in_pos, 1));
   normal = in_normal;
+  uv = in_uv;
 }
 )";
 
@@ -42,9 +45,11 @@ struct Light {
   vec3 specular;
 };
 
+
+uniform sampler2D tex0;           // diffuse map.
+uniform sampler2D tex1;
+
 struct Material {
-  vec3 ambient;
-  vec3 diffuse;
   vec3 specular;
   float shininess;
 };
@@ -56,25 +61,28 @@ layout (std140) uniform FragUniforms {
 
 in vec3 pos;
 in vec3 normal;
+in vec2 uv;
 
 void main() {
   vec3 unit_normal = normalize(normal);
 
   // Ambient light.
-  vec3 ambient_light = light.ambient * material.ambient;
+  /* vec3 ambient_light = light.ambient * material.ambient; */
+  vec3 ambient_light = light.ambient * vec3(texture(tex0, uv));
 
   // Diffuse light.
   vec3 light_dir = normalize(light.pos - pos);
   float diffuse = max(dot(unit_normal, light_dir), 0);
-  vec3 diffuse_light = light.diffuse * diffuse * material.diffuse;
+  /* vec3 diffuse_light = light.diffuse * diffuse * diffuse; */
+  vec3 diffuse_light = light.diffuse * diffuse * vec3(texture(tex0, uv));
 
   // Specular light.
   float specular_strength = 0.5f;
   vec3 view_dir = normalize(camera_pos - pos);
   vec3 reflect_dir = reflect(-light_dir, unit_normal);
   float specular = pow(max(dot(view_dir, reflect_dir), 0), material.shininess);
-  /* vec3 specular_light = specular * specular_strength * light_color; */
-  vec3 specular_light = light.specular * specular * material.specular;
+  /* vec3 specular_light = light.specular * specular * material.specular; */
+  vec3 specular_light = light.specular * specular * vec3(texture(tex1, uv));
 
   // Final lighting output.
   vec3 color = ambient_light + diffuse_light + specular_light;
@@ -89,12 +97,14 @@ Shader CreateObjectShader(Renderer* renderer) {
   Shader shader;
 
   shader.name = "lighting";
-  shader.vertex_type = VertexType::k3dNormal;
+  shader.vertex_type = VertexType::k3dNormalUV;
   shader.vert_ubo_name = "VertUniforms";
   shader.vert_ubo_size = sizeof(ObjectShaderUBO::Vert);
 
   shader.frag_ubo_name = "FragUniforms";
   shader.frag_ubo_size = sizeof(ObjectShaderUBO::Frag);
+
+  shader.texture_count = 2;
 
   shader.vert_src = CreateVertexSource(kObjectVertShader);
   shader.frag_src = CreateFragmentSource(kObjectFragShader);

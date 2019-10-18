@@ -232,6 +232,9 @@ T LengthSq(const _v3<T>& v) { return Dot(v, v); }
 template <typename T>
 float Length(const _v3<T>& v) { return SquareRoot(LengthSq(v)); }
 
+template <typename T, typename Func>
+_v3<T> Map(const _v3<T>& v, Func f) { return _v3<T>(f(v.x), f(v.y), f(v.z)); }
+
 Vec3 Normalize(const Vec3& v);
 
 template <typename T>

@@ -1,0 +1,17 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+executable("textured_lighting") {
+  sources = [
+    "main.cc",
+    "shaders.cc",
+    "shaders.h",
+  ]
+
+  deps = [
+    "//rothko:game",
+    "//rothko/graphics/default_shaders",
+    "//rothko/ui:imgui",
+    "//rothko/window:sdl_opengl",
+  ]
+}

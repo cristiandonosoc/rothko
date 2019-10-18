@@ -173,6 +173,77 @@ Mesh CreateCubeMesh_3dNormal(const std::string& name, Vec3 extents) {
 
 }  // namespace
 
+// 3dNormalUV --------------------------------------------------------------------------------------
+
+namespace {
+
+Vertex3dNormalUV CreateVertex_3dNormalUV(Vec3 pos, Vec3 normal, Vec2 uv) {
+  Vertex3dNormalUV vertex = {};
+
+  vertex.pos = pos;
+  vertex.normal = normal;
+  vertex.uv = uv;
+
+  return vertex;
+}
+
+Mesh CreateCubeMesh_3dNormalUV(const std::string& name, Vec3 extents) {
+  Mesh mesh = {};
+  mesh.name = name;
+
+  mesh.vertex_type = VertexType::k3dNormalUV;
+  // clang-format off
+  Vertex3dNormalUV vertices[] = {
+      // X
+      CreateVertex_3dNormalUV({-0.5f, -0.5f, -0.5f}, {-1,  0,  0}, {0, 0}),
+      CreateVertex_3dNormalUV({-0.5f, -0.5f,  0.5f}, {-1,  0,  0}, {0, 1}),
+      CreateVertex_3dNormalUV({-0.5f,  0.5f,  0.5f}, {-1,  0,  0}, {1, 1}),
+      CreateVertex_3dNormalUV({-0.5f,  0.5f, -0.5f}, {-1,  0,  0}, {1, 0}),
+
+      CreateVertex_3dNormalUV({ 0.5f, -0.5f, -0.5f}, { 1,  0,  0}, {0, 0}),
+      CreateVertex_3dNormalUV({ 0.5f, -0.5f,  0.5f}, { 1,  0,  0}, {0, 1}),
+      CreateVertex_3dNormalUV({ 0.5f,  0.5f,  0.5f}, { 1,  0,  0}, {1, 1}),
+      CreateVertex_3dNormalUV({ 0.5f,  0.5f, -0.5f}, { 1,  0,  0}, {1, 0}),
+
+      // Y
+      CreateVertex_3dNormalUV({-0.5f, -0.5f, -0.5f}, { 0, -1,  0}, {0, 0}),
+      CreateVertex_3dNormalUV({ 0.5f, -0.5f, -0.5f}, { 0, -1,  0}, {0, 1}),
+      CreateVertex_3dNormalUV({ 0.5f, -0.5f,  0.5f}, { 0, -1,  0}, {1, 1}),
+      CreateVertex_3dNormalUV({-0.5f, -0.5f,  0.5f}, { 0, -1,  0}, {1, 0}),
+
+      CreateVertex_3dNormalUV({-0.5f,  0.5f, -0.5f}, { 0,  1,  0}, {0, 0}),
+      CreateVertex_3dNormalUV({ 0.5f,  0.5f, -0.5f}, { 0,  1,  0}, {0, 1}),
+      CreateVertex_3dNormalUV({ 0.5f,  0.5f,  0.5f}, { 0,  1,  0}, {1, 1}),
+      CreateVertex_3dNormalUV({-0.5f,  0.5f,  0.5f}, { 0,  1,  0}, {1, 0}),
+
+      // Z
+      CreateVertex_3dNormalUV({-0.5f, -0.5f, -0.5f}, { 0,  0, -1}, {0, 0}),
+      CreateVertex_3dNormalUV({ 0.5f, -0.5f, -0.5f}, { 0,  0, -1}, {0, 1}),
+      CreateVertex_3dNormalUV({ 0.5f,  0.5f, -0.5f}, { 0,  0, -1}, {1, 1}),
+      CreateVertex_3dNormalUV({-0.5f,  0.5f, -0.5f}, { 0,  0, -1}, {1, 0}),
+
+      CreateVertex_3dNormalUV({-0.5f, -0.5f,  0.5f}, { 0,  0,  1}, {0, 0}),
+      CreateVertex_3dNormalUV({ 0.5f, -0.5f,  0.5f}, { 0,  0,  1}, {0, 1}),
+      CreateVertex_3dNormalUV({ 0.5f,  0.5f,  0.5f}, { 0,  0,  1}, {1, 1}),
+      CreateVertex_3dNormalUV({-0.5f,  0.5f,  0.5f}, { 0,  0,  1}, {1, 0}),
+  };
+  // clang-format on
+
+  // Apply the extents.
+  for (Vertex3dNormalUV& vertex : vertices) {
+    vertex.pos *= extents;
+  }
+
+  PushVertices(&mesh, vertices, ARRAY_SIZE(vertices));
+  mesh.indices = GetIndices();
+
+  ASSERT_MSG(mesh.vertex_count == ARRAY_SIZE(vertices), "Count: %u", mesh.vertex_count);
+
+  return mesh;
+}
+
+}  // namespace
+
 // 3dUVColor ---------------------------------------------------------------------------------------
 
 namespace {
@@ -252,7 +323,7 @@ Mesh CreateCubeMesh(VertexType vertex_type, const std::string& name, Vec3 extent
     case VertexType::k3d: return CreateCubeMesh_3d(name, extents);
     case VertexType::k3dColor: return {};
     case VertexType::k3dNormal: return CreateCubeMesh_3dNormal(name, extents);
-    case VertexType::k3dNormalUV: return {};
+    case VertexType::k3dNormalUV: return CreateCubeMesh_3dNormalUV(name, extents);
     case VertexType::k3dUV: return {};
     case VertexType::k3dUVColor: return CreateCubeMesh_3dUVColor(name, extents);
     case VertexType::k3dNormalTangentUV: return {};

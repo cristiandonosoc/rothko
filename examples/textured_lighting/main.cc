@@ -16,6 +16,8 @@ namespace {
 template <typename UBO>
 RenderMesh CreateRenderCommand(Mesh* mesh,
                                Shader* shader,
+                               Texture* diffuse_map,
+                               Texture* specular_map,
                                const UBO& ubo) {
   RenderMesh render_mesh = {};
   render_mesh.mesh = mesh;
@@ -27,65 +29,14 @@ RenderMesh CreateRenderCommand(Mesh* mesh,
   render_mesh.vert_ubo_data = (uint8_t*)&ubo.vert;
   render_mesh.frag_ubo_data = (uint8_t*)&ubo.frag;
 
+  if (diffuse_map)
+    render_mesh.textures.push_back(diffuse_map);
+
+  if (specular_map)
+    render_mesh.textures.push_back(specular_map);
+
   return render_mesh;
 }
-
-// Material table.
-
-std::pair<std::string, simple_lighting::ObjectShaderUBO::Frag::Material> CreateMaterial(
-    const std::string& name, Vec3 ambient, Vec3 diffuse, Vec3 specular, float shininess) {
-  simple_lighting::ObjectShaderUBO::Frag::Material material = {};
-  material.ambient = ambient;
-  material.diffuse = diffuse;
-  material.specular = specular;
-  material.shininess = shininess;
-
-  return {name, std::move(material)};
-}
-
-std::vector<std::pair<std::string, simple_lighting::ObjectShaderUBO::Frag::Material>> kMaterials = {
-
-    CreateMaterial("emerald",
-                   {0.0215f, 0.1745f, 0.0215f},
-                   {0.07568f, 0.61424f, 0.07568f},
-                   {0.633f, 0.727811f, 0.633f},
-                   0.6f),
-    CreateMaterial(
-        "jade",
-        {0.135f, 0.2225f, 0.1575f},
-        {0.54f, 0.89f, 0.63f},
-        {0.316228f, 0.316228f, 0.316228f}, 0.1f),
-    CreateMaterial("obsidian",
-                   {0.05375f, 0.05f, 0.06625f},
-                   {0.18275f, 0.17f, 0.22525f},
-                   {0.332741f, 0.328634f, 0.346435f},
-                   0.3f),
-    CreateMaterial("pearl",
-                   {0.25f, 0.20725f, 0.20725f},
-                   {1.00f, 0.829f, 0.829f},
-                   {0.296648f, 0.296648f, 0.296648f},
-                   0.088f),
-    CreateMaterial("ruby",
-                   {0.1745f, 0.01175f, 0.01175f},
-                   {0.61424f, 0.04136f, 0.04136f},
-                   {0.727811f, 0.626959f, 0.626959f},
-                   0.6f),
-    CreateMaterial("turquoise",
-                   {0.10f, 0.18725f, 0.1745f},
-                   {0.396f, 0.74151f, 0.69102f},
-                   {0.297254f, 0.30829f, 0.306678f},
-                   0.1f),
-    CreateMaterial("brass",
-                   {0.329412f, 0.223529f, 0.027451f},
-                   {0.780392f, 0.568627f, 0.113725f},
-                   {0.992157f, 0.941176f, 0.807843f},
-                   0.21794872f),
-    CreateMaterial("bronze",
-                   {0.2125f, 0.1275f, 0.054f},
-                   {0.714f, 0.4284f, 0.18144f},
-                   {0.393548f, 0.271906f, 0.166721f},
-                   0.2f),
-};
 
 };  // namespace
 
@@ -114,7 +65,7 @@ int main() {
   if (!Init(game.renderer.get(), &grid, "main-grid"))
     return 1;
 
-  Mesh cube_mesh = CreateCubeMesh(VertexType::k3dNormal, "cube");
+  Mesh cube_mesh = CreateCubeMesh(VertexType::k3dNormalUV, "cube");
   if (!RendererStageMesh(game.renderer.get(), &cube_mesh))
     return 1;
 
@@ -122,23 +73,41 @@ int main() {
   if (!RendererStageMesh(game.renderer.get(), &light_cube_mesh))
     return 1;
 
+  // Load the texture.
+  std::string diffuse_map_path = JoinPaths(
+      {GetCurrentExecutableDirectory(), "..", "examples", "textured_lighting", "diffuse_map.png"});
+  Texture diffuse_map = {};
+  if (!STBLoadTexture(diffuse_map_path, TextureType::kRGBA, &diffuse_map) ||
+      !RendererStageTexture(game.renderer.get(), &diffuse_map)) {
+    return 1;
+  }
+
+  std::string specular_map_path = JoinPaths(
+      {GetCurrentExecutableDirectory(), "..", "examples", "textured_lighting", "specular_map.png"});
+  Texture specular_map = {};
+  if (!STBLoadTexture(specular_map_path, TextureType::kRGBA, &specular_map) ||
+      !RendererStageTexture(game.renderer.get(), &specular_map)) {
+    return 1;
+  }
+
   auto scene_graph = std::make_unique<SceneGraph>();
 
   SceneNode* base_light = AddNode(scene_graph.get());
   SceneNode* light_node = AddNode(scene_graph.get(), base_light);
-  light_node->transform.position = {3, 1.4f, 1.6f};
+  light_node->transform.position = {3, 0.3f, 1.6f};
   light_node->transform.scale *= 0.2f;
 
   simple_lighting::LightShaderUBO light_ubo = {};
   light_ubo.frag.light_color = ToVec3(Color::White());
 
   // Create the UBOs.
+  constexpr int kCubeCount = 8;
   std::vector<simple_lighting::ObjectShaderUBO> ubos;
-  ubos.reserve(kMaterials.size());
+  ubos.reserve(kCubeCount);
 
-  int i = 0;
   constexpr int kMaxRow = 4;
-  for (auto& [name, mat] : kMaterials) {
+  /* for (auto& [name, mat] :) { */
+  for (int i = 0; i < kCubeCount; i++) {
     simple_lighting::ObjectShaderUBO ubo = {};
     float x = i % kMaxRow - 1;
     float y = i / kMaxRow;
@@ -149,11 +118,10 @@ int main() {
     ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f};
     ubo.frag.light.specular = {1, 1, 1};
 
-    mat.shininess *= 100;
-    ubo.frag.material = mat;
+    ubo.frag.material.specular = ToVec3(Color::White());
+    ubo.frag.material.shininess = 128;
 
     ubos.push_back(std::move(ubo));
-    i++;
   }
 
   bool running = true;
@@ -184,7 +152,7 @@ int main() {
     // Update the UBOs.
     if (move_light) {
       time_delta += game.time.frame_delta;
-      light_pos = Vec3(Sin(time_delta) * 4, 0.4f, 1);
+      light_pos = Vec3(Sin(time_delta) * 4, 0.1f, 1);
     }
 
     light_ubo.vert.model = Translate(light_pos);
@@ -197,9 +165,11 @@ int main() {
     // Draw the cubes.
     for (auto& ubo : ubos) {
       ubo.frag.light.pos = light_pos;
-      commands.push_back(CreateRenderCommand(&cube_mesh, &object_shader, ubo));
+      commands.push_back(
+          CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo));
     }
-    commands.push_back(CreateRenderCommand(&light_cube_mesh, &light_shader, light_ubo));
+    commands.push_back(
+        CreateRenderCommand(&light_cube_mesh, &light_shader, nullptr, nullptr, light_ubo));
     commands.push_back(grid.render_command);
 
     RendererExecuteCommands(game.renderer.get(), std::move(commands));

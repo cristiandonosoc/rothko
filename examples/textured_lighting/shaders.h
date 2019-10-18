@@ -30,8 +30,7 @@ struct ObjectShaderUBO {
     } light;
 
     struct Material {
-      Vec3 ambient;       FLOAT_PAD();
-      Vec3 diffuse;       FLOAT_PAD();
+      // Associated sampelr.
       Vec3 specular;
       float shininess;
     } material;
