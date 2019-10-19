@@ -6,10 +6,13 @@
 #include <rothko/scene/camera.h>
 #include <rothko/scene/grid.h>
 #include <rothko/scene/scene_graph.h>
+#include <rothko/ui/imgui.h>
+#include <third_party/imguizmo/ImGuizmo.h>
 
 #include "shaders.h"
 
 using namespace rothko;
+using namespace imgui;
 
 namespace {
 
@@ -48,6 +51,10 @@ int main() {
   /* window_config.fullscreen = true; */
   window_config.screen_size = {1920, 1440};
   if (!InitGame(&game, &window_config, true))
+    return 1;
+
+  ImguiContext imgui;
+  if (!InitImgui(game.renderer.get(), &imgui))
     return 1;
 
   Shader object_shader = simple_lighting::CreateObjectShader(game.renderer.get());
@@ -90,14 +97,8 @@ int main() {
     return 1;
   }
 
-  auto scene_graph = std::make_unique<SceneGraph>();
-
-  SceneNode* base_light = AddNode(scene_graph.get());
-  SceneNode* light_node = AddNode(scene_graph.get(), base_light);
-  light_node->transform.position = {3, 0.3f, 1.6f};
-  light_node->transform.scale *= 0.2f;
-
   simple_lighting::LightShaderUBO light_ubo = {};
+  light_ubo.vert.model = Mat4::Identity();
   light_ubo.frag.light_color = ToVec3(Color::White());
 
   // Create the UBOs.
@@ -109,12 +110,8 @@ int main() {
   /* for (auto& [name, mat] :) { */
   for (int i = 0; i < kCubeCount; i++) {
     simple_lighting::ObjectShaderUBO ubo = {};
-    float x = i % kMaxRow - 1;
-    float y = i / kMaxRow;
-    ubo.vert.model = Translate({x, y, 0});
-    ubo.vert.model *= Scale(0.5f);
-
-    ubo.frag.light.ambient = {0.2f, 0.2f, 0.2f};
+    /* ubo.frag.light.ambient = {0.2f, 0.2f, 0.2f}; */
+    ubo.frag.light.ambient = {};
     ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f};
     ubo.frag.light.specular = {1, 1, 1};
 
@@ -125,11 +122,23 @@ int main() {
   }
 
   bool running = true;
-  bool move_light = true;
+
   Vec3 light_pos = {};
-  float time_delta = 0;
+  bool move_light = true;
+  float light_time_delta = 0;
+
+  bool move_cubes = true;
+  float cubes_time_delta = 0;
+
+
+    light_ubo.vert.model = Translate(light_pos);
+    light_ubo.vert.model *= Scale(0.1f);
+
   while (running) {
     auto events = Update(&game);
+    StartFrame(&imgui, &game.window, &game.time, &game.input);
+    ImGuizmo::BeginFrame();
+
     for (auto event : events) {
       if (event == WindowEvent::kQuit) {
         running = false;
@@ -142,28 +151,59 @@ int main() {
       break;
     }
 
-    if (KeyUpThisFrame(&game.input, Key::kSpace)) {
+    if (KeyUpThisFrame(&game.input, Key::kSpace))
       move_light = !move_light;
-    }
+
+    if (KeyUpThisFrame(&game.input, Key::kC))
+      move_cubes = !move_cubes;
 
     DefaultUpdateOrbitCamera(game.input, &camera);
-    Update(scene_graph.get());
+
+    auto camera_command = GetCommand(camera);
+
 
     // Update the UBOs.
+
     if (move_light) {
-      time_delta += game.time.frame_delta;
-      light_pos = Vec3(Sin(time_delta) * 4, 0.1f, 1);
+      light_time_delta += game.time.frame_delta;
+      light_pos = Vec3(Sin(light_time_delta) * 4, 0.1f, 1);
+    } else {
+      ImGuizmo::SetRect(0, 0, game.window.screen_size.width, game.window.screen_size.height);
+      ImGuizmo::Manipulate((float*)&camera_command.view,
+                           (float*)&camera_command.projection,
+                           ImGuizmo::OPERATION::TRANSLATE,
+                           ImGuizmo::MODE::WORLD,
+                           (float*)&light_ubo.vert.model);
+
+      // Extract pos from it.
+      light_pos.x = light_ubo.vert.model.get(3, 0);
+      light_pos.y = light_ubo.vert.model.get(3, 1);
+      light_pos.z = light_ubo.vert.model.get(3, 2);
     }
 
-    light_ubo.vert.model = Translate(light_pos);
-    light_ubo.vert.model *= Scale(0.1f);
+    /* light_ubo.vert.model = Translate(light_pos); */
+    /* light_ubo.vert.model *= Scale(0.1f); */
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Gray66()));
-    commands.push_back(GetCommand(camera));
+    commands.push_back(std::move(camera_command));
+
+    EndFrame(&imgui);
 
     // Draw the cubes.
-    for (auto& ubo : ubos) {
+    if (move_cubes)
+      cubes_time_delta += game.time.frame_delta;
+    float angle = cubes_time_delta * ToRadians(33.0f);
+    for (uint32_t i = 0; i < ubos.size(); i++) {
+      auto& ubo = ubos[i];
+
+      float x = i % kMaxRow - 1;
+      float y = i / kMaxRow;
+
+      ubo.vert.model = Translate({x, y, -2});
+      ubo.vert.model *= Rotate({0.5f, 0.33f, -0.2f}, angle * i * 0.4f);
+      ubo.vert.model *= Scale(0.5f);
+
       ubo.frag.light.pos = light_pos;
       commands.push_back(
           CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo));
