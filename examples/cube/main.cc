@@ -181,14 +181,6 @@ GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   render_mesh.textures.push_back(tex0);
   commands.push_back(render_mesh);
 
-  /* // Add another cube. */
-  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[1]; */
-  /* commands.push_back(render_mesh); */
-
-  /* render_mesh.vert_ubo_data = (uint8_t*)&ubos[2]; */
-  /* render_mesh.depth_test = false; */
-  /* commands.push_back(render_mesh); */
-
   return commands;
 }
 
@@ -207,6 +199,12 @@ int main() {
   auto renderer = InitRenderer();
   if (!renderer)
     return 1;
+
+  // Initial config of the renderer.
+  PushConfig initial_config = {};
+  initial_config.viewport_pos = {};
+  initial_config.viewport_size = window.screen_size;
+  RendererExecuteCommands(renderer.get(), {initial_config});
 
   Input input = {};
 
@@ -230,17 +228,33 @@ int main() {
   if (!Loaded(&face))
     return 1;
 
-  LineManager line_manager = {};
-  if (!Init(renderer.get(), &line_manager, "line-manager"))
+  Shader line_shader = CreateLineShader(renderer.get());
+  if (!Valid(line_shader))
     return 1;
 
-  /* PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, Color::Blue()); */
-  /* PushLine(&line_manager, {-3, 2, -3}, {0, 2, 2}, Color::Red()); */
-  /* PushLine(&line_manager, {2, 2, -3}, {3, 2, -1}, Color::Green()); */
-  PushCubeCenter(&line_manager, {0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, Color::White());
+  LineManager line_manager = {};
+  if (!Init(renderer.get(), &line_shader, &line_manager, "line-manager"))
+    return 1;
+
+  LineManager axis_widget = {};
+  if (!Init(renderer.get(), &line_shader, &axis_widget, "axis-widget"))
+    return 1;
+
+  PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, Color::Blue());
+  PushLine(&line_manager, {-3, 2, -3}, {0, 2, 2}, Color::Red());
+  PushLine(&line_manager, {2, 2, -3}, {3, 2, -1}, Color::Green());
+  PushCubeCenter(&line_manager, {1.5f, 1.5f, 1.5f}, {0.5f, 0.5f, 0.5f}, Color::White());
   PushCube(&line_manager, {-1, -1, -1}, {2, 4, 5}, Color::Black());
 
+
   if (!Stage(renderer.get(), &line_manager))
+    return 1;
+
+
+  PushLine(&axis_widget, {}, {1, 0, 0}, Color::Red());
+  PushLine(&axis_widget, {}, {0, 1, 0}, Color::Green());
+  PushLine(&axis_widget, {}, {0, 0, 1}, Color::Blue());
+  if (!Stage(renderer.get(), &axis_widget))
     return 1;
 
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
@@ -426,7 +440,24 @@ int main() {
 
     commands.push_back(line_manager.render_command);
 
+
     commands.push_back(grid.render_command);
+
+    // Config the renderer for the axis.
+    constexpr float kAxisWidgetSize = 0.10f;
+    PushConfig axis_config = {};
+    Vec2 axis_widget_size = Vec2(window.screen_size) * kAxisWidgetSize;
+
+    axis_config.viewport_pos = window.screen_size - Int2(axis_widget_size * 1.05f);
+    axis_config.viewport_size = ToInt2(axis_widget_size);
+    commands.push_back(axis_config);
+
+    OrbitCamera axis_camera = camera;
+    axis_camera.distance = 1.25f;
+    Update(&axis_camera);
+
+    commands.push_back(GetPushCamera(axis_camera, ProjectionType::kOrthographic));
+    commands.push_back(axis_widget.render_command);
 
     /* Mat4 identity = Mat4::Identity(); */
     ImGuizmo::SetRect(0, 0, window.screen_size.width, window.screen_size.height);
@@ -436,6 +467,9 @@ int main() {
                          imguizmo_mode,
                          (float*)&ubos[0]);
                          /* (float*)&identity); */
+
+    commands.push_back(PopConfig());
+    commands.push_back(PopCamera());
 
     auto imgui_commands = EndFrame(&imgui);
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());

@@ -121,9 +121,10 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
   /* imgui_renderer->camera.viewport_p2 = {fb_width, fb_height}; */
 
   PerFrameVector<RenderCommand> render_commands;
-  ConfigRenderer config = {};
-  config.viewport_size = {fb_width, fb_height};
-  render_commands.push_back(std::move(config));
+
+  PushConfig push_config = {};
+  push_config.viewport_size = {fb_width, fb_height};
+  render_commands.push_back(std::move(push_config));
 
   float L = draw_data->DisplayPos.x;
   float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
@@ -229,7 +230,8 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
       NOT_REACHED_MSG("Could not upload data to the renderer.");
   }
 
-  // We pop the camera.
+  // We pop the state.
+  render_commands.push_back(PopConfig());
   render_commands.push_back(PopCamera());
 
   return render_commands;

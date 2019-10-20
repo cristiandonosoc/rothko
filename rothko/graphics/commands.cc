@@ -12,7 +12,8 @@ namespace rothko {
 const char* ToString(RenderCommandType type) {
   switch (type) {
     case RenderCommandType::kClearFrame: return "Clear Frame";
-    case RenderCommandType::kConfigRenderer: return "Config Renderer";
+    case RenderCommandType::kPushConfig: return "Push Config";
+    case RenderCommandType::kPopConfig: return "Pop Config";
     case RenderCommandType::kPushCamera: return "Push Camera";
     case RenderCommandType::kPopCamera: return "Pop Camera";
     case RenderCommandType::kRenderMesh: return "Render Mesh";
@@ -56,12 +57,16 @@ ClearFrame ClearFrame::FromColor(uint32_t color) {
 
 // Config Renderer ---------------------------------------------------------------------------------
 
-std::string ToString(const ConfigRenderer& config_renderer) {
+std::string ToString(const PushConfig& push_config) {
   std::stringstream ss;
   ss << std::boolalpha;
-  ss << "Viewport base: " << ToString(config_renderer.viewport_base)
-     << ", size: " << ToString(config_renderer.viewport_size);
+  ss << "Viewport base: " << ToString(push_config.viewport_pos)
+     << ", size: " << ToString(push_config.viewport_size);
   return ss.str();
+}
+
+std::string ToString(const PopConfig&) {
+  return "Pop config";
 }
 
 // Camera ------------------------------------------------------------------------------------------
@@ -124,8 +129,11 @@ std::string ToString(const RenderCommand& command) {
     case RenderCommandType::kClearFrame:
       ss << ToString(command.GetClearFrame());
       break;
-    case RenderCommandType::kConfigRenderer:
-      ss << ToString(command.GetConfigRenderer());
+    case RenderCommandType::kPushConfig:
+      ss << ToString(command.GetPushConfig());
+      break;
+    case RenderCommandType::kPopConfig:
+      ss << ToString(command.GetPopConfig());
       break;
     case RenderCommandType::kRenderMesh:
       ss << ToString(command.GetRenderMesh());

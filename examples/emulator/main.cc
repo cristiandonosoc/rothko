@@ -153,6 +153,20 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
+    // Config Renderer.
+    /* ConfigRenderer config_renderer; */
+    /* // TODO(Cristian): Actually find the height of the bar. */
+    /* config_renderer.viewport_base = {0, 0}; */
+    /* config_renderer.viewport_size = game.window.screen_size - Int2{0, 20}; */
+    /* commands.push_back(std::move(config_renderer)); */
+
+  PushConfig push_config = {};
+  // TODO(Cristian): Actually find the height of the bar.
+  push_config.viewport_pos = {};
+  push_config.viewport_size = game.window.screen_size - Int2{0, 20};
+
+  RendererExecuteCommands(game.renderer.get(), {push_config});
+
   bool running = true;
   while (running) {
     auto events = Update(&game);
@@ -315,13 +329,6 @@ int main(int argc, char* argv[]) {
     clear_frame = {};
     clear_frame.color = VecToColor(clear_color);
     commands.push_back(std::move(clear_frame));
-
-    // Config Renderer.
-    ConfigRenderer config_renderer;
-    // TODO(Cristian): Actually find the height of the bar.
-    config_renderer.viewport_base = {0, 0};
-    config_renderer.viewport_size = game.window.screen_size - Int2{0, 20};
-    commands.push_back(std::move(config_renderer));
 
     if (!display.quads.render_commands.empty())
       commands.insert(commands.end(), display.quads.render_commands.begin(),

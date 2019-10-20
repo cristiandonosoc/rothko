@@ -21,6 +21,12 @@ bool InitGame(Game* game, InitWindowConfig* window_config, bool log_to_stdout) {
     return false;
   }
 
+  // Initial config of the renderer.
+  PushConfig initial_config = {};
+  initial_config.viewport_pos = {};
+  initial_config.viewport_size = game->window.screen_size;
+  RendererExecuteCommands(game->renderer.get(), {initial_config});
+
   return true;
 }
 

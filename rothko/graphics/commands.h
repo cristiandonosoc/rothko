@@ -30,7 +30,8 @@ struct Texture;
 
 enum class RenderCommandType {
   kClearFrame,
-  kConfigRenderer,
+  kPushConfig,
+  kPopConfig,
   kRenderMesh,
   kPushCamera,
   kPopCamera,
@@ -59,13 +60,22 @@ struct ClearFrame {
 };
 std::string ToString(const ClearFrame&);
 
-struct ConfigRenderer {
-  static constexpr RenderCommandType kType = RenderCommandType::kConfigRenderer;
+// Config ------------------------------------------------------------------------------------------
 
-  Int2 viewport_base = {};
+constexpr int kMaxConfigCount = 4;
+
+struct PushConfig{
+  static constexpr RenderCommandType kType = RenderCommandType::kPushConfig;
+
+  Int2 viewport_pos = {};
   Int2 viewport_size = {};  // If non-zero, makes the renderer consider this the viewport size;
 };
-std::string ToString(const ConfigRenderer&);
+std::string ToString(const PushConfig&);
+
+struct PopConfig {
+  static constexpr RenderCommandType kType = RenderCommandType::kPopConfig;
+};
+std::string ToString(const PopConfig&);
 
 // Camera ------------------------------------------------------------------------------------------
 
@@ -164,14 +174,15 @@ struct RenderCommand {
   RenderCommandType type() const { return type_; }
 
   GENERATE_COMMAND(ClearFrame, is_clear_frame);
-  GENERATE_COMMAND(ConfigRenderer, is_config_renderer);
+  GENERATE_COMMAND(PushConfig, is_push_config);
+  GENERATE_COMMAND(PopConfig, is_pop_config);
   GENERATE_COMMAND(PushCamera, is_push_camera);
   GENERATE_COMMAND(PopCamera, is_pop_camera);
   GENERATE_COMMAND(RenderMesh, is_render_mesh);
 
  private:
   RenderCommandType type_ = RenderCommandType::kLast;
-  std::variant<ClearFrame, ConfigRenderer, PushCamera, PopCamera, RenderMesh> data_;
+  std::variant<ClearFrame, PushConfig, PopConfig, PushCamera, PopCamera, RenderMesh> data_;
 
   template <typename T>
   void SetRenderCommand(T t) {

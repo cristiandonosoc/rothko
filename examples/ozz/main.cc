@@ -78,7 +78,7 @@ int main() {
     commands.push_back(std::move(clear_frame));
 
     // Camera.
-    commands.push_back(GetCommand(camera));
+    commands.push_back(GetPushCamera(camera));
 
     commands.push_back(grid.render_command);
 

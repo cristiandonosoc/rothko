@@ -15,6 +15,7 @@ struct PushCamera;
 enum class ProjectionType {
   kProjection,
   kOrthographic,
+  kLast,
 };
 
 // OrbitCamera -------------------------------------------------------------------------------------
@@ -58,7 +59,8 @@ Mat4 GetOrtho(const OrbitCamera&);
 // Returns either ortho or perspective projection, depending on the camera type.
 Mat4 GetProjection(const OrbitCamera&);
 
-PushCamera GetCommand(const OrbitCamera&);
+// If |proj_override| != ProjectionType::KLast, it will use it instead of |camera.projection_type|.
+PushCamera GetPushCamera(const OrbitCamera&, ProjectionType proj_override = ProjectionType::kLast);
 
 void DefaultUpdateOrbitCamera(const Input&, OrbitCamera*);
 

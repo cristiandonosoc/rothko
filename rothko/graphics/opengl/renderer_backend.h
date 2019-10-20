@@ -33,6 +33,11 @@ struct CameraData {
   Mat4 view = Mat4::Identity();
 };
 
+struct Config {
+  Int2 viewport_pos = {};
+  Int2 viewport_size = {};
+};
+
 struct OpenGLRendererBackend {
   std::map<uint32_t, MeshHandles> loaded_meshes;
   std::map<uint32_t, ShaderHandles> loaded_shaders;
@@ -40,10 +45,17 @@ struct OpenGLRendererBackend {
 
   CameraData cameras[8] = {};
   int camera_index = -1;
+
+  Config configs[8] = {};
+  int config_index = -1;
 };
 
 inline const CameraData& GetCamera(const OpenGLRendererBackend& opengl) {
   return opengl.cameras[opengl.camera_index];
+}
+
+inline const Config& GetConfig(const OpenGLRendererBackend& opengl) {
+  return opengl.configs[opengl.config_index];
 }
 
 OpenGLRendererBackend* GetOpenGL();

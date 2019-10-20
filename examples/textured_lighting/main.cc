@@ -160,7 +160,7 @@ int main() {
 
     DefaultUpdateOrbitCamera(game.input, &camera);
 
-    auto camera_command = GetCommand(camera);
+    auto camera_command = GetPushCamera(camera);
 
 
     // Update the UBOs.

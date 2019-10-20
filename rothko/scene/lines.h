@@ -13,7 +13,7 @@ namespace rothko {
 // Uses primitive reset to render them all in a single draw call.
 struct LineManager {
   std::string name;
-  Shader shader;
+  Shader* shader;
 
   bool staged = false;          // Whether the current state of the mesh has been staged.
 
@@ -25,9 +25,11 @@ struct LineManager {
   RenderMesh render_command;
 };
 
+Shader CreateLineShader(Renderer* renderer);
+
 // |line_count| means how many lines we pre-allocate within the mesh.
 // Keep in mind that a cube = 10 lines.
-bool Init(Renderer*, LineManager*, std::string name, uint32_t line_count = 1000);
+bool Init(Renderer*, Shader*, LineManager*, std::string name, uint32_t line_count = 1000);
 inline bool Valid(LineManager* l) { return Staged(l->strip_mesh); }
 void Reset(LineManager*);
 

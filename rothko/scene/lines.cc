@@ -7,7 +7,7 @@
 
 namespace rothko {
 
-// Init --------------------------------------------------------------------------------------------
+// CreateLineShader --------------------------------------------------------------------------------
 
 namespace {
 
@@ -33,31 +33,37 @@ void main() {
 }
 )";
 
-bool InitShader(Renderer* renderer, LineManager* line_manager) {
-  Shader* shader = &line_manager->shader;
-  shader->name = StringPrintf("%s-shader", line_manager->name.c_str());
-  shader->vertex_type = VertexType::k3dColor;
-  shader->vert_src = CreateVertexSource(kLineVertexShader);
-  shader->frag_src = CreateFragmentSource(kLineFragmentShader);
-
-  return RendererStageShader(renderer, shader);
-}
-
 }  // namespace
 
-bool Init(Renderer* renderer, LineManager* line_manager, std::string name, uint32_t line_count) {
+
+
+Shader CreateLineShader(Renderer* renderer) {
+  Shader shader = {};
+  shader.name = "line-shader";
+  shader.vertex_type = VertexType::k3dColor;
+  shader.vert_src = CreateVertexSource(kLineVertexShader);
+  shader.frag_src = CreateFragmentSource(kLineFragmentShader);
+
+
+  if (!RendererStageShader(renderer, &shader))
+    return {};
+  return shader;
+}
+
+// Init --------------------------------------------------------------------------------------------
+
+bool Init(Renderer* renderer, Shader* shader, LineManager* line_manager, std::string name,
+          uint32_t line_count) {
   ASSERT(!Valid(line_manager));
   line_manager->name = std::move(name);
-
-  if (!InitShader(renderer, line_manager))
-    return false;
+  line_manager->shader = shader;
 
   // Each vertex is 2 vertices.
   // We asume one index per vertex. This might be less.
   uint32_t vertex_count = 2 * line_count * sizeof(Vertex3dColor);
   uint32_t index_count = 2 * line_count * sizeof(Mesh::IndexType);
-  bool staged = StageWithCapacity(renderer, &line_manager->strip_mesh, VertexType::k3dColor,
-                                  vertex_count, index_count);
+  bool staged = StageWithCapacity(
+      renderer, &line_manager->strip_mesh, VertexType::k3dColor, vertex_count, index_count);
   if (!staged)
     return false;
 
@@ -65,7 +71,7 @@ bool Init(Renderer* renderer, LineManager* line_manager, std::string name, uint3
 
   line_manager->render_command = {};
   line_manager->render_command.mesh = &line_manager->strip_mesh;
-  line_manager->render_command.shader = &line_manager->shader;
+  line_manager->render_command.shader = line_manager->shader;
   line_manager->render_command.primitive_type = PrimitiveType::kLineStrip;
 
   line_manager->staged = true;
@@ -108,7 +114,7 @@ void PushLine(LineManager* line_manager, Vec3 from, Vec3 to, Color color) {
   PushVertices(&line_manager->strip_mesh, vertices, ARRAY_SIZE(vertices));
   PushIndices(&line_manager->strip_mesh, indices, ARRAY_SIZE(indices));
 
-  /* line_manager->render_command.indices_size += ARRAY_SIZE(indices); */
+  line_manager->render_command.indices_count += ARRAY_SIZE(indices);
   line_manager->staged = false;
 }
 
@@ -135,8 +141,7 @@ void PushCubeCenter(LineManager* line_manager, Vec3 c, Vec3 e, Color color) {
 
   PushVertices(&line_manager->strip_mesh, vertices, ARRAY_SIZE(vertices));
   PushIndices(&line_manager->strip_mesh, indices, ARRAY_SIZE(indices));
-  /* line_manager->render_command.indices_size += ARRAY_SIZE(indices); */
-  line_manager->render_command.indices_count = ARRAY_SIZE(indices);
+  line_manager->render_command.indices_count += ARRAY_SIZE(indices);
 
   line_manager->staged = false;
 }

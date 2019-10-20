@@ -17,9 +17,10 @@ namespace {
 void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
   for (auto& command : commands) {
     switch (command.type()) {
-      case RenderCommandType::kClearFrame: ASSERT(command.is_clear_frame()); continue;
-      case RenderCommandType::kConfigRenderer: ASSERT(command.is_config_renderer()); continue;
-      case RenderCommandType::kPushCamera:
+      case RenderCommandType::kClearFrame: continue;
+      case RenderCommandType::kPushConfig: continue;
+      case RenderCommandType::kPopConfig: continue;
+      case RenderCommandType::kPushCamera: continue;
       case RenderCommandType::kPopCamera: continue;
       case RenderCommandType::kRenderMesh: {
         ASSERT(command.is_render_mesh());
@@ -29,8 +30,10 @@ void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
         ASSERT(render_mesh.primitive_type != PrimitiveType::kLast);
         ASSERT_MSG(render_mesh.mesh->vertex_type == render_mesh.shader->vertex_type,
                    "Mesh (%s): %s, Shader: (%s) %s",
-                   render_mesh.mesh->name.c_str(), ToString(render_mesh.mesh->vertex_type),
-                   render_mesh.shader->name.c_str(), ToString(render_mesh.shader->vertex_type));
+                   render_mesh.mesh->name.c_str(),
+                   ToString(render_mesh.mesh->vertex_type),
+                   render_mesh.shader->name.c_str(),
+                   ToString(render_mesh.shader->vertex_type));
         continue;
       }
       case RenderCommandType::kLast: break;
@@ -87,11 +90,30 @@ void ExecuteClearRenderAction(const ClearFrame& clear) {
 
 // Execute Config Renderer -------------------------------------------------------------------------
 
-void ExecuteConfigRendererAction(const ConfigRenderer& config) {
+void SetConfig(const Config& config) {
   if (config.viewport_size.width != 0 && config.viewport_size.height != 0) {
-    glViewport((GLsizei)config.viewport_base.x, (GLsizei)config.viewport_base.y,
-               (GLsizei)config.viewport_size.width, (GLsizei)config.viewport_size.height);
+    glViewport((GLsizei)config.viewport_pos.x,
+               (GLsizei)config.viewport_pos.y,
+               (GLsizei)config.viewport_size.width,
+               (GLsizei)config.viewport_size.height);
   }
+}
+
+void ExecutePushConfig(OpenGLRendererBackend* opengl, const PushConfig& push_config) {
+  opengl->config_index++;
+  ASSERT(opengl->config_index < kMaxConfigCount);
+
+  Config* config = opengl->configs + opengl->config_index;
+  config->viewport_pos = push_config.viewport_pos;
+  config->viewport_size = push_config.viewport_size;
+  SetConfig(*config);
+}
+
+void ExecutePopConfig(OpenGLRendererBackend* opengl) {
+  // You cannot pop the first config.
+  ASSERT(opengl->config_index > 0);
+  opengl->config_index--;
+  SetConfig(GetConfig(*opengl));
 }
 
 // Execute Push Camera -----------------------------------------------------------------------------
@@ -251,8 +273,11 @@ void RendererExecuteCommands(Renderer*,
       case RenderCommandType::kClearFrame:
         ExecuteClearRenderAction(command.GetClearFrame());
         break;
-      case RenderCommandType::kConfigRenderer:
-        ExecuteConfigRendererAction(command.GetConfigRenderer());
+      case RenderCommandType::kPushConfig:
+        ExecutePushConfig(opengl, command.GetPushConfig());
+        break;
+      case RenderCommandType::kPopConfig:
+        ExecutePopConfig(opengl);
         break;
       case RenderCommandType::kPushCamera:
         ExecutePushCamera(opengl, command.GetPushCamera());

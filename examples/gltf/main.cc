@@ -133,7 +133,7 @@ int main(int argc, const char* argv[]) {
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Graycc()));
-    commands.push_back(GetCommand(camera));
+    commands.push_back(GetPushCamera(camera));
 
     auto* mesh = scene.meshes[0].get();
 

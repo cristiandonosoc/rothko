@@ -114,7 +114,7 @@ int main() {
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Graycc()));
-    commands.push_back(GetCommand(camera));
+    commands.push_back(GetPushCamera(camera));
 
     commands.push_back(GetCubeRenderCommand(&cube, &default_shader, root));
     commands.push_back(GetCubeRenderCommand(&cube, &default_shader, child));

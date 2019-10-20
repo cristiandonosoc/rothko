@@ -100,6 +100,10 @@ union _v2 {
   _v2() = default;
   _v2(T x, T y) { this->x = x; this->y = y; }
 
+  // Int2 <-> Vec2 conversions.
+  template <typename U>
+  explicit _v2(const _v2<U>& v) { this->x = (T)v.x, this->y = (T)v.y; }
+
   static _v2 Zero() { return {0, 0}; }
 
   // Operators
@@ -133,7 +137,6 @@ union _v2 {
 using Int2 = _v2<int>;
 using Vec2 = _v2<float>;
 
-
 template <typename T>
 _v2<T> Abs(const _v2<T>& v) { return {ABS(v.x), ABS(v.y)}; }
 
@@ -153,6 +156,8 @@ Vec2 Normalize(const Vec2& v);
 
 template <typename T>
 inline float Sum(const _v2<T>& v) { return v.x + v.y; }
+
+inline Int2 ToInt2(const Vec2& v) { return {(int)v.x, (int)v.y}; }
 
 std::string ToString(const Int2&);
 std::string ToString(const Vec2&);

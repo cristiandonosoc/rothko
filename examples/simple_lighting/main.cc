@@ -192,7 +192,7 @@ int main() {
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Gray66()));
-    commands.push_back(GetCommand(camera));
+    commands.push_back(GetPushCamera(camera));
 
     // Draw the cubes.
     for (auto& ubo : ubos) {

@@ -56,17 +56,28 @@ Mat4 GetProjection(const OrbitCamera& camera) {
   switch (camera.projection_type) {
     case ProjectionType::kProjection: return GetPerspective(camera);
     case ProjectionType::kOrthographic: return GetOrtho(camera);
+    case ProjectionType::kLast: NOT_REACHED(); return Mat4::Identity();
   }
 
   NOT_REACHED();
   return Mat4::Identity();
 }
 
-PushCamera GetCommand(const OrbitCamera& camera) {
+PushCamera GetPushCamera(const OrbitCamera& camera, ProjectionType proj_override) {
   PushCamera push_camera;
   push_camera.camera_pos = camera.pos_;
   push_camera.view = GetView(camera);
-  push_camera.projection = GetProjection(camera);
+  ProjectionType projection_type = camera.projection_type;
+
+  if (proj_override != ProjectionType::kLast)
+    projection_type = proj_override;
+  if (projection_type == ProjectionType::kProjection) {
+    push_camera.projection = GetProjection(camera);
+  } else if (projection_type == ProjectionType::kOrthographic) {
+    push_camera.projection = GetOrtho(camera);
+  } else {
+    NOT_REACHED();
+  }
 
   return push_camera;
 }

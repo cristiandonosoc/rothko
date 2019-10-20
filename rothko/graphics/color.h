@@ -12,10 +12,10 @@ namespace rothko {
 
 struct Color {
   // ABGR in memory.
-  /* Color() : r(0), g(0), b(0), a(0xff) {} */
-  /* Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xff) : r(r), g(g), b(b), a(a) {} */
-  Color() : a(0xff), b(0), g(0), r(0) {}
-  Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xff) : a(a), b(b), g(g), r(r) {}
+  Color() : r(0), g(0), b(0), a(0xff) {}
+  Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xff) : r(r), g(g), b(b), a(a) {}
+  /* Color() : a(0xff), b(0), g(0), r(0) {} */
+  /* Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xff) : a(a), b(b), g(g), r(r) {} */
   Color(uint32_t color) { *((uint32_t*)this) = color; }
 
   DEFAULT_COPY_AND_ASSIGN(Color);
@@ -23,8 +23,8 @@ struct Color {
 
   void operator=(uint32_t color) { *((uint32_t*)this) = color; }
 
-  /* uint8_t r, g, b, a; */
-  uint8_t a, b, g, r;
+  uint8_t r, g, b, a;
+  /* uint8_t a, b, g, r; */
 
   // Pre-defined colors.
   // clang-format off
