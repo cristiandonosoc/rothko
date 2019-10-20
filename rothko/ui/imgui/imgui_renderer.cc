@@ -151,14 +151,16 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
     PushVertices(&imgui_renderer->mesh, (Vertex2dUVColor*)cmd_list->VtxBuffer.Data,
                                         cmd_list->VtxBuffer.Size);
 
-    // Because each draw command is isolated, it's necessary to offset each
-    // index by their right place in the vertex buffer.
+    // Because each draw command is isolated, it's necessary to offset each index by their right
+    // place within the vertex buffer.
     //
     // NOTE: Imgui doesn't have a good way of changing it's index size and compile straight out of
     //       bat. Here we do the transformation from 16-bit indexs to our 32-bit manually, but
     //       normally PushIndices should work.
     static_assert(sizeof(ImDrawIdx) == 2);
     auto& mesh = imgui_renderer->mesh;
+
+
     mesh.indices.reserve((mesh.indices.size() + cmd_list->IdxBuffer.Size));
     for (int ii = 0; ii < cmd_list->IdxBuffer.Size; ii++) {
       // NOTE: |mesh.indices| is a uint8_t array, so we need to decompose the value into a series of
@@ -174,8 +176,8 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
     /* } */
     /* mesh.index_count += cmd_list->IdxBuffer.Size; */
 
-    // This will start appending drawing data into the mesh buffer that's
-    // already staged into the renderer.
+    // This will start appending drawing data into the mesh buffer that's already staged into the
+    // renderer.
     for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
       const ImDrawCmd* draw_cmd = &cmd_list->CmdBuffer[cmd_i];
 
@@ -211,8 +213,8 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
 
       render_commands.push_back(std::move(render_mesh));
 
-      /* index_offset += draw_cmd->ElemCount * sizeof(Mesh::IndexType); */
-      index_offset += draw_cmd->ElemCount;
+      index_offset += draw_cmd->ElemCount * sizeof(Mesh::IndexType);
+      /* index_offset += draw_cmd->ElemCount; */
     }
 
     // We advance the base according to how much data we added to the pool.
