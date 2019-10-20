@@ -136,6 +136,7 @@ void PushCubeCenter(LineManager* line_manager, Vec3 c, Vec3 e, Color color) {
   PushVertices(&line_manager->strip_mesh, vertices, ARRAY_SIZE(vertices));
   PushIndices(&line_manager->strip_mesh, indices, ARRAY_SIZE(indices));
   /* line_manager->render_command.indices_size += ARRAY_SIZE(indices); */
+  line_manager->render_command.indices_count = ARRAY_SIZE(indices);
 
   line_manager->staged = false;
 }

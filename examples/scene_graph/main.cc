@@ -97,7 +97,7 @@ int main() {
 
     ImGui::End();
 
-
+    ImGui::ShowDemoWindow();
 
     DefaultUpdateOrbitCamera(game.input, &camera);
 

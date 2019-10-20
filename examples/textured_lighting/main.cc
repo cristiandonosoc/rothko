@@ -124,15 +124,16 @@ int main() {
   bool running = true;
 
   Vec3 light_pos = {};
-  bool move_light = true;
+  bool move_light = false;
   float light_time_delta = 0;
+  (void)light_time_delta;
 
   bool move_cubes = true;
   float cubes_time_delta = 0;
 
 
-    light_ubo.vert.model = Translate(light_pos);
-    light_ubo.vert.model *= Scale(0.1f);
+    /* light_ubo.vert.model = Translate(light_pos); */
+    /* light_ubo.vert.model *= Scale(0.1f); */
 
   while (running) {
     auto events = Update(&game);
@@ -164,31 +165,39 @@ int main() {
 
     // Update the UBOs.
 
-    if (move_light) {
-      light_time_delta += game.time.frame_delta;
-      light_pos = Vec3(Sin(light_time_delta) * 4, 0.1f, 1);
-    } else {
-      ImGuizmo::SetRect(0, 0, game.window.screen_size.width, game.window.screen_size.height);
-      ImGuizmo::Manipulate((float*)&camera_command.view,
-                           (float*)&camera_command.projection,
-                           ImGuizmo::OPERATION::TRANSLATE,
-                           ImGuizmo::MODE::WORLD,
-                           (float*)&light_ubo.vert.model);
+    /* if (move_light) { */
+    /*   light_time_delta += game.time.frame_delta; */
+    /*   light_pos = Vec3(Sin(light_time_delta) * 4, 0.1f, 1); */
+    /* } else { */
+    /*   ImGuizmo::SetRect(0, 0, game.window.screen_size.width, game.window.screen_size.height); */
+    /*   ImGuizmo::Manipulate((float*)&camera_command.view, */
+    /*                        (float*)&camera_command.projection, */
+    /*                        ImGuizmo::OPERATION::TRANSLATE, */
+    /*                        ImGuizmo::MODE::WORLD, */
+    /*                        (float*)&light_ubo.vert.model); */
 
-      // Extract pos from it.
-      light_pos.x = light_ubo.vert.model.get(3, 0);
-      light_pos.y = light_ubo.vert.model.get(3, 1);
-      light_pos.z = light_ubo.vert.model.get(3, 2);
-    }
+    /*   // Extract pos from it. */
+    /*   light_pos.x = light_ubo.vert.model.get(3, 0); */
+    /*   light_pos.y = light_ubo.vert.model.get(3, 1); */
+    /*   light_pos.z = light_ubo.vert.model.get(3, 2); */
+    /* } */
 
     /* light_ubo.vert.model = Translate(light_pos); */
     /* light_ubo.vert.model *= Scale(0.1f); */
+    ImGui::Begin("Matrix");
+    for (int i = 0; i < 4; i++) {
+      auto row = light_ubo.vert.model.row(0);
+      ImGui::InputFloat4("Row: ", (float*)&row);
+    }
+
+    ImGui::End();
+
+
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Gray66()));
     commands.push_back(std::move(camera_command));
 
-    EndFrame(&imgui);
 
     // Draw the cubes.
     if (move_cubes)
@@ -211,6 +220,10 @@ int main() {
     commands.push_back(
         CreateRenderCommand(&light_cube_mesh, &light_shader, nullptr, nullptr, light_ubo));
     commands.push_back(grid.render_command);
+
+
+    auto imgui_commands = EndFrame(&imgui);
+    commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
 
     RendererExecuteCommands(game.renderer.get(), std::move(commands));
 
