@@ -225,6 +225,8 @@ int main() {
     auto imgui_commands = EndFrame(&imgui);
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
 
+    commands.push_back(PopCamera());
+
     RendererExecuteCommands(game.renderer.get(), std::move(commands));
 
     RendererEndFrame(game.renderer.get(), &game.window);

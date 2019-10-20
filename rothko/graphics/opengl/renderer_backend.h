@@ -27,15 +27,24 @@ struct TextureHandles {
   uint32_t tex_handle = 0;
 };
 
-struct OpenGLRendererBackend {
-  Vec3 camera_pos;
-  Mat4 camera_projection = Mat4::Identity();
-  Mat4 camera_view = Mat4::Identity();
+struct CameraData {
+  Vec3 pos = {};
+  Mat4 projection = Mat4::Identity();
+  Mat4 view = Mat4::Identity();
+};
 
+struct OpenGLRendererBackend {
   std::map<uint32_t, MeshHandles> loaded_meshes;
   std::map<uint32_t, ShaderHandles> loaded_shaders;
   std::map<uint32_t, TextureHandles> loaded_textures;
+
+  CameraData cameras[8] = {};
+  int camera_index = -1;
 };
+
+inline const CameraData& GetCamera(const OpenGLRendererBackend& opengl) {
+  return opengl.cameras[opengl.camera_index];
+}
 
 OpenGLRendererBackend* GetOpenGL();
 

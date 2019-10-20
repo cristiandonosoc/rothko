@@ -202,6 +202,8 @@ int main() {
     commands.push_back(CreateRenderCommand(&light_cube_mesh, &light_shader, light_ubo));
     commands.push_back(grid.render_command);
 
+    commands.push_back(PopCamera());
+
     RendererExecuteCommands(game.renderer.get(), std::move(commands));
 
     RendererEndFrame(game.renderer.get(), &game.window);

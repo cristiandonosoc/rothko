@@ -33,6 +33,7 @@ enum class RenderCommandType {
   kConfigRenderer,
   kRenderMesh,
   kPushCamera,
+  kPopCamera,
   kLast,
 };
 const char* ToString(RenderCommandType);
@@ -66,7 +67,12 @@ struct ConfigRenderer {
 };
 std::string ToString(const ConfigRenderer&);
 
+// Camera ------------------------------------------------------------------------------------------
+
 // Sets the current camera state on the renderer. This persists to other calls.
+// |kMaxCameraCount| establishes how many cameras can be pushed at the same time.
+constexpr int kMaxCameraCount = 4;
+
 struct PushCamera {
   static constexpr RenderCommandType kType = RenderCommandType::kPushCamera;
 
@@ -75,6 +81,12 @@ struct PushCamera {
   Mat4 view;
 };
 std::string ToString(const PushCamera&);
+
+// Popping when there is no camera is an error.
+struct PopCamera {
+  static constexpr RenderCommandType kType = RenderCommandType::kPopCamera;
+};
+std::string ToString(const PopCamera&);
 
 // RenderMesh --------------------------------------------------------------------------------------
 
@@ -154,11 +166,12 @@ struct RenderCommand {
   GENERATE_COMMAND(ClearFrame, is_clear_frame);
   GENERATE_COMMAND(ConfigRenderer, is_config_renderer);
   GENERATE_COMMAND(PushCamera, is_push_camera);
+  GENERATE_COMMAND(PopCamera, is_pop_camera);
   GENERATE_COMMAND(RenderMesh, is_render_mesh);
 
  private:
   RenderCommandType type_ = RenderCommandType::kLast;
-  std::variant<ClearFrame, ConfigRenderer, PushCamera, RenderMesh> data_;
+  std::variant<ClearFrame, ConfigRenderer, PushCamera, PopCamera, RenderMesh> data_;
 
   template <typename T>
   void SetRenderCommand(T t) {

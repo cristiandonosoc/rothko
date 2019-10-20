@@ -19,7 +19,8 @@ void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
     switch (command.type()) {
       case RenderCommandType::kClearFrame: ASSERT(command.is_clear_frame()); continue;
       case RenderCommandType::kConfigRenderer: ASSERT(command.is_config_renderer()); continue;
-      case RenderCommandType::kPushCamera: continue;
+      case RenderCommandType::kPushCamera:
+      case RenderCommandType::kPopCamera: continue;
       case RenderCommandType::kRenderMesh: {
         ASSERT(command.is_render_mesh());
         auto& render_mesh = command.GetRenderMesh();
@@ -95,11 +96,19 @@ void ExecuteConfigRendererAction(const ConfigRenderer& config) {
 
 // Execute Push Camera -----------------------------------------------------------------------------
 
-void ExecutePushCamera(OpenGLRendererBackend* opengl,
-                       const PushCamera& push_camera) {
-  opengl->camera_pos = push_camera.camera_pos;
-  opengl->camera_projection = push_camera.projection;
-  opengl->camera_view = push_camera.view;
+void ExecutePushCamera(OpenGLRendererBackend* opengl, const PushCamera& push_camera) {
+  opengl->camera_index++;
+  ASSERT(opengl->camera_index < kMaxCameraCount);
+
+  CameraData* camera = opengl->cameras + opengl->camera_index;
+  camera->pos = push_camera.camera_pos;
+  camera->projection = push_camera.projection;
+  camera->view = push_camera.view;
+}
+
+void ExecutePopCamera(OpenGLRendererBackend* opengl) {
+  ASSERT(opengl->camera_index >= 0);
+  opengl->camera_index--;
 }
 
 // Execute Mesh Render Actions ---------------------------------------------------------------------
@@ -109,17 +118,19 @@ void SetUniforms(const OpenGLRendererBackend& opengl, const RenderMesh& render_m
   const Shader* shader = render_mesh.shader;
 
   // Camera.
+  ASSERT(opengl.camera_index >= 0);
+  const CameraData& camera = GetCamera(opengl);
   if (shader_handles.camera_pos_location != -1)
-    glUniform3fv(shader_handles.camera_pos_location, 1, (GLfloat*)&opengl.camera_pos);
+    glUniform3fv(shader_handles.camera_pos_location, 1, (GLfloat*)&camera.pos);
 
   if (shader_handles.camera_proj_location != -1) {
     glUniformMatrix4fv(shader_handles.camera_proj_location, 1, GL_FALSE,
-                       (GLfloat*)&opengl.camera_projection);
+                       (GLfloat*)&camera.projection);
   }
 
   if (shader_handles.camera_view_location != -1) {
     glUniformMatrix4fv(shader_handles.camera_view_location, 1, GL_FALSE,
-                       (GLfloat*)&opengl.camera_view);
+                       (GLfloat*)&camera.view);
   }
 
   // Vertex UBOs.
@@ -245,6 +256,9 @@ void RendererExecuteCommands(Renderer*,
         break;
       case RenderCommandType::kPushCamera:
         ExecutePushCamera(opengl, command.GetPushCamera());
+        break;
+      case RenderCommandType::kPopCamera:
+        ExecutePopCamera(opengl);
         break;
       case RenderCommandType::kRenderMesh:
         ExecuteMeshRenderActions(*opengl, command.GetRenderMesh());

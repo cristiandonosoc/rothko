@@ -14,6 +14,7 @@ const char* ToString(RenderCommandType type) {
     case RenderCommandType::kClearFrame: return "Clear Frame";
     case RenderCommandType::kConfigRenderer: return "Config Renderer";
     case RenderCommandType::kPushCamera: return "Push Camera";
+    case RenderCommandType::kPopCamera: return "Pop Camera";
     case RenderCommandType::kRenderMesh: return "Render Mesh";
     case RenderCommandType::kLast: return "<last>";
   }
@@ -63,7 +64,7 @@ std::string ToString(const ConfigRenderer& config_renderer) {
   return ss.str();
 }
 
-// Push Camera -------------------------------------------------------------------------------------
+// Camera ------------------------------------------------------------------------------------------
 
 std::string ToString(const PushCamera& push_camera) {
   std::stringstream ss;
@@ -71,6 +72,10 @@ std::string ToString(const PushCamera& push_camera) {
   ss << "Projection: " << ToString(push_camera.projection) << std::endl
      << "View: " << ToString(push_camera.view);
   return ss.str();
+}
+
+std::string ToString(const PopCamera&) {
+  return "Pop camera";
 }
 
 // Render Mesh -------------------------------------------------------------------------------------
@@ -127,6 +132,8 @@ std::string ToString(const RenderCommand& command) {
       break;
     case RenderCommandType::kPushCamera:
       ss << ToString(command.GetPushCamera());
+    case RenderCommandType::kPopCamera:
+      ss << ToString(command.GetPopCamera());
     case RenderCommandType::kLast:
       break;
   }

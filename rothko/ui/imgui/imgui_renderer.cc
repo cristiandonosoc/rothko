@@ -129,6 +129,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
   float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
   float T = draw_data->DisplayPos.y;
   float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
+
   PushCamera imgui_camera;
   imgui_camera.projection = Ortho(L, R, B, T);
   imgui_camera.view = Mat4::Identity();
@@ -227,6 +228,9 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
     if (!RendererUploadMeshRange(imgui_renderer->renderer, &imgui_renderer->mesh))
       NOT_REACHED_MSG("Could not upload data to the renderer.");
   }
+
+  // We pop the camera.
+  render_commands.push_back(PopCamera());
 
   return render_commands;
 }
