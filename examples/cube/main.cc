@@ -453,6 +453,7 @@ int main() {
     commands.push_back(axis_config);
 
     OrbitCamera axis_camera = camera;
+    axis_camera.target = {};
     axis_camera.distance = 1.25f;
     Update(&axis_camera);
 

@@ -13,7 +13,7 @@ namespace rothko {
 
 // Math Functions ==================================================================================
 
-float SquareRoot(float f) { return std::sqrt(f); }
+float Sqrt(float f) { return std::sqrt(f); }
 
 float Sin(float radian_angle) { return std::sin(radian_angle); }
 float Asin(float radian_angle) { return std::asin(radian_angle); }
