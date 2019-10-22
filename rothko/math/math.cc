@@ -256,6 +256,28 @@ Vec2 EulerFromDirection(const Vec3& direction) {
   return result;
 }
 
+Vec3 EulerFromMat4(const Mat4& m) {
+  Vec3 result = {};
+
+  if (m.get(2, 0) == -1.0f) {
+    result.x = Atan2(m.get(0, 1), m.get(0, 2));
+    result.y = kRadians90;
+    result.z = 0;
+  } else if (m.get(2, 0) == 1.0f) {
+    result.x = Atan2(-m.get(0, 1), -m.get(0, 2));
+    result.y = -kRadians90;
+    result.z = 0;
+  } else {
+    float y = Asin(m.get(2, 0));
+    float cosy = Cos(y);
+    result.x = -Atan2(m.get(2, 1) / cosy, m.get(2, 2) / cosy);
+    result.y = y;
+    result.z = Atan2(m.get(1, 0) / cosy, m.get(0, 0) / cosy);
+  }
+
+  return result;
+}
+
 // Quaternion ======================================================================================
 
 Quaternion Slerp(const Quaternion& q1, const Quaternion& q2, float t) {

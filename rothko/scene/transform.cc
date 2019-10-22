@@ -12,9 +12,9 @@ namespace rothko {
 Mat4 CalculateTransformMatrix(const Transform& transform) {
   Mat4 result = Mat4::Identity();
   result *= Translate(transform.position);
-  result *= Rotate({1, 0, 0}, transform.rotation.x);
-  result *= Rotate({0, 1, 0}, transform.rotation.y);
   result *= Rotate({0, 0, 1}, transform.rotation.z);
+  result *= Rotate({0, 1, 0}, transform.rotation.y);
+  result *= Rotate({1, 0, 0}, transform.rotation.x);
   result *= Scale(transform.scale);
 
   return result;

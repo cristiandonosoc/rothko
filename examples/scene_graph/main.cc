@@ -115,6 +115,11 @@ int main() {
     Vec3 translation = {m.get(0, 3), m.get(1, 3), m.get(2, 3)};
     ImGui::InputFloat3("Translation: ", (float*)&translation);
 
+
+    Vec3 rotation = EulerFromMat4(m);
+    ImGui::InputFloat3("Rotation", (float*)&rotation);
+    /* ImGui::InputFloat("Rx", &rx); */
+
     // Extract Scale.
     Vec3 scale = {};
     scale.x = Length(ToVec3(m.row(0)));
@@ -124,16 +129,14 @@ int main() {
     ImGui::InputFloat3("Scale", (float*)&scale);
 
     // Extract rotation.
-    float m00 = m.get(0, 0);
-    float m10 = m.get(1, 0);
+    /* float m00 = m.get(0, 0); */
+    /* float m10 = m.get(1, 0); */
 
-    float c2 = Sqrt(m00 * m00 + m10 * m10);
+    /* float c2 = Sqrt(m00 * m00 + m10 * m10); */
 
-    Vec3 rotation = {};
-    rotation.x = -Atan2(m.get(1, 2), m.get(2, 2));
-    rotation.y = Atan2(-m.get(0, 2), c2);
-    ImGui::InputFloat3("Rotation", (float*)&rotation);
-    /* ImGui::InputFloat("Rx", &rx); */
+    /* Vec3 rotation = {}; */
+    /* rotation.x = -Atan2(m.get(1, 2), m.get(2, 2)); */
+    /* rotation.y = Atan2(-m.get(0, 2), c2); */
 
 
     ImGui::End();
@@ -153,8 +156,6 @@ int main() {
                          ImGuizmo::MODE::WORLD,
                          (float*)&m);
                          /* (float*)&identity); */
-
-
 
 
     DefaultUpdateOrbitCamera(game.input, &camera);

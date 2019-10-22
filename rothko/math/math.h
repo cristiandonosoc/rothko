@@ -387,6 +387,7 @@ union _mat4 {
 
   // Operators.
   float& get(int x, int y) { return elements[y][x]; }
+  float get(int x, int y) const { return elements[y][x]; }
 
   _v4<T> row(int index) const {
     return {cols[0][index], cols[1][index], cols[2][index], cols[3][index]};
@@ -543,6 +544,9 @@ inline Vec2 EulerFromDirectionDeg(const Vec3& direction) {
   Vec2 euler= EulerFromDirection(direction);
   return {ToDegrees(euler.x), ToDegrees(euler.y)};
 }
+
+// NOTE: This assumes the matrix has no scale!
+Vec3 EulerFromMat4(const Mat4&);
 
 // =================================================================================================
 // Quaternion
