@@ -1,34 +1,108 @@
 # Rothko
 
 A simple game engine written from scratch.
+This project is for now a learning experience, though I have used it already for
+some minor projects.
 
 The phylosophy of Rothko is "EaaL": Engine as a Library. The whole logic of the
 game is your own and Rothko only provides common functionality. The way the
 application is started, managed and loops is up to you, Rothko has no opinion.
 
-This differs from engines like Unity in which you have to abide to their workflow,
-specially using their own UI. Rothko provides a lot of tooling, but in the end
-the UI and logic is up to you.
+## Tasks
 
-Is a game engine tooling meant for C++ programmers.
+- Cross-Platform
+  - [x] Windows (MSVC)
+  - [x] Linux (clang)
+  - [x] MacOS (clang, compiled outside XCode)
+  - [ ] Android
+  - [ ] iPhone
+  - [ ] Fuchsia
+- Graphics
+  - [x] Graphics Agnostic API (Can be implemented by different graphics APIs).
+  - [x] OpenGL backend
+  - [ ] Vulkan Backend
+    - (~20%)I've done some work on this. It works for rendering a static scene but haven't
+      done pipeline switch, so it's stuck to a hardcoded shader.
+  - [ ] PBR
+  - [ ] Shadows
+- Window
+  - [x] Window Agnositc API
+  - [x] SDL integration
+- GUI
+  - [x] Imgui integration
+  - [ ] In game gui
+- Assets
+  - [ ] GLTF
+    - This is ~50% done. Can load models, but there is no material handling yet.
+  - [ ] Animations
+- Misc
+  - [x] C++17
+  - [x] Math library
+  - [x] Logging (multi-threaded)
+  - [x] Scene Graph
+  - [x] Debug Widgets (cubes, lines, etc.).
+  - [x] Camera support (perspective, rothko, movement, etc.).
+  - [ ] Multithreaded Tasks
+  - [ ] Memory Management
+  - [ ] Containers
+- Examples
+  - [x] Debug Widgets
+  - [x] Scene Graph
+  - [x] Simple Lighting
+  - [ ] Textured Lighting
+  - [ ] Gameboy Emulator
+    - On hold because it doesn't really exercide a 3D engine.
 
-## Cross Platform
+## Building
 
-Currently Rothko supports Windows, Linux and MacOS. MacOS has the caveat of the
-graphics API backend. Rothko itself is agnostic to the graphics API used to render,
-by using the concepts of RenderBackends. Current only the OpenGL backend has
-been fleshed out. This backend uses modern OpenGL (3.2+). If you cannot get a
-modern OpenGL context, then you don't get to use Rothko for now :(
+Rothko uses the [GN build system](https://gn.googlesource.com/gn/),
+which is used for Chrome and Fuchsia.
+Overall the process is pretty simple.
 
-A Vulkan backend is planned, which would enable you to use it on MacOS with
-MoltenVK.
+The first time,
+```
+gn gen out
+gn args out
+```
+
+In that file, we need to tell GN what dependencies to use for graphics and windows.
+```
+opengl_enabled = true
+
+// paths are relative to rothko. This is very annoying, yes.
+// I have a TODO to make it absolute.
+sdl_enabled = true
+sdl_include_path = "../../../../../include"
+sdl_lib_path = "../../../../../source/SDL2-2.0.10/build/Debug/SDL2d.lib"
+```
+
+Finally to compile.
+```
+ninja -C out
+```
+
+On windows, you need to have cl.exe and other tools in the PATH.
+The easiest way to do this is to source this script (your actual path depends
+on where the Visual Studio installation is):
+
+```
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat
+```
+
+## Screenshots
+
+A simple lighting experiment
+![Simple Lighting](/images/simple_lighting.png)
+
+Some advance on the Gameboy Emulator (on hold right now)
+![Emulator](/images/emulator.png)
 
 ## About YCM
 
 I use YCM extensively, but every machine has it's own flags that differ a lot,
 specially in cross-platform development. For this, I have modified the
 `.ycm_extra_conf.py` YCM file to try to import a python file called
-`ycm_extra_conf_local.py'. This file should implement a function called
+`ycm_extra_conf_local.py`. This file should implement a function called
 `GetYCMLocalFlags` that should return a python array with the flags YCM style:
 
 ```
@@ -43,17 +117,4 @@ def GetYCMLocalFlags():
 
 This file is not tracked in versioning, so you must provide your own.
 
-## A bit of history
 
-I've been iterating (albeit very slowly) on these libraries/engine for a while.
-Every iteration that's worthwhile considering a change takes on another painter
-name. Rothko is currently the 4th iteration, though not all projects started
-with the purpose of being a general game engine:
-
-1. Renoir: Simple renderer with basic OpenGL instrospection. Used CMake.
-2. Picasso: Mainly worked as a shader editor. Similar to how Unity let you
-            change uniforms on a menu.
-3. Warhol: Generic game engine that handles basics: Abstracting renderer API,
-           basic math, memory management, very crude multithreading.
-4. Rothko: Cleanup over Warhol, meant to be used as a engine in a non-trivial
-           game project that uses this engine as a git submodule.

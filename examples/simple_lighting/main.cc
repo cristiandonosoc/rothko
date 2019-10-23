@@ -6,6 +6,8 @@
 #include <rothko/scene/camera.h>
 #include <rothko/scene/grid.h>
 #include <rothko/scene/scene_graph.h>
+#include <rothko/ui/imgui/imgui.h>
+#include <rothko/utils/strings.h>
 
 #include "shaders.h"
 
@@ -87,6 +89,98 @@ std::vector<std::pair<std::string, simple_lighting::ObjectShaderUBO::Frag::Mater
                    0.2f),
 };
 
+struct AppContext {
+  Vec4 clear_color = {0.45f, 0.55f, 0.60f, 1.00f};
+  OrbitCamera camera = {};
+
+  Vec3 light_pos = {};
+  Vec3 light_ambient = {1, 1, 1};
+  Vec3 light_diffuse = {0.3f, 0.3f, 0.3f};
+  Vec3 light_specular = {0.5f, 0.5f, 0.5f};
+};
+
+simple_lighting::ObjectShaderUBO CreateUBO(const AppContext& context ,Vec3 pos, Vec3 scale) {
+  simple_lighting::ObjectShaderUBO ubo = {};
+  ubo.vert.model = Translate(pos);
+  ubo.vert.model *= Scale(scale);
+
+  ubo.frag.material.ambient = {1, 1, 1};
+  ubo.frag.material.diffuse = {1, 1, 1};
+  ubo.frag.material.specular = {1, 1, 1};
+  ubo.frag.material.shininess = 128;
+
+  /* ubo.frag.light.pos = {}; */
+  /* ubo.frag.light.ambient = {0.3f, 0.3f, 0.3f}; */
+  /* ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f}; */
+
+  ubo.frag.light.pos = context.light_pos;
+  ubo.frag.light.ambient = context.light_ambient;
+  ubo.frag.light.diffuse = context.light_diffuse;
+  ubo.frag.light.specular = context.light_specular;
+
+  return ubo;
+}
+
+void CreateGUI(const imgui::ImguiContext& imgui, AppContext* context) {
+  if (ImGui::BeginMainMenuBar()) {
+    if (ImGui::BeginMenu("File")) {
+      ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Options")) {
+      ImGui::ColorEdit3("clear color", (float*)&context->clear_color);
+      ImGui::EndMenu();
+    }
+
+    auto framerate_str = StringPrintf("Application average %.3f ms/frame (%.1f FPS)",
+                                      1000.0f / ImGui::GetIO().Framerate,
+                                      ImGui::GetIO().Framerate);
+    float framerate_str_width = framerate_str.length() * imgui.font_size.x;
+
+    ImGui::GetWindowWidth();
+
+    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - framerate_str_width);
+    ImGui::Text("%s", framerate_str.c_str());
+
+    ImGui::EndMainMenuBar();
+  }
+
+  ImGui::Begin("Simple Lighting");
+
+  ImGui::Text("%s", "Camera");
+
+  static int projection = 0;
+  ImGui::RadioButton("Perspective", &projection, 0);
+  ImGui::RadioButton("Ortho", &projection, 1);
+
+  context->camera.projection_type =
+      projection == 0 ? ProjectionType::kProjection : ProjectionType::kOrthographic;
+
+  ImGui::InputFloat3("Pos", (float*)&context->camera.pos_);
+  ImGui::InputFloat3("Target", (float*)&context->camera.target);
+  ImGui::InputFloat2("Spherical Angles", (float*)&context->camera.angles);
+
+  {
+    ImGui::PushItemWidth(100.0f);
+    float fov = ToDegrees(context->camera.fov);
+    ImGui::InputFloat("FOV", &fov);
+    ImGui::SameLine();
+    ImGui::InputFloat("Aspect Ratio", &context->camera.aspect_ratio);
+    ImGui::PopItemWidth();
+  }
+
+  ImGui::Separator();
+  ImGui::Text("Light");
+
+  ImGui::InputFloat3("Pos", (float*)&context->light_pos);
+  ImGui::ColorEdit3("Ambient", (float*)&context->light_ambient);
+  ImGui::ColorEdit3("Diffuse", (float*)&context->light_diffuse);
+  ImGui::ColorEdit3("Specular", (float*)&context->light_specular);
+
+
+  ImGui::End();
+}
+
 };  // namespace
 
 int main() {
@@ -99,6 +193,11 @@ int main() {
   if (!InitGame(&game, &window_config, true))
     return 1;
 
+  PushConfig push_config = {};
+  // TODO(Cristian): Actually find the height of the bar.
+  push_config.viewport_pos = {};
+  push_config.viewport_size = game.window.screen_size - Int2{0, 20};
+
   Shader object_shader = simple_lighting::CreateObjectShader(game.renderer.get());
   if (!Valid(object_shader))
     return 1;
@@ -107,8 +206,11 @@ int main() {
   if (!Valid(light_shader))
     return 1;
 
+
+  AppContext app_context = {};
+
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;
-  OrbitCamera camera = OrbitCamera::FromLookAt({5, 5, 5}, {}, ToRadians(60.0f), aspect_ratio);
+  app_context.camera = OrbitCamera::FromLookAt({5, 5, 5}, {}, ToRadians(60.0f), aspect_ratio);
 
   Grid grid;
   if (!Init(game.renderer.get(), &grid, "main-grid"))
@@ -136,29 +238,43 @@ int main() {
   std::vector<simple_lighting::ObjectShaderUBO> ubos;
   ubos.reserve(kMaterials.size());
 
-  int i = 0;
-  constexpr int kMaxRow = 4;
-  for (auto& [name, mat] : kMaterials) {
-    simple_lighting::ObjectShaderUBO ubo = {};
-    float x = i % kMaxRow - 1;
-    float y = i / kMaxRow;
-    ubo.vert.model = Translate({x, y, 0});
-    ubo.vert.model *= Scale(0.5f);
-
-    ubo.frag.light.ambient = {0.2f, 0.2f, 0.2f};
-    ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f};
-    ubo.frag.light.specular = {1, 1, 1};
-
-    mat.shininess *= 100;
-    ubo.frag.material = mat;
-
-    ubos.push_back(std::move(ubo));
-    i++;
+  ubos.push_back(CreateUBO(app_context, {0, 0, 0}, {10, 0.5f, 10}));
+  for (float z = 0; z < 5; z++) {
+    for (float x = 0; x < 5; x++) {
+      float xx = -4.0f + x * 2;
+      float zz = -4.0f + z * 2;
+      ubos.push_back(CreateUBO(app_context, {xx, 2, zz}, {0.5f, 3, 0.5f}));
+    }
   }
+
+
+  /* int i = 0; */
+  /* constexpr int kMaxRow = 4; */
+  /* for (auto& [name, mat] : kMaterials) { */
+  /*   simple_lighting::ObjectShaderUBO ubo = {}; */
+  /*   float x = i % kMaxRow - 1; */
+  /*   float y = i / kMaxRow; */
+  /*   ubo.vert.model = Translate({x, y, 0}); */
+  /*   ubo.vert.model *= Scale(0.5f); */
+
+  /*   ubo.frag.light.ambient = {0.2f, 0.2f, 0.2f}; */
+  /*   ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f}; */
+  /*   ubo.frag.light.specular = {1, 1, 1}; */
+
+  /*   mat.shininess *= 100; */
+  /*   ubo.frag.material = mat; */
+
+  /*   ubos.push_back(std::move(ubo)); */
+  /*   i++; */
+  /* } */
+
+  imgui::ImguiContext imgui;
+  if (!InitImgui(game.renderer.get(), &imgui))
+    return 1;
+
 
   bool running = true;
   bool move_light = true;
-  Vec3 light_pos = {};
   float time_delta = 0;
   while (running) {
     auto events = Update(&game);
@@ -169,6 +285,8 @@ int main() {
       }
     }
 
+    StartFrame(&imgui, &game.window, &game.time, &game.input);
+
     if (KeyUpThisFrame(&game.input, Key::kEscape)) {
       running = false;
       break;
@@ -178,31 +296,41 @@ int main() {
       move_light = !move_light;
     }
 
-    DefaultUpdateOrbitCamera(game.input, &camera);
+    DefaultUpdateOrbitCamera(game.input, &app_context.camera);
     Update(scene_graph.get());
 
     // Update the UBOs.
     if (move_light) {
       time_delta += game.time.frame_delta;
-      light_pos = Vec3(Sin(time_delta) * 4, 0.4f, 1);
+      app_context.light_pos = Vec3(Sin(time_delta) * 4, 0.4f, 1);
     }
 
-    light_ubo.vert.model = Translate(light_pos);
+    light_ubo.vert.model = Translate(app_context.light_pos);
     light_ubo.vert.model *= Scale(0.1f);
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Gray66()));
-    commands.push_back(GetPushCamera(camera));
+    commands.push_back(GetPushCamera(app_context.camera));
 
     // Draw the cubes.
     for (auto& ubo : ubos) {
-      ubo.frag.light.pos = light_pos;
+      // Update the light.
+      ubo.frag.light.pos = app_context.light_pos;
+      ubo.frag.light.pos = app_context.light_pos;
+      ubo.frag.light.ambient = app_context.light_ambient;
+      ubo.frag.light.diffuse = app_context.light_diffuse;
+      ubo.frag.light.specular = app_context.light_specular;
+
       commands.push_back(CreateRenderCommand(&cube_mesh, &object_shader, ubo));
     }
     commands.push_back(CreateRenderCommand(&light_cube_mesh, &light_shader, light_ubo));
     commands.push_back(grid.render_command);
 
     commands.push_back(PopCamera());
+    CreateGUI(imgui, &app_context);
+
+    auto imgui_commands = EndFrame(&imgui);
+    commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());
 
     RendererExecuteCommands(game.renderer.get(), std::move(commands));
 

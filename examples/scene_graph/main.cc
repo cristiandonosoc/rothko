@@ -9,6 +9,8 @@
 #include <rothko/scene/scene_graph.h>
 #include <rothko/ui/imgui.h>
 
+#include <third_party/imguizmo/ImGuizmo.h>
+
 using namespace rothko;
 using namespace rothko::imgui;
 
@@ -72,6 +74,10 @@ int main() {
   if (!InitImgui(game.renderer.get(), &imgui))
     return 1;
 
+
+  Mat4 m = Mat4::Identity();
+  bool op = false;
+
   bool running = true;
   while (running) {
     auto events = Update(&game);
@@ -88,6 +94,7 @@ int main() {
     }
 
     StartFrame(&imgui, &game.window, &game.time, &game.input);
+    ImGuizmo::BeginFrame();
 
     ImGui::Begin("Cube Example");
 
@@ -95,9 +102,61 @@ int main() {
                 1000.0f / ImGui::GetIO().Framerate,
                 ImGui::GetIO().Framerate);
 
+    ImGui::Separator();
+
+    for (int i = 0; i < 4; i++) {
+      auto row = m.row(i);
+      ImGui::InputFloat4("", (float*)&row);
+    }
+
+    ImGui::Separator();
+
+    // Extract translation.
+    Vec3 translation = {m.get(0, 3), m.get(1, 3), m.get(2, 3)};
+    ImGui::InputFloat3("Translation: ", (float*)&translation);
+
+
+    Vec3 rotation = EulerFromMat4(m);
+    ImGui::InputFloat3("Rotation", (float*)&rotation);
+    /* ImGui::InputFloat("Rx", &rx); */
+
+    // Extract Scale.
+    Vec3 scale = {};
+    scale.x = Length(ToVec3(m.row(0)));
+    scale.y = Length(ToVec3(m.row(1)));
+    scale.z = Length(ToVec3(m.row(2)));
+
+    ImGui::InputFloat3("Scale", (float*)&scale);
+
+    // Extract rotation.
+    /* float m00 = m.get(0, 0); */
+    /* float m10 = m.get(1, 0); */
+
+    /* float c2 = Sqrt(m00 * m00 + m10 * m10); */
+
+    /* Vec3 rotation = {}; */
+    /* rotation.x = -Atan2(m.get(1, 2), m.get(2, 2)); */
+    /* rotation.y = Atan2(-m.get(0, 2), c2); */
+
+
     ImGui::End();
 
-    ImGui::ShowDemoWindow();
+    if (KeyUpThisFrame(&game.input, Key::kSpace))
+      op = !op;
+
+    auto operation = ImGuizmo::OPERATION::ROTATE;
+    if (op)
+      operation = ImGuizmo::OPERATION::SCALE;
+
+    PushCamera push_camera = GetPushCamera(camera);
+    ImGuizmo::SetRect(0, 0, game.window.screen_size.width, game.window.screen_size.height);
+    ImGuizmo::Manipulate((float*)&push_camera.view,
+                         (float*)&push_camera.projection,
+                         operation,
+                         ImGuizmo::MODE::WORLD,
+                         (float*)&m);
+                         /* (float*)&identity); */
+
 
     DefaultUpdateOrbitCamera(game.input, &camera);
 
@@ -114,7 +173,23 @@ int main() {
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Graycc()));
-    commands.push_back(GetPushCamera(camera));
+    commands.push_back(push_camera);
+
+    Transform transform;
+    transform.position = {-3, 0, 0};
+    transform.rotation = rotation;
+    transform.scale = scale;
+    Update(&transform);
+
+    SceneNode node = {};
+    /* m.get(0, 3) = 3; */
+    node.transform.world_matrix = m;
+    node.transform.world_matrix.get(0, 3) = 3;
+    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, &node));
+
+    SceneNode node2 = node;
+    node2.transform = transform;
+    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, &node2));
 
     commands.push_back(GetCubeRenderCommand(&cube, &default_shader, root));
     commands.push_back(GetCubeRenderCommand(&cube, &default_shader, child));

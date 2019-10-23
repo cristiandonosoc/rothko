@@ -29,7 +29,7 @@ constexpr float kRadians90 = kPI / 2.0f;
 constexpr float kRadians180 = kPI;
 constexpr float kRadians360 = 2.0f * kPI;
 
-float SquareRoot(float);
+float Sqrt(float);
 
 float Sin(float radian_angle);
 float Asin(float radian_angle);
@@ -98,11 +98,11 @@ union _v2 {
   // Constructors.
 
   _v2() = default;
-  _v2(T x, T y) { this->x = x; this->y = y; }
+  _v2(T _x, T _y) { x = _x; y = _y; }
 
   // Int2 <-> Vec2 conversions.
   template <typename U>
-  explicit _v2(const _v2<U>& v) { this->x = (T)v.x, this->y = (T)v.y; }
+  explicit _v2(const _v2<U>& v) { x = (T)v.x, y = (T)v.y; }
 
   static _v2 Zero() { return {0, 0}; }
 
@@ -150,7 +150,7 @@ template <typename T>
 T LengthSq(const _v2<T>& v) { return Dot(v, v); }
 
 template <typename T>
-float Length(const _v2<T>& v) { return SquareRoot(LengthSq(v)); }
+float Length(const _v2<T>& v) { return Sqrt(LengthSq(v)); }
 
 Vec2 Normalize(const Vec2& v);
 
@@ -176,7 +176,11 @@ union _v3 {
   // Constructors.
 
   _v3() = default;
-  _v3(T x, T y, T z) { this->x = x; this->y = y; this->z = z; }
+  _v3(T _x, T _y, T _z) { x = _x; y = _y; z = _z; }
+
+  // Int3 <-> Vec3 conversions.
+  template <typename U>
+  explicit _v3(const _v3<U>& v) { x = (T)v.x, y = (T)v.y; z = (T)v.z; }
 
   static _v3 Zero() { return {0, 0, 0}; }
 
@@ -235,7 +239,7 @@ template <typename T>
 T LengthSq(const _v3<T>& v) { return Dot(v, v); }
 
 template <typename T>
-float Length(const _v3<T>& v) { return SquareRoot(LengthSq(v)); }
+float Length(const _v3<T>& v) { return Sqrt(LengthSq(v)); }
 
 template <typename T, typename Func>
 _v3<T> Map(const _v3<T>& v, Func f) { return _v3<T>(f(v.x), f(v.y), f(v.z)); }
@@ -262,6 +266,10 @@ union _v4 {
 
   _v4() = default;
   _v4(T _x, T _y, T _z, T _w) { x = _x; y = _y; z = _z; w = _w; }
+
+  // Int4 <-> Vec4 conversions.
+  template <typename U>
+  explicit _v4(const _v4<U>& v) { x = (T)v.x, y = (T)v.y; z = (T)v.z; w = (T)v.w; }
 
   static _v4 Zero() { return {0, 0, 0, 0}; }
 
@@ -306,7 +314,7 @@ template <typename T>
 T LengthSq(const _v4<T>& v) { return Dot(v, v); }
 
 template <typename T>
-float Length(const _v4<T>& v) { return SquareRoot(LengthSq(v)); }
+float Length(const _v4<T>& v) { return Sqrt(LengthSq(v)); }
 
 Vec4 Normalize(const Vec4& v);
 
@@ -379,6 +387,7 @@ union _mat4 {
 
   // Operators.
   float& get(int x, int y) { return elements[y][x]; }
+  float get(int x, int y) const { return elements[y][x]; }
 
   _v4<T> row(int index) const {
     return {cols[0][index], cols[1][index], cols[2][index], cols[3][index]};
@@ -535,6 +544,9 @@ inline Vec2 EulerFromDirectionDeg(const Vec3& direction) {
   Vec2 euler= EulerFromDirection(direction);
   return {ToDegrees(euler.x), ToDegrees(euler.y)};
 }
+
+// NOTE: This assumes the matrix has no scale!
+Vec3 EulerFromMat4(const Mat4&);
 
 // =================================================================================================
 // Quaternion
