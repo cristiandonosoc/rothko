@@ -10,17 +10,19 @@ application is started, managed and loops is up to you, Rothko has no opinion.
 
 ## Tasks
 
-- Platforms
+- Cross-Platform
   - [x] Windows (MSVC)
   - [x] Linux (clang)
   - [x] MacOS (clang, compiled outside XCode)
   - [ ] Android
-  - [ ] IPhone
+  - [ ] iPhone
   - [ ] Fuchsia
 - Graphics
   - [x] Graphics Agnostic API (Can be implemented by different graphics APIs).
   - [x] OpenGL backend
-  - [ ] Vulkan Backend (20%)
+  - [ ] Vulkan Backend
+    - (~20%)I've done some work on this. It works for rendering a static scene but haven't
+      done pipeline switch, so it's stuck to a hardcoded shader.
   - [ ] PBR
   - [ ] Shadows
 - Window
@@ -30,7 +32,8 @@ application is started, managed and loops is up to you, Rothko has no opinion.
   - [x] Imgui integration
   - [ ] In game gui
 - Assets
-  - [ ] GLTF (80% - PBR handling missing).
+  - [ ] GLTF
+    - This is ~50% done. Can load models, but there is no material handling yet.
   - [ ] Animations
 - Misc
   - [x] C++17
@@ -66,7 +69,8 @@ In that file, we need to tell GN what dependencies to use for graphics and windo
 ```
 opengl_enabled = true
 
-// paths are relative to rothko. There's a TODO to make it objective.
+// paths are relative to rothko. This is very annoying, yes.
+// I have a TODO to make it absolute.
 sdl_enabled = true
 sdl_include_path = "../../../../../include"
 sdl_lib_path = "../../../../../source/SDL2-2.0.10/build/Debug/SDL2d.lib"
@@ -98,7 +102,7 @@ Some advance on the Gameboy Emulator (on hold right now)
 I use YCM extensively, but every machine has it's own flags that differ a lot,
 specially in cross-platform development. For this, I have modified the
 `.ycm_extra_conf.py` YCM file to try to import a python file called
-`ycm_extra_conf_local.py'. This file should implement a function called
+`ycm_extra_conf_local.py`. This file should implement a function called
 `GetYCMLocalFlags` that should return a python array with the flags YCM style:
 
 ```
