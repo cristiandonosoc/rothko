@@ -36,7 +36,7 @@ const char* ToString(PrimitiveType type) {
   return "<unknown>";
 }
 
-// Clear Action-------------------------------------------------------------------------------------
+// Clear Frame -------------------------------------------------------------------------------------
 
 std::string ToString(const ClearFrame& clear_frame) {
   std::stringstream ss;
@@ -49,9 +49,9 @@ std::string ToString(const ClearFrame& clear_frame) {
   return ss.str();
 }
 
-ClearFrame ClearFrame::FromColor(uint32_t color) {
+ClearFrame ClearFrame::FromColor(Color c) {
   ClearFrame clear = {};
-  clear.color = color;
+  clear.color = c.r << 24 | c.g << 16 | c.b << 8 | c.a;
   return clear;
 }
 

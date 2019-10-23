@@ -51,8 +51,7 @@ const char* ToString(PrimitiveType);
 struct ClearFrame {
   static constexpr RenderCommandType kType = RenderCommandType::kClearFrame;
 
-  static ClearFrame FromColor(uint32_t);
-  static ClearFrame FromColor(Color color) { return FromColor(ToUint32(color)); }
+  static ClearFrame FromColor(Color color);
 
   bool clear_depth = true;
   bool clear_color = true;

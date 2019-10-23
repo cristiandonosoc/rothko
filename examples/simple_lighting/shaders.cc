@@ -61,7 +61,7 @@ void main() {
   vec3 unit_normal = normalize(normal);
 
   // Ambient light.
-  vec3 ambient_light = light.ambient * material.ambient;
+  vec3 ambient_light = light.ambient * material.ambient * 0.2f;
 
   // Diffuse light.
   vec3 light_dir = normalize(light.pos - pos);
