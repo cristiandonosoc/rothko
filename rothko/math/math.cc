@@ -24,7 +24,7 @@ float Acos(float radian_angle) { return std::acos(radian_angle); }
 float Tan(float radian_angle) { return std::tan(radian_angle); }
 float Atan(float radian_angle) { return std::atan(radian_angle); }
 
-float Atan2(float x, float y) { return std::atan2(x, y); }
+float Atan2(float x, float y) { return std::atan2f(x, y); }
 
 //Vectors ==========================================================================================
 
@@ -276,6 +276,20 @@ Vec3 EulerFromMat4(const Mat4& m) {
   }
 
   return result;
+}
+
+void DecomposeTransformMatrix(const Mat4& m, Vec3* position, Vec3* rotation, Vec3* scale) {
+  position->x = m.get(0, 3);
+  position->y = m.get(1, 3);
+  position->z = m.get(2, 3);
+
+  rotation->x = -Atan2(m.get(2, 1), m.get(2, 2));
+  rotation->y = -Atan2(-m.get(2, 0), Sqrt(m.get(2, 1) * m.get(2, 1) + m.get(2, 2) * m.get(2, 2)));
+  rotation->z = -Atan2(m.get(1, 0), m.get(0, 0));
+
+  scale->x = Length(ToVec3(m.row(0)));
+  scale->y = Length(ToVec3(m.row(1)));
+  scale->z = Length(ToVec3(m.row(2)));
 }
 
 // Quaternion ======================================================================================

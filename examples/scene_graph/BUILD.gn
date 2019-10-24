@@ -10,6 +10,7 @@ executable("scene_graph") {
     "//rothko:game",
     "//rothko/graphics/default_shaders",
     "//rothko/ui:imgui",
+    "//rothko/widgets",
     "//rothko/window:sdl_opengl",
     "//third_party:imguizmo",
   ]

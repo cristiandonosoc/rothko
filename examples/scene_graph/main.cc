@@ -8,7 +8,7 @@
 #include <rothko/scene/grid.h>
 #include <rothko/scene/scene_graph.h>
 #include <rothko/ui/imgui.h>
-
+#include <rothko/widgets/widgets.h>
 #include <third_party/imguizmo/ImGuizmo.h>
 
 using namespace rothko;
@@ -88,6 +88,8 @@ int main() {
       }
     }
 
+    DefaultUpdateOrbitCamera(game.input, &camera);
+
     if (KeyUpThisFrame(&game.input, Key::kEscape)) {
       running = false;
       break;
@@ -104,40 +106,14 @@ int main() {
 
     ImGui::Separator();
 
-    for (int i = 0; i < 4; i++) {
-      auto row = m.row(i);
-      ImGui::InputFloat4("", (float*)&row);
-    }
+    ImGui::InputFloat3("Position", (float*)&root->transform.position);
 
     ImGui::Separator();
 
-    // Extract translation.
-    Vec3 translation = {m.get(0, 3), m.get(1, 3), m.get(2, 3)};
-    ImGui::InputFloat3("Translation: ", (float*)&translation);
-
-
-    Vec3 rotation = EulerFromMat4(m);
-    ImGui::InputFloat3("Rotation", (float*)&rotation);
-    /* ImGui::InputFloat("Rx", &rx); */
-
-    // Extract Scale.
-    Vec3 scale = {};
-    scale.x = Length(ToVec3(m.row(0)));
-    scale.y = Length(ToVec3(m.row(1)));
-    scale.z = Length(ToVec3(m.row(2)));
-
-    ImGui::InputFloat3("Scale", (float*)&scale);
-
-    // Extract rotation.
-    /* float m00 = m.get(0, 0); */
-    /* float m10 = m.get(1, 0); */
-
-    /* float c2 = Sqrt(m00 * m00 + m10 * m10); */
-
-    /* Vec3 rotation = {}; */
-    /* rotation.x = -Atan2(m.get(1, 2), m.get(2, 2)); */
-    /* rotation.y = Atan2(-m.get(0, 2), c2); */
-
+    for (int i = 0; i < 4; i++) {
+      auto row = root->transform.world_matrix.row(i);
+      ImGui::InputFloat4("", (float*)&row);
+    }
 
     ImGui::End();
 
@@ -150,19 +126,18 @@ int main() {
 
     PushCamera push_camera = GetPushCamera(camera);
     ImGuizmo::SetRect(0, 0, game.window.screen_size.width, game.window.screen_size.height);
-    ImGuizmo::Manipulate((float*)&push_camera.view,
-                         (float*)&push_camera.projection,
-                         operation,
-                         ImGuizmo::MODE::WORLD,
-                         (float*)&m);
-                         /* (float*)&identity); */
+    /* ImGuizmo::Manipulate((float*)&push_camera.view, */
+    /*                      (float*)&push_camera.projection, */
+    /*                      operation, */
+    /*                      ImGuizmo::MODE::WORLD, */
+    /*                      (float*)&m); */
+    /*                      /1* (float*)&identity); *1/ */
 
 
-    DefaultUpdateOrbitCamera(game.input, &camera);
 
-    float angle = game.time.seconds * ToRadians(20.0f);
-    root->transform.rotation.x = -angle;
-    root->transform.rotation.y = angle;
+    /* float angle = game.time.seconds * ToRadians(20.0f); */
+    /* root->transform.rotation.x = -angle; */
+    /* root->transform.rotation.y = angle; */
 
     float child_angle = game.time.seconds * ToRadians(33.0f);
     child->transform.position = {2 * Cos(child_angle), 0, 2 * Sin(child_angle)};
@@ -171,15 +146,32 @@ int main() {
 
     Update(scene_graph.get());
 
+    TransformWidget(WidgetOperation::kScale, push_camera, &root->transform);
+
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Graycc()));
     commands.push_back(push_camera);
 
     Transform transform;
-    transform.position = {-3, 0, 0};
-    transform.rotation = rotation;
-    transform.scale = scale;
+    /* transform.position = {-3, 0, 0}; */
+    /* transform.rotation = rotation; */
+    /* transform.scale = scale; */
+    DecomposeTransformMatrix(m, &transform.position, &transform.rotation, &transform.scale);
     Update(&transform);
+
+    Transform decomposed = {};
+    ImGuizmo::DecomposeMatrixToComponents((float*)&m,
+                                          (float*)&decomposed.position,
+                                          (float*)&decomposed.rotation,
+                                          (float*)&decomposed.scale);
+
+    Update(&decomposed);
+
+    SceneNode decomposed_node = {};
+    decomposed_node.transform = decomposed;
+    decomposed_node.transform.world_matrix.get(2, 3) = -3;
+    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, &decomposed_node));
+
 
     SceneNode node = {};
     /* m.get(0, 3) = 3; */
@@ -189,6 +181,7 @@ int main() {
 
     SceneNode node2 = node;
     node2.transform = transform;
+    node2.transform.world_matrix.get(0, 3) = -3;
     commands.push_back(GetCubeRenderCommand(&cube, &default_shader, &node2));
 
     commands.push_back(GetCubeRenderCommand(&cube, &default_shader, root));

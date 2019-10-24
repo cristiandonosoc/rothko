@@ -1,0 +1,19 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+source_set("widgets") {
+  sources = [
+    "widgets.cc",
+    "widgets.h",
+  ]
+
+  deps = [
+    "//rothko/graphics",
+    "//rothko/math",
+    "//rothko/scene",
+  ]
+
+  public_deps = [
+    "//third_party:imguizmo",
+  ]
+}

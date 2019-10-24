@@ -43,5 +43,9 @@ Mat4 CalculateTransformMatrix(const Transform&);
 // If |scene_graph| is null or if |transform.parent| is not set, will use the local transform.
 void Update(Transform*);
 
+// NOTE: It will NOT update the transform, so only the transform vectors will be changed.
+//       This is *global* decomposition, so this will make it out of sync with parent
+//       transformations.
+void TransformMatrixToTransform(const Mat4&, Transform*);
 
 }  // namespace rothko

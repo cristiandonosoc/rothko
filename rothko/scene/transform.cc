@@ -24,4 +24,8 @@ void Update(Transform* transform) {
   transform->world_matrix = CalculateTransformMatrix(*transform);
 }
 
+void TransformMatrixToTransform(const Mat4& m, Transform* transform) {
+  DecomposeTransformMatrix(m, &transform->position, &transform->rotation, &transform->scale);
+}
+
 }  // namespace rothko

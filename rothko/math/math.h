@@ -528,6 +528,8 @@ Mat4 Ortho(float left, float right, float bottom, float top, float near, float f
 // Returns |Frustrum| after calculating the values.
 Mat4 Perspective(float fov, float aspect_ratio, float near, float far);
 
+void DecomposeTransformMatrix(const Mat4&, Vec3* position, Vec3* rotation, Vec3* scale);
+
 // =================================================================================================
 // Euler Angles
 // =================================================================================================
@@ -547,6 +549,7 @@ inline Vec2 EulerFromDirectionDeg(const Vec3& direction) {
 
 // NOTE: This assumes the matrix has no scale!
 Vec3 EulerFromMat4(const Mat4&);
+
 
 // =================================================================================================
 // Quaternion
