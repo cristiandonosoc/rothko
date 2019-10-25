@@ -29,6 +29,12 @@ struct Transform {
   // Represents the overal transformation matrix. Recreated by |Update|.
   // Should not be touched directly.
   Mat4 world_matrix;
+
+  Transform operator+(const Transform& t) const;
+  void operator+=(const Transform& t);
+
+  Transform operator-(const Transform& t) const;
+  void operator-=(const Transform& t);
 };
 #pragma pack(pop)
 static_assert(sizeof(Transform) == 100);
@@ -46,6 +52,6 @@ void Update(Transform*);
 // NOTE: It will NOT update the transform, so only the transform vectors will be changed.
 //       This is *global* decomposition, so this will make it out of sync with parent
 //       transformations.
-void TransformMatrixToTransform(const Mat4&, Transform*);
+Transform TransformMatrixToTransform(const Mat4&);
 
 }  // namespace rothko

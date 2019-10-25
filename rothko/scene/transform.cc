@@ -7,7 +7,37 @@
 
 namespace rothko {
 
-// Transform ---------------------------------------------------------------------------------------
+// Transform Operations ----------------------------------------------------------------------------
+
+Transform Transform::operator+(const Transform& t) const {
+  Transform result;
+  result.position = position + t.position;
+  result.rotation = rotation + t.rotation;
+  result.scale = scale + t.scale;
+  return result;
+}
+
+void Transform::operator+=(const Transform& t) {
+  position += t.position;
+  rotation += t.rotation;
+  scale += t.scale;
+}
+
+Transform Transform::operator-(const Transform& t) const {
+  Transform result;
+  result.position = position - t.position;
+  result.rotation = rotation - t.rotation;
+  result.scale = scale - t.scale;
+  return result;
+}
+
+void Transform::operator-=(const Transform& t) {
+  position -= t.position;
+  rotation -= t.rotation;
+  scale -= t.scale;
+}
+
+// Functions ---------------------------------------------------------------------------------------
 
 Mat4 CalculateTransformMatrix(const Transform& transform) {
   Mat4 result = Mat4::Identity();
@@ -24,8 +54,10 @@ void Update(Transform* transform) {
   transform->world_matrix = CalculateTransformMatrix(*transform);
 }
 
-void TransformMatrixToTransform(const Mat4& m, Transform* transform) {
-  DecomposeTransformMatrix(m, &transform->position, &transform->rotation, &transform->scale);
+Transform TransformMatrixToTransform(const Mat4& m) {
+  Transform transform = {};
+  DecomposeTransformMatrix(m, &transform.position, &transform.rotation, &transform.scale);
+  return transform;
 }
 
 }  // namespace rothko

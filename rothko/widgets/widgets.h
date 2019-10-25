@@ -18,4 +18,7 @@ enum class WidgetOperation {
 //       Uses |transform.world_matrix|, so it probably should be updated already.
 void TransformWidget(WidgetOperation, const PushCamera&, Transform*);
 
+// Returns the diff transform.
+Transform TransformWidget(WidgetOperation, const PushCamera&, const Transform& source);
+
 }  // namespace rothko

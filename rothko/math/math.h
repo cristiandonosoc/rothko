@@ -451,9 +451,6 @@ using IntMat4 = _mat4<int>;
 using Mat4 = _mat4<float>;
 
 template <typename T>
-void SetRowCol(_mat4<T>* m, T x, T y) { (*m)[y][x]; }
-
-template <typename T>
 _v4<T> GetRow(const _mat4<T>& m, int index) {
   return m.row(index);
 }
@@ -462,6 +459,11 @@ template <typename T>
 _v4<T> GetCol(const _mat4<T>& m, int index) {
   return m.col(index);
 }
+
+Mat4 Inverse(const Mat4&);
+
+template <typename T>
+void SetRowCol(_mat4<T>* m, T x, T y) { (*m)[y][x]; }
 
 std::string ToString(const Mat4&);
 

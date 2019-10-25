@@ -25,16 +25,35 @@ ImGuizmo::OPERATION GetImGuizmoOperation(WidgetOperation op) {
   return ImGuizmo::OPERATION::TRANSLATE;
 }
 
+bool IsZero(const Transform& t) {
+  return IsZero(t.position) && IsZero(t.rotation) && IsZero(t.scale);
+}
+
 }  // namespace
 
-void TransformWidget(WidgetOperation op, const PushCamera& push_camera,Transform* transform) {
-  ImGuizmo::Manipulate((float*)&push_camera.view,
-                       (float*)&push_camera.projection,
+void TransformWidget(WidgetOperation op, const PushCamera& camera, Transform* transform) {
+  ImGuizmo::Manipulate((float*)&camera.view,
+                       (float*)&camera.projection,
                        GetImGuizmoOperation(op),
                        ImGuizmo::MODE::WORLD,
                        (float*)&transform->world_matrix);
 
-  TransformMatrixToTransform(transform->world_matrix, transform);
+  *transform = TransformMatrixToTransform(transform->world_matrix);
+}
+
+Transform TransformWidget(WidgetOperation op, const PushCamera& camera, const Transform& source) {
+  Mat4 m = source.world_matrix;
+  ImGuizmo::Manipulate((float*)&camera.view,
+                       (float*)&camera.projection,
+                       GetImGuizmoOperation(op),
+                       ImGuizmo::MODE::WORLD,
+                       (float*)&m);
+
+  Transform dest = TransformMatrixToTransform(m);
+  Transform diff = source - dest;
+  if (IsZero(diff))
+    return source;
+  return source - diff;
 }
 
 }  // namespace rothko

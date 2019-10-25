@@ -76,6 +76,8 @@ Vec4 Normalize(const Vec4& v) {
   return result;
 }
 
+// Matrices ========================================================================================
+
 // Transformation Matrices =========================================================================
 
 Mat4 FromRows(Vec3 x, Vec3 y, Vec3 z) {

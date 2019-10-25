@@ -31,6 +31,27 @@ RenderMesh GetCubeRenderCommand(Mesh* mesh, Shader* shader, SceneNode* node) {
   return render_mesh;
 }
 
+void CreateGUI(SceneNode* root) {
+  ImGui::Begin("Cube Example");
+
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+              1000.0f / ImGui::GetIO().Framerate,
+              ImGui::GetIO().Framerate);
+
+  ImGui::Separator();
+
+  ImGui::InputFloat3("Position", (float*)&root->transform.position);
+
+  ImGui::Separator();
+
+  for (int i = 0; i < 4; i++) {
+    auto row = root->transform.world_matrix.row(i);
+    ImGui::InputFloat4("", (float*)&row);
+  }
+
+  ImGui::End();
+}
+
 }  // namespace
 
 int main() {
@@ -60,24 +81,41 @@ int main() {
 
   auto scene_graph = std::make_unique<SceneGraph>();
   SceneNode* root = AddNode(scene_graph.get());
-
   SceneNode* child = AddNode(scene_graph.get(), root);
-  child->transform.scale = {0.3f, 0.3f, 0.3f};
-
-  SceneNode* child2 = AddNode(scene_graph.get(), root);
-  child2->transform.scale = {0.1f, 0.1f, 0.1f};
-
   SceneNode* grand_child = AddNode(scene_graph.get(), child);
-  grand_child->transform.scale = {0.7f, 0.3f, 1.3f};
+  SceneNode* grand_child2 = AddNode(scene_graph.get(), child);
+  SceneNode* child2 = AddNode(scene_graph.get(), root);
+
+  child->transform.position = {3, 0, 0};
+  child->transform.scale *= 0.5f;
+
+  child2->transform.position = {0 ,0, 3};
+  child2->transform.scale *= 0.5f;
+
+  grand_child->transform.position = {2, 2, 0};
+  grand_child->transform.scale *= 0.5f;
+  grand_child2->transform.position = {0, -2, 2};
+  grand_child2->transform.scale *= 0.5f;
+
+  SceneNode* nodes[] = {
+      root,
+      child,
+      grand_child,
+      grand_child2,
+      child2,
+  };
+
+  Update(scene_graph.get());
 
   ImguiContext imgui;
   if (!InitImgui(game.renderer.get(), &imgui))
     return 1;
 
 
-  Mat4 m = Mat4::Identity();
+  /* Mat4 m = Mat4::Identity(); */
   bool op = false;
 
+  SceneNode* current_node = nodes[0];
   bool running = true;
   while (running) {
     auto events = Update(&game);
@@ -96,33 +134,19 @@ int main() {
     }
 
     StartFrame(&imgui, &game.window, &game.time, &game.input);
+
     ImGuizmo::BeginFrame();
-
-    ImGui::Begin("Cube Example");
-
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                1000.0f / ImGui::GetIO().Framerate,
-                ImGui::GetIO().Framerate);
-
-    ImGui::Separator();
-
-    ImGui::InputFloat3("Position", (float*)&root->transform.position);
-
-    ImGui::Separator();
-
-    for (int i = 0; i < 4; i++) {
-      auto row = root->transform.world_matrix.row(i);
-      ImGui::InputFloat4("", (float*)&row);
-    }
-
-    ImGui::End();
 
     if (KeyUpThisFrame(&game.input, Key::kSpace))
       op = !op;
 
-    auto operation = ImGuizmo::OPERATION::ROTATE;
-    if (op)
-      operation = ImGuizmo::OPERATION::SCALE;
+    uint32_t base = (uint32_t)Key::k1;
+    for (int i = 0; i < ARRAY_SIZE(nodes); i++) {
+      Key key = (Key)(base + i);
+      if (KeyUpThisFrame(&game.input, key))
+        current_node = nodes[i];
+    }
+
 
     PushCamera push_camera = GetPushCamera(camera);
     ImGuizmo::SetRect(0, 0, game.window.screen_size.width, game.window.screen_size.height);
@@ -139,55 +163,64 @@ int main() {
     /* root->transform.rotation.x = -angle; */
     /* root->transform.rotation.y = angle; */
 
-    float child_angle = game.time.seconds * ToRadians(33.0f);
-    child->transform.position = {2 * Cos(child_angle), 0, 2 * Sin(child_angle)};
-    child2->transform.position = {0, 2 * Cos(2 * child_angle), 2 * Sin(2 * child_angle)};
-    grand_child->transform.position = {0, 1, 0};
+    /* float child_angle = game.time.seconds * ToRadians(33.0f); */
+    /* child->transform.position = {2 * Cos(child_angle), 0, 2 * Sin(child_angle)}; */
+    /* child2->transform.position = {0, 2 * Cos(2 * child_angle), 2 * Sin(2 * child_angle)}; */
+    /* grand_child->transform.position = {0, 1, 0}; */
 
-    Update(scene_graph.get());
 
-    TransformWidget(WidgetOperation::kScale, push_camera, &root->transform);
+    current_node->transform =
+        TransformWidget(WidgetOperation::kTranslation, push_camera, current_node->transform);
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Graycc()));
     commands.push_back(push_camera);
 
-    Transform transform;
-    /* transform.position = {-3, 0, 0}; */
-    /* transform.rotation = rotation; */
-    /* transform.scale = scale; */
-    DecomposeTransformMatrix(m, &transform.position, &transform.rotation, &transform.scale);
-    Update(&transform);
+    /* Transform transform; */
+    /* /1* transform.position = {-3, 0, 0}; *1/ */
+    /* /1* transform.rotation = rotation; *1/ */
+    /* /1* transform.scale = scale; *1/ */
+    /* DecomposeTransformMatrix(m, &transform.position, &transform.rotation, &transform.scale); */
+    /* Update(&transform); */
 
-    Transform decomposed = {};
-    ImGuizmo::DecomposeMatrixToComponents((float*)&m,
-                                          (float*)&decomposed.position,
-                                          (float*)&decomposed.rotation,
-                                          (float*)&decomposed.scale);
+    /* Transform decomposed = {}; */
+    /* ImGuizmo::DecomposeMatrixToComponents((float*)&m, */
+    /*                                       (float*)&decomposed.position, */
+    /*                                       (float*)&decomposed.rotation, */
+    /*                                       (float*)&decomposed.scale); */
 
-    Update(&decomposed);
+    /* Update(&decomposed); */
 
-    SceneNode decomposed_node = {};
-    decomposed_node.transform = decomposed;
-    decomposed_node.transform.world_matrix.get(2, 3) = -3;
-    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, &decomposed_node));
+    Update(scene_graph.get());
+
+    CreateGUI(root);
+
+    /* SceneNode decomposed_node = {}; */
+    /* decomposed_node.transform = decomposed; */
+    /* decomposed_node.transform.world_matrix.get(2, 3) = -3; */
+    /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, &decomposed_node)); */
 
 
-    SceneNode node = {};
-    /* m.get(0, 3) = 3; */
-    node.transform.world_matrix = m;
-    node.transform.world_matrix.get(0, 3) = 3;
-    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, &node));
+    /* SceneNode node = {}; */
+    /* /1* m.get(0, 3) = 3; *1/ */
+    /* node.transform.world_matrix = m; */
+    /* node.transform.world_matrix.get(0, 3) = 3; */
+    /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, &node)); */
 
-    SceneNode node2 = node;
-    node2.transform = transform;
-    node2.transform.world_matrix.get(0, 3) = -3;
-    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, &node2));
+    /* SceneNode node2 = node; */
+    /* node2.transform = transform; */
+    /* node2.transform.world_matrix.get(0, 3) = -3; */
+    /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, &node2)); */
 
-    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, root));
-    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, child));
-    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, child2));
-    commands.push_back(GetCubeRenderCommand(&cube, &default_shader, grand_child));
+    /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, root)); */
+    /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, child)); */
+    /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, child2)); */
+    /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, grand_child)); */
+
+    for (SceneNode* node : nodes) {
+      commands.push_back(GetCubeRenderCommand(&cube, &default_shader, node));
+    }
+
     commands.push_back(grid.render_command);
 
     auto imgui_commands = EndFrame(&imgui);
