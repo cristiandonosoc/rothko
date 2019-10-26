@@ -3,11 +3,11 @@
 
 #include "rothko/math/math.h"
 
+#include <cassert>
 #include <cmath>
 
-#include "rothko/utils/strings.h"
-
 #include "rothko/logging/logging.h"
+#include "rothko/utils/strings.h"
 
 namespace rothko {
 
@@ -77,6 +77,95 @@ Vec4 Normalize(const Vec4& v) {
 }
 
 // Matrices ========================================================================================
+
+// Mat3 --------------------------------------------------------------------------------------------
+
+float Determinant(const Mat3& m) {
+  // clang-format off
+  float a = m.get(0, 0); float b = m.get(0, 1); float c = m.get(0, 2);
+  float d = m.get(1, 0); float e = m.get(1, 1); float f = m.get(1, 2);
+  float g = m.get(2, 0); float h = m.get(2, 1); float i = m.get(2, 2);
+
+  return a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h-e*g);
+  // clang-format on
+}
+
+// Mat4 --------------------------------------------------------------------------------------------
+
+namespace {
+
+// The indices are the rows and columns to ignore.
+Mat3 GetAdjugateSubMatrix(const Mat4& m, int ignore_x, int ignore_y) {
+  int current_x = 0;
+  int current_y = 0;
+
+  Mat3 result = {};
+  for (int y = 0; y < 4; y++) {
+    if (y == ignore_y)
+      continue;
+
+    current_x = 0;
+    for (int x = 0; x < 4; x++) {
+      if (x == ignore_x)
+        continue;
+
+      result.set(current_x, current_y, m.get(x, y));
+      current_x++;
+    }
+
+    current_y++;
+  }
+
+  return result;
+}
+
+}  // namespace
+
+Mat4 Adjugate(const Mat4& m) {
+  Mat4 adjugate = {};
+  for (int y = 0; y < 4; y++) {
+    for (int x = 0; x < 4; x++) {
+      int multiplier = IS_EVEN((x + 1) + (y + 1)) ? 1 : -1;
+      Mat3 sub_matrix = GetAdjugateSubMatrix(m, x, y);
+      float determinant = Determinant(sub_matrix);
+      float res = multiplier * determinant;
+      adjugate.set(x, y, res);
+    }
+  }
+
+  return adjugate;
+}
+
+float Determinant(const Mat4& m) {
+  // clang-format off
+  Vec3 r0 = {m.get(0, 1), m.get(0, 2), m.get(0, 3)};
+  Vec3 r1 = {m.get(1, 1), m.get(1, 2), m.get(1, 3)};
+  Vec3 r2 = {m.get(2, 1), m.get(2, 2), m.get(2, 3)};
+  Vec3 r3 = {m.get(3, 1), m.get(3, 2), m.get(3, 3)};
+
+  Mat3 m0(r1, r2, r3);
+  Mat3 m1(r0, r2, r3);
+  Mat3 m2(r0, r1, r3);
+  Mat3 m3(r0, r1, r2);
+
+  float d0 = Determinant(m0);
+  float d1 = Determinant(m1);
+  float d2 = Determinant(m2);
+  float d3 = Determinant(m3);
+
+  return d0 * m.get(0, 0) - d1 * m.get(1, 0) + d2 * m.get(2, 0) - d3 * m.get(3, 0);
+  // clang-format on
+}
+
+Mat4 Inverse(const Mat4& m) {
+  float determinant = Determinant(m);
+  assert(determinant != 0);
+
+  float one_over_det = 1.0f / determinant;
+  Mat4 adjugate = Adjugate(m);
+
+  return adjugate * one_over_det;
+}
 
 // Transformation Matrices =========================================================================
 

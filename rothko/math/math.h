@@ -363,8 +363,45 @@ union _mat2 {
 using IntMat2 = _mat2<int>;
 using Mat2 = _mat2<float>;
 
+// Mat3 --------------------------------------------------------------------------------------------
+
+template <typename T>
+union _mat3 {
+  // Members.
+
+  _v3<T> cols[3] = {};
+  float elements[3][3];
+
+  // Constructors.
+
+  _mat3() = default;
+  _mat3(_v3<T> r0, _v3<T> r1, _v3<T> r2) {
+    // As this is column major, each row given becomes each column.
+    // clang-format off
+    cols[0][0] = r0[0]; cols[1][0] = r0[1]; cols[2][0] = r0[2];
+    cols[0][1] = r1[0]; cols[1][1] = r1[1]; cols[2][1] = r1[2];
+    cols[0][2] = r2[0]; cols[1][2] = r2[1]; cols[2][2] = r2[2];
+    // clang-format on
+  }
+
+  static _mat3 Identity() { return {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}; }
+
+  float& get(int x, int y) { return elements[y][x]; }
+  float get(int x, int y) const { return elements[y][x]; }
+
+  void set(int x, int y, T val) { elements[y][x] = val; }
+
+  _v3<T> row(int index) const { return {cols[0][index], cols[1][index], cols[2][index]}; }
+};
+
+using IntMat3 = _mat3<int>;
+using Mat3 = _mat3<float>;
+
+float Determinant(const Mat3&);
+
 // Mat4 --------------------------------------------------------------------------------------------
 
+// clang-format off
 template <typename T>
 union _mat4 {
   // Members.
@@ -386,15 +423,14 @@ union _mat4 {
   static _mat4 Identity() { return {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}; }
 
   // Operators.
+
   float& get(int x, int y) { return elements[y][x]; }
   float get(int x, int y) const { return elements[y][x]; }
 
+  void set(int x, int y, T val) { elements[y][x] = val; }
+
   _v4<T> row(int index) const {
     return {cols[0][index], cols[1][index], cols[2][index], cols[3][index]};
-  }
-
-  _v4<T> col(int index) const {
-    return cols[index];
   }
 
   bool operator==(const _mat4& o) const {
@@ -411,54 +447,51 @@ union _mat4 {
   }
 
   _v4<T> operator*(const _v4<T>& vec) const {
-    _v4<T> r0 = row(0);
-    _v4<T> r1 = row(1);
-    _v4<T> r2 = row(2);
-    _v4<T> r3 = row(3);
+    _v4<T> r0 = row(0); _v4<T> r1 = row(1); _v4<T> r2 = row(2); _v4<T> r3 = row(3);
     return _v4<T>{Dot(r0, vec), Dot(r1, vec), Dot(r2, vec), Dot(r3, vec)};
   }
 
   _mat4<T> operator*(const _mat4<T>& m) const {
     _mat4<T> res = {};
-
-    _v4<T> r0 = row(0);
-    _v4<T> r1 = row(1);
-    _v4<T> r2 = row(2);
-    _v4<T> r3 = row(3);
-
-    res.cols[0] = {Dot(r0, m.col(0)), Dot(r1, m.col(0)), Dot(r2, m.col(0)), Dot(r3, m.col(0))};
-    res.cols[1] = {Dot(r0, m.col(1)), Dot(r1, m.col(1)), Dot(r2, m.col(1)), Dot(r3, m.col(1))};
-    res.cols[2] = {Dot(r0, m.col(2)), Dot(r1, m.col(2)), Dot(r2, m.col(2)), Dot(r3, m.col(2))};
-    res.cols[3] = {Dot(r0, m.col(3)), Dot(r1, m.col(3)), Dot(r2, m.col(3)), Dot(r3, m.col(3))};
+    _v4<T> r0 = row(0); _v4<T> r1 = row(1); _v4<T> r2 = row(2); _v4<T> r3 = row(3);
+    res.cols[0] = {Dot(r0, m.cols[0]), Dot(r1, m.cols[0]), Dot(r2, m.cols[0]), Dot(r3, m.cols[0])};
+    res.cols[1] = {Dot(r0, m.cols[1]), Dot(r1, m.cols[1]), Dot(r2, m.cols[1]), Dot(r3, m.cols[1])};
+    res.cols[2] = {Dot(r0, m.cols[2]), Dot(r1, m.cols[2]), Dot(r2, m.cols[2]), Dot(r3, m.cols[2])};
+    res.cols[3] = {Dot(r0, m.cols[3]), Dot(r1, m.cols[3]), Dot(r2, m.cols[3]), Dot(r3, m.cols[3])};
 
     return res;
   }
 
   void operator*=(const _mat4<T>& m) {
-    _v4<T> r0 = row(0);
-    _v4<T> r1 = row(1);
-    _v4<T> r2 = row(2);
-    _v4<T> r3 = row(3);
-
-    cols[0] = {Dot(r0, m.col(0)), Dot(r1, m.col(0)), Dot(r2, m.col(0)), Dot(r3, m.col(0))};
-    cols[1] = {Dot(r0, m.col(1)), Dot(r1, m.col(1)), Dot(r2, m.col(1)), Dot(r3, m.col(1))};
-    cols[2] = {Dot(r0, m.col(2)), Dot(r1, m.col(2)), Dot(r2, m.col(2)), Dot(r3, m.col(2))};
-    cols[3] = {Dot(r0, m.col(3)), Dot(r1, m.col(3)), Dot(r2, m.col(3)), Dot(r3, m.col(3))};
+    _v4<T> r0 = row(0); _v4<T> r1 = row(1); _v4<T> r2 = row(2); _v4<T> r3 = row(3);
+    cols[0] = {Dot(r0, m.cols[0]), Dot(r1, m.cols[0]), Dot(r2, m.cols[0]), Dot(r3, m.cols[0])};
+    cols[1] = {Dot(r0, m.cols[1]), Dot(r1, m.cols[1]), Dot(r2, m.cols[1]), Dot(r3, m.cols[1])};
+    cols[2] = {Dot(r0, m.cols[2]), Dot(r1, m.cols[2]), Dot(r2, m.cols[2]), Dot(r3, m.cols[2])};
+    cols[3] = {Dot(r0, m.cols[3]), Dot(r1, m.cols[3]), Dot(r2, m.cols[3]), Dot(r3, m.cols[3])};
   };
+
+  _mat4<T> operator*(T t) const {
+    _mat4<T> result = *this;
+    for (int i = 0; i < 4; i++) {
+      result.cols[i] *= t;
+    }
+    return result;
+  };
+
+  void operator*=(T t) {
+    for (int i = 0; i < 4; i++) {
+      cols[i] *= t;
+    }
+  }
 };
+// clang-format on
 
 using IntMat4 = _mat4<int>;
 using Mat4 = _mat4<float>;
 
-template <typename T>
-_v4<T> GetRow(const _mat4<T>& m, int index) {
-  return m.row(index);
-}
+Mat4 Adjugate(const Mat4&);
 
-template <typename T>
-_v4<T> GetCol(const _mat4<T>& m, int index) {
-  return m.col(index);
-}
+float Determinant(const Mat4&);
 
 Mat4 Inverse(const Mat4&);
 

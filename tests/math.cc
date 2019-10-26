@@ -142,12 +142,25 @@ TEST_CASE("Vec3") {
   }
 }
 
+TEST_CASE("Mat3") {
+  //clang-format off
+  Mat3 mat = {{  6,  1,  1},
+              {  4, -2,  5},
+              {  2,  8,  7}};
+  // clang-format on
+
+  SECTION("Determinant") {
+    float d = Determinant(mat);
+    REQUIRE(d == -306);
+  }
+}
+
+// clang-format off
 TEST_CASE("Mat4") {
   Mat4 mat = {{ 1,  2,  3,  4},
               { 5,  6,  7,  8},
               { 9, 10, 11, 12},
               {13, 14, 15, 16}};
-  /* printf("%s\n", ToString(mat).c_str()); */
 
   SECTION("Storage") {
     // The API treats it as row-major, but they're stored column-major.
@@ -155,20 +168,6 @@ TEST_CASE("Mat4") {
     REQUIRE(mat.cols[1] == Vec4{ 2,  6, 10, 14});
     REQUIRE(mat.cols[2] == Vec4{ 3,  7, 11, 15});
     REQUIRE(mat.cols[3] == Vec4{ 4,  8, 12, 16});
-  }
-
-  SECTION("GetRow") {
-    REQUIRE(GetRow(mat, 0) == Vec4{ 1,  2,  3,  4});
-    REQUIRE(GetRow(mat, 1) == Vec4{ 5,  6,  7,  8});
-    REQUIRE(GetRow(mat, 2) == Vec4{ 9, 10, 11, 12});
-    REQUIRE(GetRow(mat, 3) == Vec4{13, 14, 15, 16});
-  }
-
-  SECTION("GetCol") {
-    REQUIRE(GetCol(mat, 0) == Vec4{ 1,  5,  9, 13});
-    REQUIRE(GetCol(mat, 1) == Vec4{ 2,  6, 10, 14});
-    REQUIRE(GetCol(mat, 2) == Vec4{ 3,  7, 11, 15});
-    REQUIRE(GetCol(mat, 3) == Vec4{ 4,  8, 12, 16});
   }
 
   SECTION("V3 multiplication") {
@@ -200,26 +199,77 @@ TEST_CASE("Mat4") {
                  {15, 16, 17, 18}};
 
     Mat4 res1_2 = mat * mat2;
-    REQUIRE(GetRow(res1_2, 0) == Vec4{100, 110, 120, 130});
-    REQUIRE(GetRow(res1_2, 1) == Vec4{228, 254, 280, 306});
-    REQUIRE(GetRow(res1_2, 2) == Vec4{356, 398, 440, 482});
-    REQUIRE(GetRow(res1_2, 3) == Vec4{484, 542, 600, 658});
+    REQUIRE(res1_2.row(0) == Vec4{100, 110, 120, 130});
+    REQUIRE(res1_2.row(1) == Vec4{228, 254, 280, 306});
+    REQUIRE(res1_2.row(2) == Vec4{356, 398, 440, 482});
+    REQUIRE(res1_2.row(3) == Vec4{484, 542, 600, 658});
 
     // A * B * C = (A * B) * C = A * (B * C);
 
     Mat4 res12_3 = res1_2 * mat3;
-    REQUIRE(GetRow(res12_3, 0) == Vec4{ 4340,  4800,  5260,  5720});
-    REQUIRE(GetRow(res12_3, 1) == Vec4{10132, 11200, 12268, 13336});
-    REQUIRE(GetRow(res12_3, 2) == Vec4{15924, 17600, 19276, 20952});
-    REQUIRE(GetRow(res12_3, 3) == Vec4{21716, 24000, 26284, 28568});
+    REQUIRE(res12_3.row(0) == Vec4{ 4340,  4800,  5260,  5720});
+    REQUIRE(res12_3.row(1) == Vec4{10132, 11200, 12268, 13336});
+    REQUIRE(res12_3.row(2) == Vec4{15924, 17600, 19276, 20952});
+    REQUIRE(res12_3.row(3) == Vec4{21716, 24000, 26284, 28568});
 
     Mat4 res123 = mat * mat2 * mat3;
-    REQUIRE(GetRow(res123, 0) == Vec4{ 4340,  4800,  5260,  5720});
-    REQUIRE(GetRow(res123, 1) == Vec4{10132, 11200, 12268, 13336});
-    REQUIRE(GetRow(res123, 2) == Vec4{15924, 17600, 19276, 20952});
-    REQUIRE(GetRow(res123, 3) == Vec4{21716, 24000, 26284, 28568});
+    REQUIRE(res123.row(0) == Vec4{ 4340,  4800,  5260,  5720});
+    REQUIRE(res123.row(1) == Vec4{10132, 11200, 12268, 13336});
+    REQUIRE(res123.row(2) == Vec4{15924, 17600, 19276, 20952});
+    REQUIRE(res123.row(3) == Vec4{21716, 24000, 26284, 28568});
+  }
+
+  SECTION("Float multiplication") {
+    Mat4 m = mat * 2;
+    REQUIRE(m.row(0) == Vec4{ 2,  4,  6,  8});
+    REQUIRE(m.row(1) == Vec4{10, 12, 14, 16});
+    REQUIRE(m.row(2) == Vec4{18, 20, 22, 24});
+    REQUIRE(m.row(3) == Vec4{26, 28, 30, 32});
+
+    m *= 2;
+    REQUIRE(m.row(0) == Vec4{ 4,  8, 12, 16});
+    REQUIRE(m.row(1) == Vec4{20, 24, 28, 32});
+    REQUIRE(m.row(2) == Vec4{36, 40, 44, 48});
+    REQUIRE(m.row(3) == Vec4{52, 56, 60, 64});
+  }
+
+  SECTION("Determinant") {
+    Mat4 m{{1, 3, 5, 9},
+           {1, 3, 1, 7},
+           {4, 3, 9, 7},
+           {5, 2, 0, 9}};
+    float det = Determinant(m);
+    REQUIRE(det == -376);
+  }
+
+  SECTION("Adjugate") {
+    Mat4 m{{  1,  1,  1, -1},
+           {  1,  1, -1,  1},
+           {  1, -1,  1,  1},
+           { -1,  1,  1,  1}};
+
+    Mat4 adjugate = Adjugate(m);
+    REQUIRE(adjugate.row(0) == Vec4{ -4, -4, -4,  4});
+    REQUIRE(adjugate.row(1) == Vec4{ -4, -4,  4, -4});
+    REQUIRE(adjugate.row(2) == Vec4{ -4,  4, -4, -4});
+    REQUIRE(adjugate.row(3) == Vec4{  4, -4, -4, -4});
+  }
+
+  SECTION("Inverse") {
+    Mat4 m{{  1,  1,  1, -1},
+           {  1,  1, -1,  1},
+           {  1, -1,  1,  1},
+           { -1,  1,  1,  1}};
+
+    float q = 0.25f;
+    Mat4 inverse = Inverse(m);
+    REQUIRE(inverse.row(0) == Vec4{  q,  q,  q, -q});
+    REQUIRE(inverse.row(1) == Vec4{  q,  q, -q,  q});
+    REQUIRE(inverse.row(2) == Vec4{  q, -q,  q,  q});
+    REQUIRE(inverse.row(3) == Vec4{ -q,  q,  q,  q});
   }
 }
+// clang-format on
 
 }  // namespace
 }  // namespace test
