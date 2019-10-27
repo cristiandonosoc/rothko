@@ -19,6 +19,9 @@ enum class WidgetOperation {
 void TransformWidget(WidgetOperation, const PushCamera&, Transform*);
 
 // Returns the diff transform.
-Transform TransformWidget(WidgetOperation, const PushCamera&, const Transform& source);
+Transform TransformWidget(WidgetOperation,
+                          const PushCamera&,
+                          const Transform& source,
+                          const Transform* parent);
 
 }  // namespace rothko

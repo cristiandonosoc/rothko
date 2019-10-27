@@ -5,6 +5,26 @@
 
 #include <third_party/catch2/catch.hpp>
 
+namespace Catch {
+
+template <>
+struct StringMaker<rothko::Vec4> {
+  static std::string convert(const rothko::Vec4& v) {
+    return ToString(v);
+  }
+};
+
+#define DIFF(lhs, rhs) std::abs(rhs - lhs)
+
+#define CHECK_ROW(row, v0, v1, v2, v3) \
+  CHECK(DIFF((row)[0], v0) < 0.00001f);  \
+  CHECK(DIFF((row)[1], v1) < 0.00001f);  \
+  CHECK(DIFF((row)[2], v2) < 0.00001f);  \
+  CHECK(DIFF((row)[3], v3) < 0.00001f);
+
+}  // namespace Catch
+
+
 namespace rothko {
 namespace test {
 namespace {
@@ -164,28 +184,28 @@ TEST_CASE("Mat4") {
 
   SECTION("Storage") {
     // The API treats it as row-major, but they're stored column-major.
-    REQUIRE(mat.cols[0] == Vec4{ 1,  5,  9, 13});
-    REQUIRE(mat.cols[1] == Vec4{ 2,  6, 10, 14});
-    REQUIRE(mat.cols[2] == Vec4{ 3,  7, 11, 15});
-    REQUIRE(mat.cols[3] == Vec4{ 4,  8, 12, 16});
+    CHECK(mat.cols[0] == Vec4{ 1,  5,  9, 13});
+    CHECK(mat.cols[1] == Vec4{ 2,  6, 10, 14});
+    CHECK(mat.cols[2] == Vec4{ 3,  7, 11, 15});
+    CHECK(mat.cols[3] == Vec4{ 4,  8, 12, 16});
   }
 
   SECTION("V3 multiplication") {
     Vec3 v = Vec3{2, 3, 4};
     Vec4 res = mat * v;
-    REQUIRE(res[0] == 24);    // 1*2 + 2*3 + 3*4 + 4*1
-    REQUIRE(res[1] == 64);    // 5*2 + 6*3 + 7*4 + 8*1
-    REQUIRE(res[2] == 104);   // 9*2 + 10*3 + 11*4 + 12*1
-    REQUIRE(res[3] == 144);   // 13*2 + 14*3 + 15*4 + 16*1
+    CHECK(res[0] == 24);    // 1*2 + 2*3 + 3*4 + 4*1
+    CHECK(res[1] == 64);    // 5*2 + 6*3 + 7*4 + 8*1
+    CHECK(res[2] == 104);   // 9*2 + 10*3 + 11*4 + 12*1
+    CHECK(res[3] == 144);   // 13*2 + 14*3 + 15*4 + 16*1
   }
 
   SECTION("v4 multiplication") {
     Vec4 v = Vec4{1, 2, 3, 4};
     Vec4 res = mat * v;
-    REQUIRE(res[0] == 30);    // 1*1 + 2*2 + 3*3 + 4*4
-    REQUIRE(res[1] == 70);    // 5*1 + 6*2 + 7*3 + 8*4
-    REQUIRE(res[2] == 110);   // 9*1 + 10*2 + 11*3 + 12*4
-    REQUIRE(res[3] == 150);   // 13*1 + 14*2 + 15*3 + 16*4
+    CHECK(res[0] == 30);    // 1*1 + 2*2 + 3*3 + 4*4
+    CHECK(res[1] == 70);    // 5*1 + 6*2 + 7*3 + 8*4
+    CHECK(res[2] == 110);   // 9*1 + 10*2 + 11*3 + 12*4
+    CHECK(res[3] == 150);   // 13*1 + 14*2 + 15*3 + 16*4
   }
 
   SECTION("mat4 multiplication") {
@@ -199,38 +219,38 @@ TEST_CASE("Mat4") {
                  {15, 16, 17, 18}};
 
     Mat4 res1_2 = mat * mat2;
-    REQUIRE(res1_2.row(0) == Vec4{100, 110, 120, 130});
-    REQUIRE(res1_2.row(1) == Vec4{228, 254, 280, 306});
-    REQUIRE(res1_2.row(2) == Vec4{356, 398, 440, 482});
-    REQUIRE(res1_2.row(3) == Vec4{484, 542, 600, 658});
+    CHECK(res1_2.row(0) == Vec4{100, 110, 120, 130});
+    CHECK(res1_2.row(1) == Vec4{228, 254, 280, 306});
+    CHECK(res1_2.row(2) == Vec4{356, 398, 440, 482});
+    CHECK(res1_2.row(3) == Vec4{484, 542, 600, 658});
 
     // A * B * C = (A * B) * C = A * (B * C);
 
     Mat4 res12_3 = res1_2 * mat3;
-    REQUIRE(res12_3.row(0) == Vec4{ 4340,  4800,  5260,  5720});
-    REQUIRE(res12_3.row(1) == Vec4{10132, 11200, 12268, 13336});
-    REQUIRE(res12_3.row(2) == Vec4{15924, 17600, 19276, 20952});
-    REQUIRE(res12_3.row(3) == Vec4{21716, 24000, 26284, 28568});
+    CHECK(res12_3.row(0) == Vec4{ 4340,  4800,  5260,  5720});
+    CHECK(res12_3.row(1) == Vec4{10132, 11200, 12268, 13336});
+    CHECK(res12_3.row(2) == Vec4{15924, 17600, 19276, 20952});
+    CHECK(res12_3.row(3) == Vec4{21716, 24000, 26284, 28568});
 
     Mat4 res123 = mat * mat2 * mat3;
-    REQUIRE(res123.row(0) == Vec4{ 4340,  4800,  5260,  5720});
-    REQUIRE(res123.row(1) == Vec4{10132, 11200, 12268, 13336});
-    REQUIRE(res123.row(2) == Vec4{15924, 17600, 19276, 20952});
-    REQUIRE(res123.row(3) == Vec4{21716, 24000, 26284, 28568});
+    CHECK(res123.row(0) == Vec4{ 4340,  4800,  5260,  5720});
+    CHECK(res123.row(1) == Vec4{10132, 11200, 12268, 13336});
+    CHECK(res123.row(2) == Vec4{15924, 17600, 19276, 20952});
+    CHECK(res123.row(3) == Vec4{21716, 24000, 26284, 28568});
   }
 
   SECTION("Float multiplication") {
     Mat4 m = mat * 2;
-    REQUIRE(m.row(0) == Vec4{ 2,  4,  6,  8});
-    REQUIRE(m.row(1) == Vec4{10, 12, 14, 16});
-    REQUIRE(m.row(2) == Vec4{18, 20, 22, 24});
-    REQUIRE(m.row(3) == Vec4{26, 28, 30, 32});
+    CHECK(m.row(0) == Vec4{ 2,  4,  6,  8});
+    CHECK(m.row(1) == Vec4{10, 12, 14, 16});
+    CHECK(m.row(2) == Vec4{18, 20, 22, 24});
+    CHECK(m.row(3) == Vec4{26, 28, 30, 32});
 
     m *= 2;
-    REQUIRE(m.row(0) == Vec4{ 4,  8, 12, 16});
-    REQUIRE(m.row(1) == Vec4{20, 24, 28, 32});
-    REQUIRE(m.row(2) == Vec4{36, 40, 44, 48});
-    REQUIRE(m.row(3) == Vec4{52, 56, 60, 64});
+    CHECK(m.row(0) == Vec4{ 4,  8, 12, 16});
+    CHECK(m.row(1) == Vec4{20, 24, 28, 32});
+    CHECK(m.row(2) == Vec4{36, 40, 44, 48});
+    CHECK(m.row(3) == Vec4{52, 56, 60, 64});
   }
 
   SECTION("Determinant") {
@@ -249,10 +269,23 @@ TEST_CASE("Mat4") {
            { -1,  1,  1,  1}};
 
     Mat4 adjugate = Adjugate(m);
-    REQUIRE(adjugate.row(0) == Vec4{ -4, -4, -4,  4});
-    REQUIRE(adjugate.row(1) == Vec4{ -4, -4,  4, -4});
-    REQUIRE(adjugate.row(2) == Vec4{ -4,  4, -4, -4});
-    REQUIRE(adjugate.row(3) == Vec4{  4, -4, -4, -4});
+    CHECK(adjugate.row(0) == Vec4{ -4, -4, -4,  4});
+    CHECK(adjugate.row(1) == Vec4{ -4, -4,  4, -4});
+    CHECK(adjugate.row(2) == Vec4{ -4,  4, -4, -4});
+    CHECK(adjugate.row(3) == Vec4{  4, -4, -4, -4});
+  }
+
+  SECTION("Adjugate2") {
+    Mat4 m{{ 2, 0, 0, 3},
+           { 0, 4, 0, 5},
+           { 0, 0, 6, 7},
+           { 0, 0, 0, 1}};
+
+    Mat4 adjugate = Adjugate(m);
+    CHECK(adjugate.row(0) == Vec4{ 24,  0,  0, -72});
+    CHECK(adjugate.row(1) == Vec4{  0, 12,  0, -60});
+    CHECK(adjugate.row(2) == Vec4{  0,  0,  8, -56});
+    CHECK(adjugate.row(3) == Vec4{  0,  0,  0,  48});
   }
 
   SECTION("Inverse") {
@@ -263,10 +296,29 @@ TEST_CASE("Mat4") {
 
     float q = 0.25f;
     Mat4 inverse = Inverse(m);
-    REQUIRE(inverse.row(0) == Vec4{  q,  q,  q, -q});
-    REQUIRE(inverse.row(1) == Vec4{  q,  q, -q,  q});
-    REQUIRE(inverse.row(2) == Vec4{  q, -q,  q,  q});
-    REQUIRE(inverse.row(3) == Vec4{ -q,  q,  q,  q});
+    CHECK(inverse.row(0) == Vec4{  q,  q,  q, -q});
+    CHECK(inverse.row(1) == Vec4{  q,  q, -q,  q});
+    CHECK(inverse.row(2) == Vec4{  q, -q,  q,  q});
+    CHECK(inverse.row(3) == Vec4{ -q,  q,  q,  q});
+  }
+
+  SECTION("Inverse2") {
+    Mat4 m{{ 2, 0, 0, 3},
+           { 0, 4, 0, 5},
+           { 0, 0, 6, 7},
+           { 0, 0, 0, 1}};
+
+    Mat4 inverse = Inverse(m);
+    CHECK_ROW(inverse.row(0), 0.5f,     0,         0, -3.0f/2.0f);
+    CHECK_ROW(inverse.row(1),    0, 0.25f,         0, -5.0f/4.0f);
+    CHECK_ROW(inverse.row(2),    0,     0, 1.0f/6.0f, -7.0f/6.0f);
+    CHECK_ROW(inverse.row(3),    0,     0,         0,          1);
+
+    Mat4 identity = m * inverse;
+    CHECK_ROW(identity.row(0), 1, 0, 0, 0);
+    CHECK_ROW(identity.row(1), 0, 1, 0, 0);
+    CHECK_ROW(identity.row(2), 0, 0, 1, 0);
+    CHECK_ROW(identity.row(3), 0, 0, 0, 1);
   }
 }
 // clang-format on

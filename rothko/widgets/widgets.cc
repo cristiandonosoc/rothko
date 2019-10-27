@@ -41,15 +41,29 @@ void TransformWidget(WidgetOperation op, const PushCamera& camera, Transform* tr
   *transform = TransformMatrixToTransform(transform->world_matrix);
 }
 
-Transform TransformWidget(WidgetOperation op, const PushCamera& camera, const Transform& source) {
-  Mat4 m = source.world_matrix;
+Transform TransformWidget(WidgetOperation op,
+                          const PushCamera& camera,
+                          const Transform& source,
+                          const Transform* parent) {
+  // Scale is only local otherwise it resets the rotation.
+  ImGuizmo::MODE imguizmo_mode = op == WidgetOperation::kScale ? ImGuizmo::MODE::LOCAL :
+                                                                 ImGuizmo::MODE::WORLD;
+  Mat4 temp = source.world_matrix;
   ImGuizmo::Manipulate((float*)&camera.view,
                        (float*)&camera.projection,
                        GetImGuizmoOperation(op),
-                       ImGuizmo::MODE::WORLD,
-                       (float*)&m);
+                       imguizmo_mode,
+                       (float*)&temp);
+
+  // We need to remove the parent transformation.
+  Mat4 m = temp;
+  if (parent) {
+    Mat4 inverse = Inverse(parent->world_matrix);
+    m = inverse * temp;
+  };
 
   Transform dest = TransformMatrixToTransform(m);
+
   Transform diff = source - dest;
   if (IsZero(diff))
     return source;

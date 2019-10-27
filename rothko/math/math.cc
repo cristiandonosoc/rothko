@@ -129,7 +129,8 @@ Mat4 Adjugate(const Mat4& m) {
       Mat3 sub_matrix = GetAdjugateSubMatrix(m, x, y);
       float determinant = Determinant(sub_matrix);
       float res = multiplier * determinant;
-      adjugate.set(x, y, res);
+      /* adjugate.set(x, y, res); */
+      adjugate.elements[x][y] = res;
     }
   }
 

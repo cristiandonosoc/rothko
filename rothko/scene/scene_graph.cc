@@ -20,6 +20,12 @@ void Update(SceneNode* node, const SceneNode* parent) {
   node->transform.world_matrix = GetWorlTransformMatrix(*node, parent);
 }
 
+SceneNode* GetParent(SceneGraph* scene_graph, SceneNode* node) {
+  if (node->parent_index == SceneNode::kInvalidIndex)
+    return nullptr;
+  return scene_graph->nodes + node->parent_index;
+}
+
 // Add Transform -----------------------------------------------------------------------------------
 
 namespace {
@@ -52,7 +58,7 @@ SceneNode* AddNode(SceneGraph* scene_graph, uint32_t parent_index) {
   *node = {};
   node->index = index;
 
-  node->parent = parent_index;
+  node->parent_index = parent_index;
   if (parent_index != SceneNode::kInvalidIndex) {
     ASSERT(scene_graph->used[parent_index]);
     SceneNode* parent = scene_graph->nodes + parent_index;
