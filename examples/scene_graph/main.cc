@@ -116,7 +116,7 @@ int main() {
   Update(scene_graph.get());
 
   ImguiContext imgui;
-  if (!InitImgui(game.renderer.get(), &imgui))
+  if (!Init(game.renderer.get(), &imgui))
     return 1;
 
 
@@ -143,9 +143,7 @@ int main() {
       break;
     }
 
-    StartFrame(&imgui, &game.window, &game.time, &game.input);
-
-    ImGuizmo::BeginFrame();
+    BeginFrame(&imgui, &game.window, &game.time, &game.input);
 
     if (KeyUpThisFrame(&game.input, Key::kSpace))
       op = !op;

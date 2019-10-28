@@ -13,5 +13,6 @@ executable("simple_lighting") {
     "//rothko/graphics/default_shaders",
     "//rothko/ui:imgui",
     "//rothko/window:sdl_opengl",
+    "//rothko/widgets",
   ]
 }

@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
     return 1;
 
   ImguiContext imgui;
-  if (!InitImgui(game.renderer.get(), &imgui))
+  if (!Init(game.renderer.get(), &imgui))
     return 1;
 
   rothko::emulator::Display display;
@@ -182,7 +182,7 @@ int main(int argc, char* argv[]) {
       break;
     }
 
-    StartFrame(&imgui, &game.window, &game.time, &game.input);
+    BeginFrame(&imgui, &game.window, &game.time, &game.input);
 
     CreateLogWindow();
 

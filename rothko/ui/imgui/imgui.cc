@@ -63,7 +63,7 @@ void MapIO(ImGuiIO* io) {
 
 }  // namespace
 
-bool InitImgui(Renderer* renderer, ImguiContext* imgui) {
+bool Init(Renderer* renderer, ImguiContext* imgui) {
   if (Valid(imgui)) {
     ERROR(Imgui, "Imgui context already initialized.");
     return false;
@@ -132,10 +132,9 @@ void RestartKeys(Window* window, Input* input, ImGuiIO* io) {
 
 }  // namespace
 
-void StartFrame(ImguiContext* imgui, Window* window, Time* time, Input* input) {
+void BeginFrame(ImguiContext* imgui, Window* window, Time* time, Input* input) {
   ASSERT(Valid(window));
   ASSERT(Valid(imgui));
-
 
   imgui->io->DisplaySize = {(float)window->screen_size.width, (float)window->screen_size.height};
   imgui->io->DisplayFramebufferScale = {window->framebuffer_scale.width,
@@ -143,7 +142,6 @@ void StartFrame(ImguiContext* imgui, Window* window, Time* time, Input* input) {
 
   // TODO(Cristian): Obtain time delta from platform!
   imgui->io->DeltaTime = time->frame_delta;
-
 
   RestartKeys(window, input, imgui->io);
 
@@ -154,6 +152,9 @@ void StartFrame(ImguiContext* imgui, Window* window, Time* time, Input* input) {
   auto imgui_size = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, "#");
   imgui->font_size = ToVec2(imgui_size);
 
+  // ImGuizmo Setup.
+  ImGuizmo::BeginFrame();
+  ImGuizmo::SetRect(0, 0, imgui->io->DisplaySize.x, imgui->io->DisplaySize.y);
 }
 
 // End Frame -------------------------------------------------------------------

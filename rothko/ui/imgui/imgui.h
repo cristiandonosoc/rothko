@@ -36,9 +36,9 @@ struct ImguiContext {
 inline bool Valid(ImguiContext* imgui) { return !!imgui->io && Valid(&imgui->imgui_renderer); }
 
 // Both the renderer and window must outlive the imgui context.
-bool InitImgui(Renderer* renderer, ImguiContext*);
+bool Init(Renderer* renderer, ImguiContext*);
 
-void StartFrame(ImguiContext*, Window*, Time*, Input*);
+void BeginFrame(ImguiContext*, Window*, Time*, Input*);
 
 // Gets the command to be passed down to the renderer.
 // IMPORTANT: StartFrame *has* to be called each frame before this.

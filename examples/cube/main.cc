@@ -279,7 +279,7 @@ int main() {
   Time time = InitTime();
 
   ImguiContext imgui;
-  if (!InitImgui(renderer.get(), &imgui))
+  if (!Init(renderer.get(), &imgui))
     return 1;
 
   ImGui::StyleColorsDark();
@@ -309,9 +309,7 @@ int main() {
 
     Update(&time);
     RendererStartFrame(renderer.get());
-    StartFrame(&imgui, &window, &time, &input);
-    // Create a guizmo.
-    ImGuizmo::BeginFrame();
+    BeginFrame(&imgui, &window, &time, &input);
 
     constexpr float kMouseSensibility = 0.007f;
     static float kMaxPitch = ToRadians(89.0f);
@@ -439,8 +437,6 @@ int main() {
     /* commands.insert(commands.end(), cube_commands.begin(), cube_commands.end()); */
 
     commands.push_back(line_manager.render_command);
-
-
     commands.push_back(grid.render_command);
 
     // Config the renderer for the axis.
@@ -461,7 +457,6 @@ int main() {
     commands.push_back(axis_widget.render_command);
 
     /* Mat4 identity = Mat4::Identity(); */
-    ImGuizmo::SetRect(0, 0, window.screen_size.width, window.screen_size.height);
     ImGuizmo::Manipulate((float*)&push_camera.view,
                          (float*)&push_camera.projection,
                          imguizmo_operation,

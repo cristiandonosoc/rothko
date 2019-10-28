@@ -54,15 +54,12 @@ int main() {
     return 1;
 
   ImguiContext imgui;
-  if (!InitImgui(game.renderer.get(), &imgui))
+  if (!Init(game.renderer.get(), &imgui))
     return 1;
 
   Shader object_shader = simple_lighting::CreateObjectShader(game.renderer.get());
-  if (!Valid(object_shader))
-    return 1;
-
   Shader light_shader = simple_lighting::CreateLightShader(game.renderer.get());
-  if (!Valid(light_shader))
+  if (!Valid(object_shader) || !Valid(light_shader))
     return 1;
 
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;
@@ -97,19 +94,41 @@ int main() {
     return 1;
   }
 
+
+  auto scene_graph = std::make_unique<SceneGraph>();
+
+  SceneNode* light_node = AddNode(scene_graph.get());
+  light_node->transform.scale *= 0.2f;
+
+  constexpr int kCubeCount = 8;
+  SceneNode* cube_nodes[kCubeCount] = {};
+
+
+
+  Update(scene_graph.get());
+
   simple_lighting::LightShaderUBO light_ubo = {};
-  light_ubo.vert.model = Mat4::Identity();
+  light_ubo.vert.model = light_node->transform.world_matrix;
   light_ubo.frag.light_color = ToVec3(Color::White());
 
   // Create the UBOs.
-  constexpr int kCubeCount = 8;
   std::vector<simple_lighting::ObjectShaderUBO> ubos;
   ubos.reserve(kCubeCount);
 
   constexpr int kMaxRow = 4;
   /* for (auto& [name, mat] :) { */
   for (int i = 0; i < kCubeCount; i++) {
+    SceneNode* node = AddNode(scene_graph.get());
+    cube_nodes[i] = node;
+
+    float x = i % kMaxRow - 1;
+    float y = i / kMaxRow;
+
+    node->transform.position = {x, y, -2};
+    node->transform.scale *= 0.5f;
+
     simple_lighting::ObjectShaderUBO ubo = {};
+
     /* ubo.frag.light.ambient = {0.2f, 0.2f, 0.2f}; */
     ubo.frag.light.ambient = {};
     ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f};
@@ -120,6 +139,8 @@ int main() {
 
     ubos.push_back(std::move(ubo));
   }
+
+  Update(scene_graph.get());
 
   bool running = true;
 
@@ -137,8 +158,7 @@ int main() {
 
   while (running) {
     auto events = Update(&game);
-    StartFrame(&imgui, &game.window, &game.time, &game.input);
-    ImGuizmo::BeginFrame();
+    BeginFrame(&imgui, &game.window, &game.time, &game.input);
 
     for (auto event : events) {
       if (event == WindowEvent::kQuit) {
@@ -202,16 +222,14 @@ int main() {
     // Draw the cubes.
     if (move_cubes)
       cubes_time_delta += game.time.frame_delta;
-    float angle = cubes_time_delta * ToRadians(33.0f);
+
+    Update(scene_graph.get());
+
+    /* float angle = cubes_time_delta * ToRadians(33.0f); */
     for (uint32_t i = 0; i < ubos.size(); i++) {
       auto& ubo = ubos[i];
 
-      float x = i % kMaxRow - 1;
-      float y = i / kMaxRow;
-
-      ubo.vert.model = Translate({x, y, -2});
-      ubo.vert.model *= Rotate({0.5f, 0.33f, -0.2f}, angle * i * 0.4f);
-      ubo.vert.model *= Scale(0.5f);
+      ubo.vert.model = cube_nodes[i]->transform.world_matrix;
 
       ubo.frag.light.pos = light_pos;
       commands.push_back(

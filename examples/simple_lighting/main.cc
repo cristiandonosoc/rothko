@@ -8,6 +8,8 @@
 #include <rothko/scene/scene_graph.h>
 #include <rothko/ui/imgui/imgui.h>
 #include <rothko/utils/strings.h>
+#include <rothko/widgets/widgets.h>
+#include <third_party/imguizmo/ImGuizmo.h>
 
 #include "shaders.h"
 
@@ -228,7 +230,7 @@ int main() {
 
   SceneNode* base_light = AddNode(scene_graph.get());
   SceneNode* light_node = AddNode(scene_graph.get(), base_light);
-  light_node->transform.position = {3, 1.4f, 1.6f};
+  light_node->transform.position = {3, 3, 3};
   light_node->transform.scale *= 0.2f;
 
   simple_lighting::LightShaderUBO light_ubo = {};
@@ -246,6 +248,9 @@ int main() {
       ubos.push_back(CreateUBO(app_context, {xx, 2, zz}, {0.5f, 3, 0.5f}));
     }
   }
+
+
+    Update(scene_graph.get());
 
 
   /* int i = 0; */
@@ -269,13 +274,12 @@ int main() {
   /* } */
 
   imgui::ImguiContext imgui;
-  if (!InitImgui(game.renderer.get(), &imgui))
+  if (!Init(game.renderer.get(), &imgui))
     return 1;
 
 
   bool running = true;
-  bool move_light = true;
-  float time_delta = 0;
+  /* float time_delta = 0; */
   while (running) {
     auto events = Update(&game);
     for (auto event : events) {
@@ -285,37 +289,45 @@ int main() {
       }
     }
 
-    StartFrame(&imgui, &game.window, &game.time, &game.input);
+    BeginFrame(&imgui, &game.window, &game.time, &game.input);
 
     if (KeyUpThisFrame(&game.input, Key::kEscape)) {
       running = false;
       break;
     }
 
-    if (KeyUpThisFrame(&game.input, Key::kSpace)) {
-      move_light = !move_light;
-    }
+    /* if (KeyUpThisFrame(&game.input, Key::kSpace)) { */
+    /*   move_light = !move_light; */
+    /* } */
 
     DefaultUpdateOrbitCamera(game.input, &app_context.camera);
-    Update(scene_graph.get());
 
     // Update the UBOs.
-    if (move_light) {
-      time_delta += game.time.frame_delta;
-      app_context.light_pos = Vec3(Sin(time_delta) * 4, 0.4f, 1);
-    }
+    /* if (move_light) { */
+    /*   time_delta += game.time.frame_delta; */
+    /*   app_context.light_pos = Vec3(Sin(time_delta) * 4, 0.4f, 1); */
+    /* } */
 
-    light_ubo.vert.model = Translate(app_context.light_pos);
-    light_ubo.vert.model *= Scale(0.1f);
+
+    auto push_camera = GetPushCamera(app_context.camera);
+    light_node->transform =
+        TransformWidget(WidgetOperation::kTranslation, push_camera, light_node->transform, nullptr);
+
+    Update(scene_graph.get());
+
+
+    /* light_ubo.vert.model = Translate(app_context.light_pos); */
+    /* light_ubo.vert.model *= Scale(0.1f); */
+    light_ubo.vert.model = light_node->transform.world_matrix;
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Gray66()));
     commands.push_back(GetPushCamera(app_context.camera));
 
     // Draw the cubes.
+    app_context.light_pos = light_node->transform.position;
     for (auto& ubo : ubos) {
       // Update the light.
-      ubo.frag.light.pos = app_context.light_pos;
       ubo.frag.light.pos = app_context.light_pos;
       ubo.frag.light.ambient = app_context.light_ambient;
       ubo.frag.light.diffuse = app_context.light_diffuse;

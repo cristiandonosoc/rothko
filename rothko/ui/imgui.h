@@ -22,6 +22,8 @@
   }                                 \
   operator ::rothko::Vec4() const { return ::rothko::Vec4{x, y, z, w}; }
 
+#include <third_party/imguizmo/ImGuizmo.h>
+
 #include "rothko/ui/imgui/def.h"
 #include "rothko/ui/imgui/imgui.h"
 #include "rothko/ui/imgui/imgui_windows.h"
