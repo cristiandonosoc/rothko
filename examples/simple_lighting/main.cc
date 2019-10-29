@@ -277,7 +277,6 @@ int main() {
   if (!Init(game.renderer.get(), &imgui))
     return 1;
 
-
   bool running = true;
   /* float time_delta = 0; */
   while (running) {
@@ -311,7 +310,7 @@ int main() {
 
     auto push_camera = GetPushCamera(app_context.camera);
     light_node->transform =
-        TransformWidget(WidgetOperation::kTranslation, push_camera, light_node->transform, nullptr);
+        TransformWidget(WidgetOperation::kTranslate, push_camera, light_node->transform, nullptr);
 
     Update(scene_graph.get());
 

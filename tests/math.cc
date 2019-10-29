@@ -177,12 +177,12 @@ TEST_CASE("Mat3") {
 
 // clang-format off
 TEST_CASE("Mat4") {
-  Mat4 mat = {{ 1,  2,  3,  4},
-              { 5,  6,  7,  8},
-              { 9, 10, 11, 12},
-              {13, 14, 15, 16}};
-
   SECTION("Storage") {
+    Mat4 mat = {{ 1,  2,  3,  4},
+                { 5,  6,  7,  8},
+                { 9, 10, 11, 12},
+                {13, 14, 15, 16}};
+
     // The API treats it as row-major, but they're stored column-major.
     CHECK(mat.cols[0] == Vec4{ 1,  5,  9, 13});
     CHECK(mat.cols[1] == Vec4{ 2,  6, 10, 14});
@@ -191,6 +191,11 @@ TEST_CASE("Mat4") {
   }
 
   SECTION("V3 multiplication") {
+    Mat4 mat = {{ 1,  2,  3,  4},
+                { 5,  6,  7,  8},
+                { 9, 10, 11, 12},
+                {13, 14, 15, 16}};
+
     Vec3 v = Vec3{2, 3, 4};
     Vec4 res = mat * v;
     CHECK(res[0] == 24);    // 1*2 + 2*3 + 3*4 + 4*1
@@ -200,6 +205,11 @@ TEST_CASE("Mat4") {
   }
 
   SECTION("v4 multiplication") {
+    Mat4 mat = {{ 1,  2,  3,  4},
+                { 5,  6,  7,  8},
+                { 9, 10, 11, 12},
+                {13, 14, 15, 16}};
+
     Vec4 v = Vec4{1, 2, 3, 4};
     Vec4 res = mat * v;
     CHECK(res[0] == 30);    // 1*1 + 2*2 + 3*3 + 4*4
@@ -209,6 +219,10 @@ TEST_CASE("Mat4") {
   }
 
   SECTION("mat4 multiplication") {
+    Mat4 mat  = {{ 1,  2,  3,  4},
+                 { 5,  6,  7,  8},
+                 { 9, 10, 11, 12},
+                 {13, 14, 15, 16}};
     Mat4 mat2 = {{ 2,  3,  4,  5},
                  { 6,  7,  8,  9},
                  {10, 11, 12, 13},
@@ -240,6 +254,11 @@ TEST_CASE("Mat4") {
   }
 
   SECTION("Float multiplication") {
+    Mat4 mat = {{ 1,  2,  3,  4},
+                { 5,  6,  7,  8},
+                { 9, 10, 11, 12},
+                {13, 14, 15, 16}};
+
     Mat4 m = mat * 2;
     CHECK(m.row(0) == Vec4{ 2,  4,  6,  8});
     CHECK(m.row(1) == Vec4{10, 12, 14, 16});
@@ -319,6 +338,20 @@ TEST_CASE("Mat4") {
     CHECK_ROW(identity.row(1), 0, 1, 0, 0);
     CHECK_ROW(identity.row(2), 0, 0, 1, 0);
     CHECK_ROW(identity.row(3), 0, 0, 0, 1);
+  }
+
+  SECTION("Transpose") {
+    Mat4 mat = {{ 1,  2,  3,  4},
+                { 5,  6,  7,  8},
+                { 9, 10, 11, 12},
+                {13, 14, 15, 16}};
+
+    Mat4 transpose = Transpose(mat);
+
+    CHECK_ROW(transpose.row(0),  1,  5,  9, 13);
+    CHECK_ROW(transpose.row(1),  2,  6, 10, 14);
+    CHECK_ROW(transpose.row(2),  3,  7, 11, 15);
+    CHECK_ROW(transpose.row(3),  4,  8, 12, 16);
   }
 }
 // clang-format on

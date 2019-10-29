@@ -59,11 +59,18 @@ SceneNode* AddNode(SceneGraph* scene_graph, uint32_t parent_index) {
   node->index = index;
 
   node->parent_index = parent_index;
+
+  SceneNode* parent = nullptr;
   if (parent_index != SceneNode::kInvalidIndex) {
     ASSERT(scene_graph->used[parent_index]);
-    SceneNode* parent = scene_graph->nodes + parent_index;
-    parent->children.push_back(index);
+    parent = scene_graph->nodes + parent_index;
+  } else {
+    // This is a child of the base node.
+    parent = &scene_graph->base_node;
   }
+
+  ASSERT(parent);
+  parent->children.push_back(index);
 
   scene_graph->count++;
   return node;
@@ -73,8 +80,23 @@ SceneNode* AddNode(SceneGraph* scene_graph, uint32_t parent_index) {
 
 namespace {
 
-}  // namespace
+void DeleteChildIndex(SceneNode* parent, uint32_t index) {
+  bool child_found = false;
+  auto it = parent->children.begin();
+  while (it != parent->children.end()) {
+    if (*it == index) {
+      parent->children.erase(it);
+      child_found = true;
+      break;
+    } else {
+      it++;
+    }
+  }
 
+  ASSERT(child_found);
+}
+
+}  // namespace
 
 void DeleteTransform(SceneGraph* scene_graph, uint32_t index, uint32_t parent_index) {
   ASSERT(scene_graph->count > 0);
@@ -93,24 +115,15 @@ void DeleteTransform(SceneGraph* scene_graph, uint32_t index, uint32_t parent_in
   }
 
   // Check if we need to update the parent as well.
+  SceneNode* parent = nullptr;
   if (parent_index != SceneNode::kInvalidIndex) {
     ASSERT(scene_graph->used[parent_index]);
-    SceneNode* parent = scene_graph->nodes + parent_index;
-
-    bool child_found = false;
-    auto it = parent->children.begin();
-    while (it != parent->children.end()) {
-      if (*it == index) {
-        parent->children.erase(it);
-        child_found = true;
-        break;
-      } else {
-        it++;
-      }
-    }
-    ASSERT(child_found);
+    parent = scene_graph->nodes + parent_index;
+  } else {
+    parent = &scene_graph->base_node;
   }
-
+  ASSERT(parent);
+  DeleteChildIndex(parent, index);
 }
 
 // Update ------------------------------------------------------------------------------------------
@@ -132,7 +145,7 @@ void Update(SceneGraph* scene_graph) {
   if (scene_graph->count == 0)
     return;
 
-  SceneNode* current_node = scene_graph->nodes;
+  SceneNode* current_node = &scene_graph->base_node;
   UpdateNode(scene_graph, current_node, nullptr);
 }
 

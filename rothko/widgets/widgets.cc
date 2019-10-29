@@ -16,8 +16,8 @@ namespace {
 
 ImGuizmo::OPERATION GetImGuizmoOperation(WidgetOperation op) {
   switch (op) {
-    case WidgetOperation::kTranslation: return ImGuizmo::OPERATION::TRANSLATE;
-    case WidgetOperation::kRotation: return ImGuizmo::OPERATION::ROTATE;
+    case WidgetOperation::kTranslate: return ImGuizmo::OPERATION::TRANSLATE;
+    case WidgetOperation::kRotate: return ImGuizmo::OPERATION::ROTATE;
     case WidgetOperation::kScale: return ImGuizmo::OPERATION::SCALE;
   }
 
@@ -30,16 +30,6 @@ bool IsZero(const Transform& t) {
 }
 
 }  // namespace
-
-void TransformWidget(WidgetOperation op, const PushCamera& camera, Transform* transform) {
-  ImGuizmo::Manipulate((float*)&camera.view,
-                       (float*)&camera.projection,
-                       GetImGuizmoOperation(op),
-                       ImGuizmo::MODE::WORLD,
-                       (float*)&transform->world_matrix);
-
-  *transform = TransformMatrixToTransform(transform->world_matrix);
-}
 
 Transform TransformWidget(WidgetOperation op,
                           const PushCamera& camera,

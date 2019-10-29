@@ -7,7 +7,7 @@
 #include <rothko/scene/grid.h>
 #include <rothko/scene/scene_graph.h>
 #include <rothko/ui/imgui.h>
-#include <third_party/imguizmo/ImGuizmo.h>
+#include <rothko/widgets/widgets.h>
 
 #include "shaders.h"
 
@@ -94,7 +94,6 @@ int main() {
     return 1;
   }
 
-
   auto scene_graph = std::make_unique<SceneGraph>();
 
   SceneNode* light_node = AddNode(scene_graph.get());
@@ -102,8 +101,6 @@ int main() {
 
   constexpr int kCubeCount = 8;
   SceneNode* cube_nodes[kCubeCount] = {};
-
-
 
   Update(scene_graph.get());
 
@@ -144,17 +141,11 @@ int main() {
 
   bool running = true;
 
-  Vec3 light_pos = {};
-  bool move_light = false;
   float light_time_delta = 0;
   (void)light_time_delta;
 
   bool move_cubes = true;
   float cubes_time_delta = 0;
-
-
-    /* light_ubo.vert.model = Translate(light_pos); */
-    /* light_ubo.vert.model *= Scale(0.1f); */
 
   while (running) {
     auto events = Update(&game);
@@ -173,63 +164,41 @@ int main() {
     }
 
     if (KeyUpThisFrame(&game.input, Key::kSpace))
-      move_light = !move_light;
+      move_cubes = !move_cubes;
 
     if (KeyUpThisFrame(&game.input, Key::kC))
       move_cubes = !move_cubes;
 
     DefaultUpdateOrbitCamera(game.input, &camera);
 
-    auto camera_command = GetPushCamera(camera);
+    auto push_camera = GetPushCamera(camera);
 
 
-    // Update the UBOs.
+    // Update the scene.
 
-    /* if (move_light) { */
-    /*   light_time_delta += game.time.frame_delta; */
-    /*   light_pos = Vec3(Sin(light_time_delta) * 4, 0.1f, 1); */
-    /* } else { */
-    /*   ImGuizmo::SetRect(0, 0, game.window.screen_size.width, game.window.screen_size.height); */
-    /*   ImGuizmo::Manipulate((float*)&camera_command.view, */
-    /*                        (float*)&camera_command.projection, */
-    /*                        ImGuizmo::OPERATION::TRANSLATE, */
-    /*                        ImGuizmo::MODE::WORLD, */
-    /*                        (float*)&light_ubo.vert.model); */
-
-    /*   // Extract pos from it. */
-    /*   light_pos.x = light_ubo.vert.model.get(3, 0); */
-    /*   light_pos.y = light_ubo.vert.model.get(3, 1); */
-    /*   light_pos.z = light_ubo.vert.model.get(3, 2); */
-    /* } */
-
-    /* light_ubo.vert.model = Translate(light_pos); */
-    /* light_ubo.vert.model *= Scale(0.1f); */
-    ImGui::Begin("Matrix");
-    for (int i = 0; i < 4; i++) {
-      auto row = light_ubo.vert.model.row(0);
-      ImGui::InputFloat4("Row: ", (float*)&row);
-    }
-
-    ImGui::End();
-
-
-
-    PerFrameVector<RenderCommand> commands;
-    commands.push_back(ClearFrame::FromColor(Color::Gray66()));
-    commands.push_back(std::move(camera_command));
-
-
-    // Draw the cubes.
-    if (move_cubes)
+    light_node->transform = TranslateWidget(push_camera, light_node->transform);
+    if (move_cubes) {
       cubes_time_delta += game.time.frame_delta;
-
+      float angle = cubes_time_delta * ToRadians(7.0f);
+      for (uint32_t i = 0; i < ubos.size(); i++) {
+        SceneNode* cube_node = cube_nodes[i];
+        cube_node->transform.rotation = {angle * i, -angle * i, 0};
+      }
+    }
     Update(scene_graph.get());
 
-    /* float angle = cubes_time_delta * ToRadians(33.0f); */
+    // Create the render commands.
+    PerFrameVector<RenderCommand> commands;
+    commands.push_back(ClearFrame::FromColor(Color::Gray66()));
+    commands.push_back(push_camera);
+
+    light_ubo.vert.model = light_node->transform.world_matrix;
+
+    Vec3 light_pos = PositionFromTransformMatrix(light_node->transform.world_matrix);
     for (uint32_t i = 0; i < ubos.size(); i++) {
       auto& ubo = ubos[i];
-
       ubo.vert.model = cube_nodes[i]->transform.world_matrix;
+      ubo.vert.normal_matrix = ToMat3(Transpose(Inverse(ubo.vert.model)));
 
       ubo.frag.light.pos = light_pos;
       commands.push_back(

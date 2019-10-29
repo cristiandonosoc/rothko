@@ -18,6 +18,7 @@ layout (location = 2) in vec2 in_uv;
 
 layout (std140) uniform VertUniforms {
   mat4 model;
+  mat3 normal_matrix;
 };
 
 out vec3 pos;
@@ -29,8 +30,11 @@ void main() {
 
   // We want the frag position in world space, not view space. Only multiply by the model matrix.
   pos = vec3(model * vec4(in_pos, 1));
-  normal = in_normal;
   uv = in_uv;
+
+  // Normals have to take into account the model transformation.
+  // We use a normal matrix because non-uniform scale will distort the normal direction.
+  normal = normal_matrix * in_normal;
 }
 )";
 

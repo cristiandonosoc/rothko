@@ -168,6 +168,49 @@ Mat4 Inverse(const Mat4& m) {
   return adjugate * one_over_det;
 }
 
+Vec3 PositionFromTransformMatrix(const Mat4& m) {
+  Vec3 position;
+  position.x = m.get(0, 3);
+  position.y = m.get(1, 3);
+  position.z = m.get(2, 3);
+
+  return position;
+}
+
+Vec3 RotationFromTransformMatrix(const Mat4& m) {
+  Vec3 rotation;
+  rotation.x = -Atan2(m.get(2, 1), m.get(2, 2));
+  rotation.y = -Atan2(-m.get(2, 0), Sqrt(m.get(2, 1) * m.get(2, 1) + m.get(2, 2) * m.get(2, 2)));
+  rotation.z = -Atan2(m.get(1, 0), m.get(0, 0));
+
+  return rotation;
+}
+
+Vec3 ScaleFromTransformMatrix(const Mat4& m) {
+  Vec3 scale;
+  scale.x = Length(ToVec3(m.row(0)));
+  scale.y = Length(ToVec3(m.row(1)));
+  scale.z = Length(ToVec3(m.row(2)));
+
+  return scale;
+}
+
+void DecomposeTransformMatrix(const Mat4& m, Vec3* position, Vec3* rotation, Vec3* scale) {
+  *position = PositionFromTransformMatrix(m);
+  *rotation = RotationFromTransformMatrix(m);
+  *scale = ScaleFromTransformMatrix(m);
+}
+
+Mat4 Transpose(const Mat4& m) {
+  Mat4 result;
+  result.cols[0] = m.row(0);
+  result.cols[1] = m.row(1);
+  result.cols[2] = m.row(2);
+  result.cols[3] = m.row(3);
+
+  return result;
+}
+
 // Transformation Matrices =========================================================================
 
 Mat4 FromRows(Vec3 x, Vec3 y, Vec3 z) {
@@ -255,15 +298,10 @@ Mat4 LookAt(Vec3 pos, Vec3 target, Vec3 hint_up) {
   //       NOTE3: f = forward, u = up, r = right, p = pos.
 
   // clang-format off
-  /* return {{          right.x,           up.x,          forward.z,     0}, */
-  /*         {          right.y,           up.y,          forward.z,     0}, */
-  /*         {          right.z,           up.z,          forward.z,     0}, */
-  /*         { -Dot(right, pos),  -Dot(up, pos), -Dot(forward, pos),     1}}; */
-
-  return {{          right.x,        right.y,            right.z,   -Dot(right, pos)},
-          {             up.x,           up.y,               up.z,      -Dot(up, pos)},
-          {        forward.x,      forward.y,          forward.z, -Dot(forward, pos)},
-          {                0,              0,                  0,                  1}};
+  return {{          right.x,        right.y,          right.z,   -Dot(right, pos)},
+          {             up.x,           up.y,             up.z,      -Dot(up, pos)},
+          {        forward.x,      forward.y,        forward.z, -Dot(forward, pos)},
+          {                0,              0,                0,                  1}};
   // clang-format on
 }
 
@@ -346,42 +384,6 @@ Vec2 EulerFromDirection(const Vec3& direction) {
   // Yaw.
   result.y = Atan2(direction.z, direction.x);
   return result;
-}
-
-Vec3 EulerFromMat4(const Mat4& m) {
-  Vec3 result = {};
-
-  if (m.get(2, 0) == -1.0f) {
-    result.x = Atan2(m.get(0, 1), m.get(0, 2));
-    result.y = kRadians90;
-    result.z = 0;
-  } else if (m.get(2, 0) == 1.0f) {
-    result.x = Atan2(-m.get(0, 1), -m.get(0, 2));
-    result.y = -kRadians90;
-    result.z = 0;
-  } else {
-    float y = Asin(m.get(2, 0));
-    float cosy = Cos(y);
-    result.x = -Atan2(m.get(2, 1) / cosy, m.get(2, 2) / cosy);
-    result.y = y;
-    result.z = Atan2(m.get(1, 0) / cosy, m.get(0, 0) / cosy);
-  }
-
-  return result;
-}
-
-void DecomposeTransformMatrix(const Mat4& m, Vec3* position, Vec3* rotation, Vec3* scale) {
-  position->x = m.get(0, 3);
-  position->y = m.get(1, 3);
-  position->z = m.get(2, 3);
-
-  rotation->x = -Atan2(m.get(2, 1), m.get(2, 2));
-  rotation->y = -Atan2(-m.get(2, 0), Sqrt(m.get(2, 1) * m.get(2, 1) + m.get(2, 2) * m.get(2, 2)));
-  rotation->z = -Atan2(m.get(1, 0), m.get(0, 0));
-
-  scale->x = Length(ToVec3(m.row(0)));
-  scale->y = Length(ToVec3(m.row(1)));
-  scale->z = Length(ToVec3(m.row(2)));
 }
 
 // Quaternion ======================================================================================

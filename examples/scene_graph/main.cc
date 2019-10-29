@@ -41,8 +41,8 @@ void CreateGUI(SceneNode* root, WidgetOperation* op) {
   ImGui::Separator();
 
   int op_int = (int)*op;
-  ImGui::RadioButton("Translation", &op_int, (int)WidgetOperation::kTranslation);
-  ImGui::RadioButton("Rotation", &op_int, (int)WidgetOperation::kRotation);
+  ImGui::RadioButton("Translation", &op_int, (int)WidgetOperation::kTranslate);
+  ImGui::RadioButton("Rotation", &op_int, (int)WidgetOperation::kRotate);
   ImGui::RadioButton("Scale", &op_int, (int)WidgetOperation::kScale);
   *op = (WidgetOperation)op_int;
 
@@ -123,7 +123,7 @@ int main() {
   /* Mat4 m = Mat4::Identity(); */
   bool op = false;
 
-  WidgetOperation operation = WidgetOperation::kTranslation;
+  WidgetOperation operation = WidgetOperation::kTranslate;
 
   SceneNode* current_node = nodes[0];
   bool running = true;

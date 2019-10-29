@@ -13,7 +13,6 @@ namespace rothko {
 
 #pragma pack(push, 1)
 struct Transform {
-
   Transform(Vec3 position = {}, Vec3 rotation = {}, Vec3 scale = {1, 1, 1})
       : position(position), rotation(rotation), scale(scale) {}
 

@@ -498,7 +498,18 @@ Mat4 Inverse(const Mat4&);
 template <typename T>
 void SetRowCol(_mat4<T>* m, T x, T y) { (*m)[y][x]; }
 
+inline Mat3 ToMat3(const Mat4& m) {
+  Mat3 result;
+  result.cols[0] = ToVec3(m.cols[0]);
+  result.cols[1] = ToVec3(m.cols[1]);
+  result.cols[2] = ToVec3(m.cols[2]);
+
+  return result;
+}
+
 std::string ToString(const Mat4&);
+
+Mat4 Transpose(const Mat4&);
 
 // =================================================================================================
 // Transformation Matrices.
@@ -563,6 +574,11 @@ Mat4 Ortho(float left, float right, float bottom, float top, float near, float f
 // Returns |Frustrum| after calculating the values.
 Mat4 Perspective(float fov, float aspect_ratio, float near, float far);
 
+Vec3 PositionFromTransformMatrix(const Mat4&);
+Vec3 RotationFromTransformMatrix(const Mat4&);
+Vec3 ScaleFromTransformMatrix(const Mat4&);
+
+// Calls the three extractions calls.
 void DecomposeTransformMatrix(const Mat4&, Vec3* position, Vec3* rotation, Vec3* scale);
 
 // =================================================================================================
@@ -581,10 +597,6 @@ inline Vec2 EulerFromDirectionDeg(const Vec3& direction) {
   Vec2 euler= EulerFromDirection(direction);
   return {ToDegrees(euler.x), ToDegrees(euler.y)};
 }
-
-// NOTE: This assumes the matrix has no scale!
-Vec3 EulerFromMat4(const Mat4&);
-
 
 // =================================================================================================
 // Quaternion

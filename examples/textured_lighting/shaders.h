@@ -17,6 +17,13 @@ namespace simple_lighting {
 struct ObjectShaderUBO {
   struct Vert {
     Mat4 model = Mat4::Identity();
+
+    // Normal matrix, that permits to correctly transform the normal to world space, taking into
+    // account distorting effects such as non-uniform scaling.
+    // Calculated as:
+    //
+    // Mat3(Transpose(Inverse(model));
+    Mat3 normal_matrix = Mat3::Identity();
   } vert;
 
   // Due to std140 alignment, Vec3 are aligned to 4 floats, thus we need a padding.

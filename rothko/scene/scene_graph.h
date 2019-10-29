@@ -41,6 +41,7 @@ SceneNode* GetParent(SceneGraph*, SceneNode*);
 constexpr uint64_t kSceneGraphSize = 8192;
 
 struct SceneGraph {
+  SceneNode base_node = {};
   SceneNode nodes[kSceneGraphSize];
 
   std::bitset<kSceneGraphSize> used;
