@@ -139,26 +139,5 @@ void main() {
 
 }  // namespace
 
-
-Shader CreateLightShader(Renderer* renderer) {
-  Shader shader;
-  shader.name = "lighting";
-  shader.vertex_type = VertexType::k3d;
-  shader.vert_ubo_name = "VertUniforms";
-  shader.vert_ubo_size = sizeof(LightShaderUBO::Vert);
-
-  shader.frag_ubo_name = "FragUniforms";
-  shader.frag_ubo_size = sizeof(LightShaderUBO::Frag);
-
-  shader.vert_src = CreateVertexSource(kLightVertShader);
-  shader.frag_src = CreateFragmentSource(kLightFragShader);
-
-  if (!RendererStageShader(renderer, &shader))
-    return {};
-  return shader;
-}
-
 }  // namespace simple_lighting
 }  // namespace rothko
-
-

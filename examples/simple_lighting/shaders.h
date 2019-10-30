@@ -42,19 +42,5 @@ struct ObjectShaderUBO {
 
 Shader CreateObjectShader(Renderer*);
 
-// Light Shader ------------------------------------------------------------------------------------
-
-struct LightShaderUBO {
-  struct Vert {
-    Mat4 model;
-  } vert;
-
-  struct Frag {
-    Vec3 light_color;
-  } frag;
-};
-
-Shader CreateLightShader(Renderer*);
-
 }  // namespace simple_lighting
 }  // namespace rothko

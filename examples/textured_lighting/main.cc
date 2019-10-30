@@ -26,7 +26,6 @@ RenderMesh CreateRenderCommand(Mesh* mesh,
   render_mesh.mesh = mesh;
   render_mesh.shader = shader;
   render_mesh.primitive_type = PrimitiveType::kTriangles;
-
   render_mesh.indices_count = mesh->indices.size();
 
   render_mesh.vert_ubo_data = (uint8_t*)&ubo.vert;
@@ -58,8 +57,8 @@ int main() {
     return 1;
 
   Shader object_shader = simple_lighting::CreateObjectShader(game.renderer.get());
-  Shader light_shader = simple_lighting::CreateLightShader(game.renderer.get());
-  if (!Valid(object_shader) || !Valid(light_shader))
+  /* Shader light_shader = simple_lighting::CreateLightShader(game.renderer.get()); */
+  if (!Valid(object_shader))
     return 1;
 
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;
@@ -94,6 +93,11 @@ int main() {
     return 1;
   }
 
+  LightWidgetManager light_widgets;
+  Shader point_light_shader = CreatePointLightShader(game.renderer.get());
+  Mesh point_light_mesh = CreatePointLightMesh(game.renderer.get());
+  Init(&light_widgets, "light-widgets", &point_light_shader, &point_light_mesh);
+
   auto scene_graph = std::make_unique<SceneGraph>();
 
   SceneNode* light_node = AddNode(scene_graph.get());
@@ -104,16 +108,15 @@ int main() {
 
   Update(scene_graph.get());
 
-  simple_lighting::LightShaderUBO light_ubo = {};
-  light_ubo.vert.model = light_node->transform.world_matrix;
-  light_ubo.frag.light_color = ToVec3(Color::White());
+  /* simple_lighting::LightShaderUBO light_ubo = {}; */
+  /* light_ubo.vert.model = light_node->transform.world_matrix; */
+  /* light_ubo.frag.light_color = ToVec3(Color::White()); */
 
   // Create the UBOs.
   std::vector<simple_lighting::ObjectShaderUBO> ubos;
   ubos.reserve(kCubeCount);
 
   constexpr int kMaxRow = 4;
-  /* for (auto& [name, mat] :) { */
   for (int i = 0; i < kCubeCount; i++) {
     SceneNode* node = AddNode(scene_graph.get());
     cube_nodes[i] = node;
@@ -144,12 +147,13 @@ int main() {
   float light_time_delta = 0;
   (void)light_time_delta;
 
-  bool move_cubes = true;
+  bool move_cubes = false;
   float cubes_time_delta = 0;
 
   while (running) {
     auto events = Update(&game);
     BeginFrame(&imgui, &game.window, &game.time, &game.input);
+    Reset(&light_widgets);
 
     for (auto event : events) {
       if (event == WindowEvent::kQuit) {
@@ -173,7 +177,6 @@ int main() {
 
     auto push_camera = GetPushCamera(camera);
 
-
     // Update the scene.
 
     light_node->transform = TranslateWidget(push_camera, light_node->transform);
@@ -186,28 +189,34 @@ int main() {
       }
     }
     Update(scene_graph.get());
+    Vec3 light_pos = PositionFromTransformMatrix(light_node->transform.world_matrix);
+
+    // Add the widgets.
+    PushPointLight(&light_widgets, {light_pos, {1, 1, 1}});
 
     // Create the render commands.
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Gray66()));
     commands.push_back(push_camera);
 
-    light_ubo.vert.model = light_node->transform.world_matrix;
+    /* light_ubo.vert.model = light_node->transform.world_matrix; */
 
-    Vec3 light_pos = PositionFromTransformMatrix(light_node->transform.world_matrix);
     for (uint32_t i = 0; i < ubos.size(); i++) {
       auto& ubo = ubos[i];
       ubo.vert.model = cube_nodes[i]->transform.world_matrix;
-      ubo.vert.normal_matrix = ToMat3(Transpose(Inverse(ubo.vert.model)));
+      ubo.vert.normal_matrix = Transpose(Inverse(ubo.vert.model));
 
       ubo.frag.light.pos = light_pos;
       commands.push_back(
           CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo));
     }
-    commands.push_back(
-        CreateRenderCommand(&light_cube_mesh, &light_shader, nullptr, nullptr, light_ubo));
-    commands.push_back(grid.render_command);
+    /* commands.push_back( */
+    /*     CreateRenderCommand(&light_cube_mesh, &light_shader, nullptr, nullptr, light_ubo)); */
 
+    auto light_commands = GetRenderCommands(light_widgets);
+    commands.insert(commands.end(), light_commands.begin(), light_commands.end());
+
+    commands.push_back(grid.render_command);
 
     auto imgui_commands = EndFrame(&imgui);
     commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end());

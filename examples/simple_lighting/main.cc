@@ -9,7 +9,6 @@
 #include <rothko/ui/imgui/imgui.h>
 #include <rothko/utils/strings.h>
 #include <rothko/widgets/widgets.h>
-#include <third_party/imguizmo/ImGuizmo.h>
 
 #include "shaders.h"
 
@@ -204,11 +203,6 @@ int main() {
   if (!Valid(object_shader))
     return 1;
 
-  Shader light_shader = simple_lighting::CreateLightShader(game.renderer.get());
-  if (!Valid(light_shader))
-    return 1;
-
-
   AppContext app_context = {};
 
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;
@@ -226,15 +220,17 @@ int main() {
   if (!RendererStageMesh(game.renderer.get(), &light_cube_mesh))
     return 1;
 
+  LightWidgetManager light_widgets;
+  Shader point_light_shader = CreatePointLightShader(game.renderer.get());
+  Mesh point_light_mesh = CreatePointLightMesh(game.renderer.get());
+  Init(&light_widgets, "light-widgets", &point_light_shader, &point_light_mesh);
+
   auto scene_graph = std::make_unique<SceneGraph>();
 
   SceneNode* base_light = AddNode(scene_graph.get());
   SceneNode* light_node = AddNode(scene_graph.get(), base_light);
   light_node->transform.position = {3, 3, 3};
   light_node->transform.scale *= 0.2f;
-
-  simple_lighting::LightShaderUBO light_ubo = {};
-  light_ubo.frag.light_color = ToVec3(Color::White());
 
   // Create the UBOs.
   std::vector<simple_lighting::ObjectShaderUBO> ubos;
@@ -249,29 +245,7 @@ int main() {
     }
   }
 
-
-    Update(scene_graph.get());
-
-
-  /* int i = 0; */
-  /* constexpr int kMaxRow = 4; */
-  /* for (auto& [name, mat] : kMaterials) { */
-  /*   simple_lighting::ObjectShaderUBO ubo = {}; */
-  /*   float x = i % kMaxRow - 1; */
-  /*   float y = i / kMaxRow; */
-  /*   ubo.vert.model = Translate({x, y, 0}); */
-  /*   ubo.vert.model *= Scale(0.5f); */
-
-  /*   ubo.frag.light.ambient = {0.2f, 0.2f, 0.2f}; */
-  /*   ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f}; */
-  /*   ubo.frag.light.specular = {1, 1, 1}; */
-
-  /*   mat.shininess *= 100; */
-  /*   ubo.frag.material = mat; */
-
-  /*   ubos.push_back(std::move(ubo)); */
-  /*   i++; */
-  /* } */
+  Update(scene_graph.get());
 
   imgui::ImguiContext imgui;
   if (!Init(game.renderer.get(), &imgui))
@@ -280,6 +254,7 @@ int main() {
   bool running = true;
   /* float time_delta = 0; */
   while (running) {
+    // Frame start.
     auto events = Update(&game);
     for (auto event : events) {
       if (event == WindowEvent::kQuit) {
@@ -289,42 +264,33 @@ int main() {
     }
 
     BeginFrame(&imgui, &game.window, &game.time, &game.input);
+    Reset(&light_widgets);
+    DefaultUpdateOrbitCamera(game.input, &app_context.camera);
 
     if (KeyUpThisFrame(&game.input, Key::kEscape)) {
       running = false;
       break;
     }
 
-    /* if (KeyUpThisFrame(&game.input, Key::kSpace)) { */
-    /*   move_light = !move_light; */
-    /* } */
-
-    DefaultUpdateOrbitCamera(game.input, &app_context.camera);
-
-    // Update the UBOs.
-    /* if (move_light) { */
-    /*   time_delta += game.time.frame_delta; */
-    /*   app_context.light_pos = Vec3(Sin(time_delta) * 4, 0.4f, 1); */
-    /* } */
-
+    // Update Scene.
 
     auto push_camera = GetPushCamera(app_context.camera);
     light_node->transform =
         TransformWidget(WidgetOperation::kTranslate, push_camera, light_node->transform, nullptr);
-
     Update(scene_graph.get());
 
+    app_context.light_pos = light_node->transform.position;
 
-    /* light_ubo.vert.model = Translate(app_context.light_pos); */
-    /* light_ubo.vert.model *= Scale(0.1f); */
-    light_ubo.vert.model = light_node->transform.world_matrix;
+    // Add the widgets.
+    PushPointLight(&light_widgets, {app_context.light_pos, app_context.light_diffuse});
+
+    // Create Commands.
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Gray66()));
     commands.push_back(GetPushCamera(app_context.camera));
 
     // Draw the cubes.
-    app_context.light_pos = light_node->transform.position;
     for (auto& ubo : ubos) {
       // Update the light.
       ubo.frag.light.pos = app_context.light_pos;
@@ -334,7 +300,11 @@ int main() {
 
       commands.push_back(CreateRenderCommand(&cube_mesh, &object_shader, ubo));
     }
-    commands.push_back(CreateRenderCommand(&light_cube_mesh, &light_shader, light_ubo));
+    /* commands.push_back(CreateRenderCommand(&light_cube_mesh, &light_shader, light_ubo)); */
+
+    auto light_commands = GetRenderCommands(light_widgets);
+    commands.insert(commands.end(), light_commands.begin(), light_commands.end());
+
     commands.push_back(grid.render_command);
 
     commands.push_back(PopCamera());

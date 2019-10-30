@@ -3,7 +3,10 @@
 
 source_set("widgets") {
   sources = [
-    "widgets.cc",
+    "lights.cc",
+    "lights.h",
+    "transform.cc",
+    "transform.h",
     "widgets.h",
   ]
 

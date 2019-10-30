@@ -22,9 +22,10 @@ struct ObjectShaderUBO {
     // account distorting effects such as non-uniform scaling.
     // Calculated as:
     //
-    // Mat3(Transpose(Inverse(model));
-    Mat3 normal_matrix = Mat3::Identity();
+    // Transpose(Inverse(model));
+    Mat4 normal_matrix = Mat4::Identity();
   } vert;
+  static_assert(sizeof(Vert) == 128);
 
   // Due to std140 alignment, Vec3 are aligned to 4 floats, thus we need a padding.
   // clang-format off
@@ -47,20 +48,6 @@ struct ObjectShaderUBO {
 };
 
 Shader CreateObjectShader(Renderer*);
-
-// Light Shader ------------------------------------------------------------------------------------
-
-struct LightShaderUBO {
-  struct Vert {
-    Mat4 model;
-  } vert;
-
-  struct Frag {
-    Vec3 light_color;
-  } frag;
-};
-
-Shader CreateLightShader(Renderer*);
 
 }  // namespace simple_lighting
 }  // namespace rothko

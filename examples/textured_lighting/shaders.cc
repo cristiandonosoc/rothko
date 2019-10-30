@@ -18,7 +18,7 @@ layout (location = 2) in vec2 in_uv;
 
 layout (std140) uniform VertUniforms {
   mat4 model;
-  mat3 normal_matrix;
+  mat4 normal_matrix;
 };
 
 out vec3 pos;
@@ -34,7 +34,7 @@ void main() {
 
   // Normals have to take into account the model transformation.
   // We use a normal matrix because non-uniform scale will distort the normal direction.
-  normal = normal_matrix * in_normal;
+  normal = mat3(normal_matrix) * in_normal;
 }
 )";
 
@@ -49,9 +49,8 @@ struct Light {
   vec3 specular;
 };
 
-
-uniform sampler2D tex0;           // diffuse map.
-uniform sampler2D tex1;
+uniform sampler2D tex0;   // diffuse map.
+uniform sampler2D tex1;   // Specular map.
 
 struct Material {
   vec3 specular;
@@ -118,61 +117,5 @@ Shader CreateObjectShader(Renderer* renderer) {
   return shader;
 }
 
-// Light Shader ------------------------------------------------------------------------------------
-
-namespace {
-
-constexpr char kLightVertShader[] = R"(
-
-layout (location = 0) in vec3 in_pos;
-
-layout (std140) uniform VertUniforms {
-  mat4 model;
-};
-
-void main() {
-  gl_Position = camera_proj * camera_view * model * vec4(in_pos, 1.0);
-}
-
-)";
-
-constexpr char kLightFragShader[] = R"(
-
-layout (location = 0) out vec4 out_color;
-
-layout (std140) uniform FragUniforms {
-  vec3 light_color;
-};
-
-void main() {
-  out_color = vec4(light_color, 1);
-}
-
-)";
-
-
-}  // namespace
-
-
-Shader CreateLightShader(Renderer* renderer) {
-  Shader shader;
-  shader.name = "lighting";
-  shader.vertex_type = VertexType::k3d;
-  shader.vert_ubo_name = "VertUniforms";
-  shader.vert_ubo_size = sizeof(LightShaderUBO::Vert);
-
-  shader.frag_ubo_name = "FragUniforms";
-  shader.frag_ubo_size = sizeof(LightShaderUBO::Frag);
-
-  shader.vert_src = CreateVertexSource(kLightVertShader);
-  shader.frag_src = CreateFragmentSource(kLightFragShader);
-
-  if (!RendererStageShader(renderer, &shader))
-    return {};
-  return shader;
-}
-
 }  // namespace simple_lighting
 }  // namespace rothko
-
-
