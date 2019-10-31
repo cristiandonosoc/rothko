@@ -9,16 +9,12 @@
 
 namespace rothko {
 
-struct LightWidgetManager {
-  struct PointLight {
-    Vec3 position;
-    Vec3 color;
-  };
+struct Transform;
 
-  struct DirectionalLight {
-    Vec3 position;
-    Vec3 rotation;
-    Vec3 color;
+struct LightWidgetManager {
+  struct Light {
+    Transform* transform = {};
+    Vec3 color = {};
   };
 
   std::string name;
@@ -27,23 +23,31 @@ struct LightWidgetManager {
   Shader* point_light_shader = nullptr;
 
   Mesh* directional_light_mesh = nullptr;
+  Shader* directional_light_shader = nullptr;
 
-  std::vector<PointLight> point_lights;
-  std::vector<DirectionalLight> directional_lights;
+  std::vector<Light> point_lights;
+  std::vector<Light> directional_lights;
 };
 
 Shader CreatePointLightShader(Renderer*);
-
 Mesh CreatePointLightMesh(Renderer*);
+
+Shader CreateDirectionalLightShader(Renderer*);
 Mesh CreateDirectionalLightMesh(Renderer*);
 
 void Init(LightWidgetManager*, const std::string& name,
                                Shader* point_light_shader,
-                               Mesh* point_light_mesh);
+                               Mesh* point_light_mesh,
+                               Shader* directional_light_shader,
+                               Mesh* directional_light_mesh);
 void Reset(LightWidgetManager*);
 
-void PushPointLight(LightWidgetManager*, LightWidgetManager::PointLight);
-void PushDirectionalLight(LightWidgetManager*, LightWidgetManager::DirectionalLight);
+// Transforms must be stable in memory throughout the frame.
+void PushPointLight(LightWidgetManager*, Transform*, Vec3 color);
+void PushDirectionalLight(LightWidgetManager*, Transform*, Vec3 color);
+
+/* void PushPointLight(LightWidgetManager*, LightWidgetManager::PointLight); */
+/* void PushDirectionalLight(LightWidgetManager*, LightWidgetManager::DirectionalLight); */
 
 std::vector<RenderMesh> GetRenderCommands(const LightWidgetManager&);
 

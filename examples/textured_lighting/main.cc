@@ -96,7 +96,10 @@ int main() {
   LightWidgetManager light_widgets;
   Shader point_light_shader = CreatePointLightShader(game.renderer.get());
   Mesh point_light_mesh = CreatePointLightMesh(game.renderer.get());
-  Init(&light_widgets, "light-widgets", &point_light_shader, &point_light_mesh);
+  Shader directional_light_shader = CreateDirectionalLightShader(game.renderer.get());
+  Mesh directional_light_mesh = CreateDirectionalLightMesh(game.renderer.get());
+  Init(&light_widgets, "light-widgets", &point_light_shader, &point_light_mesh,
+       &directional_light_shader, &directional_light_mesh);
 
   auto scene_graph = std::make_unique<SceneGraph>();
 
@@ -192,7 +195,7 @@ int main() {
     Vec3 light_pos = PositionFromTransformMatrix(light_node->transform.world_matrix);
 
     // Add the widgets.
-    PushPointLight(&light_widgets, {light_pos, {1, 1, 1}});
+    PushPointLight(&light_widgets, &light_node->transform, {1, 1, 1});
 
     // Create the render commands.
     PerFrameVector<RenderCommand> commands;
