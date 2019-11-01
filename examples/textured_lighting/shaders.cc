@@ -43,7 +43,7 @@ constexpr char kObjectFragShader[] = R"(
 layout (location = 0) out vec4 out_color;
 
 struct Light {
-  vec3 pos;
+  vec4 pos;
   vec3 ambient;
   vec3 diffuse;
   vec3 specular;
@@ -69,12 +69,21 @@ in vec2 uv;
 void main() {
   vec3 unit_normal = normalize(normal);
 
+  // Depending on the type of light position, we know whether this is a directional light or not.
+  vec3 light_dir;
+  if (light.pos.w == 0.0f) {
+    light_dir = normalize(-vec3(light.pos));
+  } else {
+    light_dir = normalize(vec3(light.pos) - pos);
+  }
+
   // Ambient light.
   /* vec3 ambient_light = light.ambient * material.ambient; */
   vec3 ambient_light = light.ambient * vec3(texture(tex0, uv));
 
+
   // Diffuse light.
-  vec3 light_dir = normalize(light.pos - pos);
+  /* vec3 light_dir = normalize(vec3(light.pos) - pos); */
   float diffuse = max(dot(unit_normal, light_dir), 0);
   /* vec3 diffuse_light = light.diffuse * diffuse * diffuse; */
   vec3 diffuse_light = light.diffuse * diffuse * vec3(texture(tex0, uv));

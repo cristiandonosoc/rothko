@@ -279,7 +279,7 @@ int main() {
 
     auto push_camera = GetPushCamera(app_context.camera);
     light_node->transform =
-        TransformWidget(WidgetOperation::kTranslate, push_camera, light_node->transform, nullptr);
+        TranslateWidget(TransformKind::kGlobal, push_camera, light_node->transform, nullptr);
     Update(scene_graph.get());
 
     app_context.light_pos = light_node->transform.position;

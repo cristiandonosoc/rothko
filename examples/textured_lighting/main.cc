@@ -8,6 +8,7 @@
 #include <rothko/scene/scene_graph.h>
 #include <rothko/ui/imgui.h>
 #include <rothko/widgets/widgets.h>
+#include <rothko/scene/lines.h>
 
 #include "shaders.h"
 
@@ -93,6 +94,7 @@ int main() {
     return 1;
   }
 
+  // Lights.
   LightWidgetManager light_widgets;
   Shader point_light_shader = CreatePointLightShader(game.renderer.get());
   Mesh point_light_mesh = CreatePointLightMesh(game.renderer.get());
@@ -101,23 +103,30 @@ int main() {
   Init(&light_widgets, "light-widgets", &point_light_shader, &point_light_mesh,
        &directional_light_shader, &directional_light_mesh);
 
+  // Line Manager.
+  Shader line_shader = CreateLineShader(game.renderer.get());
+  if (!Valid(line_shader))
+    return 1;
+
+  LineManager line_manager = {};
+  if (!Init(game.renderer.get(), &line_shader, &line_manager, "line-manager"))
+    return 1;
+
   auto scene_graph = std::make_unique<SceneGraph>();
 
-  SceneNode* light_node = AddNode(scene_graph.get());
-  light_node->transform.scale *= 0.2f;
+  SceneNode* point_light_node = AddNode(scene_graph.get());
+
+  SceneNode* dir_light_node = AddNode(scene_graph.get());
+  dir_light_node->transform.position = {0, 1, 0};
 
   constexpr int kCubeCount = 8;
   SceneNode* cube_nodes[kCubeCount] = {};
 
   Update(scene_graph.get());
 
-  /* simple_lighting::LightShaderUBO light_ubo = {}; */
-  /* light_ubo.vert.model = light_node->transform.world_matrix; */
-  /* light_ubo.frag.light_color = ToVec3(Color::White()); */
-
   // Create the UBOs.
-  std::vector<simple_lighting::ObjectShaderUBO> ubos;
-  ubos.reserve(kCubeCount);
+  std::vector<simple_lighting::ObjectShaderUBO> point_light_ubos;
+  point_light_ubos.reserve(kCubeCount);
 
   constexpr int kMaxRow = 4;
   for (int i = 0; i < kCubeCount; i++) {
@@ -140,8 +149,10 @@ int main() {
     ubo.frag.material.specular = ToVec3(Color::White());
     ubo.frag.material.shininess = 128;
 
-    ubos.push_back(std::move(ubo));
+    point_light_ubos.push_back(std::move(ubo));
   }
+
+  std::vector<simple_lighting::ObjectShaderUBO> dir_light_ubos = point_light_ubos;
 
   Update(scene_graph.get());
 
@@ -152,6 +163,8 @@ int main() {
 
   bool move_cubes = false;
   float cubes_time_delta = 0;
+
+  bool move_point_light = true;
 
   while (running) {
     auto events = Update(&game);
@@ -176,49 +189,79 @@ int main() {
     if (KeyUpThisFrame(&game.input, Key::kC))
       move_cubes = !move_cubes;
 
+    if (KeyUpThisFrame(&game.input, Key::kA))
+      move_point_light = !move_point_light;
+
     DefaultUpdateOrbitCamera(game.input, &camera);
 
     auto push_camera = GetPushCamera(camera);
 
     // Update the scene.
 
-    light_node->transform = TranslateWidget(push_camera, light_node->transform);
+    if (move_point_light) {
+      point_light_node->transform =
+          TranslateWidget(TransformKind::kGlobal, push_camera, point_light_node->transform);
+    } else {
+      dir_light_node->transform =
+          RotateWidget(TransformKind::kLocal, push_camera, dir_light_node->transform);
+    }
+
     if (move_cubes) {
       cubes_time_delta += game.time.frame_delta;
       float angle = cubes_time_delta * ToRadians(7.0f);
-      for (uint32_t i = 0; i < ubos.size(); i++) {
+      for (uint32_t i = 0; i < point_light_ubos.size(); i++) {
         SceneNode* cube_node = cube_nodes[i];
         cube_node->transform.rotation = {angle * i, -angle * i, 0};
       }
     }
     Update(scene_graph.get());
-    Vec3 light_pos = PositionFromTransformMatrix(light_node->transform.world_matrix);
+    Vec3 point_light_pos = PositionFromTransformMatrix(point_light_node->transform.world_matrix);
+    /* Vec3 dir_light_dir = RotationFromTransformMatrix(dir_light_node->transform.world_matrix); */
+    /* Vec3 dir_light_dir = ToVec3(dir_light_node->transform.world_matrix.row(0)); */
+    Vec3 dir_light_dir = ToVec3(dir_light_node->transform.world_matrix.cols[0]);
+
+    /* Reset(&line_manager); */
+    /* PushLine(&line_manager, {}, Normalize(dir_light_dir), Color::Blue()); */
+    /* if (!Stage(game.renderer.get(), &line_manager)) */
+    /*   return 1; */
 
     // Add the widgets.
-    PushPointLight(&light_widgets, &light_node->transform, {1, 1, 1});
+    PushPointLight(&light_widgets, &point_light_node->transform, {1, 1, 1});
+    PushDirectionalLight(&light_widgets, &dir_light_node->transform, {1, 1, 1});
 
     // Create the render commands.
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Gray66()));
     commands.push_back(push_camera);
 
-    /* light_ubo.vert.model = light_node->transform.world_matrix; */
-
-    for (uint32_t i = 0; i < ubos.size(); i++) {
-      auto& ubo = ubos[i];
+    // Point light cubes.
+    for (uint32_t i = 0; i < point_light_ubos.size(); i++) {
+      auto& ubo = point_light_ubos[i];
       ubo.vert.model = cube_nodes[i]->transform.world_matrix;
       ubo.vert.normal_matrix = Transpose(Inverse(ubo.vert.model));
 
-      ubo.frag.light.pos = light_pos;
+      ubo.frag.light.pos = ToVec4(point_light_pos);
       commands.push_back(
           CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo));
     }
-    /* commands.push_back( */
-    /*     CreateRenderCommand(&light_cube_mesh, &light_shader, nullptr, nullptr, light_ubo)); */
+
+    // Directional light cubes.
+    for (uint32_t i = 0; i < dir_light_ubos.size(); i++) {
+      auto& ubo = dir_light_ubos[i];
+      ubo.vert.model = Translate({0, 0, 4});
+      ubo.vert.model *= cube_nodes[i]->transform.world_matrix;
+      ubo.vert.normal_matrix = Transpose(Inverse(ubo.vert.model));
+
+      // Directional lights expect 0 in the w coordinate.
+      ubo.frag.light.pos = ToVec4(dir_light_dir, 0);
+      commands.push_back(
+          CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo));
+    }
 
     auto light_commands = GetRenderCommands(light_widgets);
     commands.insert(commands.end(), light_commands.begin(), light_commands.end());
 
+    commands.push_back(GetRenderCommand(line_manager));
     commands.push_back(grid.render_command);
 
     auto imgui_commands = EndFrame(&imgui);

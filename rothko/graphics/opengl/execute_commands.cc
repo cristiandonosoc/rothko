@@ -17,6 +17,7 @@ namespace {
 void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
   for (auto& command : commands) {
     switch (command.type()) {
+      case RenderCommandType::kNop: continue;
       case RenderCommandType::kClearFrame: continue;
       case RenderCommandType::kPushConfig: continue;
       case RenderCommandType::kPopConfig: continue;
@@ -270,6 +271,8 @@ void RendererExecuteCommands(Renderer*,
 
   for (auto& command : commands) {
     switch (command.type()) {
+      case RenderCommandType::kNop:
+        continue;
       case RenderCommandType::kClearFrame:
         ExecuteClearRenderAction(command.GetClearFrame());
         break;

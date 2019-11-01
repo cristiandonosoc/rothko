@@ -252,6 +252,7 @@ inline float Sum(const _v3<T>& v) { return v.x + v.y + v.z; }
 std::string ToString(const Int3&);
 std::string ToString(const Vec3&);
 
+
 // Vec 4 -------------------------------------------------------------------------------------------
 
 template<typename T>
@@ -319,6 +320,7 @@ float Length(const _v4<T>& v) { return Sqrt(LengthSq(v)); }
 Vec4 Normalize(const Vec4& v);
 
 inline Vec3 ToVec3(const Vec4& v) { return Vec3{v.x, v.y, v.z}; }
+inline Vec4 ToVec4(const Vec3& v, float w = 1.0f) { return Vec4(v.x, v.y, v.z, w); }
 
 template <typename T>
 inline float Sum(const _v4<T>& v) { return v.x + v.y + v.z + v.w; }
@@ -605,21 +607,20 @@ inline Vec2 EulerFromDirectionDeg(const Vec3& direction) {
 union Quaternion {
   // Members.
 
-  struct {
-    union {
-      Vec3 dir;
-      struct {
-        float x, y, z;
-      };
-      float w;
-    };
-  };
+  struct { Vec3 dir; float angle; };
+  struct { float x, y, z, w; };
   Vec4 elements;
 
   // Constructor.
 
+  // clang-format off
   Quaternion() = default;
   Quaternion(const Vec4& v) { elements = v; }
+  Quaternion(const Quaternion& q) : elements(q.elements) {}
+  Quaternion& operator=(const Quaternion& q) { elements = q.elements; return *this; }
+  Quaternion(Quaternion&& q) : elements(q.elements) {}
+  Quaternion& operator=(Quaternion&& q) { elements = q.elements; return *this; }
+  // clang-format on
 
   // Operators.
 

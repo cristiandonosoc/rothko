@@ -15,6 +15,9 @@ struct LineManager {
   std::string name;
   Shader* shader;
 
+  // How many shapes have been added to the line manager. Will be zeroed upon reset.
+  int shape_count = 0;
+
   bool staged = false;          // Whether the current state of the mesh has been staged.
 
   // Uses PrimitiveType::kLineStrip.
@@ -22,7 +25,10 @@ struct LineManager {
   // IMPORTANT: The GPU state might be out of date. Use |staged| to know this and call |Stage|
   //            accordingly.
   Mesh strip_mesh;
-  RenderMesh render_command;
+
+  // You should not access the render command directly, as it might be empty.
+  // Use |GetRenderCommand| instead.
+  RenderMesh render_command_;
 };
 
 Shader CreateLineShader(Renderer* renderer);
@@ -34,6 +40,8 @@ inline bool Valid(LineManager* l) { return Staged(l->strip_mesh); }
 void Reset(LineManager*);
 
 bool Stage(Renderer*, LineManager*);
+
+RenderCommand GetRenderCommand(const LineManager&);
 
 // Push primitives ---------------------------------------------------------------------------------
 

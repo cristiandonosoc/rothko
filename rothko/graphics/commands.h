@@ -29,6 +29,7 @@ struct Texture;
 // Render Actions ----------------------------------------------------------------------------------
 
 enum class RenderCommandType {
+  kNop,           // Don't do anything.
   kClearFrame,
   kPushConfig,
   kPopConfig,
@@ -47,6 +48,14 @@ enum class PrimitiveType {
   kLast,
 };
 const char* ToString(PrimitiveType);
+
+// No op -------------------------------------------------------------------------------------------
+
+struct Nop {
+  static constexpr RenderCommandType kType = RenderCommandType::kNop;
+};
+
+// Clear Frame -------------------------------------------------------------------------------------
 
 struct ClearFrame {
   static constexpr RenderCommandType kType = RenderCommandType::kClearFrame;
@@ -172,6 +181,7 @@ struct RenderCommand {
 
   RenderCommandType type() const { return type_; }
 
+  GENERATE_COMMAND(Nop, is_nop);
   GENERATE_COMMAND(ClearFrame, is_clear_frame);
   GENERATE_COMMAND(PushConfig, is_push_config);
   GENERATE_COMMAND(PopConfig, is_pop_config);
@@ -181,7 +191,7 @@ struct RenderCommand {
 
  private:
   RenderCommandType type_ = RenderCommandType::kLast;
-  std::variant<ClearFrame, PushConfig, PopConfig, PushCamera, PopCamera, RenderMesh> data_;
+  std::variant<Nop, ClearFrame, PushConfig, PopConfig, PushCamera, PopCamera, RenderMesh> data_;
 
   template <typename T>
   void SetRenderCommand(T t) {

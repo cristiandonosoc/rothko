@@ -31,7 +31,7 @@ struct ObjectShaderUBO {
   // clang-format off
   struct Frag {
     struct Light {
-      Vec3 pos;           FLOAT_PAD();
+      Vec4 pos;
       Vec3 ambient;       FLOAT_PAD();
       Vec3 diffuse;       FLOAT_PAD();
       Vec3 specular;      FLOAT_PAD();

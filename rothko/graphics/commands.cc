@@ -11,6 +11,7 @@ namespace rothko {
 
 const char* ToString(RenderCommandType type) {
   switch (type) {
+    case RenderCommandType::kNop: return "Nop";
     case RenderCommandType::kClearFrame: return "Clear Frame";
     case RenderCommandType::kPushConfig: return "Push Config";
     case RenderCommandType::kPopConfig: return "Pop Config";
@@ -126,6 +127,8 @@ std::string ToString(const RenderCommand& command) {
   std::stringstream ss;
   ss << "Type: " << ToString(command.type()) << std::endl;
   switch (command.type()) {
+    case RenderCommandType::kNop:
+      ss << "Nop";
     case RenderCommandType::kClearFrame:
       ss << ToString(command.GetClearFrame());
       break;

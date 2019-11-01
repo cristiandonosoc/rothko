@@ -35,15 +35,12 @@ void main() {
 
 }  // namespace
 
-
-
 Shader CreateLineShader(Renderer* renderer) {
   Shader shader = {};
   shader.name = "line-shader";
   shader.vertex_type = VertexType::k3dColor;
   shader.vert_src = CreateVertexSource(kLineVertexShader);
   shader.frag_src = CreateFragmentSource(kLineFragmentShader);
-
 
   if (!RendererStageShader(renderer, &shader))
     return {};
@@ -69,10 +66,10 @@ bool Init(Renderer* renderer, Shader* shader, LineManager* line_manager, std::st
 
   line_manager->strip_mesh.name = StringPrintf("%s-mesh", line_manager->name.c_str());
 
-  line_manager->render_command = {};
-  line_manager->render_command.mesh = &line_manager->strip_mesh;
-  line_manager->render_command.shader = line_manager->shader;
-  line_manager->render_command.primitive_type = PrimitiveType::kLineStrip;
+  line_manager->render_command_ = {};
+  line_manager->render_command_.mesh = &line_manager->strip_mesh;
+  line_manager->render_command_.shader = line_manager->shader;
+  line_manager->render_command_.primitive_type = PrimitiveType::kLineStrip;
 
   line_manager->staged = true;
   return true;
@@ -86,6 +83,12 @@ bool Stage(Renderer* renderer, LineManager* line_manager) {
   if (line_manager->staged)
     return true;
   return RendererUploadMeshRange(renderer, &line_manager->strip_mesh);
+}
+
+RenderCommand GetRenderCommand(const LineManager& line_manager) {
+  if (!line_manager.staged || line_manager.shape_count == 0)
+    return Nop{};
+  return line_manager.render_command_;
 }
 
 // Push Lines --------------------------------------------------------------------------------------
@@ -114,8 +117,9 @@ void PushLine(LineManager* line_manager, Vec3 from, Vec3 to, Color color) {
   PushVertices(&line_manager->strip_mesh, vertices, ARRAY_SIZE(vertices));
   PushIndices(&line_manager->strip_mesh, indices, ARRAY_SIZE(indices));
 
-  line_manager->render_command.indices_count += ARRAY_SIZE(indices);
+  line_manager->render_command_.indices_count += ARRAY_SIZE(indices);
   line_manager->staged = false;
+  line_manager->shape_count++;
 }
 
 void PushCubeCenter(LineManager* line_manager, Vec3 c, Vec3 e, Color color) {
@@ -141,9 +145,10 @@ void PushCubeCenter(LineManager* line_manager, Vec3 c, Vec3 e, Color color) {
 
   PushVertices(&line_manager->strip_mesh, vertices, ARRAY_SIZE(vertices));
   PushIndices(&line_manager->strip_mesh, indices, ARRAY_SIZE(indices));
-  line_manager->render_command.indices_count += ARRAY_SIZE(indices);
+  line_manager->render_command_.indices_count += ARRAY_SIZE(indices);
 
   line_manager->staged = false;
+  line_manager->shape_count++;
 }
 
 }  // namespace rothko

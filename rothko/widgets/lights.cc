@@ -21,8 +21,11 @@ layout (std140) uniform VertUniforms {
   mat4 model;
 };
 
+float kScale = 0.2f;
+
 void main() {
-  gl_Position = camera_proj * camera_view * model * vec4(in_pos, 1.0);
+  vec3 pos = in_pos * kScale;
+  gl_Position = camera_proj * camera_view * model * vec4(pos, 1.0);
 }
 )";
 
@@ -47,8 +50,11 @@ layout (std140) uniform VertUniforms {
   mat4 model;
 };
 
+float kScale = 0.4f;
+
 void main() {
-  gl_Position = camera_proj * camera_view * model * vec4(in_pos, 1.0);
+  vec3 pos = in_pos * kScale;
+  gl_Position = camera_proj * camera_view * model * vec4(pos, 1.0);
 }
 )";
 

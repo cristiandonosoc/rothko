@@ -26,6 +26,16 @@ ImGuizmo::OPERATION GetImGuizmoOperation(WidgetOperation op) {
   return ImGuizmo::OPERATION::TRANSLATE;
 }
 
+ImGuizmo::MODE GetImGuizmoMode(TransformKind transform_kind) {
+  switch (transform_kind) {
+    case TransformKind::kGlobal: return ImGuizmo::MODE::WORLD;
+    case TransformKind::kLocal: return ImGuizmo::MODE::LOCAL;
+  }
+
+  NOT_REACHED();
+  return ImGuizmo::MODE::WORLD;
+}
+
 bool IsZero(const Transform& t) {
   return IsZero(t.position) && IsZero(t.rotation) && IsZero(t.scale);
 }
@@ -33,12 +43,15 @@ bool IsZero(const Transform& t) {
 }  // namespace
 
 Transform TransformWidget(WidgetOperation op,
+                          TransformKind transform_kind,
                           const PushCamera& camera,
                           const Transform& source,
                           const Transform* parent) {
   // Scale is only local otherwise it resets the rotation.
-  ImGuizmo::MODE imguizmo_mode = op == WidgetOperation::kScale ? ImGuizmo::MODE::LOCAL :
-                                                                 ImGuizmo::MODE::WORLD;
+  ImGuizmo::MODE imguizmo_mode = GetImGuizmoMode(transform_kind);
+  if (op == WidgetOperation::kScale)
+    imguizmo_mode = ImGuizmo::MODE::LOCAL;
+
   Mat4 temp = source.world_matrix;
   ImGuizmo::Manipulate((float*)&camera.view,
                        (float*)&camera.projection,

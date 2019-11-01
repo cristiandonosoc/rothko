@@ -161,7 +161,7 @@ int main() {
 
     SceneNode* parent = GetParent(scene_graph.get(), current_node);
     Transform* parent_transform = parent ? &parent->transform : nullptr;
-    current_node->transform = TransformWidget(operation,
+    current_node->transform = TransformWidget(operation, TransformKind::kGlobal,
                                               push_camera,
                                               current_node->transform,
                                               parent_transform);

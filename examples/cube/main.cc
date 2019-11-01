@@ -436,7 +436,7 @@ int main() {
     /* auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face); */
     /* commands.insert(commands.end(), cube_commands.begin(), cube_commands.end()); */
 
-    commands.push_back(line_manager.render_command);
+    commands.push_back(GetRenderCommand(line_manager));
     commands.push_back(grid.render_command);
 
     // Config the renderer for the axis.
@@ -454,7 +454,7 @@ int main() {
     Update(&axis_camera);
 
     commands.push_back(GetPushCamera(axis_camera, ProjectionType::kOrthographic));
-    commands.push_back(axis_widget.render_command);
+    commands.push_back(GetRenderCommand(axis_widget));
 
     /* Mat4 identity = Mat4::Identity(); */
     ImGuizmo::Manipulate((float*)&push_camera.view,
