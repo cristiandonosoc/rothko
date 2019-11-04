@@ -29,10 +29,11 @@ std::string StringPrintf(const char* fmt, ...) {
   return res;
 }
 
+static thread_local char gStringPrintfBuffer[8192];
+
 std::string StringPrintfV(const char* fmt, va_list va) {
-  char buf[2048];
-  stbsp_vsnprintf(buf, sizeof(buf), fmt, va);
-  return std::string(buf);
+  stbsp_vsnprintf(gStringPrintfBuffer, sizeof(gStringPrintfBuffer), fmt, va);
+  return std::string(gStringPrintfBuffer);
 }
 
 std::string Concatenate(std::vector<std::string> strings) {

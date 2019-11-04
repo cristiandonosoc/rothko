@@ -118,6 +118,7 @@ int main() {
 
   SceneNode* dir_light_node = AddNode(scene_graph.get());
   dir_light_node->transform.position = {0, 1, 0};
+  dir_light_node->transform.rotation = {kRadians45, kRadians180, -kRadians45};
 
   constexpr int kCubeCount = 8;
   SceneNode* cube_nodes[kCubeCount] = {};
@@ -152,7 +153,19 @@ int main() {
     point_light_ubos.push_back(std::move(ubo));
   }
 
+
   std::vector<simple_lighting::ObjectShaderUBO> dir_light_ubos = point_light_ubos;
+
+  SceneNode* ground_node = AddNode(scene_graph.get());
+  ground_node->transform.position = {0, -0.5f, 0};
+  ground_node->transform.scale = {10, 0.2f, 10};
+
+  simple_lighting::ObjectShaderUBO ground_ubo ={};
+  ground_ubo.frag.light.ambient = {};
+  ground_ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f};
+  ground_ubo.frag.light.specular = {1, 1, 1};
+  ground_ubo.frag.material.specular = ToVec3(Color::White());
+  ground_ubo.frag.material.shininess = 128;
 
   Update(scene_graph.get());
 
@@ -257,6 +270,11 @@ int main() {
       commands.push_back(
           CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo));
     }
+
+    ground_ubo.vert.model = ground_node->transform.world_matrix;
+    ground_ubo.frag.light.pos = ToVec4(point_light_pos);
+    commands.push_back(
+        CreateRenderCommand(&cube_mesh, &object_shader, nullptr, nullptr, ground_ubo));
 
     auto light_commands = GetRenderCommands(light_widgets);
     commands.insert(commands.end(), light_commands.begin(), light_commands.end());

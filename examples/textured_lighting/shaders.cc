@@ -47,6 +47,10 @@ struct Light {
   vec3 ambient;
   vec3 diffuse;
   vec3 specular;
+
+  float constant;
+  float linear;
+  float quadratic;
 };
 
 uniform sampler2D tex0;   // diffuse map.
@@ -66,37 +70,47 @@ in vec3 pos;
 in vec3 normal;
 in vec2 uv;
 
+bool IsZero(vec3 v) {
+  return v.r == 0.0f && v.g == 0.0f && v.b == 0.0f;
+}
+
 void main() {
   vec3 unit_normal = normalize(normal);
 
   // Depending on the type of light position, we know whether this is a directional light or not.
   vec3 light_dir;
+  float attenuation = 1.0f;   // By default, directional light have no attenuation.
   if (light.pos.w == 0.0f) {
+    // Directional light.
     light_dir = normalize(-vec3(light.pos));
   } else {
     light_dir = normalize(vec3(light.pos) - pos);
+    float d = length(vec3(light.pos) - pos);
+    attenuation = 1.0f / (light.constant + light.linear * d + light.quadratic * d * d);
   }
 
   // Ambient light.
-  /* vec3 ambient_light = light.ambient * material.ambient; */
   vec3 ambient_light = light.ambient * vec3(texture(tex0, uv));
 
-
   // Diffuse light.
-  /* vec3 light_dir = normalize(vec3(light.pos) - pos); */
   float diffuse = max(dot(unit_normal, light_dir), 0);
-  /* vec3 diffuse_light = light.diffuse * diffuse * diffuse; */
-  vec3 diffuse_light = light.diffuse * diffuse * vec3(texture(tex0, uv));
+  vec3 diffuse_color = vec3(texture(tex0, uv));
+  if (IsZero(diffuse_color))
+    diffuse_color = vec3(0.44f, 0.55f, 0.22f);
+  vec3 diffuse_light = light.diffuse * diffuse * diffuse_color;
 
   // Specular light.
   float specular_strength = 0.5f;
   vec3 view_dir = normalize(camera_pos - pos);
   vec3 reflect_dir = reflect(-light_dir, unit_normal);
   float specular = pow(max(dot(view_dir, reflect_dir), 0), material.shininess);
-  /* vec3 specular_light = light.specular * specular * material.specular; */
   vec3 specular_light = light.specular * specular * vec3(texture(tex1, uv));
 
   // Final lighting output.
+  ambient_light *= attenuation;
+  diffuse_light *= attenuation;
+  specular_light *= attenuation;
+
   vec3 color = ambient_light + diffuse_light + specular_light;
   out_color = vec4(color, 1);
 }
@@ -125,6 +139,8 @@ Shader CreateObjectShader(Renderer* renderer) {
     return {};
   return shader;
 }
+
+// Simple Light Shader -----------------------------------------------------------------------------
 
 }  // namespace simple_lighting
 }  // namespace rothko
