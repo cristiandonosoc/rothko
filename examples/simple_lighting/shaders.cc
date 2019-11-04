@@ -104,40 +104,5 @@ Shader CreateObjectShader(Renderer* renderer) {
   return shader;
 }
 
-// Light Shader ------------------------------------------------------------------------------------
-
-namespace {
-
-constexpr char kLightVertShader[] = R"(
-
-layout (location = 0) in vec3 in_pos;
-
-layout (std140) uniform VertUniforms {
-  mat4 model;
-};
-
-void main() {
-  gl_Position = camera_proj * camera_view * model * vec4(in_pos, 1.0);
-}
-
-)";
-
-constexpr char kLightFragShader[] = R"(
-
-layout (location = 0) out vec4 out_color;
-
-layout (std140) uniform FragUniforms {
-  vec3 light_color;
-};
-
-void main() {
-  out_color = vec4(light_color, 1);
-}
-
-)";
-
-
-}  // namespace
-
 }  // namespace simple_lighting
 }  // namespace rothko
