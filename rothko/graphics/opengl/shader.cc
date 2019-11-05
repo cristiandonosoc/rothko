@@ -51,6 +51,11 @@ uint32_t CompileShader(Shader* shader, const char* src, GLenum shader_kind) {
     glGetShaderInfoLog(handle, sizeof(log), 0, log);
     glDeleteShader(handle);
     ERROR(OpenGL, "Shader %s error %s: %s", shader->name.c_str(), ToString(shader_kind), log);
+    ERROR(OpenGL, "---------------------------------------\n");
+    ERROR(OpenGL, "Shader vert source: \n%s", shader->vert_src.c_str());
+    ERROR(OpenGL, "---------------------------------------\n");
+    ERROR(OpenGL, "Shader frag source: \n%s", shader->frag_src.c_str());
+    ERROR(OpenGL, "---------------------------------------\n");
     return 0;
   }
 

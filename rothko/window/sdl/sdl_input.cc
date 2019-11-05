@@ -74,10 +74,10 @@ void HandleKeysDown(Input* input) {
 
   // Set the control state
   // TODO(Cristian): This should not be here.
-  input->up = KeyDown(input, Key::kUp);
-  input->down = KeyDown(input, Key::kDown);
-  input->left = KeyDown(input, Key::kLeft);
-  input->right = KeyDown(input, Key::kRight);
+  input->up = KeyDown(*input, Key::kUp);
+  input->down = KeyDown(*input, Key::kDown);
+  input->left = KeyDown(*input, Key::kLeft);
+  input->right = KeyDown(*input, Key::kRight);
 }
 
 void HandleKeyUpEvent(const SDL_KeyboardEvent&, Input*) {}

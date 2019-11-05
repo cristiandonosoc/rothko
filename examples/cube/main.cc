@@ -302,7 +302,7 @@ int main() {
       }
     }
 
-    if (KeyUpThisFrame(&input, Key::kEscape)) {
+    if (KeyUpThisFrame(input, Key::kEscape)) {
       running = false;
       break;
     }

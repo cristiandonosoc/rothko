@@ -57,7 +57,7 @@ int main() {
   if (!Init(game.renderer.get(), &imgui))
     return 1;
 
-  Shader object_shader = simple_lighting::CreateObjectShader(game.renderer.get());
+  Shader object_shader = simple_lighting::CreateLightShader(game.renderer.get());
   /* Shader light_shader = simple_lighting::CreateLightShader(game.renderer.get()); */
   if (!Valid(object_shader))
     return 1;
@@ -118,28 +118,45 @@ int main() {
 
   SceneNode* dir_light_node = AddNode(scene_graph.get());
   dir_light_node->transform.position = {0, 1, 0};
+  dir_light_node->transform.rotation = {kRadians45, kRadians180, -kRadians45};
 
-  constexpr int kCubeCount = 8;
+  Vec3 cube_positions[] = {Vec3(0.0f, 0.0f, 0.0f),
+                           Vec3(2.0f, 5.0f, -15.0f),
+                           Vec3(-1.5f, -2.2f, -2.5f),
+                           Vec3(-3.8f, -2.0f, -12.3f),
+                           Vec3(2.4f, -0.4f, -3.5f),
+                           Vec3(-1.7f, 3.0f, -7.5f),
+                           Vec3(1.3f, -2.0f, -2.5f),
+                           Vec3(1.5f, 2.0f, -2.5f),
+                           Vec3(1.5f, 0.2f, -1.5f),
+                           Vec3(-1.3f, 1.0f, -1.5f)};
+
+  constexpr int kCubeCount = ARRAY_SIZE(cube_positions);
   SceneNode* cube_nodes[kCubeCount] = {};
 
   Update(scene_graph.get());
 
   // Create the UBOs.
-  std::vector<simple_lighting::ObjectShaderUBO> point_light_ubos;
+  std::vector<simple_lighting::LightShaderUBO> point_light_ubos;
   point_light_ubos.reserve(kCubeCount);
 
-  constexpr int kMaxRow = 4;
+
+  /* constexpr int kMaxRow = 4; */
   for (int i = 0; i < kCubeCount; i++) {
     SceneNode* node = AddNode(scene_graph.get());
     cube_nodes[i] = node;
 
-    float x = i % kMaxRow - 1;
-    float y = i / kMaxRow;
+    /* float x = i % kMaxRow - 1; */
+    /* float y = i / kMaxRow; */
 
-    node->transform.position = {x, y, -2};
+    float angle = ToRadians(20) * i;
+
+    /* node->transform.position = {x, y, -2}; */
+    node->transform.position = cube_positions[i];
+    node->transform.rotation = {angle, -angle, 0};
     node->transform.scale *= 0.5f;
 
-    simple_lighting::ObjectShaderUBO ubo = {};
+    simple_lighting::LightShaderUBO ubo = {};
 
     /* ubo.frag.light.ambient = {0.2f, 0.2f, 0.2f}; */
     ubo.frag.light.ambient = {};
@@ -152,7 +169,19 @@ int main() {
     point_light_ubos.push_back(std::move(ubo));
   }
 
-  std::vector<simple_lighting::ObjectShaderUBO> dir_light_ubos = point_light_ubos;
+
+  std::vector<simple_lighting::LightShaderUBO> dir_light_ubos = point_light_ubos;
+
+  SceneNode* ground_node = AddNode(scene_graph.get());
+  ground_node->transform.position = {0, -0.5f, 0};
+  ground_node->transform.scale = {10, 0.2f, 10};
+
+  simple_lighting::LightShaderUBO ground_ubo ={};
+  ground_ubo.frag.light.ambient = {};
+  ground_ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f};
+  ground_ubo.frag.light.specular = {1, 1, 1};
+  ground_ubo.frag.material.specular = ToVec3(Color::White());
+  ground_ubo.frag.material.shininess = 128;
 
   Update(scene_graph.get());
 
@@ -178,19 +207,19 @@ int main() {
       }
     }
 
-    if (KeyUpThisFrame(&game.input, Key::kEscape)) {
+    if (KeyUpThisFrame(game.input, Key::kEscape)) {
       running = false;
       break;
     }
 
-    if (KeyUpThisFrame(&game.input, Key::kSpace))
+    if (KeyUpThisFrame(game.input, Key::kSpace))
       move_cubes = !move_cubes;
 
-    if (KeyUpThisFrame(&game.input, Key::kC))
+    if (KeyUpThisFrame(game.input, Key::kC))
       move_cubes = !move_cubes;
 
-    if (KeyUpThisFrame(&game.input, Key::kA))
-      move_point_light = !move_point_light;
+    /* if (KeyUpThisFrame(&game.input, Key::kA)) */
+    /*   move_point_light = !move_point_light; */
 
     DefaultUpdateOrbitCamera(game.input, &camera);
 
@@ -218,7 +247,7 @@ int main() {
     Vec3 point_light_pos = PositionFromTransformMatrix(point_light_node->transform.world_matrix);
     /* Vec3 dir_light_dir = RotationFromTransformMatrix(dir_light_node->transform.world_matrix); */
     /* Vec3 dir_light_dir = ToVec3(dir_light_node->transform.world_matrix.row(0)); */
-    Vec3 dir_light_dir = ToVec3(dir_light_node->transform.world_matrix.cols[0]);
+    /* Vec3 dir_light_dir = ToVec3(dir_light_node->transform.world_matrix.cols[0]); */
 
     /* Reset(&line_manager); */
     /* PushLine(&line_manager, {}, Normalize(dir_light_dir), Color::Blue()); */
@@ -245,18 +274,23 @@ int main() {
           CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo));
     }
 
-    // Directional light cubes.
-    for (uint32_t i = 0; i < dir_light_ubos.size(); i++) {
-      auto& ubo = dir_light_ubos[i];
-      ubo.vert.model = Translate({0, 0, 4});
-      ubo.vert.model *= cube_nodes[i]->transform.world_matrix;
-      ubo.vert.normal_matrix = Transpose(Inverse(ubo.vert.model));
+    /* // Directional light cubes. */
+    /* for (uint32_t i = 0; i < dir_light_ubos.size(); i++) { */
+    /*   auto& ubo = dir_light_ubos[i]; */
+    /*   ubo.vert.model = Translate({0, 0, 4}); */
+    /*   ubo.vert.model *= cube_nodes[i]->transform.world_matrix; */
+    /*   ubo.vert.normal_matrix = Transpose(Inverse(ubo.vert.model)); */
 
-      // Directional lights expect 0 in the w coordinate.
-      ubo.frag.light.pos = ToVec4(dir_light_dir, 0);
-      commands.push_back(
-          CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo));
-    }
+    /*   // Directional lights expect 0 in the w coordinate. */
+    /*   ubo.frag.light.pos = ToVec4(dir_light_dir, 0); */
+    /*   commands.push_back( */
+    /*       CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo)); */
+    /* } */
+
+    /* ground_ubo.vert.model = ground_node->transform.world_matrix; */
+    /* ground_ubo.frag.light.pos = ToVec4(point_light_pos); */
+    /* commands.push_back( */
+    /*     CreateRenderCommand(&cube_mesh, &object_shader, nullptr, nullptr, ground_ubo)); */
 
     auto light_commands = GetRenderCommands(light_widgets);
     commands.insert(commands.end(), light_commands.begin(), light_commands.end());

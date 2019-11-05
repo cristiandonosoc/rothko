@@ -85,6 +85,16 @@ PushCamera GetPushCamera(const OrbitCamera& camera, ProjectionType proj_override
 static constexpr float kMouseSensibility = 0.007f;
 static float kMaxPitch = ToRadians(89.0f);
 
+void MoveInLocalFrame(OrbitCamera* camera, Vec3 offset) {
+  Vec3 front = Normalize({camera->dir_.x, 0, camera->dir_.z});
+  Vec3 up = {0, 1, 0};
+  Vec3 right = -Normalize(Cross(front, up));
+
+  camera->target -= front * offset.x;
+  camera->target += up * offset.y;
+  camera->target += right * offset.z;
+}
+
 void DefaultUpdateOrbitCamera(const Input& input, OrbitCamera* camera) {
   if (input.mouse.right) {
     if (!IsZero(input.mouse_offset)) {
@@ -111,6 +121,25 @@ void DefaultUpdateOrbitCamera(const Input& input, OrbitCamera* camera) {
     if (camera->distance < 0.5f)
       camera->distance = 0.5f;
   }
+
+  // Moving.
+  constexpr float kSpeed = 0.1f;
+  Vec3 offset = {};
+
+  // Forward, backwards.
+  if (KeyDown(input, Key::kW)) {
+    offset.x += kSpeed;
+  } else if (KeyDown(input, Key::kS)) {
+    offset.x -= kSpeed;
+  }
+
+  // Left, right.
+  if (KeyDown(input, Key::kA)) {
+    offset.z -= kSpeed;
+  } else if (KeyDown(input, Key::kD)) {
+    offset.z += kSpeed;
+  }
+  MoveInLocalFrame(camera, offset);
 
   Update(camera);
 }

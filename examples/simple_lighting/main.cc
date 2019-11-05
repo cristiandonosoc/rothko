@@ -270,7 +270,7 @@ int main() {
     Reset(&light_widgets);
     DefaultUpdateOrbitCamera(game.input, &app_context.camera);
 
-    if (KeyUpThisFrame(&game.input, Key::kEscape)) {
+    if (KeyUpThisFrame(game.input, Key::kEscape)) {
       running = false;
       break;
     }
