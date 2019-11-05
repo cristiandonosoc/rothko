@@ -138,20 +138,20 @@ int main() {
 
     DefaultUpdateOrbitCamera(game.input, &camera);
 
-    if (KeyUpThisFrame(&game.input, Key::kEscape)) {
+    if (KeyUpThisFrame(game.input, Key::kEscape)) {
       running = false;
       break;
     }
 
     BeginFrame(&imgui, &game.window, &game.time, &game.input);
 
-    if (KeyUpThisFrame(&game.input, Key::kSpace))
+    if (KeyUpThisFrame(game.input, Key::kSpace))
       op = !op;
 
     uint32_t base = (uint32_t)Key::k1;
     for (int i = 0; i < ARRAY_SIZE(nodes); i++) {
       Key key = (Key)(base + i);
-      if (KeyUpThisFrame(&game.input, key))
+      if (KeyUpThisFrame(game.input, key))
         current_node = nodes[i];
     }
 

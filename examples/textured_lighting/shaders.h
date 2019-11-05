@@ -12,9 +12,11 @@ namespace simple_lighting {
 
 #define FLOAT_PAD() float STRINGIFY(__pad_, __LINE__)
 
-// Object Shader -----------------------------------------------------------------------------------
+// Light Shader ------------------------------------------------------------------------------------
+//
+// Supports both point light and directional light.
 
-struct ObjectShaderUBO {
+struct LightShaderUBO {
   struct Vert {
     Mat4 model = Mat4::Identity();
 
@@ -55,7 +57,49 @@ struct ObjectShaderUBO {
   // clang format on
 };
 
-Shader CreateObjectShader(Renderer*);
+Shader CreateLightShader(Renderer*);
+
+// Spot Light Shader -------------------------------------------------------------------------------
+
+struct SpotLightShaderUBO {
+  struct Vert {
+    Mat4 model = Mat4::Identity();
+
+    // Normal matrix, that permits to correctly transform the normal to world space, taking into
+    // account distorting effects such as non-uniform scaling.
+    // Calculated as:
+    //
+    // Transpose(Inverse(model));
+    Mat4 normal_matrix = Mat4::Identity();
+  } vert;
+  static_assert(sizeof(Vert) == 128);
+
+  // Due to std140 alignment, Vec3 are aligned to 4 floats, thus we need a padding.
+  // clang-format off
+  struct Frag {
+    struct Light {
+      Vec3 pos;       FLOAT_PAD();
+      Vec3 direction;
+      float cutoff_cos;
+
+      Vec3 ambient;   FLOAT_PAD();
+      Vec3 diffuse;   FLOAT_PAD();
+      Vec3 specular;
+    } light;
+
+    FLOAT_PAD();
+
+    struct Material {
+      // Associated sampelr.
+      Vec3 specular;
+      float shininess;
+    } material;
+
+  } frag;
+  // clang format on
+};
+
+Shader CreateSpotLightShader(Renderer*);
 
 }  // namespace simple_lighting
 }  // namespace rothko

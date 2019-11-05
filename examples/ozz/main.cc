@@ -35,7 +35,7 @@ int main() {
       }
     }
 
-    if (KeyUpThisFrame(&game.input, Key::kEscape)) {
+    if (KeyUpThisFrame(game.input, Key::kEscape)) {
       running = false;
       break;
     }

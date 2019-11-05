@@ -59,8 +59,8 @@ struct Input {
 
 void NewFrame(Input*);
 
-bool KeyDown(Input* input, Key key);
-bool KeyDownThisFrame(Input* input, Key key);
-bool KeyUpThisFrame(Input* input, Key key);
+bool KeyDown(const Input&, Key key);
+bool KeyDownThisFrame(const Input&, Key key);
+bool KeyUpThisFrame(const Input&, Key key);
 
 }  // rothko

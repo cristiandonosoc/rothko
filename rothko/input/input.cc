@@ -26,22 +26,22 @@ void NewFrame(Input* input) {
   input->mouse = {};
   input->mouse_offset = {};
 }
-bool KeyDown(Input* input, Key key) {
+bool KeyDown(const Input& input, Key key) {
   int val = (int)key;
   ASSERT(val < (int)Key::kLast);
-  return input->down_this_frame[val];
+  return input.down_this_frame[val];
 }
 
-bool KeyDownThisFrame(Input* input, Key key) {
+bool KeyDownThisFrame(const Input& input, Key key) {
   int val = (int)key;
   ASSERT(val < (int)Key::kLast);
-  return input->down_this_frame[val] && !input->down_last_frame[val];
+  return input.down_this_frame[val] && !input.down_last_frame[val];
 }
 
-bool KeyUpThisFrame(Input* input, Key key) {
+bool KeyUpThisFrame(const Input& input, Key key) {
   int val = (int)key;
   ASSERT(val < (int)Key::kLast);
-  return !input->down_this_frame[val] && input->down_last_frame[val];
+  return !input.down_this_frame[val] && input.down_last_frame[val];
 }
 
 const char* ToString(Key key) {
