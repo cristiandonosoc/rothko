@@ -5,4 +5,5 @@
 
 // Grab all header for all the widgets.
 #include "rothko/widgets/lights.h"
+#include "rothko/widgets/lines.h"
 #include "rothko/widgets/transform.h"

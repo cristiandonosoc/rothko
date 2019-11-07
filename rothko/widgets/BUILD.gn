@@ -5,6 +5,8 @@ source_set("widgets") {
   sources = [
     "lights.cc",
     "lights.h",
+    "lines.cc",
+    "lines.h",
     "transform.cc",
     "transform.h",
     "widgets.h",
@@ -14,6 +16,7 @@ source_set("widgets") {
     "//rothko/graphics",
     "//rothko/math",
     "//rothko/scene",
+    "//rothko/models",
   ]
 
   public_deps = [

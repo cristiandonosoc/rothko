@@ -8,7 +8,6 @@
 #include <rothko/scene/scene_graph.h>
 #include <rothko/ui/imgui.h>
 #include <rothko/widgets/widgets.h>
-#include <rothko/scene/lines.h>
 
 #include "shaders.h"
 
@@ -256,7 +255,7 @@ int main() {
 
     // Add the widgets.
     PushPointLight(&light_widgets, &point_light_node->transform, {1, 1, 1});
-    PushDirectionalLight(&light_widgets, &dir_light_node->transform, {1, 1, 1});
+    /* PushDirectionalLight(&light_widgets, &dir_light_node->transform, {1, 1, 1}); */
 
     // Create the render commands.
     PerFrameVector<RenderCommand> commands;
@@ -287,10 +286,10 @@ int main() {
     /*       CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo)); */
     /* } */
 
-    /* ground_ubo.vert.model = ground_node->transform.world_matrix; */
-    /* ground_ubo.frag.light.pos = ToVec4(point_light_pos); */
-    /* commands.push_back( */
-    /*     CreateRenderCommand(&cube_mesh, &object_shader, nullptr, nullptr, ground_ubo)); */
+    ground_ubo.vert.model = ground_node->transform.world_matrix;
+    ground_ubo.frag.light.pos = ToVec4(point_light_pos);
+    commands.push_back(
+        CreateRenderCommand(&cube_mesh, &object_shader, nullptr, nullptr, ground_ubo));
 
     auto light_commands = GetRenderCommands(light_widgets);
     commands.insert(commands.end(), light_commands.begin(), light_commands.end());

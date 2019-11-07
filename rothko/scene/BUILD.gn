@@ -7,8 +7,6 @@ source_set("scene") {
     "camera.h",
     "grid.cc",
     "grid.h",
-    "lines.cc",
-    "lines.h",
     "scene_graph.cc",
     "scene_graph.h",
     "transform.cc",

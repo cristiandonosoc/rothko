@@ -8,8 +8,8 @@
 #include <rothko/platform/platform.h>
 #include <rothko/scene/camera.h>
 #include <rothko/scene/grid.h>
-#include <rothko/scene/lines.h>
 #include <rothko/ui/imgui.h>
+#include <rothko/widgets/widgets.h>
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
 #include <third_party/imguizmo/ImGuizmo.h>
@@ -240,16 +240,36 @@ int main() {
   if (!Init(renderer.get(), &line_shader, &axis_widget, "axis-widget"))
     return 1;
 
-  PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, Color::Blue());
-  PushLine(&line_manager, {-3, 2, -3}, {0, 2, 2}, Color::Red());
-  PushLine(&line_manager, {2, 2, -3}, {3, 2, -1}, Color::Green());
-  PushCubeCenter(&line_manager, {1.5f, 1.5f, 1.5f}, {0.5f, 0.5f, 0.5f}, Color::White());
-  PushCube(&line_manager, {-1, -1, -1}, {2, 4, 5}, Color::Black());
+  /* PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, Color::Blue()); */
+  /* PushLine(&line_manager, {-3, 2, -3}, {0, 2, 2}, Color::Red()); */
+  /* PushLine(&line_manager, {2, 2, -3}, {3, 2, -1}, Color::Green()); */
+  /* PushCubeCenter(&line_manager, {1.5f, 1.5f, 1.5f}, {0.5f, 0.5f, 0.5f}, Color::White()); */
+  /* PushCube(&line_manager, {-1, -1, -1}, {2, 4, 5}, Color::Black()); */
 
+  PushRing(&line_manager, {}, Vec3::Up(), 1, Color::Blue());
+  PushRing(&line_manager, {}, {1, 0, 0}, 1, Color::Green());
+  PushRing(&line_manager, {}, {0, 0, 1}, 1, Color::Red());
+  /* PushRing(&line_manager, {}, Vec3::Up(), 4, Color::Blue()); */
+
+
+  constexpr int kRingCount = 10;
+  constexpr float kRingAngle = kRadians90 / (float)kRingCount;
+
+  for (int i = 0; i < 2 * kRingCount; i++) {
+    float angle = i * kRingAngle;
+    Vec3 normal = {Sin(angle), Cos(angle), 0};
+
+    PushRing(&line_manager, {1 + 0.2f * i, 1, 1}, normal, 1 + 0.025f * i, Color::Black());
+  }
+
+  /* for (int i = 0; i < 2 * kRingCount; i++) { */
+  /*   float angle = i * kRingAngle; */
+  /*   Vec3 normal = {Cos(angle), 0, Sin(angle)}; */
+  /*   PushRing(&line_manager, {1, 1, 1}, normal, 1 + 0.025f * i, Color::Black()); */
+  /* } */
 
   if (!Stage(renderer.get(), &line_manager))
     return 1;
-
 
   PushLine(&axis_widget, {}, {1, 0, 0}, Color::Red());
   PushLine(&axis_widget, {}, {0, 1, 0}, Color::Green());

@@ -52,4 +52,6 @@ inline void PushCube(LineManager* lm, Vec3 min, Vec3 max, Color color) {
   PushCubeCenter(lm, (min + max) / 2, Abs((max - min) / 2), color);
 }
 
+void PushRing(LineManager*, Vec3 center, Vec3 normal, float radius, Color color);
+
 }  // namespace

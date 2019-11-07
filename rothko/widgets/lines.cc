@@ -1,7 +1,7 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include "rothko/scene/lines.h"
+#include "rothko/widgets/lines.h"
 
 #include "rothko/utils/strings.h"
 
@@ -82,7 +82,8 @@ void Reset(LineManager* line_manager) {
 bool Stage(Renderer* renderer, LineManager* line_manager) {
   if (line_manager->staged)
     return true;
-  return RendererUploadMeshRange(renderer, &line_manager->strip_mesh);
+  line_manager->staged = RendererUploadMeshRange(renderer, &line_manager->strip_mesh);
+  return line_manager->staged;
 }
 
 RenderCommand GetRenderCommand(const LineManager& line_manager) {
@@ -146,6 +147,59 @@ void PushCubeCenter(LineManager* line_manager, Vec3 c, Vec3 e, Color color) {
   PushVertices(&line_manager->strip_mesh, vertices, ARRAY_SIZE(vertices));
   PushIndices(&line_manager->strip_mesh, indices, ARRAY_SIZE(indices));
   line_manager->render_command_.indices_count += ARRAY_SIZE(indices);
+
+  line_manager->staged = false;
+  line_manager->shape_count++;
+}
+
+// Push Ring ---------------------------------------------------------------------------------------
+
+namespace {
+
+constexpr int kRingVertexCount = 32;
+constexpr float kRingAngle = kRadians360 / (float)kRingVertexCount;
+
+}  // namespace
+
+void PushRing(LineManager* line_manager, Vec3 center, Vec3 normal, float radius, Color color) {
+  (void)normal;
+
+  Vec3 forward = Normalize(normal);
+  Vec3 up, right;
+
+  if (forward.y == 1.0f) {
+    up = {1, 0, 0};
+    right = {0, 0, 1};
+  } else {
+    // Use the up trick to find the frame of reference of the normal.
+    Vec3 temp_up = Vec3::Up();
+    right = Cross(normal, temp_up);
+    up = Normalize(Cross(right, normal));
+  }
+
+  Mat3 rotation = ToMat3(Rotate(forward, kRingAngle));
+
+
+  Vertex3dColor vertices[kRingVertexCount] = {};
+  Mesh::IndexType indices[kRingVertexCount + 2] = {};
+  Mesh::IndexType base = line_manager->strip_mesh.vertex_count;
+
+  Vec3 p = up * radius;
+  for (int i = 0; i < kRingVertexCount; i++) {
+    vertices[i] = CreateVertex(center + p, color);
+    indices[i] = base + i;
+
+    // Rotate the point.
+    p = rotation * p;
+    /* Vec3 p = {radius * Cos(i * kRingAngle), 0, radius * Sin(i * kRingAngle)}; */
+    /* vertices[i] = CreateVertex(center + p, color); */
+  }
+  indices[kRingVertexCount] = base;    // Loop back to the beginning of the ring.
+  indices[kRingVertexCount + 1] = line_strip::kPrimitiveReset;
+
+  PushVertices(&line_manager->strip_mesh, vertices, std::size(vertices));
+  PushIndices(&line_manager->strip_mesh, indices, std::size(indices));
+  line_manager->render_command_.indices_count += std::size(indices);
 
   line_manager->staged = false;
   line_manager->shape_count++;

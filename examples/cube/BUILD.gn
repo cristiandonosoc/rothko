@@ -14,6 +14,7 @@ executable("cube") {
     "//rothko/math",
     "//rothko/platform",
     "//rothko/scene",
+    "//rothko/widgets",
     "//rothko/ui:imgui",
     "//rothko/window:sdl_opengl",
     "//third_party:imguizmo",

@@ -185,6 +185,8 @@ union _v3 {
 
   static _v3 Zero() { return {0, 0, 0}; }
 
+  static _v3 Up() { return {0, 1, 0}; }
+
   // Operators
 
   T& operator[](int index) { return elements[index]; }
@@ -389,12 +391,21 @@ union _mat3 {
 
   static _mat3 Identity() { return {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}; }
 
+
+
+
   float& get(int x, int y) { return elements[y][x]; }
   float get(int x, int y) const { return elements[y][x]; }
 
   void set(int x, int y, T val) { elements[y][x] = val; }
 
   _v3<T> row(int index) const { return {cols[0][index], cols[1][index], cols[2][index]}; }
+
+  // Operators.
+  _v3<T> operator*(const _v3<T>& vec) const {
+    _v3<T> r0 = row(0); _v3<T> r1 = row(1); _v3<T> r2 = row(2);
+    return _v3<T>{Dot(r0, vec), Dot(r1, vec), Dot(r2, vec)};
+  }
 };
 
 using IntMat3 = _mat3<int>;
