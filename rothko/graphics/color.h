@@ -71,4 +71,11 @@ inline Vec4 ToVec4(const Color& c) {
   return res;
 }
 
+inline Color ToColor(Vec3 v) {
+  Color color((uint8_t)(v.r * 255.0f),
+              (uint8_t)(v.g * 255.0f),
+              (uint8_t)(v.b * 255.0f));
+  return color;
+}
+
 }  // namespace rothko

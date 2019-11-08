@@ -49,7 +49,7 @@ Shader CreateLineShader(Renderer* renderer) {
 
 // Init --------------------------------------------------------------------------------------------
 
-bool Init(Renderer* renderer, Shader* shader, LineManager* line_manager, std::string name,
+bool Init(LineManager* line_manager, Renderer* renderer, Shader* shader, std::string name,
           uint32_t line_count) {
   ASSERT(!Valid(line_manager));
   line_manager->name = std::move(name);
@@ -79,7 +79,7 @@ void Reset(LineManager* line_manager) {
   Reset(&line_manager->strip_mesh);
 }
 
-bool Stage(Renderer* renderer, LineManager* line_manager) {
+bool Stage(LineManager* line_manager, Renderer* renderer) {
   if (line_manager->staged)
     return true;
   line_manager->staged = RendererUploadMeshRange(renderer, &line_manager->strip_mesh);
@@ -162,23 +162,8 @@ constexpr float kRingAngle = kRadians360 / (float)kRingVertexCount;
 }  // namespace
 
 void PushRing(LineManager* line_manager, Vec3 center, Vec3 normal, float radius, Color color) {
-  (void)normal;
-
-  Vec3 forward = Normalize(normal);
-  Vec3 up, right;
-
-  if (forward.y == 1.0f) {
-    up = {1, 0, 0};
-    right = {0, 0, 1};
-  } else {
-    // Use the up trick to find the frame of reference of the normal.
-    Vec3 temp_up = Vec3::Up();
-    right = Cross(normal, temp_up);
-    up = Normalize(Cross(right, normal));
-  }
-
+  auto [forward, up, right] = GetFrame(normal);
   Mat3 rotation = ToMat3(Rotate(forward, kRingAngle));
-
 
   Vertex3dColor vertices[kRingVertexCount] = {};
   Mesh::IndexType indices[kRingVertexCount + 2] = {};

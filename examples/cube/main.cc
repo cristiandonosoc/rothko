@@ -233,11 +233,11 @@ int main() {
     return 1;
 
   LineManager line_manager = {};
-  if (!Init(renderer.get(), &line_shader, &line_manager, "line-manager"))
+  if (!Init(&line_manager, renderer.get(), &line_shader, "line-manager"))
     return 1;
 
   LineManager axis_widget = {};
-  if (!Init(renderer.get(), &line_shader, &axis_widget, "axis-widget"))
+  if (!Init(&axis_widget, renderer.get(), &line_shader, "axis-widget"))
     return 1;
 
   /* PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, Color::Blue()); */
@@ -262,19 +262,13 @@ int main() {
     PushRing(&line_manager, {1 + 0.2f * i, 1, 1}, normal, 1 + 0.025f * i, Color::Black());
   }
 
-  /* for (int i = 0; i < 2 * kRingCount; i++) { */
-  /*   float angle = i * kRingAngle; */
-  /*   Vec3 normal = {Cos(angle), 0, Sin(angle)}; */
-  /*   PushRing(&line_manager, {1, 1, 1}, normal, 1 + 0.025f * i, Color::Black()); */
-  /* } */
-
-  if (!Stage(renderer.get(), &line_manager))
+  if (!Stage(&line_manager, renderer.get()))
     return 1;
 
   PushLine(&axis_widget, {}, {1, 0, 0}, Color::Red());
   PushLine(&axis_widget, {}, {0, 1, 0}, Color::Green());
   PushLine(&axis_widget, {}, {0, 0, 1}, Color::Blue());
-  if (!Stage(renderer.get(), &axis_widget))
+  if (!Stage(&axis_widget, renderer.get()))
     return 1;
 
   float aspect_ratio = (float)window.screen_size.width / (float)window.screen_size.height;
@@ -282,11 +276,6 @@ int main() {
 
   push_camera.view = GetView(camera);
   push_camera.projection = Perspective(ToRadians(60.0f), aspect_ratio, 0.1f, 100.0f);
-
-  /* constexpr float kFrameWidth = 40.0f; */
-  /* float kFrameHeight = kFrameWidth / aspect_ratio; */
-  /* auto ortho = Ortho(-kFrameWidth, kFrameWidth, -kFrameHeight, kFrameHeight, 0.1f, 100.0f); */
-
 
   UBO ubo;
   ubo.model = Translate({0, 0, 0});
@@ -314,6 +303,9 @@ int main() {
   // Sample game loop.
   bool running = true;
   while (running) {
+
+    // Update --------------------------------------------------------------------------------------
+
     auto events = NewFrame(&window, &input);
     for (auto event : events) {
       if (event == WindowEvent::kQuit) {
@@ -366,9 +358,7 @@ int main() {
     push_camera.view = GetView(camera);
     push_camera.projection = GetProjection(camera);
 
-    /* float angle = time.seconds * ToRadians(20.0f); */
-    /* Mat4 rotation = Rotate({1, 2, 3}, angle); */
-    /* ubos[0].model = rotation; */
+    // Create GUI ----------------------------------------------------------------------------------
 
     /* ImGui::ShowDemoWindow(); */
     CreateLogWindow();
@@ -437,7 +427,8 @@ int main() {
       ImGui::End();
     }
 
-    // 3. Generate render commands.
+    // Generate render commands --------------------------------------------------------------------
+
     PerFrameVector<RenderCommand> commands;
 
     // Clear command.
@@ -448,13 +439,6 @@ int main() {
 
     // Set the camera.
     commands.push_back(push_camera);
-
-    /* float angle = time.seconds * ToRadians(50.0f); */
-    /* ubos[1].model = Translate({5, 0, 0}) * Rotate({1.0f, 0.3f, 0.5f}, angle); */
-    /* ubos[1].model = Rotate({1.0f, 0.3f, 0.5f}, angle) * Translate({5, 0, 0}); */
-
-    /* auto cube_commands = GetRenderCommands(&mesh, shader.get(), &wall, &face); */
-    /* commands.insert(commands.end(), cube_commands.begin(), cube_commands.end()); */
 
     commands.push_back(GetRenderCommand(line_manager));
     commands.push_back(grid.render_command);

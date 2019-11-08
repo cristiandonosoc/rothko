@@ -93,23 +93,31 @@ int main() {
     return 1;
   }
 
-  // Lights.
-  LightWidgetManager light_widgets;
-  Shader point_light_shader = CreatePointLightShader(game.renderer.get());
-  Mesh point_light_mesh = CreatePointLightMesh(game.renderer.get());
-  Shader directional_light_shader = CreateDirectionalLightShader(game.renderer.get());
-  Mesh directional_light_mesh = CreateDirectionalLightMesh(game.renderer.get());
-  Init(&light_widgets, "light-widgets", &point_light_shader, &point_light_mesh,
-       &directional_light_shader, &directional_light_mesh);
-
   // Line Manager.
   Shader line_shader = CreateLineShader(game.renderer.get());
   if (!Valid(line_shader))
     return 1;
 
   LineManager line_manager = {};
-  if (!Init(game.renderer.get(), &line_shader, &line_manager, "line-manager"))
+  if (!Init(&line_manager, game.renderer.get(), &line_shader, "line-manager"))
     return 1;
+
+  // Lights.
+  LightWidgetManager light_widgets;
+  Shader point_light_shader = CreatePointLightShader(game.renderer.get());
+  Mesh point_light_mesh = CreatePointLightMesh(game.renderer.get());
+  Shader directional_light_shader = CreateDirectionalLightShader(game.renderer.get());
+  Mesh directional_light_mesh = CreateDirectionalLightMesh(game.renderer.get());
+  Init(&light_widgets, game.renderer.get(), "light-widgets", &point_light_shader, &point_light_mesh,
+       &directional_light_shader, &directional_light_mesh, &line_shader);
+
+  SpotLight spot_light = {};
+  spot_light.position = {1, 1, 1};
+  spot_light.direction = {0, -1, 0.1f};
+  spot_light.angle = ToRadians(30);
+  spot_light.color = Color::Blue();
+  PushSpotLight(&light_widgets, spot_light);
+  Stage(&light_widgets, game.renderer.get());
 
   auto scene_graph = std::make_unique<SceneGraph>();
 
@@ -286,10 +294,10 @@ int main() {
     /*       CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo)); */
     /* } */
 
-    ground_ubo.vert.model = ground_node->transform.world_matrix;
-    ground_ubo.frag.light.pos = ToVec4(point_light_pos);
-    commands.push_back(
-        CreateRenderCommand(&cube_mesh, &object_shader, nullptr, nullptr, ground_ubo));
+    /* ground_ubo.vert.model = ground_node->transform.world_matrix; */
+    /* ground_ubo.frag.light.pos = ToVec4(point_light_pos); */
+    /* commands.push_back( */
+    /*     CreateRenderCommand(&cube_mesh, &object_shader, nullptr, nullptr, ground_ubo)); */
 
     auto light_commands = GetRenderCommands(light_widgets);
     commands.insert(commands.end(), light_commands.begin(), light_commands.end());

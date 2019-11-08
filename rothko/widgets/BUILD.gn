@@ -15,8 +15,8 @@ source_set("widgets") {
   deps = [
     "//rothko/graphics",
     "//rothko/math",
-    "//rothko/scene",
     "//rothko/models",
+    "//rothko/scene",
   ]
 
   public_deps = [

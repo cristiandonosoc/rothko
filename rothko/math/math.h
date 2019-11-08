@@ -596,6 +596,14 @@ Vec3 ScaleFromTransformMatrix(const Mat4&);
 void DecomposeTransformMatrix(const Mat4&, Vec3* position, Vec3* rotation, Vec3* scale);
 
 // =================================================================================================
+// Frames (axis)
+// =================================================================================================
+
+// Gets the |foward|, |up| and |right| vectors from the given |direction| vector.
+// |direction| doesn't need to be normalized. The returned vectors will be normalized.
+std::tuple<Vec3, Vec3, Vec3> GetFrame(Vec3 direction);
+
+// =================================================================================================
 // Euler Angles
 // =================================================================================================
 

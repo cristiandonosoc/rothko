@@ -220,13 +220,17 @@ int main() {
   if (!RendererStageMesh(game.renderer.get(), &light_cube_mesh))
     return 1;
 
+  Shader line_shader = CreateLineShader(game.renderer.get());
+  if (!Valid(line_shader))
+    return 1;
+
   LightWidgetManager light_widgets;
   Shader point_light_shader = CreatePointLightShader(game.renderer.get());
   Mesh point_light_mesh = CreatePointLightMesh(game.renderer.get());
   Shader directional_light_shader = CreateDirectionalLightShader(game.renderer.get());
   Mesh directional_light_mesh = CreateDirectionalLightMesh(game.renderer.get());
-  Init(&light_widgets, "light-widgets", &point_light_shader, &point_light_mesh,
-       &directional_light_shader, &directional_light_mesh);
+  Init(&light_widgets, game.renderer.get(), "light-widgets", &point_light_shader, &point_light_mesh,
+       &directional_light_shader, &directional_light_mesh, &line_shader);
 
   auto scene_graph = std::make_unique<SceneGraph>();
 

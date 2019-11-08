@@ -35,11 +35,11 @@ Shader CreateLineShader(Renderer* renderer);
 
 // |line_count| means how many lines we pre-allocate within the mesh.
 // Keep in mind that a cube = 10 lines.
-bool Init(Renderer*, Shader*, LineManager*, std::string name, uint32_t line_count = 1000);
+bool Init(LineManager*, Renderer*, Shader*, std::string name, uint32_t line_count = 1000);
 inline bool Valid(LineManager* l) { return Staged(l->strip_mesh); }
 void Reset(LineManager*);
 
-bool Stage(Renderer*, LineManager*);
+bool Stage(LineManager*, Renderer*);
 
 RenderCommand GetRenderCommand(const LineManager&);
 

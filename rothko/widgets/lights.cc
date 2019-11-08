@@ -155,11 +155,16 @@ Mesh CreateDirectionalLightMesh(Renderer* renderer) {
 
 // LightWidgetManager ------------------------------------------------------------------------------
 
-void Init(LightWidgetManager* light_widgets, const std::string& name,
-                                             Shader* point_light_shader,
-                                             Mesh* point_light_mesh,
-                                             Shader* directional_light_shader,
-                                             Mesh* directional_light_mesh) {
+bool Init(LightWidgetManager* light_widgets, Renderer* renderer, const std::string& name,
+          Shader* point_light_shader,
+          Mesh* point_light_mesh,
+          Shader* directional_light_shader,
+          Mesh* directional_light_mesh,
+          Shader* lines_shader) {
+
+  if (!Init(&light_widgets->lines, renderer, lines_shader, "light-widget-lines"))
+    return false;
+
   light_widgets->name = name;
   light_widgets->point_light_shader = point_light_shader;
   light_widgets->point_light_mesh = point_light_mesh;
@@ -167,17 +172,25 @@ void Init(LightWidgetManager* light_widgets, const std::string& name,
   light_widgets->directional_light_mesh = directional_light_mesh;
 
   Reset(light_widgets);
+
+  return true;
 }
 
 void Reset(LightWidgetManager* light_widgets) {
   light_widgets->point_lights.clear();
   light_widgets->directional_lights.clear();
+
+  Reset(&light_widgets->lines);
+}
+
+void Stage(LightWidgetManager* light_widgets, Renderer* renderer) {
+  Stage(&light_widgets->lines, renderer);
 }
 
 // Push Lights -------------------------------------------------------------------------------------
 
 void PushPointLight(LightWidgetManager* light_widgets, Transform* transform, Vec3 color) {
-  LightWidgetManager::Light light = {};
+  PointLight light = {};
   light.transform = transform;
   light.color = color;
 
@@ -185,17 +198,50 @@ void PushPointLight(LightWidgetManager* light_widgets, Transform* transform, Vec
 }
 
 void PushDirectionalLight(LightWidgetManager* light_widgets, Transform* transform, Vec3 color) {
-  LightWidgetManager::Light light = {};
+  DirectionalLight light = {};
   light.transform = transform;
   light.color = color;
 
   light_widgets->directional_lights.push_back(std::move(light));
 }
 
+void PushSpotLight(LightWidgetManager* lights, const SpotLight& light) {
+  // Add the lines.
+  auto [forward, up, right] = GetFrame(light.direction);
+
+  float s = Sin(light.angle);
+
+  Vec3 end = light.position + light.direction;
+  PushLine(&lights->lines, light.position, end - up * s, light.color);
+  PushLine(&lights->lines, light.position, end + up * s, light.color);
+  PushLine(&lights->lines, light.position, end - right * s, light.color);
+  PushLine(&lights->lines, light.position, end + right * s, light.color);
+
+  // Add the end ring.
+  PushRing(&lights->lines, end, light.direction, s, light.color);
+
+
+
+  /* // Add the lines. */
+  /* constexpr int kRingCount = 5; */
+  /* constexpr float kDiff = 1.0f / (kRingCount - 1); */
+
+  /* for (int i = 1; i < kRingCount; i++) { */
+  /*   float diff = i * kDiff; */
+  /*   float r = s * diff; */
+
+  /*   PushRing(&lights->lines, */
+  /*            light.position + light.direction * diff, */
+  /*            light.direction, */
+  /*            r, */
+  /*            light.color); */
+  /* } */
+}
+
 // GetRenderCommands -------------------------------------------------------------------------------
 
-std::vector<RenderMesh> GetRenderCommands(const LightWidgetManager& light_widgets) {
-  std::vector<RenderMesh> render_commands;
+std::vector<RenderCommand> GetRenderCommands(const LightWidgetManager& light_widgets) {
+  std::vector<RenderCommand> render_commands;
   render_commands.reserve(light_widgets.point_lights.size() +
                           light_widgets.directional_lights.size());
 
@@ -224,6 +270,9 @@ std::vector<RenderMesh> GetRenderCommands(const LightWidgetManager& light_widget
 
     render_commands.push_back(std::move(render_mesh));
   }
+
+  // Spot lights.
+  render_commands.push_back(GetRenderCommand(light_widgets.lines));
 
   return render_commands;
 }

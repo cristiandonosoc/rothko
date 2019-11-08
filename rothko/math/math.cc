@@ -211,6 +211,28 @@ Mat4 Transpose(const Mat4& m) {
   return result;
 }
 
+// Frames (axis) ===================================================================================
+
+std::tuple<Vec3, Vec3, Vec3> GetFrame(Vec3 direction) {
+  Vec3 forward = Normalize(direction);
+  Vec3 up, right;
+
+  if (forward.y == 1.0f) {
+    up = {1, 0, 0};
+    right = {0, 0, 1};
+  } if (forward.y == -1.0f) {
+    up = {-1, 0, 0};
+    right = {0, 0, 1};
+  } else {
+    // Use the up trick to find the frame of reference of the normal.
+    Vec3 temp_up = Vec3::Up();
+    right = Normalize(Cross(forward, temp_up));
+    up = Normalize(Cross(right, forward));
+  }
+
+  return {forward, up, right};
+}
+
 // Transformation Matrices =========================================================================
 
 Mat4 FromRows(Vec3 x, Vec3 y, Vec3 z) {
