@@ -56,20 +56,31 @@ int main() {
   if (!Init(game.renderer.get(), &imgui))
     return 1;
 
-  Shader object_shader = simple_lighting::CreateLightShader(game.renderer.get());
+  // Shaders ---------------------------------------------------------------------------------------
+
+  Shader object_shader = textured_lighting::CreateLightShader(game.renderer.get());
   if (!Valid(object_shader))
     return 1;
 
-  Shader spot_light_shader = simple_lighting::CreateSpotLightShader(game.renderer.get());
+  Shader spot_light_shader = textured_lighting::CreateSpotLightShader(game.renderer.get());
   if (!Valid(spot_light_shader))
     return 1;
+
+  Shader full_light_shader = textured_lighting::CreateFullLightShader(game.renderer.get());
+  if (!Valid(full_light_shader))
+    return 1;
+
+  // Line Manager.
+  Shader line_shader = CreateLineShader(game.renderer.get());
+  if (!Valid(line_shader))
+    return 1;
+
+  // Camera ----------------------------------------------------------------------------------------
 
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;
   OrbitCamera camera = OrbitCamera::FromLookAt({5, 5, 5}, {}, ToRadians(60.0f), aspect_ratio);
 
-  Grid grid;
-  if (!Init(game.renderer.get(), &grid, "main-grid"))
-    return 1;
+  // Meshes ----------------------------------------------------------------------------------------
 
   Mesh cube_mesh = CreateCubeMesh(VertexType::k3dNormalUV, "cube");
   if (!RendererStageMesh(game.renderer.get(), &cube_mesh))
@@ -79,7 +90,8 @@ int main() {
   if (!RendererStageMesh(game.renderer.get(), &light_cube_mesh))
     return 1;
 
-  // Load the texture.
+  // Textures --------------------------------------------------------------------------------------
+
   std::string diffuse_map_path = JoinPaths(
       {GetCurrentExecutableDirectory(), "..", "examples", "textured_lighting", "diffuse_map.png"});
   Texture diffuse_map = {};
@@ -96,16 +108,18 @@ int main() {
     return 1;
   }
 
-  // Line Manager.
-  Shader line_shader = CreateLineShader(game.renderer.get());
-  if (!Valid(line_shader))
+  // Widgets ---------------------------------------------------------------------------------------
+
+  Grid grid;
+  if (!Init(game.renderer.get(), &grid, "main-grid"))
     return 1;
 
   LineManager line_manager = {};
   if (!Init(&line_manager, game.renderer.get(), &line_shader, "line-manager"))
     return 1;
 
-  // Lights.
+  // LightsWidgetManager ---------------------------------------------------------------------------
+
   LightWidgetManager light_widgets;
   Shader point_light_shader = CreatePointLightShader(game.renderer.get());
   Mesh point_light_mesh = CreatePointLightMesh(game.renderer.get());
@@ -114,17 +128,26 @@ int main() {
   Init(&light_widgets, game.renderer.get(), "light-widgets", &point_light_shader, &point_light_mesh,
        &directional_light_shader, &directional_light_mesh, &line_shader);
 
-  // Scene Graph.
+  // Scene Graph -----------------------------------------------------------------------------------
+
   auto scene_graph = std::make_unique<SceneGraph>();
 
-  SceneNode* spot_light_node = AddNode(scene_graph.get());
-  spot_light_node->transform.position = {1, 1, 1};
-
-  SceneNode* point_light_node = AddNode(scene_graph.get());
+  // Light nodes.
 
   SceneNode* dir_light_node = AddNode(scene_graph.get());
-  dir_light_node->transform.position = {0, 1, 0};
+  dir_light_node->transform.position = {0, 5, 0};
   dir_light_node->transform.rotation = {kRadians45, kRadians180, -kRadians45};
+
+  SceneNode* point_lights[textured_lighting::kPointLightCount];
+  for (int i = 0; i < textured_lighting::kPointLightCount; i++) {
+    point_lights[i] = AddNode(scene_graph.get());
+  }
+
+  /* SceneNode* spot_light_node = AddNode(scene_graph.get()); */
+  /* spot_light_node->transform.position = {1, 1, 1}; */
+  /* SceneNode* point_light_node = AddNode(scene_graph.get()); */
+
+  // Cubes.
 
   SceneNode* ground_node = AddNode(scene_graph.get());
   ground_node->transform.position = {0, -0.5f, 0};
@@ -141,14 +164,18 @@ int main() {
                            Vec3(1.5f, 0.2f, -1.5f),
                            Vec3(-1.3f, 1.0f, -1.5f)};
 
-  constexpr int kCubeCount = ARRAY_SIZE(cube_positions);
+  constexpr int kCubeCount = std::size(cube_positions);
   SceneNode* cube_nodes[kCubeCount] = {};
 
-  // Create the UBOs -------------------------------------------------------------------------------
+  textured_lighting::FullLightUBO ground_ubo ={};
+  ground_ubo.frag.light.ambient = {};
+  ground_ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f};
+  ground_ubo.frag.light.specular = {1, 1, 1};
+  ground_ubo.frag.material.specular = ToVec3(Color::White());
+  ground_ubo.frag.material.shininess = 128;
 
-  std::vector<simple_lighting::LightShaderUBO> point_light_ubos;
-  point_light_ubos.reserve(kCubeCount);
 
+  std::vector<textured_lighting::FullLightUBO> light_ubos;
   for (int i = 0; i < kCubeCount; i++) {
     SceneNode* node = AddNode(scene_graph.get());
     cube_nodes[i] = node;
@@ -159,7 +186,7 @@ int main() {
     node->transform.rotation = {angle, -angle, 0};
     node->transform.scale *= 0.5f;
 
-    simple_lighting::LightShaderUBO ubo = {};
+    textured_lighting::LightShaderUBO ubo = {};
 
     ubo.frag.light.ambient = {};
     ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f};
@@ -168,18 +195,15 @@ int main() {
     ubo.frag.material.specular = ToVec3(Color::White());
     ubo.frag.material.shininess = 128;
 
-    point_light_ubos.push_back(std::move(ubo));
+    light_ubos.push_back(std::move(ubo));
   }
 
 
-  std::vector<simple_lighting::LightShaderUBO> dir_light_ubos = point_light_ubos;
 
-  simple_lighting::SpotLightShaderUBO ground_ubo ={};
-  ground_ubo.frag.light.ambient = {};
-  ground_ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f};
-  ground_ubo.frag.light.specular = {1, 1, 1};
-  ground_ubo.frag.material.specular = ToVec3(Color::White());
-  ground_ubo.frag.material.shininess = 128;
+  // UBOs ------------------------------------------------------------------------------------------
+
+
+  std::vector<textured_lighting::LightShaderUBO> dir_light_ubos = point_light_ubos;
 
   Update(scene_graph.get());
 

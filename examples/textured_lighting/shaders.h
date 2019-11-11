@@ -8,7 +8,7 @@
 #include <rothko/utils/macros.h>
 
 namespace rothko {
-namespace simple_lighting {
+namespace textured_lighting {
 
 #define FLOAT_PAD() float STRINGIFY(__pad_, __LINE__)
 
@@ -101,5 +101,54 @@ struct SpotLightShaderUBO {
 
 Shader CreateSpotLightShader(Renderer*);
 
-}  // namespace simple_lighting
+// Full Light Shader -------------------------------------------------------------------------------
+
+
+constexpr int kPointLightCount = 4;
+
+struct FullLightUBO {
+  struct Vert {
+    Mat4 model = Mat4::Identity();
+
+    // Transpose(Inverse(model));
+    Mat4 normal_matrix = Mat4::Identity();
+  };
+
+  // std140 aligned.
+  struct Frag {
+    struct Material {
+      Vec3 specular;
+      float shininess;
+    };
+
+    struct LightProperties {
+      Vec3 ambient;   FLOAT_PAD();
+      Vec3 diffuse;   FLOAT_PAD();
+      Vec3 specular;  FLOAT_PAD();
+    };
+
+    struct DirectionalLight {
+      Vec3 direction; FLOAT_PAD();
+      LightProperties properties;
+    };
+
+    struct PointLight {
+      Vec4 position;
+      LightProperties properties;
+
+      float constant = 1.0f;
+      float linear = 0.09f;
+      float quadratic = 0.032f;
+      FLOAT_PAD();
+    };
+
+    Material material;
+    DirectionalLight dir_light;
+    PointLight point_lights[kPointLightCount];
+  };
+};
+
+Shader CreateFullLightShader(Renderer*);
+
+}  // namespace textured_lighting
 }  // namespace rothko

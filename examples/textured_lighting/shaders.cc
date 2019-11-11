@@ -4,7 +4,7 @@
 #include "shaders.h"
 
 namespace rothko {
-namespace simple_lighting {
+namespace textured_lighting {
 
 // Light Shader -----------------------------------------------------------------------------------
 
@@ -44,6 +44,7 @@ layout (location = 0) out vec4 out_color;
 
 struct Light {
   vec4 pos;
+
   vec3 ambient;
   vec3 diffuse;
   vec3 specular;
@@ -122,7 +123,7 @@ void main() {
 Shader CreateLightShader(Renderer* renderer) {
   Shader shader;
 
-  shader.name = "lighting";
+  shader.name = "point-dir-lighting";
   shader.vertex_type = VertexType::k3dNormalUV;
   shader.vert_ubo_name = "VertUniforms";
   shader.vert_ubo_size = sizeof(LightShaderUBO::Vert);
@@ -219,6 +220,7 @@ void main() {
     return;
   }
 
+  light_dir = theta * light_dir;
   vec3 unit_normal = normalize(normal);
 
   // Ambient light.
@@ -238,11 +240,6 @@ void main() {
   float specular = pow(max(dot(view_dir, reflect_dir), 0), material.shininess);
   vec3 specular_light = light.specular * specular * vec3(texture(tex1, uv));
 
-  // Final lighting output.
-  /* ambient_light *= attenuation; */
-  /* diffuse_light *= attenuation; */
-  /* specular_light *= attenuation; */
-
   vec3 color = ambient_light + diffuse_light + specular_light;
   out_color = vec4(color, 1);
 }
@@ -254,7 +251,7 @@ void main() {
 Shader CreateSpotLightShader(Renderer* renderer) {
   Shader shader;
 
-  shader.name = "lighting";
+  shader.name = "spot-lighting";
   shader.vertex_type = VertexType::k3dNormalUV;
   shader.vert_ubo_name = "VertUniforms";
   shader.vert_ubo_size = sizeof(SpotLightShaderUBO::Vert);
@@ -271,6 +268,172 @@ Shader CreateSpotLightShader(Renderer* renderer) {
     return {};
   return shader;
 }
+// Full Light Shader -------------------------------------------------------------------------------
 
-}  // namespace simple_lighting
+namespace {
+
+constexpr char kFullLightVertShader[] = R"(
+
+layout (location = 0) in vec3 in_pos;
+layout (location = 1) in vec3 in_normal;
+layout (location = 2) in vec2 in_uv;
+
+layout (std140) uniform VertUniforms {
+  mat4 model;
+  mat4 normal_matrix;
+};
+
+out vec3 f_pos;
+out vec3 f_normal;
+out vec2 f_uv;
+
+void main() {
+  gl_Position = camera_proj * camera_view * model * vec4(in_pos, 1.0);
+
+  // We want the frag position in world space, not view space. Only multiply by the model matrix.
+  f_pos = vec3(model * vec4(in_pos, 1));
+  f_uv = in_uv;
+
+  // Normals have to take into account the model transformation.
+  // We use a normal matrix because non-uniform scale will distort the normal direction.
+  f_normal = mat3(normal_matrix) * in_normal;
+}
+
+)";
+
+constexpr char kFullLightFragShader[] = R"(
+
+layout (location = 0) out vec4 out_color;
+
+in vec3 f_pos;
+in vec3 f_normal;
+in vec2 f_uv;
+
+// ***** Structs *****
+
+struct LightProperties {
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+};
+
+struct DirectionalLight {
+  vec3 direction;
+
+  LightProperties properties;
+};
+
+struct PointLight {
+  vec3 position;
+
+  LightProperties properties;
+
+  float constant;
+  float linear;
+  float quadratic;
+};
+
+struct Material {
+  vec3 specular;
+  float shininess;
+};
+
+// ***** Uniforms *****
+
+#define NUM_POINT_LIGHTS 4
+
+layout (std140) uniform FragUniforms {
+  Material material;
+
+  DirectionalLight dir_light;
+  PointLight point_lights[NUM_POINT_LIGHTS];
+} uniforms;
+
+uniform sampler2D f_tex0;   // diffuse map.
+uniform sampler2D f_tex1;   // Specular map.
+
+// ***** Functions *****
+
+vec3 CalculateLightColor(Material material, LightProperties light, vec3 light_dir, vec3 normal,
+                         vec3 view_dir) {
+  // Ambient light.
+  vec3 ambient_light = light.ambient * vec3(texture(f_tex0, f_uv));
+
+  // Diffuse light.
+  float diffuse = max(dot(normal, light_dir), 0);
+  vec3 diffuse_color = vec3(texture(f_tex0, f_uv));
+  vec3 diffuse_light = light.diffuse * diffuse * diffuse_color;
+
+  // Specular light.
+  float specular_strength = 0.5f;
+  vec3 reflect_dir = reflect(-light_dir, normal);
+  float specular = pow(max(dot(view_dir, reflect_dir), 0), material.shininess);
+  vec3 specular_light = light.specular * specular * vec3(texture(f_tex1, f_uv));
+
+  // Final lighting output.
+  return ambient_light + diffuse_light + specular_light;
+}
+
+vec3 CalculateDirectionalLight(Material material, DirectionalLight light, vec3 normal,
+                               vec3 view_dir) {
+  return CalculateLightColor(material, light.properties, light.direction, normal, view_dir);
+}
+
+vec3 CalculatePointLight(Material material, PointLight light, vec3 normal, vec3 view_dir) {
+  vec3 light_dir = normalize(vec3(light.position) - f_pos);
+
+  float d = length(vec3(light.position) - f_pos);
+  float attenuation = 1.0f / (light.constant + light.linear * d + light.quadratic * d * d);
+
+  vec3 color = CalculateLightColor(material, light.properties, light_dir, normal, view_dir);
+
+  color *= attenuation;
+
+  return color;
+}
+
+// ***** Main ******
+
+void main() {
+  vec3 output = vec3(0);
+
+  vec3 view_dir = normalize(camera_pos - f_pos);
+
+  output += CalculateDirectionalLight(uniforms.material, uniforms.dir_light, f_normal, view_dir);
+
+  for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
+    output += CalculatePointLight(uniforms.material, uniforms.point_lights[i], f_normal, view_dir);
+  }
+
+  // output += CalculateSpotLight();
+
+  out_color = vec4(output, 1);
+}
+
+)";
+
+}  // namespace
+
+Shader CreateFullLightShader(Renderer* renderer) {
+  Shader shader;
+
+  shader.name = "full-lighting";
+  shader.vertex_type = VertexType::k3dNormalUV;
+  shader.vert_ubo_name = "VertUniforms";
+  shader.vert_ubo_size = sizeof(SpotLightShaderUBO::Vert);
+
+  shader.frag_ubo_name = "FragUniforms";
+  shader.frag_ubo_size = sizeof(SpotLightShaderUBO::Frag);
+
+  shader.texture_count = 2;
+
+  shader.vert_src = CreateVertexSource(kFullLightVertShader);
+  shader.frag_src = CreateFragmentSource(kFullLightFragShader);
+
+  if (!RendererStageShader(renderer, &shader))
+    return {};
+  return shader;
+}
+
+}  // namespace textured_lighting
 }  // namespace rothko
