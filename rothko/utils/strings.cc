@@ -50,7 +50,7 @@ std::string Concatenate(std::vector<std::string> strings) {
   return result;
 }
 
-// Trim ------------------------------------------------------------------------
+// Trim --------------------------------------------------------------------------------------------
 
 std::string Trim(const std::string &input, const std::string &chars_to_trim) {
   size_t start = input.find_first_not_of(chars_to_trim);
@@ -63,11 +63,14 @@ std::string Trim(const std::string &input, const std::string &chars_to_trim) {
   return input.substr(start, end - start + 1);
 }
 
-// SplitToLines ----------------------------------------------------------------
+// SplitToLines ------------------------------------------------------------------------------------
 
-std::vector<std::string> SplitToLines(const std::string &input,
+namespace {
+
+
+std::vector<std::string> SplitToLinesInternal(const std::string &input,
                                       const std::string &delimiters,
-                                      const std::string &chars_to_trim) {
+                                      const std::string &chars_to_trim, bool keep_empty_lines) {
   if (input.empty())
     return {};
 
@@ -86,11 +89,26 @@ std::vector<std::string> SplitToLines(const std::string &input,
     }
 
     view = Trim(view, chars_to_trim);
-    if (!view.empty())
+    if (keep_empty_lines || !view.empty())
       output.push_back(std::move(view));
   }
 
   return output;
+}
+
+
+}  // namespace
+
+std::vector<std::string> SplitToLines(const std::string &input,
+                                      const std::string &delimiters,
+                                      const std::string &chars_to_trim) {
+  return SplitToLinesInternal(input, delimiters, chars_to_trim, false);
+}
+
+std::vector<std::string> SplitToLinesKeepEmpty(const std::string& input,
+                                               const std::string& delimiters,
+                                               const std::string& chars_to_trim) {
+  return SplitToLinesInternal(input, delimiters, chars_to_trim, true);
 }
 
 } // namespace rothko

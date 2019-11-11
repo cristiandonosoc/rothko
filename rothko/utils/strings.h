@@ -26,6 +26,11 @@ std::vector<std::string>
 SplitToLines(const std::string &input, const std::string &delimiters = "\n",
              const std::string &chars_to_trim = "\t\r ");
 
+// Same as |SplitToLines|, but it doesn't remove the empty lines.
+std::vector<std::string> SplitToLinesKeepEmpty(const std::string& input,
+                                               const std::string& delimiters = "\n",
+                                               const std::string& chars_to_trim = "\t\r ");
+
 template <typename StringContainer>
 std::string Join(const StringContainer& lines,
                  const std::string &separator = "") {

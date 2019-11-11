@@ -40,7 +40,6 @@ static_assert(sizeof(Transform) == 100);
 
 Mat4 CalculateTransformMatrix(const Transform&);
 
-
 /* // Calculates the transformation matrix from |position|, |rotation| and |scale|. */
 /* Mat4 GetLocalTransformMatrix(const Transform&); */
 
@@ -52,5 +51,21 @@ void Update(Transform*);
 //       This is *global* decomposition, so this will make it out of sync with parent
 //       transformations.
 Transform TransformMatrixToTransform(const Mat4&);
+
+inline Vec3 GetWorldPosition(const Transform& transform) {
+  return PositionFromTransformMatrix(transform.world_matrix);
+}
+
+inline Vec3 GetWorldRotation(const Transform& transform) {
+  return RotationFromTransformMatrix(transform.world_matrix);
+}
+
+inline Vec3 GetWorldScale(const Transform& transform) {
+  return ScaleFromTransformMatrix(transform.world_matrix);
+}
+
+// Vec3{1, 0, 0} rotated by |world_matrix|.
+// No translation is applied.
+Vec3 GetWorldDirection(const Transform&);
 
 }  // namespace rothko

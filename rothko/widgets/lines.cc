@@ -162,14 +162,19 @@ constexpr float kRingAngle = kRadians360 / (float)kRingVertexCount;
 }  // namespace
 
 void PushRing(LineManager* line_manager, Vec3 center, Vec3 normal, float radius, Color color) {
-  auto [forward, up, right] = GetFrame(normal);
-  Mat3 rotation = ToMat3(Rotate(forward, kRingAngle));
+  auto frame = GetAxisFrame(normal);
+  PushRing(line_manager, center, frame, radius, color);
+}
+
+void PushRing(
+    LineManager* line_manager, Vec3 center, const AxisFrame& frame, float radius, Color color) {
+  Mat3 rotation = ToMat3(Rotate(frame.forward, kRingAngle));
 
   Vertex3dColor vertices[kRingVertexCount] = {};
   Mesh::IndexType indices[kRingVertexCount + 2] = {};
   Mesh::IndexType base = line_manager->strip_mesh.vertex_count;
 
-  Vec3 p = up * radius;
+  Vec3 p = frame.up * radius;
   for (int i = 0; i < kRingVertexCount; i++) {
     vertices[i] = CreateVertex(center + p, color);
     indices[i] = base + i;
@@ -179,7 +184,7 @@ void PushRing(LineManager* line_manager, Vec3 center, Vec3 normal, float radius,
     /* Vec3 p = {radius * Cos(i * kRingAngle), 0, radius * Sin(i * kRingAngle)}; */
     /* vertices[i] = CreateVertex(center + p, color); */
   }
-  indices[kRingVertexCount] = base;    // Loop back to the beginning of the ring.
+  indices[kRingVertexCount] = base;  // Loop back to the beginning of the ring.
   indices[kRingVertexCount + 1] = line_strip::kPrimitiveReset;
 
   PushVertices(&line_manager->strip_mesh, vertices, std::size(vertices));

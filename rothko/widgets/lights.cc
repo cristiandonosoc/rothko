@@ -206,20 +206,21 @@ void PushDirectionalLight(LightWidgetManager* light_widgets, Transform* transfor
 }
 
 void PushSpotLight(LightWidgetManager* lights, const SpotLight& light) {
-  // Add the lines.
-  auto [forward, up, right] = GetFrame(light.direction);
+  Vec3 pos = GetWorldPosition(*light.transform);
+  Vec3 dir = GetWorldDirection(*light.transform);
 
+  // Add the lines.
+  auto [forward, up, right] = GetAxisFrame(dir);
   float s = Sin(light.angle);
 
-  Vec3 end = light.position + light.direction;
-  PushLine(&lights->lines, light.position, end - up * s, light.color);
-  PushLine(&lights->lines, light.position, end + up * s, light.color);
-  PushLine(&lights->lines, light.position, end - right * s, light.color);
-  PushLine(&lights->lines, light.position, end + right * s, light.color);
+  Vec3 end = pos + dir;
+  PushLine(&lights->lines, pos, end - up * s, light.color);
+  PushLine(&lights->lines, pos, end + up * s, light.color);
+  PushLine(&lights->lines, pos, end - right * s, light.color);
+  PushLine(&lights->lines, pos, end + right * s, light.color);
 
   // Add the end ring.
-  PushRing(&lights->lines, end, light.direction, s, light.color);
-
+  PushRing(&lights->lines, end, dir, s, light.color);
 
 
   /* // Add the lines. */

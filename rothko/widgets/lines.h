@@ -52,6 +52,10 @@ inline void PushCube(LineManager* lm, Vec3 min, Vec3 max, Color color) {
   PushCubeCenter(lm, (min + max) / 2, Abs((max - min) / 2), color);
 }
 
+// Normal will be used to calculate the axis frame (where the right and up vectors are according to
+// the |normal|).
 void PushRing(LineManager*, Vec3 center, Vec3 normal, float radius, Color color);
+
+void PushRing(LineManager*, Vec3 center, const AxisFrame&, float radius, Color color);
 
 }  // namespace

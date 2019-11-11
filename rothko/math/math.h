@@ -599,9 +599,15 @@ void DecomposeTransformMatrix(const Mat4&, Vec3* position, Vec3* rotation, Vec3*
 // Frames (axis)
 // =================================================================================================
 
+struct AxisFrame {
+  Vec3 forward;
+  Vec3 up;
+  Vec3 right;
+};
+
 // Gets the |foward|, |up| and |right| vectors from the given |direction| vector.
 // |direction| doesn't need to be normalized. The returned vectors will be normalized.
-std::tuple<Vec3, Vec3, Vec3> GetFrame(Vec3 direction);
+AxisFrame GetAxisFrame(Vec3 direction);
 
 // =================================================================================================
 // Euler Angles

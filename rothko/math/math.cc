@@ -213,7 +213,7 @@ Mat4 Transpose(const Mat4& m) {
 
 // Frames (axis) ===================================================================================
 
-std::tuple<Vec3, Vec3, Vec3> GetFrame(Vec3 direction) {
+AxisFrame GetAxisFrame(Vec3 direction) {
   Vec3 forward = Normalize(direction);
   Vec3 up, right;
 

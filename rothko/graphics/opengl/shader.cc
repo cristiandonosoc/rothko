@@ -14,6 +14,7 @@
 #include "rothko/logging/logging.h"
 #include "rothko/utils/defer.h"
 #include "rothko/utils/file.h"
+#include "rothko/utils/strings.h"
 
 namespace rothko {
 namespace opengl {
@@ -26,6 +27,14 @@ uint32_t GetNextShaderUUID() {
   ASSERT(id < UINT32_MAX);
   return id;
 }
+
+void OutputShaderForError(const std::string& source) {
+  auto lines = SplitToLinesKeepEmpty(source, "\n", "\t\r");
+  for (uint32_t i = 0; i < lines.size(); i++) {
+    ERROR(OpenGL, "%04u: %s", i + 1, lines[i].c_str());
+  }
+}
+
 
 }  // namespace
 
@@ -50,12 +59,12 @@ uint32_t CompileShader(Shader* shader, const char* src, GLenum shader_kind) {
     GLchar log[2048];
     glGetShaderInfoLog(handle, sizeof(log), 0, log);
     glDeleteShader(handle);
+    ERROR(OpenGL, "* VERT SOURCE ---------------------------------------\n");
+    OutputShaderForError(shader->vert_src);
+    ERROR(OpenGL, "* FRAG SOURCE ---------------------------------------\n");
+    OutputShaderForError(shader->frag_src);
+    ERROR(OpenGL, "---------------------------------------\n");
     ERROR(OpenGL, "Shader %s error %s: %s", shader->name.c_str(), ToString(shader_kind), log);
-    ERROR(OpenGL, "---------------------------------------\n");
-    ERROR(OpenGL, "Shader vert source: \n%s", shader->vert_src.c_str());
-    ERROR(OpenGL, "---------------------------------------\n");
-    ERROR(OpenGL, "Shader frag source: \n%s", shader->frag_src.c_str());
-    ERROR(OpenGL, "---------------------------------------\n");
     return 0;
   }
 

@@ -24,8 +24,7 @@ struct DirectionalLight {
 };
 
 struct SpotLight {
-  Vec3 position;
-  Vec3 direction;
+  Transform* transform = nullptr;
   float angle;
   Color color;
 };
@@ -64,9 +63,6 @@ void Stage(LightWidgetManager*, Renderer*);
 void PushPointLight(LightWidgetManager*, Transform*, Vec3 color);
 void PushDirectionalLight(LightWidgetManager*, Transform*, Vec3 color);
 void PushSpotLight(LightWidgetManager*, const SpotLight&);
-
-/* void PushPointLight(LightWidgetManager*, LightWidgetManager::PointLight); */
-/* void PushDirectionalLight(LightWidgetManager*, LightWidgetManager::DirectionalLight); */
 
 std::vector<RenderCommand> GetRenderCommands(const LightWidgetManager&);
 

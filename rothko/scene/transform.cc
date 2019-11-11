@@ -60,4 +60,9 @@ Transform TransformMatrixToTransform(const Mat4& m) {
   return transform;
 }
 
+Vec3 GetWorldDirection(const Transform& transform) {
+  Mat3 m = ToMat3(transform.world_matrix);
+  return m * Vec3{1, 0, 0};
+}
+
 }  // namespace rothko

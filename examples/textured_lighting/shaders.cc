@@ -208,61 +208,43 @@ bool IsZero(vec3 v) {
 }
 
 void main() {
-  float light_dir = normalize(vec3(light.pos) - pos); */
+  vec3 light_dir = normalize(vec3(light.pos) - pos);
 
   // Angle between |light_dir| and the spot light center direction.
   float theta = dot(light_dir, normalize(-light.direction));
-
-  if (theta > light.cutoff_cos) {
-
-  } else {
+  if (theta < light.cutoff_cos) {
     // Use ambient light so that scene isn't completely dark.
-    out_color = vec4(light.ambient * vec3(texture(tex0, uv)));
-
-
-
+    vec3 color = light.ambient * vec3(texture(tex0, uv));
+    out_color = vec4(color, 1);
+    return;
   }
 
+  vec3 unit_normal = normalize(normal);
 
+  // Ambient light.
+  vec3 ambient_light = light.ambient * vec3(texture(tex0, uv));
 
-  /* vec3 unit_normal = normalize(normal); */
+  // Diffuse light.
+  float diffuse = max(dot(unit_normal, light_dir), 0);
+  vec3 diffuse_color = vec3(texture(tex0, uv));
+  if (IsZero(diffuse_color))
+    diffuse_color = vec3(0.44f, 0.55f, 0.22f);
+  vec3 diffuse_light = light.diffuse * diffuse * diffuse_color;
 
-  /* // Depending on the type of light position, we know whether this is a directional light or not. */
-  /* vec3 light_dir; */
-  /* float attenuation = 1.0f;   // By default, directional light have no attenuation. */
-  /* if (light.pos.w == 0.0f) { */
-  /*   // Directional light. */
-  /*   light_dir = normalize(-vec3(light.pos)); */
-  /* } else { */
-  /*   light_dir = normalize(vec3(light.pos) - pos); */
-  /*   float d = length(vec3(light.pos) - pos); */
-  /*   attenuation = 1.0f / (light.constant + light.linear * d + light.quadratic * d * d); */
-  /* } */
+  // Specular light.
+  float specular_strength = 0.5f;
+  vec3 view_dir = normalize(camera_pos - pos);
+  vec3 reflect_dir = reflect(-light_dir, unit_normal);
+  float specular = pow(max(dot(view_dir, reflect_dir), 0), material.shininess);
+  vec3 specular_light = light.specular * specular * vec3(texture(tex1, uv));
 
-  /* // Ambient light. */
-  /* vec3 ambient_light = light.ambient * vec3(texture(tex0, uv)); */
-
-  /* // Diffuse light. */
-  /* float diffuse = max(dot(unit_normal, light_dir), 0); */
-  /* vec3 diffuse_color = vec3(texture(tex0, uv)); */
-  /* if (IsZero(diffuse_color)) */
-  /*   diffuse_color = vec3(0.44f, 0.55f, 0.22f); */
-  /* vec3 diffuse_light = light.diffuse * diffuse * diffuse_color; */
-
-  /* // Specular light. */
-  /* float specular_strength = 0.5f; */
-  /* vec3 view_dir = normalize(camera_pos - pos); */
-  /* vec3 reflect_dir = reflect(-light_dir, unit_normal); */
-  /* float specular = pow(max(dot(view_dir, reflect_dir), 0), material.shininess); */
-  /* vec3 specular_light = light.specular * specular * vec3(texture(tex1, uv)); */
-
-  /* // Final lighting output. */
+  // Final lighting output.
   /* ambient_light *= attenuation; */
   /* diffuse_light *= attenuation; */
   /* specular_light *= attenuation; */
 
-  /* vec3 color = ambient_light + diffuse_light + specular_light; */
-  /* out_color = vec4(color, 1); */
+  vec3 color = ambient_light + diffuse_light + specular_light;
+  out_color = vec4(color, 1);
 }
 
 )";
