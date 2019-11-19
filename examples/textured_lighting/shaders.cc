@@ -372,6 +372,7 @@ vec3 CalculateLightColor(Material material, LightProperties light, vec3 light_di
 
   // Final lighting output.
   return ambient_light + diffuse_light + specular_light;
+  /* return ambient_light + diffuse_light; */
 }
 
 vec3 CalculateDirectionalLight(Material material, DirectionalLight light, vec3 normal,
@@ -397,12 +398,13 @@ vec3 CalculatePointLight(Material material, PointLight light, vec3 normal, vec3 
 void main() {
   vec3 output = vec3(0);
 
+  vec3 normal = normalize(f_normal);
   vec3 view_dir = normalize(camera_pos - f_pos);
 
-  output += CalculateDirectionalLight(uniforms.material, uniforms.dir_light, f_normal, view_dir);
+  // output += CalculateDirectionalLight(uniforms.material, uniforms.dir_light, normal, view_dir);
 
   for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
-    output += CalculatePointLight(uniforms.material, uniforms.point_lights[i], f_normal, view_dir);
+    output += CalculatePointLight(uniforms.material, uniforms.point_lights[i], normal, view_dir);
   }
 
   // output += CalculateSpotLight();
@@ -420,10 +422,10 @@ Shader CreateFullLightShader(Renderer* renderer) {
   shader.name = "full-lighting";
   shader.vertex_type = VertexType::k3dNormalUV;
   shader.vert_ubo_name = "VertUniforms";
-  shader.vert_ubo_size = sizeof(SpotLightShaderUBO::Vert);
+  shader.vert_ubo_size = sizeof(FullLightUBO::Vert);
 
   shader.frag_ubo_name = "FragUniforms";
-  shader.frag_ubo_size = sizeof(SpotLightShaderUBO::Frag);
+  shader.frag_ubo_size = sizeof(FullLightUBO::Frag);
 
   shader.texture_count = 2;
 

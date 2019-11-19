@@ -13,6 +13,8 @@
 
 using namespace rothko;
 using namespace imgui;
+using LightProperties = textured_lighting::FullLightUBO::Frag::LightProperties;
+using PointLightProperties = textured_lighting::FullLightUBO::Frag::PointLightProperties;
 
 namespace {
 
@@ -128,7 +130,7 @@ int main() {
   Init(&light_widgets, game.renderer.get(), "light-widgets", &point_light_shader, &point_light_mesh,
        &directional_light_shader, &directional_light_mesh, &line_shader);
 
-  // Scene Graph -----------------------------------------------------------------------------------
+  // Scene Graph / UBOS ----------------------------------------------------------------------------
 
   auto scene_graph = std::make_unique<SceneGraph>();
 
@@ -138,20 +140,44 @@ int main() {
   dir_light_node->transform.position = {0, 5, 0};
   dir_light_node->transform.rotation = {kRadians45, kRadians180, -kRadians45};
 
-  SceneNode* point_lights[textured_lighting::kPointLightCount];
+  struct ExamplePointLight {
+    SceneNode* node;
+    LightProperties properties;
+    PointLightProperties point_light_properties;
+  };
+
+  ExamplePointLight point_lights[textured_lighting::kPointLightCount] = {};
   for (int i = 0; i < textured_lighting::kPointLightCount; i++) {
-    point_lights[i] = AddNode(scene_graph.get());
+    point_lights[i].node = AddNode(scene_graph.get());
+
+    point_lights[i].properties.ambient = {};
+    point_lights[i].properties.diffuse = {1, 1, 1};
+    point_lights[i].properties.specular = {1, 1, 1};
   }
 
-  /* SceneNode* spot_light_node = AddNode(scene_graph.get()); */
-  /* spot_light_node->transform.position = {1, 1, 1}; */
-  /* SceneNode* point_light_node = AddNode(scene_graph.get()); */
+  point_lights[0].node->transform.position = {2, 0, 0};
+  point_lights[1].node->transform.position = {-3, -3, 2};
+  point_lights[2].node->transform.position = {0, 2, 0};
+  point_lights[3].node->transform.position = {3, 1, -4};
 
-  // Cubes.
+  struct ExampleDirectionalLight {
+    SceneNode* node;
+    LightProperties properties;
+  } dir_light = {};
 
-  SceneNode* ground_node = AddNode(scene_graph.get());
-  ground_node->transform.position = {0, -0.5f, 0};
-  ground_node->transform.scale = {10, 0.2f, 10};
+  dir_light.node = AddNode(scene_graph.get());
+  dir_light.properties.ambient = {};
+  dir_light.properties.diffuse = {0.5f, 0.5f, 0.5f};
+  dir_light.properties.specular = {1, 1, 1};
+
+  // Cubes nodes.
+
+  struct Cube {
+    SceneNode* node;
+    textured_lighting::FullLightUBO ubo;
+  };
+
+  std::vector<Cube> cubes;
 
   Vec3 cube_positions[] = {Vec3(0.0f, 0.0f, 0.0f),
                            Vec3(2.0f, 5.0f, -15.0f),
@@ -165,56 +191,37 @@ int main() {
                            Vec3(-1.3f, 1.0f, -1.5f)};
 
   constexpr int kCubeCount = std::size(cube_positions);
-  SceneNode* cube_nodes[kCubeCount] = {};
-
-  textured_lighting::FullLightUBO ground_ubo ={};
-  ground_ubo.frag.light.ambient = {};
-  ground_ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f};
-  ground_ubo.frag.light.specular = {1, 1, 1};
-  ground_ubo.frag.material.specular = ToVec3(Color::White());
-  ground_ubo.frag.material.shininess = 128;
-
-
-  std::vector<textured_lighting::FullLightUBO> light_ubos;
   for (int i = 0; i < kCubeCount; i++) {
-    SceneNode* node = AddNode(scene_graph.get());
-    cube_nodes[i] = node;
+    auto& cube = cubes.emplace_back();
+
+    cube.node = AddNode(scene_graph.get());
 
     float angle = ToRadians(20) * i;
+    cube.node->transform.position = cube_positions[i];
+    cube.node->transform.rotation = {angle, -angle, 0};
+    cube.node->transform.scale *= 0.5f;
 
-    node->transform.position = cube_positions[i];
-    node->transform.rotation = {angle, -angle, 0};
-    node->transform.scale *= 0.5f;
-
-    textured_lighting::LightShaderUBO ubo = {};
-
-    ubo.frag.light.ambient = {};
-    ubo.frag.light.diffuse = {0.5f, 0.5f, 0.5f};
-    ubo.frag.light.specular = {1, 1, 1};
-
-    ubo.frag.material.specular = ToVec3(Color::White());
-    ubo.frag.material.shininess = 128;
-
-    light_ubos.push_back(std::move(ubo));
+    cube.ubo.frag.material.specular = ToVec3(Color::White());
+    cube.ubo.frag.material.shininess = 128;
   }
 
-
-
-  // UBOs ------------------------------------------------------------------------------------------
-
-
-  std::vector<textured_lighting::LightShaderUBO> dir_light_ubos = point_light_ubos;
+  Cube ground_cube = {};
+  ground_cube.node = AddNode(scene_graph.get());
+  ground_cube.node->transform.position = {0, -0.5f, 0};
+  ground_cube.node->transform.scale = {10, 0.2f, 10};
+  ground_cube.ubo.frag.material.specular = ToVec3(Color::White());
+  ground_cube.ubo.frag.material.shininess = 128;
 
   Update(scene_graph.get());
 
   // Create light widgets --------------------------------------------------------------------------
 
-  SpotLight spot_light = {};
+  /* SpotLight spot_light = {}; */
   /* spot_light.position = {1, 1, 1}; */
   /* spot_light.direction = {0, -1, 0.1f}; */
-  spot_light.transform = &spot_light_node->transform;
-  spot_light.angle = ToRadians(30);
-  spot_light.color = Color::Blue();
+  /* spot_light.transform = &spot_light_node->transform; */
+  /* spot_light.angle = ToRadians(30); */
+  /* spot_light.color = Color::Blue(); */
   /* PushSpotLight(&light_widgets, spot_light); */
   /* Stage(&light_widgets, game.renderer.get()); */
 
@@ -262,31 +269,34 @@ int main() {
 
     // Update the scene.
 
-    if (move_point_light) {
-      /* point_light_node->transform = */
-      /*     TranslateWidget(TransformKind::kGlobal, push_camera, point_light_node->transform); */
-      spot_light_node->transform =
-          TranslateWidget(TransformKind::kGlobal, push_camera, spot_light_node->transform);
-    } else {
-      spot_light_node->transform =
-          RotateWidget(TransformKind::kLocal, push_camera, spot_light_node->transform);
-    }
+    /* if (move_point_light) { */
+    /*   /1* point_light_node->transform = *1/ */
+    /*   /1*     TranslateWidget(TransformKind::kGlobal, push_camera, point_light_node->transform); *1/ */
+    /*   spot_light_node->transform = */
+    /*       TranslateWidget(TransformKind::kGlobal, push_camera, spot_light_node->transform); */
+    /* } else { */
+    /*   spot_light_node->transform = */
+    /*       RotateWidget(TransformKind::kLocal, push_camera, spot_light_node->transform); */
+    /* } */
 
     if (move_cubes) {
       cubes_time_delta += game.time.frame_delta;
       float angle = cubes_time_delta * ToRadians(7.0f);
-      for (uint32_t i = 0; i < point_light_ubos.size(); i++) {
-        SceneNode* cube_node = cube_nodes[i];
+      for (uint32_t i = 0; i < cubes.size(); i++) {
+        SceneNode* cube_node = cubes[i].node;
         cube_node->transform.rotation = {angle * i, -angle * i, 0};
       }
     }
     Update(scene_graph.get());
-    Vec3 point_light_pos = GetWorldPosition(point_light_node->transform);
 
     // Add the widgets -----------------------------------------------------------------------------
 
-    PushPointLight(&light_widgets, &point_light_node->transform, {1, 1, 1});
-    PushSpotLight(&light_widgets, spot_light);
+    for (uint32_t i = 0; i < std::size(point_lights); i++) {
+      auto& light = point_lights[i];
+      PushPointLight(&light_widgets, &light.node->transform, light.properties.diffuse);
+    }
+
+    /* PushSpotLight(&light_widgets, spot_light); */
     Stage(&light_widgets, game.renderer.get());
 
     // Create the render commands ------------------------------------------------------------------
@@ -295,16 +305,36 @@ int main() {
     commands.push_back(ClearFrame::FromColor(Color::Gray66()));
     commands.push_back(push_camera);
 
-    // Point light cubes.
-    for (uint32_t i = 0; i < point_light_ubos.size(); i++) {
-      auto& ubo = point_light_ubos[i];
-      ubo.vert.model = cube_nodes[i]->transform.world_matrix;
-      ubo.vert.normal_matrix = Transpose(Inverse(ubo.vert.model));
+    // Draw cubes.
+    for (uint32_t i = 0; i < std::size(cubes); i++) {
+      auto& cube = cubes[i];
+      cube.ubo.vert.model = cube.node->transform.world_matrix;
+      cube.ubo.vert.normal_matrix = Transpose(Inverse(cube.ubo.vert.model));
 
-      ubo.frag.light.pos = ToVec4(point_light_pos);
-      commands.push_back(
-          CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo));
+      // Point Light positions.
+      for (uint32_t point_i = 0; point_i < std::size(point_lights); point_i++) {
+        auto& light = point_lights[point_i];
+        auto& light_ubo = cube.ubo.frag.point_lights[point_i];
+
+        light_ubo.position = ToVec4(GetWorldPosition(light.node->transform));
+        light_ubo.properties = light.properties;
+        light_ubo.point_light_properties = light.point_light_properties;
+      }
+
+      commands.push_back(CreateRenderCommand(
+          &cube_mesh, &full_light_shader, &diffuse_map, &specular_map, cube.ubo));
     }
+
+    /* // Point light cubes. */
+    /* for (uint32_t i = 0; i < point_light_ubos.size(); i++) { */
+    /*   auto& ubo = point_light_ubos[i]; */
+    /*   ubo.vert.model = cube_nodes[i]->transform.world_matrix; */
+    /*   ubo.vert.normal_matrix = Transpose(Inverse(ubo.vert.model)); */
+
+    /*   ubo.frag.light.pos = ToVec4(point_light_pos); */
+    /*   commands.push_back( */
+    /*       CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo)); */
+    /* } */
 
     /* // Directional light cubes. */
     /* for (uint32_t i = 0; i < dir_light_ubos.size(); i++) { */
@@ -319,12 +349,12 @@ int main() {
     /*       CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo)); */
     /* } */
 
-    ground_ubo.vert.model = ground_node->transform.world_matrix;
-    ground_ubo.frag.light.pos = GetWorldPosition(*spot_light.transform);
-    ground_ubo.frag.light.direction = GetWorldDirection(*spot_light.transform);
-    ground_ubo.frag.light.cutoff_cos = Cos(spot_light.angle);
-    commands.push_back(
-        CreateRenderCommand(&cube_mesh, &spot_light_shader, nullptr, nullptr, ground_ubo));
+    /* ground_ubo.vert.model = ground_node->transform.world_matrix; */
+    /* ground_ubo.frag.light.pos = GetWorldPosition(*spot_light.transform); */
+    /* ground_ubo.frag.light.direction = GetWorldDirection(*spot_light.transform); */
+    /* ground_ubo.frag.light.cutoff_cos = Cos(spot_light.angle); */
+    /* commands.push_back( */
+    /*     CreateRenderCommand(&cube_mesh, &spot_light_shader, nullptr, nullptr, ground_ubo)); */
 
     auto light_commands = GetRenderCommands(light_widgets);
     commands.insert(commands.end(), light_commands.begin(), light_commands.end());

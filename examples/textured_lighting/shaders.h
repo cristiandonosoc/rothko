@@ -103,7 +103,6 @@ Shader CreateSpotLightShader(Renderer*);
 
 // Full Light Shader -------------------------------------------------------------------------------
 
-
 constexpr int kPointLightCount = 4;
 
 struct FullLightUBO {
@@ -112,7 +111,7 @@ struct FullLightUBO {
 
     // Transpose(Inverse(model));
     Mat4 normal_matrix = Mat4::Identity();
-  };
+  } vert;
 
   // std140 aligned.
   struct Frag {
@@ -132,20 +131,23 @@ struct FullLightUBO {
       LightProperties properties;
     };
 
-    struct PointLight {
-      Vec4 position;
-      LightProperties properties;
-
+    struct PointLightProperties {
       float constant = 1.0f;
       float linear = 0.09f;
       float quadratic = 0.032f;
       FLOAT_PAD();
     };
 
+    struct PointLight {
+      Vec4 position;
+      LightProperties properties;
+      PointLightProperties point_light_properties;
+    };
+
     Material material;
     DirectionalLight dir_light;
     PointLight point_lights[kPointLightCount];
-  };
+  } frag;
 };
 
 Shader CreateFullLightShader(Renderer*);
