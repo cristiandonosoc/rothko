@@ -43,48 +43,49 @@ TEST_CASE("Bits") {
     CHECK(GetBit(bits, 7) == 0);
   }
 
+  // clang-format off
   SECTION("Set bits") {
-    CHECK(SetBit(0, 0) == 0b00000001);
-    CHECK(SetBit(0, 1) == 0b00000010);
-    CHECK(SetBit(0, 2) == 0b00000100);
-    CHECK(SetBit(0, 3) == 0b00001000);
-    CHECK(SetBit(0, 4) == 0b00010000);
-    CHECK(SetBit(0, 5) == 0b00100000);
-    CHECK(SetBit(0, 6) == 0b01000000);
-    CHECK(SetBit(0, 7) == 0b10000000);
+    int test = 0;
 
-    uint8_t bits = 0b01010101;
+    test = 0; SetBit(&test, 0); CHECK(test == 0b00000001);
+    test = 0; SetBit(&test, 1); CHECK(test == 0b00000010);
+    test = 0; SetBit(&test, 2); CHECK(test == 0b00000100);
+    test = 0; SetBit(&test, 3); CHECK(test == 0b00001000);
+    test = 0; SetBit(&test, 4); CHECK(test == 0b00010000);
+    test = 0; SetBit(&test, 5); CHECK(test == 0b00100000);
+    test = 0; SetBit(&test, 6); CHECK(test == 0b01000000);
+    test = 0; SetBit(&test, 7); CHECK(test == 0b10000000);
 
-    CHECK(SetBit(bits, 0) == 0b01010101);
-    CHECK(SetBit(bits, 1) == 0b01010111);
-    CHECK(SetBit(bits, 2) == 0b01010101);
-    CHECK(SetBit(bits, 3) == 0b01011101);
-    CHECK(SetBit(bits, 4) == 0b01010101);
-    CHECK(SetBit(bits, 5) == 0b01110101);
-    CHECK(SetBit(bits, 6) == 0b01010101);
-    CHECK(SetBit(bits, 7) == 0b11010101);
+    test = 0b01010101; SetBit(&test, 0); CHECK(test == 0b01010101);
+    test = 0b01010101; SetBit(&test, 1); CHECK(test == 0b01010111);
+    test = 0b01010101; SetBit(&test, 2); CHECK(test == 0b01010101);
+    test = 0b01010101; SetBit(&test, 3); CHECK(test == 0b01011101);
+    test = 0b01010101; SetBit(&test, 4); CHECK(test == 0b01010101);
+    test = 0b01010101; SetBit(&test, 5); CHECK(test == 0b01110101);
+    test = 0b01010101; SetBit(&test, 6); CHECK(test == 0b01010101);
+    test = 0b01010101; SetBit(&test, 7); CHECK(test == 0b11010101);
   }
 
   SECTION("Clear bits") {
-    CHECK(ClearBit(0xff, 0) == 0b11111110);
-    CHECK(ClearBit(0xff, 1) == 0b11111101);
-    CHECK(ClearBit(0xff, 2) == 0b11111011);
-    CHECK(ClearBit(0xff, 3) == 0b11110111);
-    CHECK(ClearBit(0xff, 4) == 0b11101111);
-    CHECK(ClearBit(0xff, 5) == 0b11011111);
-    CHECK(ClearBit(0xff, 6) == 0b10111111);
-    CHECK(ClearBit(0xff, 7) == 0b01111111);
+    int test = 0;
 
-    uint8_t bits = 0b01010101;
+    test = 0xff; ClearBit(&test, 0); CHECK(test == 0b11111110);
+    test = 0xff; ClearBit(&test, 1); CHECK(test == 0b11111101);
+    test = 0xff; ClearBit(&test, 2); CHECK(test == 0b11111011);
+    test = 0xff; ClearBit(&test, 3); CHECK(test == 0b11110111);
+    test = 0xff; ClearBit(&test, 4); CHECK(test == 0b11101111);
+    test = 0xff; ClearBit(&test, 5); CHECK(test == 0b11011111);
+    test = 0xff; ClearBit(&test, 6); CHECK(test == 0b10111111);
+    test = 0xff; ClearBit(&test, 7); CHECK(test == 0b01111111);
 
-    CHECK(ClearBit(bits, 0) == 0b01010100);
-    CHECK(ClearBit(bits, 1) == 0b01010101);
-    CHECK(ClearBit(bits, 2) == 0b01010001);
-    CHECK(ClearBit(bits, 3) == 0b01010101);
-    CHECK(ClearBit(bits, 4) == 0b01000101);
-    CHECK(ClearBit(bits, 5) == 0b01010101);
-    CHECK(ClearBit(bits, 6) == 0b00010101);
-    CHECK(ClearBit(bits, 7) == 0b01010101);
+    test = 0b01010101; ClearBit(&test, 0); CHECK(test == 0b01010100);
+    test = 0b01010101; ClearBit(&test, 1); CHECK(test == 0b01010101);
+    test = 0b01010101; ClearBit(&test, 2); CHECK(test == 0b01010001);
+    test = 0b01010101; ClearBit(&test, 3); CHECK(test == 0b01010101);
+    test = 0b01010101; ClearBit(&test, 4); CHECK(test == 0b01000101);
+    test = 0b01010101; ClearBit(&test, 5); CHECK(test == 0b01010101);
+    test = 0b01010101; ClearBit(&test, 6); CHECK(test == 0b00010101);
+    test = 0b01010101; ClearBit(&test, 7); CHECK(test == 0b01010101);
   }
 }
 

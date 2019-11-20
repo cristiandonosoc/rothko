@@ -89,12 +89,12 @@ inline uint8_t CPUFlagsGetN(const CPU& cpu) { return GetBit(cpu.registers.f, 6);
 inline uint8_t CPUFlagsGetZ(const CPU& cpu) { return GetBit(cpu.registers.f, 7); }
 
 inline uint8_t _Set(CPU* cpu, uint8_t bit) {
-  cpu->registers.f = SetBit(cpu->registers.f, bit);
+  SetBit(&cpu->registers.f, bit);
   return cpu->registers.f;
 }
 
 inline uint8_t _Clear(CPU* cpu, uint8_t bit) {
-  cpu->registers.f = ClearBit(cpu->registers.f, bit);
+  ClearBit(&cpu->registers.f, bit);
   return cpu->registers.f;
 }
 

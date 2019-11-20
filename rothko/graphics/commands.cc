@@ -42,10 +42,13 @@ const char* ToString(PrimitiveType type) {
 std::string ToString(const ClearFrame& clear_frame) {
   std::stringstream ss;
   ss << std::boolalpha;
-  ss << "Clear Color :" << clear_frame.clear_color;
-  if (clear_frame.clear_color)
+
+  bool clear_color = GetClearColor(clear_frame);
+  ss << "Clear Color :" << clear_color;
+  if (clear_color)
     ss << " (color: " << std::hex << clear_frame.color << ")";
-  ss << ", Clear depth: " << clear_frame.clear_depth;
+
+  ss << ", Clear depth: " << GetClearDepth(clear_frame);
 
   return ss.str();
 }

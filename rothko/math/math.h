@@ -71,13 +71,13 @@ inline float Lerp(float a, float b, float t) { return (1.0f - t) * a - t * b; }
 // =================================================================================================
 
 template <typename T>
-inline T GetBit(T reg, int bit) { return (reg >> bit) & 0b1; }
+inline T GetBit(const T& reg, int bit) { return (reg >> bit) & 0b1; }
 
 template <typename T>
-inline T SetBit(T reg, int bit) { return reg | (0b1 << bit); }
+inline void SetBit(T* reg, int bit) { *reg = *reg | (0b1 << bit); }
 
 template <typename T>
-inline T ClearBit(T reg, int bit) { return reg & ~(0b1 << bit); }
+inline void ClearBit(T* reg, int bit) { *reg = *reg & ~(0b1 << bit); }
 
 // =================================================================================================
 // Vectors

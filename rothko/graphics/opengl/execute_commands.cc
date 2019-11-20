@@ -74,16 +74,18 @@ void SetRenderCommandConfig(const RenderMesh& render_mesh) {
 // Clear Frame -------------------------------------------------------------------------------------
 
 void ExecuteClearRenderAction(const ClearFrame& clear) {
-  if (!clear.clear_color && !clear.clear_depth)
+  bool clear_color = GetClearColor(clear);
+  bool clear_depth = GetClearDepth(clear);
+  if (!clear_color && !clear_depth)
     return;
 
   GLbitfield clear_mask = 0;
-  if (clear.clear_color) {
+  if (clear_color) {
     glClearColor(RED(clear.color), GREEN(clear.color), BLUE(clear.color), 1.0f);
     clear_mask |= GL_COLOR_BUFFER_BIT;
   }
 
-  if (clear.clear_depth)
+  if (clear_depth)
     clear_mask |= GL_DEPTH_BUFFER_BIT;
 
   glClear(clear_mask);

@@ -42,6 +42,8 @@ RenderMesh CreateRenderCommand(Mesh* mesh,
   return render_mesh;
 }
 
+
+
 };  // namespace
 
 int main() {
@@ -59,10 +61,6 @@ int main() {
     return 1;
 
   // Shaders ---------------------------------------------------------------------------------------
-
-  Shader object_shader = textured_lighting::CreateLightShader(game.renderer.get());
-  if (!Valid(object_shader))
-    return 1;
 
   Shader spot_light_shader = textured_lighting::CreateSpotLightShader(game.renderer.get());
   if (!Valid(spot_light_shader))
@@ -237,6 +235,8 @@ int main() {
 
   bool move_point_light = true;
 
+  ExamplePointLight* editing_point_light = point_lights;
+
   while (running) {
     auto events = Update(&game);
     BeginFrame(&imgui, &game.window, &game.time, &game.input);
@@ -245,6 +245,16 @@ int main() {
     for (auto event : events) {
       if (event == WindowEvent::kQuit) {
         running = false;
+        break;
+      }
+    }
+
+    // Controls
+
+    constexpr int kBase = (int)Key::k1;
+    for (uint32_t i = 0; i < std::size(point_lights); i++) {
+      if (KeyUpThisFrame(game.input, (Key)(kBase + i))) {
+        editing_point_light = point_lights + i;
         break;
       }
     }
@@ -269,15 +279,7 @@ int main() {
 
     // Update the scene.
 
-    /* if (move_point_light) { */
-    /*   /1* point_light_node->transform = *1/ */
-    /*   /1*     TranslateWidget(TransformKind::kGlobal, push_camera, point_light_node->transform); *1/ */
-    /*   spot_light_node->transform = */
-    /*       TranslateWidget(TransformKind::kGlobal, push_camera, spot_light_node->transform); */
-    /* } else { */
-    /*   spot_light_node->transform = */
-    /*       RotateWidget(TransformKind::kLocal, push_camera, spot_light_node->transform); */
-    /* } */
+    TranslateWidget(TransformKind::kGlobal, push_camera, &editing_point_light->node->transform);
 
     if (move_cubes) {
       cubes_time_delta += game.time.frame_delta;
@@ -298,6 +300,24 @@ int main() {
 
     /* PushSpotLight(&light_widgets, spot_light); */
     Stage(&light_widgets, game.renderer.get());
+
+    // Create the UI -------------------------------------------------------------------------------
+
+    {
+
+      /* ImGui::ShowDemoWindow(); */
+
+      ImGui::Begin("Textured Lighting");
+
+      if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::InputFloat3("Pos", (float*)&editing_point_light->node->transform.position);
+        ImGui::ColorEdit3("Ambient", (float*)&editing_point_light->properties.ambient);
+        ImGui::ColorEdit3("Diffuse", (float*)&editing_point_light->properties.diffuse);
+        ImGui::ColorEdit3("Specular", (float*)&editing_point_light->properties.specular);
+      }
+
+      ImGui::End();
+    }
 
     // Create the render commands ------------------------------------------------------------------
 

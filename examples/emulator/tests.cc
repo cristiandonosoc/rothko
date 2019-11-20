@@ -19,7 +19,8 @@ constexpr uint8_t kReturnedTicks = 4;
 TEST_CASE("Conditional Ticks") {
   SECTION("Z Flag") {
     uint8_t z_not_set = 0;
-    uint8_t z_set = SetBit(0, kCPUFlagsZIndex);
+    uint8_t z_set = 0;
+    SetBit(&z_set, kCPUFlagsZIndex);
 
     ConditionalTicks neg_ct = COND_TICKS_NEGATIVE_FLAG(Z, kReturnedTicks);
     ConditionalTicks pos_ct = COND_TICKS_POSITIVE_FLAG(Z, kReturnedTicks);
@@ -33,7 +34,8 @@ TEST_CASE("Conditional Ticks") {
 
   SECTION("C Flag") {
     uint8_t c_not_set = 0;
-    uint8_t c_set = SetBit(0, kCPUFlagsCIndex);
+    uint8_t c_set = 0;
+    SetBit(&c_set, kCPUFlagsCIndex);
 
     ConditionalTicks neg_ct = COND_TICKS_NEGATIVE_FLAG(C, kReturnedTicks);
     ConditionalTicks pos_ct = COND_TICKS_POSITIVE_FLAG(C, kReturnedTicks);
@@ -102,10 +104,12 @@ TEST_CASE("Instruction Conditional Ticks") {
     Instruction instruction;
 
     uint8_t z_not_set = 0;
-    uint8_t z_set = SetBit(0, kCPUFlagsZIndex);
+    uint8_t z_set = 0;
+    SetBit(&z_set, kCPUFlagsZIndex);
 
     uint8_t c_not_set = 0;
-    uint8_t c_set = SetBit(0, kCPUFlagsCIndex);
+    uint8_t c_set = 0;
+    SetBit(&c_set, kCPUFlagsCIndex);
 
     {
       // (0x20) JR NZ,n: Relative jump by signed immediate if last result was not zero.

@@ -57,16 +57,31 @@ struct Nop {
 
 // Clear Frame -------------------------------------------------------------------------------------
 
+static constexpr uint32_t kClearColorShift = 0;
+static constexpr uint32_t kClearColor = 1u << kClearColorShift;
+
+static constexpr uint32_t kClearDepthShift = 1;
+static constexpr uint32_t kClearDepth = 1u << kClearDepthShift;
+
 struct ClearFrame {
   static constexpr RenderCommandType kType = RenderCommandType::kClearFrame;
 
   static ClearFrame FromColor(Color color);
 
-  bool clear_depth = true;
-  bool clear_color = true;
+  uint32_t flags = kClearColor | kClearDepth;
   uint32_t color = 0;   // One byte per color, RGBA (R = 24, G = 16, B = 8, A = 0).
 };
 std::string ToString(const ClearFrame&);
+
+inline bool GetClearColor(const ClearFrame& c) { return GetBit(c.flags, kClearColorShift); }
+inline void SetClearColor(ClearFrame* c, bool v) {
+  v ? SetBit(&c->flags, kClearColorShift) : ClearBit(&c->flags, kClearColorShift);
+}
+
+inline bool GetClearDepth(const ClearFrame& c) { return GetBit(c.flags, kClearDepthShift); }
+inline void SetClearDepth(ClearFrame* c, bool v) {
+  v ? SetBit(&c->flags, kClearDepthShift) : ClearBit(&c->flags, kClearDepthShift);
+}
 
 // Config ------------------------------------------------------------------------------------------
 

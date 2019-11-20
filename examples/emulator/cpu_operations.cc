@@ -19,17 +19,17 @@ inline void TestBit(CPU* cpu, uint8_t word, int bit) {
   CPUFlagsSetH(cpu);
 }
 
-// Z=/ N=/ H=/ C=/
-inline void SetBit(uint8_t* target, int bit) {
-  uint8_t mask = (uint8_t)(1 << bit);
-  *target |= mask;
-}
+/* // Z=/ N=/ H=/ C=/ */
+/* inline void SetBit(uint8_t* target, int bit) { */
+/*   uint8_t mask = (uint8_t)(1 << bit); */
+/*   *target |= mask; */
+/* } */
 
-// Z=/ N=/ H=/ C=/
-inline void ClearBit(uint8_t* target, int bit) {
-  uint8_t mask = (uint8_t) ~(1 << bit);
-  *target &= mask;
-}
+/* // Z=/ N=/ H=/ C=/ */
+/* inline void ClearBit(uint8_t* target, int bit) { */
+/*   uint8_t mask = (uint8_t) ~(1 << bit); */
+/*   *target &= mask; */
+/* } */
 
 // Z=* N=0 H=0 C=*
 inline void RotateLeftThroughCarry(CPU* cpu, uint8_t* target, int count, int carry) {
