@@ -2,12 +2,11 @@
 // This code has a BSD license. See LICENSE.
 
 #include <rothko/game.h>
+#include <rothko/graphics/default_shaders/default_shaders.h>
 #include <rothko/scene/camera.h>
-#include <rothko/scene/grid.h>
+#include <rothko/widgets/grid.h>
 #include <stdio.h>
 #include <third_party/tiny_gltf/tiny_gltf.h>
-
-#include <rothko/graphics/default_shaders/default_shaders.h>
 
 #include "loader.h"
 
@@ -77,9 +76,12 @@ int main(int argc, const char* argv[]) {
   if (!RendererStageTexture(game.renderer.get(), scene.textures[0].get()))
     return 1;
 
+  auto grid_shader = CreateGridShader(game.renderer.get(), "grid-shader");
+  if (!grid_shader)
+    return 1;
 
   Grid grid;
-  if (!Init(game.renderer.get(), &grid, "main-grid"))
+  if (!Init(&grid, game.renderer.get(), grid_shader.get()))
     return 1;
 
   auto default_shader = CreateDefaultShader(game.renderer.get(), VertexType::k3dNormalTangentUV);

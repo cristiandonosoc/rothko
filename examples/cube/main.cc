@@ -7,8 +7,8 @@
 #include <rothko/math/math.h>
 #include <rothko/platform/platform.h>
 #include <rothko/scene/camera.h>
-#include <rothko/scene/grid.h>
 #include <rothko/ui/imgui.h>
+#include <rothko/widgets/grid.h>
 #include <rothko/widgets/widgets.h>
 #include <rothko/window/sdl/sdl_definitions.h>
 #include <rothko/window/window.h>
@@ -216,8 +216,12 @@ int main() {
   if (!shader)
     return 1;
 
+  auto grid_shader = CreateGridShader(renderer.get(), "grid-shader");
+  if (!grid_shader)
+    return 1;
+
   Grid grid;
-  if (!Init(renderer.get(), &grid, "main-grid"))
+  if (!Init(&grid, renderer.get(), grid_shader.get()))
     return 1;
 
   Texture wall = LoadTexture(renderer.get(), "examples/cube/wall.jpg");

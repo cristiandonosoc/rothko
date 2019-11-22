@@ -2,7 +2,7 @@
 // This code has a BSD license. See LICENSE.
 
 #include <rothko/scene/camera.h>
-#include <rothko/scene/grid.h>
+#include <rothko/widgets/grid.h>
 #include <rothko/game.h>
 
 using namespace rothko;
@@ -17,9 +17,12 @@ int main() {
   if (!InitGame(&game, &window_config, false))
     return 1;
 
+  auto grid_shader = CreateGridShader(game.renderer.get(), "grid-shader");
+  if (!grid_shader)
+    return 1;
 
   Grid grid;
-  if (!Init(game.renderer.get(), &grid, "main-grid"))
+  if (!Init(&grid, game.renderer.get(), grid_shader.get()))
     return 1;
 
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;

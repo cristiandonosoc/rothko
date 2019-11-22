@@ -189,11 +189,34 @@ std::unique_ptr<Shader> RendererStageShader(Renderer*,
                                             const ShaderConfig& config,
                                             const std::string& vert_src,
                                             const std::string& frag_src) {
-  return OpenGLStageShader(gBackend.get(), config, vert_src, frag_src);
+  auto* opengl = gBackend.get();
+  auto it = opengl->shader_map.find(config.name);
+  if (it != opengl->shader_map.end()) {
+    NOT_REACHED_MSG("Shader %s already exists!", config.name.c_str());
+    return {};
+  }
+
+  // Create it and add it to the shader.
+  auto shader = OpenGLStageShader(opengl, config, vert_src, frag_src);
+  if (!shader)
+    return shader;
+
+  opengl->shader_map[config.name] = shader.get();
+  return shader;
 }
 
 void RendererUnstageShader(Renderer*, Shader* shader) {
-  OpenGLUnstageShader(gBackend.get(), shader);
+  auto* opengl = gBackend.get();
+  opengl->shader_map.erase(shader->config.name);
+  OpenGLUnstageShader(opengl, shader);
+}
+
+const Shader* RendererGetShader(Renderer*, const char* name) {
+  auto* opengl = gBackend.get();
+  auto it = opengl->shader_map.find(name);
+  if (it == opengl->shader_map.end())
+    return nullptr;
+  return it->second;
 }
 
 // Textures ----------------------------------------------------------------------------------------

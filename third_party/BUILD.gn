@@ -35,6 +35,10 @@ source_set("imguizmo") {
     "imguizmo/ImGuizmo.cpp",
   ]
 
+  public_deps = [
+    ":imgui",
+  ]
+
   configs += [ ":imgui_config" ]
 
   include_dirs = [ "//third_party/imguizmo" ]

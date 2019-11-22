@@ -4,9 +4,9 @@
 #include <rothko/game.h>
 #include <rothko/models/cube.h>
 #include <rothko/scene/camera.h>
-#include <rothko/scene/grid.h>
 #include <rothko/scene/scene_graph.h>
 #include <rothko/ui/imgui.h>
+#include <rothko/widgets/grid.h>
 #include <rothko/widgets/widgets.h>
 
 #include "shaders.h"
@@ -41,8 +41,6 @@ RenderMesh CreateRenderCommand(Mesh* mesh,
 
   return render_mesh;
 }
-
-
 
 };  // namespace
 
@@ -111,7 +109,7 @@ int main() {
   // Widgets ---------------------------------------------------------------------------------------
 
   Grid grid;
-  if (!Init(game.renderer.get(), &grid, "main-grid"))
+  if (!Init(&grid, game.renderer.get()))
     return 1;
 
   LineManager line_manager = {};

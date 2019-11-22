@@ -39,6 +39,12 @@ struct Config {
 };
 
 struct OpenGLRendererBackend {
+  // NOTE: This are NON-OWNING pointers. While the backend will keep correct track of these (won't
+  //       dangling), it can give these references outside of the renderer system and it's the
+  //       client's responsability to correctly handle those.
+  std::map<std::string, const Shader*> shader_map;
+
+
   std::map<uint32_t, MeshHandles> loaded_meshes;
   std::map<uint32_t, ShaderHandles> loaded_shaders;
   std::map<uint32_t, TextureHandles> loaded_textures;

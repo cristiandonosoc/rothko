@@ -5,8 +5,6 @@ source_set("scene") {
   sources = [
     "camera.cc",
     "camera.h",
-    "grid.cc",
-    "grid.h",
     "scene_graph.cc",
     "scene_graph.h",
     "transform.cc",

@@ -10,6 +10,7 @@ executable("ozz") {
     "//rothko:game",
     "//rothko/graphics",
     "//rothko/ui:imgui",
+    "//rothko/widgets",
     "//rothko/window:sdl_opengl",
     "//third_party:imgui_extras",
     "//third_party/ozz:animation",
