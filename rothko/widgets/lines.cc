@@ -35,21 +35,24 @@ void main() {
 
 }  // namespace
 
-Shader CreateLineShader(Renderer* renderer) {
-  Shader shader = {};
-  shader.name = "line-shader";
-  shader.vertex_type = VertexType::k3dColor;
-  shader.vert_src = CreateVertexSource(kLineVertexShader);
-  shader.frag_src = CreateFragmentSource(kLineFragmentShader);
+std::unique_ptr<Shader> CreateLineShader(Renderer* renderer) {
+  ShaderConfig config = {};
+  config.name = "line-shader";
+  config.vertex_type = VertexType::k3dColor;
 
-  if (!RendererStageShader(renderer, &shader))
-    return {};
-  return shader;
+  auto vert_src = CreateVertexSource(kLineVertexShader);
+  auto frag_src = CreateFragmentSource(kLineFragmentShader);
+
+
+  return RendererStageShader(renderer, config, vert_src, frag_src);
 }
 
 // Init --------------------------------------------------------------------------------------------
 
-bool Init(LineManager* line_manager, Renderer* renderer, Shader* shader, std::string name,
+bool Init(LineManager* line_manager,
+          Renderer* renderer,
+          const Shader* shader,
+          const std::string& name,
           uint32_t line_count) {
   ASSERT(!Valid(line_manager));
   line_manager->name = std::move(name);

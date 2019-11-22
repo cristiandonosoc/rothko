@@ -3,13 +3,13 @@
 
 #pragma once
 
-#include <optional>
+#include <memory>
 
 #include "rothko/graphics/shader.h"
 #include "rothko/graphics/vertices.h"
 
 namespace rothko {
 
-Shader CreateDefaultShader(VertexType);
+std::unique_ptr<Shader> CreateDefaultShader(Renderer*, VertexType);
 
 }  // namespace rothko

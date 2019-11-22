@@ -17,18 +17,18 @@ namespace {
 
 bool CreateShader(Renderer* renderer, ImguiRenderer* imgui) {
   ASSERT(Valid(renderer));
-  Shader shader;
+  std::unique_ptr<Shader> shader;
   if (strcmp(renderer->renderer_type, "OpenGL") == 0) {
-    shader = GetOpenGLImguiShader();
+    shader = GetOpenGLImguiShader(renderer);
   } else {
     ERROR(Imgui, "Unsupported renderer type: %s", renderer->renderer_type);
     return false;
   }
 
-  if (!Loaded(shader) || !RendererStageShader(renderer, &shader))
+  if (!shader)
     return false;
 
-  RemoveSources(&shader);
+  RemoveSources(shader.get());
   imgui->shader = std::move(shader);
   return true;
 }
@@ -185,7 +185,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
 
       // Each Imgui Draw Command is our MeshRenderCommand equivalent.
       RenderMesh render_mesh;
-      render_mesh.shader = &imgui_renderer->shader;
+      render_mesh.shader = imgui_renderer->shader.get();
       render_mesh.mesh = &imgui_renderer->mesh;
       render_mesh.primitive_type = PrimitiveType::kTriangles;
       render_mesh.textures.push_back((Texture*)draw_cmd->TextureId);

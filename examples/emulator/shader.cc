@@ -51,18 +51,15 @@ void main() {
 }  // namespace
 
 std::unique_ptr<Shader> CreateNormalShader(Renderer* renderer) {
-  auto shader = std::make_unique<Shader>();
-  shader->name = "normal-shader";
-  shader->vertex_type = VertexType::k3dUVColor;
+  ShaderConfig config = {};
+  config.name = "normal-shader";
+  config.vertex_type = VertexType::k3dUVColor;
+  config.texture_count = 1;
 
-  shader->vert_src = kNormalVertex;
-  shader->frag_src = kNormalFrag;
+  auto vert_src = kNormalVertex;
+  auto frag_src = kNormalFrag;
 
-  shader->texture_count = 1;
-
-  if (!RendererStageShader(renderer, shader.get()))
-    return nullptr;
-  return shader;
+  return RendererStageShader(renderer, config, vert_src, frag_src);
 }
 
 }  // namespace emulator

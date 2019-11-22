@@ -40,7 +40,7 @@ struct ObjectShaderUBO {
   // clang format on
 };
 
-Shader CreateObjectShader(Renderer*);
+std::unique_ptr<Shader> CreateObjectShader(Renderer*);
 
 }  // namespace simple_lighting
 }  // namespace rothko

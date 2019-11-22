@@ -67,17 +67,15 @@ void main() {
 )";
 
 std::unique_ptr<Shader> InitShader(Renderer* renderer) {
-  auto shader = std::make_unique<Shader>();
 
-  shader->name = "scene-grid-shader";
-  shader->vertex_type = VertexType::k3dUV;
+  ShaderConfig config = {};
+  config.name = "scene-grid-shader";
+  config.vertex_type = VertexType::k3dUV;
 
-  shader->vert_src = CreateVertexSource(kGridVertexShader);
-  shader->frag_src = CreateFragmentSource(kGridFragmentShader);
+  auto vert_src = CreateVertexSource(kGridVertexShader);
+  auto frag_src = CreateFragmentSource(kGridFragmentShader);
 
-  if (!RendererStageShader(renderer, shader.get()))
-    return nullptr;
-  return shader;
+  return RendererStageShader(renderer, config, vert_src, frag_src);
 }
 
 bool InitMesh(Renderer* renderer, Grid* grid) {

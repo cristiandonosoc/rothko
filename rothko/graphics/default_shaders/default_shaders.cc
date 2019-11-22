@@ -3,6 +3,7 @@
 
 #include "rothko/graphics/default_shaders/default_shaders.h"
 
+#include "rothko/graphics/renderer.h"
 #include "rothko/logging/logging.h"
 
 namespace rothko {
@@ -45,18 +46,18 @@ void main() {
 }
 )";
 
-Shader Vertex3dUVColorShader() {
-  Shader shader;
-  shader.name = "3dNormalUV-default";
-  shader.vertex_type = VertexType::k3dUVColor;
-  shader.vert_ubo_name = "Uniforms";
-  shader.vert_ubo_size = sizeof(Mat4);
-  shader.texture_count = 2;
+std::unique_ptr<Shader> Vertex3dUVColorShader(Renderer* renderer) {
+  ShaderConfig config;
+  config.name = "3dNormalUV-default";
+  config.vertex_type = VertexType::k3dUVColor;
+  config.vert_ubo_name = "Uniforms";
+  config.vert_ubo_size = sizeof(Mat4);
+  config.texture_count = 2;
 
-  shader.vert_src = CreateVertexSource(kVertex3dUVColorVertexShader);
-  shader.frag_src = CreateFragmentSource(kVertex3dUVColorFragmentShader);
+  auto vert_src = CreateVertexSource(kVertex3dUVColorVertexShader);
+  auto frag_src = CreateFragmentSource(kVertex3dUVColorFragmentShader);
 
-  return shader;
+  return RendererStageShader(renderer, config, vert_src, frag_src);
 }
 
 }  // namespace
@@ -101,25 +102,25 @@ void main() {
 }
 )";
 
-Shader Vertex3dNormalTangentUVShader() {
-  Shader shader;
-  shader.name = "3dNormalUV-default";
-  shader.vertex_type = VertexType::k3dNormalTangentUV;
-  shader.vert_ubo_name = "Uniforms";
-  shader.vert_ubo_size = sizeof(Mat4);
-  shader.texture_count = 2;
+std::unique_ptr<Shader> Vertex3dNormalTangentUVShader(Renderer* renderer) {
+  ShaderConfig config;
+  config.name = "3dNormalUV-default";
+  config.vertex_type = VertexType::k3dNormalTangentUV;
+  config.vert_ubo_name = "Uniforms";
+  config.vert_ubo_size = sizeof(Mat4);
+  config.texture_count = 2;
 
-  shader.vert_src = CreateVertexSource(kVertex3dNormalTangentUVVertexShader);
-  shader.frag_src = CreateFragmentSource(kVertex3dNormalTangentUVFragmentShader);
+  auto vert_src = CreateVertexSource(kVertex3dNormalTangentUVVertexShader);
+  auto frag_src = CreateFragmentSource(kVertex3dNormalTangentUVFragmentShader);
 
-  return shader;
+  return RendererStageShader(renderer, config, vert_src, frag_src);
 }
 
 }  // namespace
 
 // GetDefaultShader --------------------------------------------------------------------------------
 
-Shader CreateDefaultShader(VertexType vertex_type) {
+std::unique_ptr<Shader> CreateDefaultShader(Renderer* renderer, VertexType vertex_type) {
   switch (vertex_type) {
     case VertexType::k2dUVColor: return {};
     case VertexType::k3d: return {};
@@ -127,8 +128,8 @@ Shader CreateDefaultShader(VertexType vertex_type) {
     case VertexType::k3dNormal: return {};
     case VertexType::k3dNormalUV: return {};
     case VertexType::k3dUV: return {};
-    case VertexType::k3dUVColor: return Vertex3dUVColorShader();
-    case VertexType::k3dNormalTangentUV: return Vertex3dNormalTangentUVShader();
+    case VertexType::k3dUVColor: return Vertex3dUVColorShader(renderer);
+    case VertexType::k3dNormalTangentUV: return Vertex3dNormalTangentUVShader(renderer);
     case VertexType::kLast: return {};
   }
 

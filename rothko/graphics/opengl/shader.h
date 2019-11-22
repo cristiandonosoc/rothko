@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 
+#include <memory>
 #include <string>
 
 #include "rothko/graphics/shader.h"
@@ -39,7 +40,10 @@ struct ShaderHandles {
   int texture_handles[kMaxTextures] = {};
 };
 
-bool OpenGLStageShader(OpenGLRendererBackend*, Shader*);
+std::unique_ptr<Shader> OpenGLStageShader(OpenGLRendererBackend*,
+                                          const ShaderConfig& config,
+                                          const std::string& vert_src,
+                                          const std::string& frag_src);
 void OpenGLUnstageShader(OpenGLRendererBackend*, Shader*);
 
 }  // namespace opengl

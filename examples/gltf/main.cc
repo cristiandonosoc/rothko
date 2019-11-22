@@ -82,8 +82,8 @@ int main(int argc, const char* argv[]) {
   if (!Init(game.renderer.get(), &grid, "main-grid"))
     return 1;
 
-  Shader default_shader = CreateDefaultShader(VertexType::k3dNormalTangentUV);
-  if (!Valid(default_shader) || !RendererStageShader(game.renderer.get(), &default_shader))
+  auto default_shader = CreateDefaultShader(game.renderer.get(), VertexType::k3dNormalTangentUV);
+  if (default_shader)
     return 1;
 
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;
@@ -139,7 +139,7 @@ int main(int argc, const char* argv[]) {
 
     RenderMesh render_mesh = {};
     render_mesh.mesh = mesh;
-    render_mesh.shader = &default_shader;
+    render_mesh.shader = default_shader.get();
     render_mesh.primitive_type = PrimitiveType::kTriangles;
     render_mesh.indices_count = mesh->indices.size();
     render_mesh.vert_ubo_data = (uint8_t*)&model_mat;

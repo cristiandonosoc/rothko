@@ -13,7 +13,8 @@ namespace rothko {
 // Uses primitive reset to render them all in a single draw call.
 struct LineManager {
   std::string name;
-  Shader* shader;
+
+  const Shader* shader;
 
   // How many shapes have been added to the line manager. Will be zeroed upon reset.
   int shape_count = 0;
@@ -31,11 +32,12 @@ struct LineManager {
   RenderMesh render_command_;
 };
 
-Shader CreateLineShader(Renderer* renderer);
+std::unique_ptr<Shader> CreateLineShader(Renderer* renderer);
 
 // |line_count| means how many lines we pre-allocate within the mesh.
 // Keep in mind that a cube = 10 lines.
-bool Init(LineManager*, Renderer*, Shader*, std::string name, uint32_t line_count = 1000);
+bool Init(LineManager*, Renderer*, const Shader*, const std::string& name,
+          uint32_t line_count = 1000);
 inline bool Valid(LineManager* l) { return Staged(l->strip_mesh); }
 void Reset(LineManager*);
 

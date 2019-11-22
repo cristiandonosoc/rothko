@@ -79,8 +79,8 @@ int main() {
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;
   OrbitCamera camera = OrbitCamera::FromLookAt({5, 5, 5}, {}, ToRadians(60.0f), aspect_ratio);
 
-  Shader default_shader = CreateDefaultShader(VertexType::k3dUVColor);
-  if (!Valid(default_shader) || !RendererStageShader(game.renderer.get(), &default_shader))
+  auto default_shader = CreateDefaultShader(game.renderer.get(), VertexType::k3dUVColor);
+  if (!default_shader)
     return 1;
 
   Mesh cube = CreateCubeMesh(VertexType::k3dUVColor, "cube");
@@ -177,7 +177,7 @@ int main() {
     commands.push_back(push_camera);
 
     for (SceneNode* node : nodes) {
-      commands.push_back(GetCubeRenderCommand(&cube, &default_shader, node));
+      commands.push_back(GetCubeRenderCommand(&cube, default_shader.get(), node));
     }
 
     commands.push_back(grid.render_command);

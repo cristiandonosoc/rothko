@@ -7,6 +7,7 @@
 
 #include "rothko/containers/vector.h"
 #include "rothko/graphics/commands.h"
+#include "rothko/graphics/shader.h"
 #include "rothko/math/math.h"
 #include "rothko/utils/macros.h"
 
@@ -26,7 +27,7 @@ struct Shader;
 struct Texture;
 struct Window;
 
-// Renderer ----------------------------------------------------------------------------------------
+// Renderer ========================================================================================
 
 std::unique_ptr<Renderer> InitRenderer();
 void ShutdownRenderer();
@@ -55,9 +56,16 @@ void RendererUnstageMesh(Renderer*, Mesh*);
 // For both ranges, empty size means all.
 bool RendererUploadMeshRange(Renderer*, Mesh*, Int2 vertex_range = {}, Int2 index_range = {});
 
-// Shaders.
-bool RendererStageShader(Renderer*, Shader*);
+// Shaders -----------------------------------------------------------------------------------------
+
+std::unique_ptr<Shader> RendererStageShader(Renderer*,
+                                            const ShaderConfig&,
+                                            const std::string& vert_src,
+                                            const std::string& frag_src);
 void RendererUnstageShader(Renderer*, Shader*);
+
+// Returns a non-owning pointer to a shader. No synchronization is made with the original shader.
+const Shader* RendererGetShader(const char*);
 
 bool RendererStageTexture(Renderer*, Texture*);
 void RendererUnstageTexture(Renderer*, Texture*);

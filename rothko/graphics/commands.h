@@ -149,8 +149,8 @@ inline uint64_t SetRestartIndex(uint64_t ctx, uint32_t i) {
 struct RenderMesh {
   static constexpr RenderCommandType kType = RenderCommandType::kRenderMesh;
 
-  Mesh* mesh = nullptr;
-  Shader* shader = nullptr;
+  const Mesh* mesh = nullptr;
+  const Shader* shader = nullptr;
 
   PrimitiveType primitive_type = PrimitiveType::kLast;
 

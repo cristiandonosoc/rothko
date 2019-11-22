@@ -21,7 +21,7 @@ struct ImguiContext;
 
 struct ImguiRenderer {
   Mesh mesh;
-  Shader shader;
+  std::unique_ptr<Shader> shader;
   Texture font_texture;
 
   ImGuiIO* io = nullptr;

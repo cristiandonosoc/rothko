@@ -92,7 +92,8 @@ std::string ToString(const PopCamera&) {
 std::string ToString(const RenderMesh& render_mesh) {
   std::stringstream ss;
   ss << std::boolalpha;
-  ss << "Mesh: " << render_mesh.mesh->name << ", Shader: " << render_mesh.shader->name << std::endl;
+  ss << "Mesh: " << render_mesh.mesh->name << ", Shader: " << render_mesh.shader->config.name
+     << std::endl;
 
   ss << "Indices= Offset: " << render_mesh.indices_offset
      << ", Count: " << render_mesh.indices_count << std::endl;

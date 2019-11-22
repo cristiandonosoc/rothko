@@ -29,12 +29,12 @@ void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
         ASSERT(render_mesh.mesh);
         ASSERT(render_mesh.shader);
         ASSERT(render_mesh.primitive_type != PrimitiveType::kLast);
-        ASSERT_MSG(render_mesh.mesh->vertex_type == render_mesh.shader->vertex_type,
+        ASSERT_MSG(render_mesh.mesh->vertex_type == render_mesh.shader->config.vertex_type,
                    "Mesh (%s): %s, Shader: (%s) %s",
                    render_mesh.mesh->name.c_str(),
                    ToString(render_mesh.mesh->vertex_type),
-                   render_mesh.shader->name.c_str(),
-                   ToString(render_mesh.shader->vertex_type));
+                   render_mesh.shader->config.name.c_str(),
+                   ToString(render_mesh.shader->config.vertex_type));
         continue;
       }
       case RenderCommandType::kLast: break;
@@ -159,28 +159,28 @@ void SetUniforms(const OpenGLRendererBackend& opengl, const RenderMesh& render_m
   }
 
   // Vertex UBOs.
-  if (shader->vert_ubo_size > 0) {
+  if (shader->config.vert_ubo_size > 0) {
     auto& ubo_binding = shader_handles.vert_ubo;
 
     ASSERT(ubo_binding.binding_index >= 0);
     ASSERT(ubo_binding.buffer_handle > 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, shader->vert_ubo_size, render_mesh.vert_ubo_data,
+    glBufferData(GL_UNIFORM_BUFFER, shader->config.vert_ubo_size, render_mesh.vert_ubo_data,
                  GL_STREAM_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
     glBindBuffer(GL_UNIFORM_BUFFER, NULL);
   }
 
   // Fragment UBOs.
-  if (shader->frag_ubo_size > 0) {
+  if (shader->config.frag_ubo_size > 0) {
     auto& ubo_binding = shader_handles.frag_ubo;
 
     ASSERT(ubo_binding.binding_index >= 0);
     ASSERT(ubo_binding.buffer_handle > 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, shader->frag_ubo_size, render_mesh.frag_ubo_data,
+    glBufferData(GL_UNIFORM_BUFFER, shader->config.frag_ubo_size, render_mesh.frag_ubo_data,
                  GL_STREAM_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
     glBindBuffer(GL_UNIFORM_BUFFER, NULL);

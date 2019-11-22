@@ -64,7 +64,8 @@ uint32_t CompileShader(Shader* shader, const char* src, GLenum shader_kind) {
     ERROR(OpenGL, "* FRAG SOURCE ---------------------------------------\n");
     OutputShaderForError(shader->frag_src);
     ERROR(OpenGL, "---------------------------------------\n");
-    ERROR(OpenGL, "Shader %s error %s: %s", shader->name.c_str(), ToString(shader_kind), log);
+    ERROR(
+        OpenGL, "Shader %s error %s: %s", shader->config.name.c_str(), ToString(shader_kind), log);
     return 0;
   }
 
@@ -186,18 +187,24 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
 
   // Get the uniform buffer object information.
   int current_binding = 0;
-  if (!BindUBOs(shader->vert_ubo_name, shader->vert_ubo_size, prog_handle, &handles->vert_ubo,
+  if (!BindUBOs(shader->config.vert_ubo_name,
+                shader->config.vert_ubo_size,
+                prog_handle,
+                &handles->vert_ubo,
                 &current_binding)) {
     return false;
   }
 
-  if (!BindUBOs(shader->frag_ubo_name, shader->frag_ubo_size, prog_handle, &handles->frag_ubo,
+  if (!BindUBOs(shader->config.frag_ubo_name,
+                shader->config.frag_ubo_size,
+                prog_handle,
+                &handles->frag_ubo,
                 &current_binding)) {
     return false;
   }
 
   // Get the texture positions.
-  for (uint32_t i = 0; i < shader->texture_count; i++) {
+  for (uint32_t i = 0; i < shader->config.texture_count; i++) {
     char tex_name[] = "tex%";   // % will be replaced.
     tex_name[3] = '0' + i;
 
@@ -215,33 +222,36 @@ void FreeHandles(ShaderHandles* handles) {
 
 }  // namespace
 
-bool OpenGLStageShader(OpenGLRendererBackend* opengl, Shader* shader) {
-  ASSERT(Loaded(*shader));
+std::unique_ptr<Shader> OpenGLStageShader(OpenGLRendererBackend* opengl,
+                                          const ShaderConfig& config,
+                                          const std::string& vert_src,
+                                          const std::string& frag_src) {
+  // TODO(Cristian): Keep track by name.
 
   uint32_t uuid = GetNextShaderUUID();
-  auto it = opengl->loaded_shaders.find(uuid);
-  if (it != opengl->loaded_shaders.end()) {
-    ERROR(OpenGL, "Shader %s is already loaded.", shader->name.c_str());
-    return false;
-  }
+
+  auto shader = std::make_unique<Shader>();
+  shader->config = config;
+  shader->vert_src = vert_src;
+  shader->frag_src = frag_src;
 
   ShaderHandles handles;
-  if (!UploadShader(shader, &handles)) {
+  if (!UploadShader(shader.get(), &handles)) {
     FreeHandles(&handles);
-    return false;
+    return {};
   }
 
   opengl->loaded_shaders[uuid] = std::move(handles);
   shader->uuid = uuid;
 
-  return true;
+  return shader;
 }
 
 // Unstage Shader --------------------------------------------------------------
 
 void OpenGLUnstageShader(OpenGLRendererBackend* opengl, Shader* shader) {
   uint32_t uuid = shader->uuid.value;
-  LOG(OpenGL, "Unstaging shader %s (uuid %u).", shader->name.c_str(), uuid);
+  LOG(OpenGL, "Unstaging shader %s (uuid %u).", shader->config.name.c_str(), uuid);
   auto it = opengl->loaded_shaders.find(uuid);
   ASSERT(it != opengl->loaded_shaders.end());
 

@@ -62,17 +62,17 @@ int main() {
 
   // Shaders ---------------------------------------------------------------------------------------
 
-  Shader spot_light_shader = textured_lighting::CreateSpotLightShader(game.renderer.get());
-  if (!Valid(spot_light_shader))
+  auto spot_light_shader = textured_lighting::CreateSpotLightShader(game.renderer.get());
+  if (!spot_light_shader)
     return 1;
 
-  Shader full_light_shader = textured_lighting::CreateFullLightShader(game.renderer.get());
-  if (!Valid(full_light_shader))
+  auto full_light_shader = textured_lighting::CreateFullLightShader(game.renderer.get());
+  if (!full_light_shader)
     return 1;
 
   // Line Manager.
-  Shader line_shader = CreateLineShader(game.renderer.get());
-  if (!Valid(line_shader))
+  auto line_shader = CreateLineShader(game.renderer.get());
+  if (!line_shader)
     return 1;
 
   // Camera ----------------------------------------------------------------------------------------
@@ -115,18 +115,25 @@ int main() {
     return 1;
 
   LineManager line_manager = {};
-  if (!Init(&line_manager, game.renderer.get(), &line_shader, "line-manager"))
+  if (!Init(&line_manager, game.renderer.get(), line_shader.get(), "line-manager"))
     return 1;
 
   // LightsWidgetManager ---------------------------------------------------------------------------
 
   LightWidgetManager light_widgets;
-  Shader point_light_shader = CreatePointLightShader(game.renderer.get());
+  auto point_light_shader = CreatePointLightShader(game.renderer.get());
   Mesh point_light_mesh = CreatePointLightMesh(game.renderer.get());
-  Shader directional_light_shader = CreateDirectionalLightShader(game.renderer.get());
+  auto directional_light_shader = CreateDirectionalLightShader(game.renderer.get());
   Mesh directional_light_mesh = CreateDirectionalLightMesh(game.renderer.get());
-  Init(&light_widgets, game.renderer.get(), "light-widgets", &point_light_shader, &point_light_mesh,
-       &directional_light_shader, &directional_light_mesh, &line_shader);
+
+  Init(&light_widgets,
+       game.renderer.get(),
+       "light-widgets",
+       point_light_shader.get(),
+       &point_light_mesh,
+       directional_light_shader.get(),
+       &directional_light_mesh,
+       line_shader.get());
 
   // Scene Graph / UBOS ----------------------------------------------------------------------------
 
@@ -342,32 +349,8 @@ int main() {
       }
 
       commands.push_back(CreateRenderCommand(
-          &cube_mesh, &full_light_shader, &diffuse_map, &specular_map, cube.ubo));
+          &cube_mesh, full_light_shader.get(), &diffuse_map, &specular_map, cube.ubo));
     }
-
-    /* // Point light cubes. */
-    /* for (uint32_t i = 0; i < point_light_ubos.size(); i++) { */
-    /*   auto& ubo = point_light_ubos[i]; */
-    /*   ubo.vert.model = cube_nodes[i]->transform.world_matrix; */
-    /*   ubo.vert.normal_matrix = Transpose(Inverse(ubo.vert.model)); */
-
-    /*   ubo.frag.light.pos = ToVec4(point_light_pos); */
-    /*   commands.push_back( */
-    /*       CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo)); */
-    /* } */
-
-    /* // Directional light cubes. */
-    /* for (uint32_t i = 0; i < dir_light_ubos.size(); i++) { */
-    /*   auto& ubo = dir_light_ubos[i]; */
-    /*   ubo.vert.model = Translate({0, 0, 4}); */
-    /*   ubo.vert.model *= cube_nodes[i]->transform.world_matrix; */
-    /*   ubo.vert.normal_matrix = Transpose(Inverse(ubo.vert.model)); */
-
-    /*   // Directional lights expect 0 in the w coordinate. */
-    /*   ubo.frag.light.pos = ToVec4(dir_light_dir, 0); */
-    /*   commands.push_back( */
-    /*       CreateRenderCommand(&cube_mesh, &object_shader, &diffuse_map, &specular_map, ubo)); */
-    /* } */
 
     /* ground_ubo.vert.model = ground_node->transform.world_matrix; */
     /* ground_ubo.frag.light.pos = GetWorldPosition(*spot_light.transform); */

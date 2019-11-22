@@ -31,13 +31,8 @@ struct Renderer;
 // - camera_proj: The projection matrix. Passed through the |PushCamera| command.
 // - camera_view: The view matrix. Passed through the |PushCamera| command.
 
-struct Shader {
-  RAII_CONSTRUCTORS(Shader);
-
-  std::string name;
-
-  Renderer* renderer = nullptr;
-  ClearOnMove<uint32_t> uuid = 0;  // Set by the renderer.
+struct ShaderConfig {
+  std::string name;   // Used as key, must be unique.
 
   // A UniformBufferObject is a group of uniforms grouped in a struct-ish configuration within the
   // shader. The advantage of those is that they can be mapped directly from a buffer upload
@@ -47,17 +42,28 @@ struct Shader {
   //       Otherwise staging the shader will fail.
   std::string vert_ubo_name;
   std::string frag_ubo_name;
-  uint32_t vert_ubo_size = 0;   // In bytes.
-  uint32_t frag_ubo_size = 0;   // In bytes.
-
-  uint32_t texture_count = 0;
 
   VertexType vertex_type = VertexType::kLast;
+
+  uint32_t vert_ubo_size = 0;   // In bytes.
+  uint32_t frag_ubo_size = 0;   // In bytes.
+  uint32_t texture_count = 0;
+
+};
+
+struct Shader {
+  RAII_CONSTRUCTORS(Shader);
+
+  Renderer* renderer = nullptr;
+  ClearOnMove<uint32_t> uuid = 0;  // Set by the renderer.
+
+  ShaderConfig config = {};
 
   std::string vert_src;
   std::string frag_src;
 };
-inline bool Valid(const Shader& s) { return s.vertex_type != VertexType::kLast; }
+
+inline bool Valid(const Shader& s) { return s.config.vertex_type != VertexType::kLast; }
 inline bool Loaded(const Shader& s) { return !s.vert_src.empty() && !s.frag_src.empty(); }
 inline bool Staged(const Shader& s) { return s.renderer && s.uuid.has_value(); }
 

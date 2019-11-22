@@ -199,8 +199,8 @@ int main() {
   push_config.viewport_pos = {};
   push_config.viewport_size = game.window.screen_size - Int2{0, 20};
 
-  Shader object_shader = simple_lighting::CreateObjectShader(game.renderer.get());
-  if (!Valid(object_shader))
+  auto object_shader = simple_lighting::CreateObjectShader(game.renderer.get());
+  if (!object_shader)
     return 1;
 
   AppContext app_context = {};
@@ -220,17 +220,23 @@ int main() {
   if (!RendererStageMesh(game.renderer.get(), &light_cube_mesh))
     return 1;
 
-  Shader line_shader = CreateLineShader(game.renderer.get());
-  if (!Valid(line_shader))
+  auto line_shader = CreateLineShader(game.renderer.get());
+  if (!line_shader)
     return 1;
 
   LightWidgetManager light_widgets;
-  Shader point_light_shader = CreatePointLightShader(game.renderer.get());
+  auto point_light_shader = CreatePointLightShader(game.renderer.get());
   Mesh point_light_mesh = CreatePointLightMesh(game.renderer.get());
-  Shader directional_light_shader = CreateDirectionalLightShader(game.renderer.get());
+  auto directional_light_shader = CreateDirectionalLightShader(game.renderer.get());
   Mesh directional_light_mesh = CreateDirectionalLightMesh(game.renderer.get());
-  Init(&light_widgets, game.renderer.get(), "light-widgets", &point_light_shader, &point_light_mesh,
-       &directional_light_shader, &directional_light_mesh, &line_shader);
+  Init(&light_widgets,
+       game.renderer.get(),
+       "light-widgets",
+       point_light_shader.get(),
+       &point_light_mesh,
+       directional_light_shader.get(),
+       &directional_light_mesh,
+       line_shader.get());
 
   auto scene_graph = std::make_unique<SceneGraph>();
 
@@ -306,9 +312,8 @@ int main() {
       ubo.frag.light.diffuse = app_context.light_diffuse;
       ubo.frag.light.specular = app_context.light_specular;
 
-      commands.push_back(CreateRenderCommand(&cube_mesh, &object_shader, ubo));
+      commands.push_back(CreateRenderCommand(&cube_mesh, object_shader.get(), ubo));
     }
-    /* commands.push_back(CreateRenderCommand(&light_cube_mesh, &light_shader, light_ubo)); */
 
     auto light_commands = GetRenderCommands(light_widgets);
     commands.insert(commands.end(), light_commands.begin(), light_commands.end());

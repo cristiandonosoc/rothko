@@ -3,6 +3,9 @@
 
 #include "rothko/ui/imgui/imgui_shaders.h"
 
+#include <memory>
+
+#include "rothko/graphics/renderer.h"
 #include "rothko/graphics/shader.h"
 #include "rothko/logging/logging.h"
 
@@ -43,17 +46,16 @@ void main() {
 }
 )";
 
-Shader GetOpenGLImguiShader() {
-  Shader shader;
-  shader.name = "Imgui Shader";
-  shader.vertex_type = VertexType::k2dUVColor;
+std::unique_ptr<Shader> GetOpenGLImguiShader(Renderer* renderer) {
+  ShaderConfig config = {};
+  config.name = "Imgui Shader";
+  config.vertex_type = VertexType::k2dUVColor;
+  config.texture_count = 1;
 
-  shader.texture_count = 1;
+  auto vert_src = CreateVertexSource(kOpenGLVertex);
+  auto frag_src = CreateFragmentSource(kOpenGLFragment);
 
-  shader.vert_src = CreateVertexSource(kOpenGLVertex);
-  shader.frag_src = CreateFragmentSource(kOpenGLFragment);
-
-  return shader;
+  return RendererStageShader(renderer, config, vert_src, frag_src);
 }
 
 #else

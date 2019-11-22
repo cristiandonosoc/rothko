@@ -72,40 +72,34 @@ void main() {
 
 }  // namespace
 
-Shader CreatePointLightShader(Renderer* renderer) {
-  Shader shader;
-  shader.name = "point-light-shader";
-  shader.vertex_type = VertexType::k3d;
-  shader.vert_ubo_name = "VertUniforms";
-  shader.vert_ubo_size = sizeof(Mat4);
+std::unique_ptr<Shader> CreatePointLightShader(Renderer* renderer) {
+  ShaderConfig config = {};
+  config.name = "point-light-shader";
+  config.vertex_type = VertexType::k3d;
+  config.vert_ubo_name = "VertUniforms";
+  config.vert_ubo_size = sizeof(Mat4);
+  config.frag_ubo_name = "FragUniforms";
+  config.frag_ubo_size = sizeof(Vec3);
 
-  shader.frag_ubo_name = "FragUniforms";
-  shader.frag_ubo_size = sizeof(Vec3);
+  auto vert_src = CreateVertexSource(kPointLightVertShader);
+  auto frag_src = CreateFragmentSource(kPointLightFragShader);
 
-  shader.vert_src = CreateVertexSource(kPointLightVertShader);
-  shader.frag_src = CreateFragmentSource(kPointLightFragShader);
-
-  if (!RendererStageShader(renderer, &shader))
-    return {};
-  return shader;
+  return RendererStageShader(renderer, config, vert_src, frag_src);
 }
 
-Shader CreateDirectionalLightShader(Renderer* renderer) {
-  Shader shader;
-  shader.name = "directional-light-shader";
-  shader.vertex_type = VertexType::k3d;
-  shader.vert_ubo_name = "VertUniforms";
-  shader.vert_ubo_size = sizeof(Mat4);
+std::unique_ptr<Shader> CreateDirectionalLightShader(Renderer* renderer) {
+  ShaderConfig config = {};
+  config.name = "directional-light-shader";
+  config.vertex_type = VertexType::k3d;
+  config.vert_ubo_name = "VertUniforms";
+  config.vert_ubo_size = sizeof(Mat4);
+  config.frag_ubo_name = "FragUniforms";
+  config.frag_ubo_size = sizeof(Vec3);
 
-  shader.frag_ubo_name = "FragUniforms";
-  shader.frag_ubo_size = sizeof(Vec3);
+  auto vert_src = CreateVertexSource(kDirectionalLightVertShader);
+  auto frag_src = CreateFragmentSource(kDirectionalLightFragShader);
 
-  shader.vert_src = CreateVertexSource(kDirectionalLightVertShader);
-  shader.frag_src = CreateFragmentSource(kDirectionalLightFragShader);
-
-  if (!RendererStageShader(renderer, &shader))
-    return {};
-  return shader;
+  return RendererStageShader(renderer, config, vert_src, frag_src);
 }
 
 // Mesh Creation -----------------------------------------------------------------------------------
@@ -156,11 +150,11 @@ Mesh CreateDirectionalLightMesh(Renderer* renderer) {
 // LightWidgetManager ------------------------------------------------------------------------------
 
 bool Init(LightWidgetManager* light_widgets, Renderer* renderer, const std::string& name,
-          Shader* point_light_shader,
-          Mesh* point_light_mesh,
-          Shader* directional_light_shader,
-          Mesh* directional_light_mesh,
-          Shader* lines_shader) {
+          const Shader* point_light_shader,
+          const Mesh* point_light_mesh,
+          const Shader* directional_light_shader,
+          const Mesh* directional_light_mesh,
+          const Shader* lines_shader) {
 
   if (!Init(&light_widgets->lines, renderer, lines_shader, "light-widget-lines"))
     return false;

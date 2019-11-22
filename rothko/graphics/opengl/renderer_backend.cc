@@ -8,10 +8,10 @@
 #include <memory>
 #include <sstream>
 
-#include "rothko/graphics/renderer.h"
 #include "rothko/graphics/opengl/mesh.h"
 #include "rothko/graphics/opengl/shader.h"
 #include "rothko/graphics/opengl/texture.h"
+#include "rothko/graphics/renderer.h"
 #include "rothko/logging/logging.h"
 #include "rothko/window/window.h"
 
@@ -185,8 +185,11 @@ bool RendererUploadMeshRange(Renderer*, Mesh* mesh, Int2 vertex_range, Int2 inde
 
 // Shaders -----------------------------------------------------------------------------------------
 
-bool RendererStageShader(Renderer*, Shader* shader) {
-  return OpenGLStageShader(gBackend.get(), shader);
+std::unique_ptr<Shader> RendererStageShader(Renderer*,
+                                            const ShaderConfig& config,
+                                            const std::string& vert_src,
+                                            const std::string& frag_src) {
+  return OpenGLStageShader(gBackend.get(), config, vert_src, frag_src);
 }
 
 void RendererUnstageShader(Renderer*, Shader* shader) {

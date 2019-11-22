@@ -5,6 +5,8 @@
 
 #include <rothko/math/math.h>
 
+#include <memory>
+
 // This is meant to be a holder API for getting specialized shaders for each kind of  supported
 // renderer within Rothko.
 //
@@ -13,11 +15,12 @@
 
 namespace rothko {
 
+struct Renderer;
 struct Shader;
 
 namespace imgui {
 
-Shader GetOpenGLImguiShader();
+std::unique_ptr<Shader> GetOpenGLImguiShader(Renderer*);
 
 }  // namespace imgui
 }  // namespace rothko

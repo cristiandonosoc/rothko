@@ -228,16 +228,16 @@ int main() {
   if (!Loaded(&face))
     return 1;
 
-  Shader line_shader = CreateLineShader(renderer.get());
-  if (!Valid(line_shader))
+  auto line_shader = CreateLineShader(renderer.get());
+  if (!line_shader)
     return 1;
 
   LineManager line_manager = {};
-  if (!Init(&line_manager, renderer.get(), &line_shader, "line-manager"))
+  if (!Init(&line_manager, renderer.get(), line_shader.get(), "line-manager"))
     return 1;
 
   LineManager axis_widget = {};
-  if (!Init(&axis_widget, renderer.get(), &line_shader, "axis-widget"))
+  if (!Init(&axis_widget, renderer.get(), line_shader.get(), "axis-widget"))
     return 1;
 
   /* PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, Color::Blue()); */

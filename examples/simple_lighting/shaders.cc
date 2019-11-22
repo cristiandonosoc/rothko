@@ -85,23 +85,19 @@ void main() {
 
 }  // namespace
 
-Shader CreateObjectShader(Renderer* renderer) {
-  Shader shader;
+std::unique_ptr<Shader> CreateObjectShader(Renderer* renderer) {
+  ShaderConfig config = {};
+  config.name = "lighting";
+  config.vertex_type = VertexType::k3dNormal;
+  config.vert_ubo_name = "VertUniforms";
+  config.vert_ubo_size = sizeof(ObjectShaderUBO::Vert);
+  config.frag_ubo_name = "FragUniforms";
+  config.frag_ubo_size = sizeof(ObjectShaderUBO::Frag);
 
-  shader.name = "lighting";
-  shader.vertex_type = VertexType::k3dNormal;
-  shader.vert_ubo_name = "VertUniforms";
-  shader.vert_ubo_size = sizeof(ObjectShaderUBO::Vert);
+  auto vert_src = CreateVertexSource(kObjectVertShader);
+  auto frag_src = CreateFragmentSource(kObjectFragShader);
 
-  shader.frag_ubo_name = "FragUniforms";
-  shader.frag_ubo_size = sizeof(ObjectShaderUBO::Frag);
-
-  shader.vert_src = CreateVertexSource(kObjectVertShader);
-  shader.frag_src = CreateFragmentSource(kObjectFragShader);
-
-  if (!RendererStageShader(renderer, &shader))
-    return {};
-  return shader;
+  return RendererStageShader(renderer, config, vert_src, frag_src);
 }
 
 }  // namespace simple_lighting

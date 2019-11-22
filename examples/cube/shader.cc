@@ -45,19 +45,16 @@ void main() {
 
 }  // namespace
 
-
 std::unique_ptr<Shader> CreateShader(Renderer* renderer) {
-  auto shader = std::make_unique<Shader>();
-  shader->name = "cube-shader";
-  shader->vertex_type = VertexType::k3dUVColor;
-  shader->vert_ubo_name = "Uniforms";
-  shader->vert_ubo_size = sizeof(UBO);
-  shader->texture_count = 2;
+  ShaderConfig config = {};
+  config.name = "cube-shader";
+  config.vertex_type = VertexType::k3dUVColor;
+  config.vert_ubo_name = "Uniforms";
+  config.vert_ubo_size = sizeof(UBO);
+  config.texture_count = 2;
 
-  shader->vert_src = CreateVertexSource(kVertexShader);
-  shader->frag_src = CreateFragmentSource(kFragmentShader);
+  auto vert_src = CreateVertexSource(kVertexShader);
+  auto frag_src = CreateFragmentSource(kFragmentShader);
 
-  if (!RendererStageShader(renderer, shader.get()))
-    return nullptr;
-  return shader;
+  return RendererStageShader(renderer, config, vert_src, frag_src);
 }
