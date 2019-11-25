@@ -32,11 +32,11 @@ struct SpotLight {
 struct LightWidgetManager {
   std::string name;
 
-  const Mesh* point_light_mesh = nullptr;
   const Shader* point_light_shader = nullptr;
-
-  const Mesh* directional_light_mesh = nullptr;
   const Shader* directional_light_shader = nullptr;
+
+  Mesh point_light_mesh;
+  Mesh directional_light_mesh;
 
   std::vector<PointLight> point_lights;
   std::vector<DirectionalLight> directional_lights;
@@ -44,18 +44,14 @@ struct LightWidgetManager {
   LineManager lines;
 };
 
-std::unique_ptr<Shader> CreatePointLightShader(Renderer*);
-Mesh CreatePointLightMesh(Renderer*);
-
-std::unique_ptr<Shader> CreateDirectionalLightShader(Renderer*);
-Mesh CreateDirectionalLightMesh(Renderer*);
+// Uses default shaders and meshes.
+bool Init(LightWidgetManager*, Renderer*, const std::string& name);
 
 bool Init(LightWidgetManager*, Renderer*, const std::string& name,
           const Shader* point_light_shader,
-          const Mesh* point_light_mesh,
           const Shader* directional_light_shader,
-          const Mesh* directional_light_mesh,
           const Shader* lines_shader);
+
 void Reset(LightWidgetManager*);
 void Stage(LightWidgetManager*, Renderer*);
 

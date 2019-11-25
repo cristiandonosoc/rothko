@@ -68,8 +68,7 @@ bool Init(Grid* grid, Renderer* renderer, const Shader* shader) {
   grid->render_command.primitive_type = PrimitiveType::kTriangles;
   grid->render_command.mesh = &grid->mesh;
   grid->render_command.shader = shader;
-  grid->render_command.cull_faces = false;
-  grid->render_command.blend_enabled = true;
+  grid->render_command.flags = kBlendEnabled | kDepthTest;
   grid->render_command.indices_count = grid->mesh.indices.size();
 
   return true;

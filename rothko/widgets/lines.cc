@@ -35,9 +35,9 @@ void main() {
 
 }  // namespace
 
-std::unique_ptr<Shader> CreateLineShader(Renderer* renderer) {
+std::unique_ptr<Shader> CreateLineShader(Renderer* renderer, const std::string& name) {
   ShaderConfig config = {};
-  config.name = "line-shader";
+  config.name = name;
   config.vertex_type = VertexType::k3dColor;
 
   auto vert_src = CreateVertexSource(kLineVertexShader);
@@ -48,6 +48,27 @@ std::unique_ptr<Shader> CreateLineShader(Renderer* renderer) {
 }
 
 // Init --------------------------------------------------------------------------------------------
+
+namespace {
+
+constexpr char kLineShaderName[] = "default-line-shader";
+
+}  // namespace
+
+bool Init(LineManager* lines, Renderer* renderer, const std::string& name, uint32_t line_count) {
+  // See if we can get the shader.
+  const Shader* shader = RendererGetShader(renderer, kLineShaderName);
+  if (!shader) {
+    // Otherwise we keep a global shader.
+    static auto default_shader = CreateLineShader(renderer, kLineShaderName);
+    if (!default_shader)
+      return {};
+
+    shader = default_shader.get();
+  }
+
+  return Init(lines, renderer, shader, name, line_count);
+}
 
 bool Init(LineManager* line_manager,
           Renderer* renderer,

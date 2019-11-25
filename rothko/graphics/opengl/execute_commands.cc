@@ -52,7 +52,7 @@ void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
   }
 
 void SetRenderCommandConfig(const RenderMesh& render_mesh) {
-  if (render_mesh.blend_enabled) {
+  if (GetBlendEnabled(render_mesh)) {
     glEnable(GL_BLEND);
 
     // TODO(Cristian): Have a way of setting the blend function!!!!!
@@ -62,9 +62,15 @@ void SetRenderCommandConfig(const RenderMesh& render_mesh) {
     glDisable(GL_BLEND);
   }
 
-  SET_GL_CONFIG(render_mesh.cull_faces, GL_CULL_FACE);
-  SET_GL_CONFIG(render_mesh.depth_test, GL_DEPTH_TEST);
-  SET_GL_CONFIG(render_mesh.scissor_test, GL_SCISSOR_TEST);
+  SET_GL_CONFIG(GetCullFaces(render_mesh), GL_CULL_FACE);
+  /* glDepthFunc(GL_LESS); */
+  SET_GL_CONFIG(GetDepthTest(render_mesh), GL_DEPTH_TEST);
+  if (GetDepthMask(render_mesh)) {
+    glDepthMask(GL_TRUE);
+  } else {
+    glDepthMask(GL_FALSE);
+  }
+  SET_GL_CONFIG(GetScissorTest(render_mesh), GL_SCISSOR_TEST);
 }
 
 #define RED(c) ((float)((c >> 24) & 0xff) / 255.0f)
@@ -241,7 +247,7 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   SetTextures(opengl, shader_handles, render_mesh);
 
   // Scissoring.
-  if (render_mesh.scissor_test &&
+  if (GetScissorTest(render_mesh) &&
       render_mesh.scissor_size.width != 0 && render_mesh.scissor_size.height != 0) {
     glScissor(render_mesh.scissor_pos.x, render_mesh.scissor_pos.y,
               render_mesh.scissor_size.width, render_mesh.scissor_size.height);

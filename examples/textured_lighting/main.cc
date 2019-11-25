@@ -69,7 +69,7 @@ int main() {
     return 1;
 
   // Line Manager.
-  auto line_shader = CreateLineShader(game.renderer.get());
+  auto line_shader = CreateLineShader(game.renderer.get(), "line-shader");
   if (!line_shader)
     return 1;
 
@@ -119,19 +119,8 @@ int main() {
   // LightsWidgetManager ---------------------------------------------------------------------------
 
   LightWidgetManager light_widgets;
-  auto point_light_shader = CreatePointLightShader(game.renderer.get());
-  Mesh point_light_mesh = CreatePointLightMesh(game.renderer.get());
-  auto directional_light_shader = CreateDirectionalLightShader(game.renderer.get());
-  Mesh directional_light_mesh = CreateDirectionalLightMesh(game.renderer.get());
-
-  Init(&light_widgets,
-       game.renderer.get(),
-       "light-widgets",
-       point_light_shader.get(),
-       &point_light_mesh,
-       directional_light_shader.get(),
-       &directional_light_mesh,
-       line_shader.get());
+  if (!Init(&light_widgets, game.renderer.get(), "light-widgets"))
+    return 1;
 
   // Scene Graph / UBOS ----------------------------------------------------------------------------
 

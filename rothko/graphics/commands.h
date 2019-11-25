@@ -26,6 +26,30 @@ struct Mesh;
 struct Shader;
 struct Texture;
 
+#define BIT_FLAG(flag, shift)                                                    \
+  constexpr uint32_t k##flag##Shift = shift;                                     \
+  constexpr uint32_t k##flag = 1u << k##flag##Shift;                             \
+                                                                                 \
+  template <typename T>                                                          \
+  inline bool Get##flag(const T& t) {                                            \
+    return GetBit(t.flags, k##flag##Shift);                                      \
+  }                                                                              \
+                                                                                 \
+  template <typename T>                                                          \
+  inline void Set##flag(T* t, bool v) {                                          \
+    v ? SetBit(&t->flags, k##flag##Shift) : ClearBit(&t->flags, k##flag##Shift); \
+  }                                                                              \
+                                                                                 \
+  template <typename T>                                                          \
+  inline void Set##flag(T* t) {                                                  \
+    SetBit(&t->flags, k##flag##Shift);                                           \
+  }                                                                              \
+                                                                                 \
+  template <typename T>                                                          \
+  inline void Clear##flag(T* t) {                                                \
+    ClearBit(&t->flags, k##flag##Shift);                                         \
+  }
+
 // Render Actions ----------------------------------------------------------------------------------
 
 enum class RenderCommandType {
@@ -57,11 +81,8 @@ struct Nop {
 
 // Clear Frame -------------------------------------------------------------------------------------
 
-static constexpr uint32_t kClearColorShift = 0;
-static constexpr uint32_t kClearColor = 1u << kClearColorShift;
-
-static constexpr uint32_t kClearDepthShift = 1;
-static constexpr uint32_t kClearDepth = 1u << kClearDepthShift;
+BIT_FLAG(ClearColor, 0);
+BIT_FLAG(ClearDepth, 1);
 
 struct ClearFrame {
   static constexpr RenderCommandType kType = RenderCommandType::kClearFrame;
@@ -72,16 +93,6 @@ struct ClearFrame {
   uint32_t color = 0;   // One byte per color, RGBA (R = 24, G = 16, B = 8, A = 0).
 };
 std::string ToString(const ClearFrame&);
-
-inline bool GetClearColor(const ClearFrame& c) { return GetBit(c.flags, kClearColorShift); }
-inline void SetClearColor(ClearFrame* c, bool v) {
-  v ? SetBit(&c->flags, kClearColorShift) : ClearBit(&c->flags, kClearColorShift);
-}
-
-inline bool GetClearDepth(const ClearFrame& c) { return GetBit(c.flags, kClearDepthShift); }
-inline void SetClearDepth(ClearFrame* c, bool v) {
-  v ? SetBit(&c->flags, kClearDepthShift) : ClearBit(&c->flags, kClearDepthShift);
-}
 
 // Config ------------------------------------------------------------------------------------------
 
@@ -143,6 +154,13 @@ inline uint64_t SetRestartIndex(uint64_t ctx, uint32_t i) {
 
 }  // namespace line_strip
 
+BIT_FLAG(BlendEnabled, 0);
+BIT_FLAG(CullFaces, 1);
+BIT_FLAG(DepthMask, 2);
+BIT_FLAG(DepthTest, 3);
+BIT_FLAG(ScissorTest, 4);
+BIT_FLAG(WireframeMode, 5);
+
 // Represents all the information needed to render a mesh. It provides the mesh, texture, uniform
 // and whatnot. The renderer can be clever about re-using state (like if two consecutive render
 // mesh commands use the same shader), but it's not obligated to do that.
@@ -155,12 +173,7 @@ struct RenderMesh {
   PrimitiveType primitive_type = PrimitiveType::kLast;
 
   // Config.
-  // TODO(Cristian): This could me move to a bit-field.
-  bool blend_enabled = false;
-  bool cull_faces = true;
-  bool depth_test = true;
-  bool scissor_test = false;
-  bool wireframe_mode = false;
+  uint32_t flags = kCullFaces | kDepthMask | kDepthMask | kDepthTest;
 
   Int2 scissor_pos = {};
   Int2 scissor_size = {};

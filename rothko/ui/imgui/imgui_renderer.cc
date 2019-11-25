@@ -194,10 +194,7 @@ PerFrameVector<RenderCommand> ImguiGetRenderCommands(ImguiRenderer* imgui_render
       render_mesh.indices_count = draw_cmd->ElemCount;
 
       /* render_mesh.vert_ubo_data = (uint8_t*)&imgui_renderer->ubo; */
-      render_mesh.blend_enabled = true;
-      render_mesh.cull_faces = false;
-      render_mesh.depth_test = false;
-      render_mesh.scissor_test = true;
+      render_mesh.flags = kBlendEnabled | kScissorTest;
 
       // We check if we need to apply scissoring.
       Vec4 clip_rect;

@@ -170,11 +170,11 @@ GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   PerFrameVector<RenderCommand> commands;
 
   // Mesh command.
-  RenderMesh render_mesh;
+  RenderMesh render_mesh = {};
   render_mesh.mesh = mesh;
   render_mesh.shader = shader;
   render_mesh.primitive_type = PrimitiveType::kTriangles;
-  render_mesh.cull_faces = false;
+  ClearCullFaces(&render_mesh);
   render_mesh.indices_count = mesh->indices.size();
   render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
   render_mesh.textures.push_back(tex1);
@@ -232,17 +232,11 @@ int main() {
   if (!Loaded(&face))
     return 1;
 
-  auto line_shader = CreateLineShader(renderer.get());
-  if (!line_shader)
+  LineManager line_manager, axis_widget = {};
+  if (!Init(&line_manager, renderer.get(), "line-manager") ||
+      !Init(&axis_widget, renderer.get(), "axis-widget")) {
     return 1;
-
-  LineManager line_manager = {};
-  if (!Init(&line_manager, renderer.get(), line_shader.get(), "line-manager"))
-    return 1;
-
-  LineManager axis_widget = {};
-  if (!Init(&axis_widget, renderer.get(), line_shader.get(), "axis-widget"))
-    return 1;
+  }
 
   /* PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, Color::Blue()); */
   /* PushLine(&line_manager, {-3, 2, -3}, {0, 2, 2}, Color::Red()); */

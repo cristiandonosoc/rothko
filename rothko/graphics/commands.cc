@@ -112,15 +112,16 @@ std::string ToString(const RenderMesh& render_mesh) {
   if (!render_mesh.textures.empty())
     ss << std::endl;
 
-  if (render_mesh.scissor_test) {
+  if (GetScissorTest(render_mesh)) {
     ss << "Scissor= Pos: " << ToString(render_mesh.scissor_pos)
        << ", Size: " << ToString(render_mesh.scissor_size) << std::endl;
   }
 
-  ss << "Blend: " << render_mesh.blend_enabled << ", "
-     << "Cull Faces: " << render_mesh.cull_faces << ", "
-     << "Depth test: " << render_mesh.depth_test << ", "
-     << "Wireframe: " << render_mesh.wireframe_mode;
+  ss << "Blend: " << GetBlendEnabled(render_mesh) << ", "
+     << "Cull Faces: " << GetCullFaces(render_mesh) << ", "
+     << "Depth mask: " << GetDepthMask(render_mesh) << ", "
+     << "Depth test: " << GetDepthTest(render_mesh) << ", "
+     << "Wireframe: " << GetWireframeMode(render_mesh);
 
   return ss.str();
 };

@@ -157,6 +157,8 @@ namespace {
 
 void ResetRendererState() {
   glDisable(GL_SCISSOR_TEST);
+  glDepthMask(GL_TRUE);
+  glEnable(GL_DEPTH_TEST);
 }
 
 }  // namespace
@@ -165,8 +167,8 @@ void RendererEndFrame(Renderer*, Window* window) {
   /* auto* opengl = GetOpenGL(); */
   /* ASSERT(opengl->camera_index == -1);     // All cameras should be popped. */
 
-  ResetRendererState();
   WindowSwapBuffers(window);
+  ResetRendererState();
 }
 
 // Meshes ------------------------------------------------------------------------------------------

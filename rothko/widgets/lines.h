@@ -32,12 +32,14 @@ struct LineManager {
   RenderMesh render_command_;
 };
 
-std::unique_ptr<Shader> CreateLineShader(Renderer* renderer);
+std::unique_ptr<Shader> CreateLineShader(Renderer* renderer, const std::string&);
 
 // |line_count| means how many lines we pre-allocate within the mesh.
 // Keep in mind that a cube = 10 lines.
+bool Init(LineManager*, Renderer*, const std::string& name, uint32_t line_count = 1000);
 bool Init(LineManager*, Renderer*, const Shader*, const std::string& name,
           uint32_t line_count = 1000);
+
 inline bool Valid(LineManager* l) { return Staged(l->strip_mesh); }
 void Reset(LineManager*);
 
