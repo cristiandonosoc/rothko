@@ -29,12 +29,14 @@ std::unique_ptr<PlatformHandle> InitializePlatform();
 
 // Paths -------------------------------------------------------------------------------------------
 
-std::string GetBasePath();
 std::string GetCurrentExecutablePath();
 std::string GetCurrentExecutableDirectory();
 
 // Returns a concatenate of path parts joined together.
 std::string JoinPaths(const std::vector<std::string>& paths);
+
+// Strip everything after and including the last filepath separator.
+std::string GetBasePath(const std::string&);
 
 // Strip everything up to and including the last filepath separator.
 std::string GetBasename(const std::string& path);

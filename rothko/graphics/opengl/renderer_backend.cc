@@ -164,8 +164,8 @@ void ResetRendererState() {
 }  // namespace
 
 void RendererEndFrame(Renderer*, Window* window) {
-  /* auto* opengl = GetOpenGL(); */
-  /* ASSERT(opengl->camera_index == -1);     // All cameras should be popped. */
+  auto* opengl = GetOpenGL();
+  ASSERT(opengl->camera_index == -1);     // All cameras should be popped.
 
   WindowSwapBuffers(window);
   ResetRendererState();

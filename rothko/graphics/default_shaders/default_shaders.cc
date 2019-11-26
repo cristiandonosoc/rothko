@@ -94,11 +94,12 @@ in vec4 f_color;
 layout (location = 0) out vec4 out_color;
 
 uniform sampler2D tex0;
-uniform sampler2D tex1;
+/* uniform sampler2D tex1; */
 
 void main() {
+  out_color = texture(tex0, f_uv);
   /* out_color = mix(texture(tex0, f_uv), texture(tex1, f_uv), 0.5f) * f_color; */
-  out_color = f_color;
+  /* out_color = f_color; */
 }
 )";
 

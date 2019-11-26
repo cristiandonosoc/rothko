@@ -1,18 +1,17 @@
 # Copyright 2019, Cristián Donoso.
 # This code has a BSD license. See LICENSE.
 
-executable("gltf") {
+executable("obj") {
   sources = [
-    "loader.cc",
-    "loader.h",
     "main.cc",
   ]
 
   deps = [
     "//rothko:game",
-    "//rothko/graphics/default_shaders",
+    "//rothko/ui:imgui",
     "//rothko/widgets",
     "//rothko/window:sdl_opengl",
-    "//third_party/tiny_gltf",
+    "//third_party/tiny_obj_loader",
   ]
+
 }

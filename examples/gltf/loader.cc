@@ -418,6 +418,7 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
 void ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node, Scene* out_scene) {
   ProcessNode(model, node, out_scene);
   for (int node_index : node.children) {
+    LOG(App, "Processing node %d", node_index);
     ProcessNodes(model, model.nodes[node_index], out_scene);
   }
 }

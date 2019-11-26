@@ -46,15 +46,6 @@ std::string GetCurrentExecutableDirectory() {
   return exe_path.substr(0, separator);
 }
 
-std::string GetBasePath() {
-  std::string exe_path = GetCurrentExecutablePath();
-  size_t separator = exe_path.rfind('/');
-  if (separator == std::string::npos)
-    return exe_path;
-  auto base_path = exe_path.substr(0, separator);
-  return JoinPaths({std::move(base_path), ".."});
-}
-
 uint64_t GetNanoseconds() {
   struct timespec now;
   clock_gettime(CLOCK_MONOTONIC, &now);

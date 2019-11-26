@@ -76,22 +76,20 @@ int main(int argc, const char* argv[]) {
   if (!RendererStageTexture(game.renderer.get(), scene.textures[0].get()))
     return 1;
 
-  auto grid_shader = CreateGridShader(game.renderer.get(), "grid-shader");
-  if (!grid_shader)
-    return 1;
-
   Grid grid;
-  if (!Init(&grid, game.renderer.get(), grid_shader.get()))
+  if (!Init(&grid, game.renderer.get()))
     return 1;
 
   auto default_shader = CreateDefaultShader(game.renderer.get(), VertexType::k3dNormalTangentUV);
-  if (default_shader)
+  if (!default_shader)
     return 1;
 
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;
   OrbitCamera camera = OrbitCamera::FromLookAt({5, 5, 5}, {}, ToRadians(60.0f), aspect_ratio);
 
   Mat4 model_mat = Mat4::Identity();
+
+  LOG(App, "Hello");
 
   bool running = true;
   while (running) {
@@ -119,7 +117,6 @@ int main(int argc, const char* argv[]) {
     /* ImGui::End(); */
 
 
-
     DefaultUpdateOrbitCamera(game.input, &camera);
 
     /* float angle = game.time.seconds * ToRadians(20.0f); */
@@ -145,6 +142,7 @@ int main(int argc, const char* argv[]) {
     render_mesh.primitive_type = PrimitiveType::kTriangles;
     render_mesh.indices_count = mesh->indices.size();
     render_mesh.vert_ubo_data = (uint8_t*)&model_mat;
+    render_mesh.textures = {scene.textures[0].get()};
 
     commands.push_back(std::move(render_mesh));
 
@@ -157,8 +155,9 @@ int main(int argc, const char* argv[]) {
     /* auto imgui_commands = EndFrame(&imgui); */
     /* commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end()); */
 
-    RendererExecuteCommands(game.renderer.get(), std::move(commands));
+    commands.push_back(PopCamera());
 
+    RendererExecuteCommands(game.renderer.get(), std::move(commands));
     RendererEndFrame(game.renderer.get(), &game.window);
   }
 }
