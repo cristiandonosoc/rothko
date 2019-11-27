@@ -3,6 +3,8 @@
 
 #include "rothko/scene/transform.h"
 
+#include <sstream>
+
 #include "rothko/logging/logging.h"
 
 namespace rothko {
@@ -63,6 +65,16 @@ Transform TransformMatrixToTransform(const Mat4& m) {
 Vec3 GetWorldDirection(const Transform& transform) {
   Mat3 m = ToMat3(transform.world_matrix);
   return m * Vec3{1, 0, 0};
+}
+
+std::string ToString(const Transform& transform) {
+  std::stringstream ss;
+
+  ss << "Position: " << ToString(transform.position) << std::endl
+     << "Rotation: " << ToString(transform.rotation) << std::endl
+     << "Scale:    " << ToString(transform.scale);
+
+  return ss.str();
 }
 
 }  // namespace rothko

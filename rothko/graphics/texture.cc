@@ -67,6 +67,42 @@ bool STBLoadTexture(const std::string& path, TextureType texture_type, Texture* 
 
 // Extras ------------------------------------------------------------------------------------------
 
+const char* ToString(TextureType type) {
+  switch (type) {
+    case TextureType::kRGBA: return "RGBA";
+    case TextureType::kLast: return "<last>";
+  }
+
+  NOT_REACHED_MSG("Invalid TextureType: %u", (uint32_t)type);
+  return "<unknown>";
+}
+
+const char* ToString(TextureWrapMode mode) {
+  switch (mode) {
+    case TextureWrapMode::kClampToBorder: return "ClampToBorder";
+    case TextureWrapMode::kClampToEdge: return "ClampToEdge";
+    case TextureWrapMode::kMirroredRepeat: return "MirroredRepeat";
+    case TextureWrapMode::kRepeat: return "Repeat";
+  }
+
+  NOT_REACHED_MSG("Invalid TextureWrapMode: %u", (uint32_t)mode);
+  return "<unknown>";
+}
+
+const char* ToString(TextureFilterMode mode) {
+  switch (mode) {
+    case TextureFilterMode::kLinear: return "Linear";
+    case TextureFilterMode::kLinearMipmapNearest: return "LinearMipmapNearest";
+    case TextureFilterMode::kLinearMipampLinear: return "LinearMipampLinear";
+    case TextureFilterMode::kNearest: return "Nearest";
+    case TextureFilterMode::kNearestMipmapNearest: return "NearestMipmapNearest";
+    case TextureFilterMode::kNearestMipmapLinear: return "NearestMipmapLinear";
+  }
+
+  NOT_REACHED_MSG("Invalid TextureFilterMode: %u", (uint32_t)mode);
+  return "<unknown>";
+}
+
 uint32_t ToSize(TextureType type) {
   switch (type) {
     case TextureType::kRGBA: return 4;

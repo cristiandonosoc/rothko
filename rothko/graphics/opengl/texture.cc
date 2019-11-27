@@ -65,6 +65,11 @@ GLenum FilterToGL(TextureFilterMode filter) {
 }  // namespace
 
 bool OpenGLStageTexture(OpenGLRendererBackend* opengl, Texture* texture) {
+  LOG(OpenGL, "Staging texture %s [Type: %s, Size: %s]",
+              texture->name.c_str(),
+              ToString(texture->type),
+              ToString(texture->size).c_str());
+
   uint32_t uuid = GetNextTextureUUID();
   auto it = opengl->loaded_textures.find(uuid);
   if (it != opengl->loaded_textures.end()) {
