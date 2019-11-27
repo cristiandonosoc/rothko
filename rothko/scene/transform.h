@@ -68,4 +68,6 @@ inline Vec3 GetWorldScale(const Transform& transform) {
 // No translation is applied.
 Vec3 GetWorldDirection(const Transform&);
 
+std::string ToString(const Transform&);
+
 }  // namespace rothko

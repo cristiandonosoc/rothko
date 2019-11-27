@@ -73,21 +73,18 @@ int main(int argc, const char* argv[]) {
 
   LOG(App, "Mesh 0 vertex count %u", scene.meshes[0]->vertex_count);
   LOG(App, "Mesh 0 index count %zu", scene.meshes[0]->indices.size());
-  for (int i = 0; i < 10; i++) {
-
-  }
-
-  return 0;
 
   // -----------------------------------------------------------------------------------------------
 
+  for (auto& mesh : scene.meshes) {
+    if (!RendererStageMesh(game.renderer.get(), mesh.get()))
+      return 1;
+  }
 
-
-  if (!RendererStageMesh(game.renderer.get(), scene.meshes[0].get()))
-    return 1;
-
-  if (!RendererStageTexture(game.renderer.get(), scene.textures[0].get()))
-    return 1;
+  for (auto& texture : scene.textures) {
+    if (!RendererStageTexture(game.renderer.get(), texture.get()))
+      return 1;
+  }
 
   Grid grid;
   if (!Init(&grid, game.renderer.get()))
@@ -99,8 +96,6 @@ int main(int argc, const char* argv[]) {
 
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;
   OrbitCamera camera = OrbitCamera::FromLookAt({5, 5, 5}, {}, ToRadians(60.0f), aspect_ratio);
-
-  Mat4 model_mat = Mat4::Identity();
 
   bool running = true;
   while (running) {
@@ -145,17 +140,24 @@ int main(int argc, const char* argv[]) {
     commands.push_back(ClearFrame::FromColor(Color::Graycc()));
     commands.push_back(GetPushCamera(camera));
 
-    auto* mesh = scene.meshes[0].get();
+    for (auto& node : scene.nodes) {
+      if (!node.mesh)
+        continue;
 
-    RenderMesh render_mesh = {};
-    render_mesh.mesh = mesh;
-    render_mesh.shader = default_shader.get();
-    render_mesh.primitive_type = PrimitiveType::kTriangles;
-    render_mesh.indices_count = mesh->indices.size();
-    render_mesh.vert_ubo_data = (uint8_t*)&model_mat;
-    render_mesh.textures = {scene.textures[0].get()};
 
-    commands.push_back(std::move(render_mesh));
+      Update(&node.transform);
+
+      RenderMesh render_mesh = {};
+      render_mesh.mesh = node.mesh;
+      render_mesh.shader = default_shader.get();
+      render_mesh.primitive_type = PrimitiveType::kTriangles;
+      render_mesh.indices_count = node.mesh->indices.size();
+      render_mesh.vert_ubo_data = (uint8_t*)&node.transform.world_matrix;
+      render_mesh.textures = {node.material->base_texture};
+
+      commands.push_back(std::move(render_mesh));
+    }
+
 
     /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, root)); */
     /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, child)); */

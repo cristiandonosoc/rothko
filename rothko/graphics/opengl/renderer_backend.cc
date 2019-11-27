@@ -224,6 +224,10 @@ const Shader* RendererGetShader(Renderer*, const char* name) {
 // Textures ----------------------------------------------------------------------------------------
 
 bool RendererStageTexture(Renderer*, Texture* texture) {
+  if (!texture) {
+    ERROR(Graphics, "Received null texture");
+    return false;
+  }
   return OpenGLStageTexture(gBackend.get(), texture);
 }
 

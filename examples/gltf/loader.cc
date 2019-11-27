@@ -290,13 +290,15 @@ std::vector<uint32_t> ObtainIndices(const uint8_t* data, uint32_t count) {
 
   const T* ptr = (const T*)data;
   for (uint32_t i = 0; i < count; i++) {
-    printf("Index %u\n", *ptr);
+    /* const uint8_t* char_ptr = (const uint8_t*)ptr; */
+    /* printf("Index %u (0x%x) [0x%x, 0x%x]\n", *ptr, *ptr, char_ptr[0], char_ptr[1]); */
+    /* fflush(stdout); */
 
     indices.push_back(*ptr++);
-  }
-  fflush(stdout);
-  __builtin_trap();
 
+    /* if (i > 5) */
+    /*   SEGFAULT(); */
+  }
 
   return indices;
 }
@@ -307,15 +309,28 @@ std::vector<uint32_t> ExtractIndices(const tinygltf::Model& model,
   const tinygltf::Accessor& accessor = model.accessors[primitive.indices];
   uint32_t index_count = accessor.count;
 
+  /* printf("Indices. Index: %d, Count: %zu, bufferView: %d\n", */
+  /*        primitive.indices, */
+  /*        accessor.count, */
+  /*        accessor.bufferView); */
+
   ComponentType component_type = (ComponentType)accessor.componentType;
   ASSERT(component_type == ComponentType::kUint16 || component_type == ComponentType::kUInt32);
   LOG(App, "Index component type: %s", ToString(component_type));
 
+  const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
 
-  const tinygltf::BufferView& buffer_view = model.bufferViews[primitive.indices];
+  /* printf("BufferView. byteOffset: %zu, byteLength: %zu\n", */
+  /*        buffer_view.byteOffset, */
+  /*        buffer_view.byteLength); */
+
   const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
 
-  const uint8_t* data = (const uint8_t*)buffer.data.data() + accessor.byteOffset;
+
+  const uint8_t* data = (const uint8_t*)buffer.data.data();
+  data += buffer_view.byteOffset;
+
+  /* printf("Original: 0x%p. Data: 0x%p\n", buffer.data.data(), data); */
 
   return component_type == ComponentType::kUint16 ? ObtainIndices<uint16_t>(data, index_count) :
                                                     ObtainIndices<uint32_t>(data, index_count);
@@ -411,6 +426,7 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
 
     const tinygltf::Material& material = model.materials[primitive.material];
 
+
     const tinygltf::Texture& base_texture =
         model.textures[material.pbrMetallicRoughness.baseColorTexture.index];
 
@@ -423,6 +439,7 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
     // TODO(Cristian): Do tinygltf -> rothko modes translation instead of hardcoding.
     //                 This is obtained from |base_sampler|.
     (void)base_sampler;
+    rothko_texture->name = model.images[base_texture.source].uri;
     rothko_texture->type = TextureType::kRGBA;
     rothko_texture->wrap_mode_u = TextureWrapMode::kRepeat;
     rothko_texture->wrap_mode_v = TextureWrapMode::kRepeat;
