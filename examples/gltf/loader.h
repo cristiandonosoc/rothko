@@ -34,7 +34,7 @@ struct Scene {
   std::vector<std::unique_ptr<Mesh>> meshes;
   std::vector<std::unique_ptr<Texture>> textures;
 
-  std::vector<SceneNode> scene_nodes;
+  std::vector<SceneNode> nodes;
 };
 
 void ProcessScene(const tinygltf::Model&, const tinygltf::Scene&, Scene* out_scene);

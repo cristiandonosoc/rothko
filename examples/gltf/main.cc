@@ -19,12 +19,6 @@ namespace {
 }  // namespace
 
 int main(int argc, const char* argv[]) {
-
-  std::string path;
-  if (argc == 2)
-    path = argv[1];
-
-
   Game game = {};
   InitWindowConfig window_config = {};
   window_config.type = WindowType::kSDLOpenGL;
@@ -33,6 +27,13 @@ int main(int argc, const char* argv[]) {
   window_config.screen_size = {1920, 1440};
   if (!InitGame(&game, &window_config, true))
     return 1;
+
+
+
+  std::string path;
+  if (argc == 2)
+    path = argv[1];
+
 
   if (path.empty()) {
     path = OpenFileDialog();
@@ -67,7 +68,19 @@ int main(int argc, const char* argv[]) {
 
   gltf::ProcessScene(model, gltf_scene, &scene);
 
+  LOG(App, "Meshes: %zu", scene.meshes.size());
+  LOG(App, "Textures: %zu", scene.textures.size());
+
+  LOG(App, "Mesh 0 vertex count %u", scene.meshes[0]->vertex_count);
+  LOG(App, "Mesh 0 index count %zu", scene.meshes[0]->indices.size());
+  for (int i = 0; i < 10; i++) {
+
+  }
+
+  return 0;
+
   // -----------------------------------------------------------------------------------------------
+
 
 
   if (!RendererStageMesh(game.renderer.get(), scene.meshes[0].get()))
@@ -88,8 +101,6 @@ int main(int argc, const char* argv[]) {
   OrbitCamera camera = OrbitCamera::FromLookAt({5, 5, 5}, {}, ToRadians(60.0f), aspect_ratio);
 
   Mat4 model_mat = Mat4::Identity();
-
-  LOG(App, "Hello");
 
   bool running = true;
   while (running) {
