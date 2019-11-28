@@ -214,13 +214,17 @@ DetectVertexType(const tinygltf::Model& model,
   return ToVertexType(types);
 }
 
-std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
+struct VerticesExtraction {
+  std::vector<uint8_t> data;
+  Vec3 min;
+  Vec3 max;
+};
+VerticesExtraction ExtractVertices(const tinygltf::Model& model,
                                      const tinygltf::Primitive& primitive,
                                      VertexType vertex_type = VertexType::kLast) {
   std::map<VertComponent, const tinygltf::Accessor*> accessors;
   vertex_type = DetectVertexType(model, primitive, &accessors);
   uint32_t vertex_size = ToSize(vertex_type);
-
 
   ASSERT(vertex_type != VertexType::kLast);
   ASSERT(!accessors.empty());
@@ -234,6 +238,9 @@ std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
 
   std::vector<uint8_t> vertices;
   vertices.resize(vertices_size);   // We're going to overwrite the contents.
+
+  Vec3 min_pos = {};
+  Vec3 max_pos = {};
 
   // Accessors are already sorted to where they are in the buffer.
   uint32_t component_offset = 0;
@@ -266,6 +273,19 @@ std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
       ASSERT(vertices_ptr < vertices_end);
       ASSERT(buffer_ptr < buffer_end);
 
+      if (vert_component == VertComponent::kPos3d) {
+        const Vec3& pos = *(const Vec3*)buffer_ptr;
+        // clang-format off
+        if (min_pos.x > pos.x) { min_pos.x = pos.x; }
+        if (min_pos.y > pos.y) { min_pos.y = pos.y; }
+        if (min_pos.z > pos.z) { min_pos.z = pos.z; }
+
+        if (max_pos.x < pos.x) { max_pos.x = pos.x; }
+        if (max_pos.y < pos.y) { max_pos.y = pos.y; }
+        if (max_pos.z < pos.z) { max_pos.z = pos.z; }
+        // clang-format on
+      }
+
       // Copy over the component value.
       uint8_t* write_ptr = vertices_ptr;
       for (size_t j = 0; j < component_size; j++) {
@@ -280,7 +300,12 @@ std::vector<uint8_t> ExtractVertices(const tinygltf::Model& model,
     component_offset += component_size;
   }
 
-  return vertices;
+
+  VerticesExtraction extraction = {};
+  extraction.data = std::move(vertices);
+  extraction.min = min_pos;
+  extraction.max = max_pos;
+  return extraction;
 }
 
 template <typename T>
@@ -338,107 +363,46 @@ std::vector<uint32_t> ExtractIndices(const tinygltf::Model& model,
 
 Vec3 NodeToVec3(const double* d) { return {(float)d[0], (float)d[1], (float)d[2]}; }
 
-void ProcessNodeTransform(const tinygltf::Node& node, SceneNode* scene_node) {
+void ProcessNodeTransform(const tinygltf::Node& node, ModelNode* model_node) {
   if (!node.matrix.empty()) {
-    scene_node->transform = TransformMatrixToTransform(*(Mat4*)node.matrix.data());
+    model_node->transform = TransformMatrixToTransform(*(Mat4*)node.matrix.data());
     return;
   }
 
   if (!node.translation.empty())
-    scene_node->transform.position = NodeToVec3(node.translation.data());
+    model_node->transform.position = NodeToVec3(node.translation.data());
 
   // TODO(Cristian): Do rotation.
 
   if (!node.scale.empty())
-    scene_node->transform.scale = NodeToVec3(node.scale.data());
+    model_node->transform.scale = NodeToVec3(node.scale.data());
 }
 
-void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene* out_scene) {
-  LOG(App, "Processing Node %s", node.name.c_str());
+Material* HandleMaterial(const tinygltf::Model& model,
+                    const tinygltf::Primitive& primitive,
+                    Model* out_model) {
+  auto material_it = out_model->materials.find(primitive.material);
+  if (material_it != out_model->materials.end())
+    return material_it->second.get();
 
-  auto& scene_node = out_scene->nodes.emplace_back();
-  ProcessNodeTransform(node, &scene_node);
+  const tinygltf::Material& material = model.materials[primitive.material];
 
-  // This is just a transform containing node.
-  if (node.mesh == -1)
-    return;
-
-  const tinygltf::Mesh& mesh = model.meshes[node.mesh];
-  LOG(App, "Processing mesh %s", mesh.name.c_str());
-
-  /* std::stringstream ss; */
-  /* ss << "Primitives: " << std::endl; */
-
-  // Process the primitives.
-  for (uint32_t primitive_i = 0; primitive_i < mesh.primitives.size(); primitive_i++) {
-    const tinygltf::Primitive& primitive = mesh.primitives[primitive_i];
-    VertexType vertex_type = DetectVertexType(model, primitive);
-
-    /* ss << "  Primitive " << primitive_i << std::endl; */
-
-    /* ss << "    Vertex Type: " << ToString(vertex_type) << ", Size: " << ToSize(vertex_type) */
-    /*    << std::endl; */
-
-    /* ss << "    Indices -> Accessor " << primitive.indices << std::endl; */
-
-    /* for (auto& [attr_name, attr_accessor_index] : primitive.attributes) { */
-    /*   ss << "    " << "Attribute " << attr_name << " -> Accessor " << attr_accessor_index; */
-
-    /*   const tinygltf::Accessor& accessor = model.accessors[attr_accessor_index]; */
-    /*   if (!accessor.name.empty()) */
-    /*     ss << " (" << accessor.name << ")"; */
-    /*   ss << std::endl; */
-    /*   ss << "      Type: " << ToString((AccessorType)accessor.type) << std::endl; */
-
-    /*   const tinygltf::BufferView bv = model.bufferViews[accessor.bufferView]; */
-
-    /*   ss << "      Buffer view " << bv.name << std::endl; */
-    /*   ss << "        offset: " << bv.byteOffset << std::endl; */
-    /*   ss << "        length: " << bv.byteLength << std::endl; */
-    /*   ss << "        stride: " << bv.byteStride << std::endl; */
-    /*   ss << "        target: " << bv.target << " (" << ToString((BufferViewTarget)bv.target) << ")" */
-    /*      << std::endl; */
-    /* } */
-
-    /* /1* VertexType vertex_type = DetectVertexType(model, primitive); *1/ */
-    std::vector<uint8_t> vertices = ExtractVertices(model, primitive);
-    uint32_t vertex_count = vertices.size() / ToSize(vertex_type);
-
-    std::vector<uint32_t> indices = ExtractIndices(model, primitive);
-
-    /* ss << "    VERTICES: " << vertices.size() << " bytes (" << vertex_count << " vertices)." */
-    /*    << std::endl; */
-    /* ss << "    INDICES: " << indices.size() * sizeof(Mesh::IndexType) << " bytes (" */
-    /*    << indices.size() << " indices)." << std::endl; */
-
-    /* auto* vertex_ptr = (Vertex3dNormalTangentUV*)vertices.data(); */
-    /* for (uint32_t i = 0; i < vertex_count; i++) { */
-    /*   LOG(App, "Vertex %u: %s", i, ToString(*vertex_ptr++).c_str()); */
-    /* } */
-
-    // Create the mesh.
-    auto rothko_mesh = std::make_unique<Mesh>();
-    rothko_mesh->name = StringPrintf("%s-%u", mesh.name.c_str(), primitive_i);
-    rothko_mesh->vertex_type = vertex_type;
-    rothko_mesh->vertices = std::move(vertices);
-    rothko_mesh->vertex_count = vertex_count;
-    rothko_mesh->indices = std::move(indices);
-
-    const tinygltf::Material& material = model.materials[primitive.material];
-
-
+  // Load the related texture.
+  Texture* texture_ptr = nullptr;
+  auto texture_it = out_model->textures.find(material.pbrMetallicRoughness.baseColorTexture.index);
+  if (texture_it != out_model->textures.end()) {
+    texture_ptr = texture_it->second.get();
+  } else {
     const tinygltf::Texture& base_texture =
         model.textures[material.pbrMetallicRoughness.baseColorTexture.index];
 
-    const tinygltf::Sampler& base_sampler = model.samplers[base_texture.sampler];
     const tinygltf::Image& base_image = model.images[base_texture.source];
 
     auto rothko_texture = std::make_unique<Texture>();
     rothko_texture->name = base_image.name;
-    rothko_texture->size = { base_image.width, base_image.height };
+    rothko_texture->size = {base_image.width, base_image.height};
     // TODO(Cristian): Do tinygltf -> rothko modes translation instead of hardcoding.
-    //                 This is obtained from |base_sampler|.
-    (void)base_sampler;
+    //                 This is obtained from |base_texture.sampler|.
     rothko_texture->name = model.images[base_texture.source].uri;
     rothko_texture->type = TextureType::kRGBA;
     rothko_texture->wrap_mode_u = TextureWrapMode::kRepeat;
@@ -450,47 +414,84 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Scene
     rothko_texture->data = std::make_unique<uint8_t[]>(base_image.image.size());
     memcpy(rothko_texture->data.get(), base_image.image.data(), base_image.image.size());
 
-    auto rothko_material = std::make_unique<Material>();
-
-    rothko_material->base_texture = rothko_texture.get();
-    ASSERT(material.pbrMetallicRoughness.baseColorFactor.size() == 4u);
-    rothko_material->base_color.r = material.pbrMetallicRoughness.baseColorFactor[0];
-    rothko_material->base_color.g = material.pbrMetallicRoughness.baseColorFactor[1];
-    rothko_material->base_color.b = material.pbrMetallicRoughness.baseColorFactor[2];
-    rothko_material->base_color.a = material.pbrMetallicRoughness.baseColorFactor[3];
-
-    scene_node.mesh = rothko_mesh.get();
-    scene_node.material = rothko_material.get();
-
-    out_scene->meshes.push_back(std::move(rothko_mesh));
-    out_scene->textures.push_back(std::move(rothko_texture));
+    texture_ptr = rothko_texture.get();
+    out_model->textures[base_texture.source] = std::move(rothko_texture);
   }
 
-  /* LOG(App, "%s", ss.str().c_str()); */
+  auto rothko_material = std::make_unique<Material>();
+
+  rothko_material->base_texture = texture_ptr;
+  ASSERT(material.pbrMetallicRoughness.baseColorFactor.size() == 4u);
+  rothko_material->base_color.r = material.pbrMetallicRoughness.baseColorFactor[0];
+  rothko_material->base_color.g = material.pbrMetallicRoughness.baseColorFactor[1];
+  rothko_material->base_color.b = material.pbrMetallicRoughness.baseColorFactor[2];
+  rothko_material->base_color.a = material.pbrMetallicRoughness.baseColorFactor[3];
+
+  Material* material_ptr = rothko_material.get();
+  out_model->materials[primitive.material] = std::move(rothko_material);
+  return material_ptr;
 }
 
+void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Model* out_model) {
+  LOG(App, "Processing Node %s", node.name.c_str());
 
+  auto& scene_node = out_model->nodes.emplace_back();
+  ProcessNodeTransform(node, &scene_node);
 
-void ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node, Scene* out_scene) {
-  ProcessNode(model, node, out_scene);
+  // This is just a transform containing node.
+  if (node.mesh == -1)
+    return;
+
+  const tinygltf::Mesh& mesh = model.meshes[node.mesh];
+  LOG(App, "Processing mesh %s", mesh.name.c_str());
+
+  // Process the primitives.
+  for (uint32_t primitive_i = 0; primitive_i < mesh.primitives.size(); primitive_i++) {
+    const tinygltf::Primitive& primitive = mesh.primitives[primitive_i];
+    VertexType vertex_type = DetectVertexType(model, primitive);
+
+    auto [vertices, min, max] = ExtractVertices(model, primitive);
+    uint32_t vertex_count = vertices.size() / ToSize(vertex_type);
+
+    std::vector<uint32_t> indices = ExtractIndices(model, primitive);
+
+    // Create the mesh.
+    auto rothko_mesh = std::make_unique<Mesh>();
+    rothko_mesh->name = StringPrintf("%s-%u", mesh.name.c_str(), primitive_i);
+    rothko_mesh->vertex_type = vertex_type;
+    rothko_mesh->vertices = std::move(vertices);
+    rothko_mesh->vertex_count = vertex_count;
+    rothko_mesh->indices = std::move(indices);
+    scene_node.mesh = rothko_mesh.get();
+    out_model->meshes[node.mesh] = std::move(rothko_mesh);
+
+    // Material.
+    scene_node.material = HandleMaterial(model, primitive, out_model);
+    scene_node.min = min;
+    scene_node.max = max;
+  }
+}
+
+void ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node, Model* out_model) {
+  ProcessNode(model, node, out_model);
   for (int node_index : node.children) {
     LOG(App, "Processing node %d", node_index);
-    ProcessNodes(model, model.nodes[node_index], out_scene);
+    ProcessNodes(model, model.nodes[node_index], out_model);
   }
 }
 
 }  // namespace
 
 
-void ProcessScene(const tinygltf::Model& model, const tinygltf::Scene& scene, Scene* out_scene) {
+void ProcessModel(const tinygltf::Model& model, const tinygltf::Scene& scene, Model* out_model) {
   for (int node_index : scene.nodes) {
-    ProcessNodes(model, model.nodes[node_index], out_scene);
+    ProcessNodes(model, model.nodes[node_index], out_model);
   }
 
 
-  LOG(App, "Nodes: %zu", out_scene->nodes.size());
-  for (uint32_t i = 0; i < out_scene->nodes.size(); i++) {
-    auto& node = out_scene->nodes[i];
+  LOG(App, "Nodes: %zu", out_model->nodes.size());
+  for (uint32_t i = 0; i < out_model->nodes.size(); i++) {
+    auto& node = out_model->nodes[i];
     LOG(App, "Node %u", i);
     LOG(App, "\n%s", ToString(node.transform).c_str());
     LOG(App, "--------------------------------------");

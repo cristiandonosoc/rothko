@@ -6,6 +6,7 @@
 #include <rothko/scene/transform.h>
 
 #include <memory>
+#include <map>
 
 // Forward declarations.
 namespace tinygltf {
@@ -23,21 +24,24 @@ struct Texture;
 
 namespace gltf {
 
-struct SceneNode {
+struct ModelNode {
   Mesh* mesh = nullptr;
   Material* material = nullptr;
 
   Transform transform;
+  Vec3 min;
+  Vec3 max;
 };
 
-struct Scene {
-  std::vector<std::unique_ptr<Mesh>> meshes;
-  std::vector<std::unique_ptr<Texture>> textures;
+struct Model {
+  std::map<int, std::unique_ptr<Mesh>> meshes;
+  std::map<int, std::unique_ptr<Texture>> textures;
+  std::map<int, std::unique_ptr<Material>> materials;
 
-  std::vector<SceneNode> nodes;
+  std::vector<ModelNode> nodes;
 };
 
-void ProcessScene(const tinygltf::Model&, const tinygltf::Scene&, Scene* out_scene);
+void ProcessModel(const tinygltf::Model&, const tinygltf::Scene&, Model* out_model);
 
 }  // namespace gltf
 }  // namespace rothko

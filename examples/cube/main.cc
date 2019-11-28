@@ -238,11 +238,11 @@ int main() {
     return 1;
   }
 
-  /* PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, Color::Blue()); */
-  /* PushLine(&line_manager, {-3, 2, -3}, {0, 2, 2}, Color::Red()); */
-  /* PushLine(&line_manager, {2, 2, -3}, {3, 2, -1}, Color::Green()); */
-  /* PushCubeCenter(&line_manager, {1.5f, 1.5f, 1.5f}, {0.5f, 0.5f, 0.5f}, Color::White()); */
-  /* PushCube(&line_manager, {-1, -1, -1}, {2, 4, 5}, Color::Black()); */
+  PushLine(&line_manager, {1, 1, 1}, {2, 2, 2}, Color::Blue());
+  PushLine(&line_manager, {-3, 2, -3}, {0, 2, 2}, Color::Red());
+  PushLine(&line_manager, {2, 2, -3}, {3, 2, -1}, Color::Green());
+  PushCubeCenter(&line_manager, {1.5f, 1.5f, 1.5f}, {0.5f, 0.5f, 0.5f}, Color::White());
+  PushCube(&line_manager, {-1, -1, -1}, {2, 4, 5}, Color::Black());
 
   PushRing(&line_manager, {}, Vec3::Up(), 1, Color::Blue());
   PushRing(&line_manager, {}, {1, 0, 0}, 1, Color::Green());

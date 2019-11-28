@@ -70,50 +70,53 @@ bool Init(LineManager* lines, Renderer* renderer, const std::string& name, uint3
   return Init(lines, renderer, shader, name, line_count);
 }
 
-bool Init(LineManager* line_manager,
+bool Init(LineManager* lines,
           Renderer* renderer,
           const Shader* shader,
           const std::string& name,
           uint32_t line_count) {
-  ASSERT(!Valid(line_manager));
-  line_manager->name = std::move(name);
-  line_manager->shader = shader;
+  ASSERT(!Valid(lines));
+  lines->name = std::move(name);
+  lines->shader = shader;
 
   // Each vertex is 2 vertices.
   // We asume one index per vertex. This might be less.
   uint32_t vertex_count = 2 * line_count * sizeof(Vertex3dColor);
   uint32_t index_count = 2 * line_count * sizeof(Mesh::IndexType);
   bool staged = StageWithCapacity(
-      renderer, &line_manager->strip_mesh, VertexType::k3dColor, vertex_count, index_count);
+      renderer, &lines->strip_mesh, VertexType::k3dColor, vertex_count, index_count);
   if (!staged)
     return false;
 
-  line_manager->strip_mesh.name = StringPrintf("%s-mesh", line_manager->name.c_str());
+  lines->strip_mesh.name = StringPrintf("%s-mesh", lines->name.c_str());
 
-  line_manager->render_command_ = {};
-  line_manager->render_command_.mesh = &line_manager->strip_mesh;
-  line_manager->render_command_.shader = line_manager->shader;
-  line_manager->render_command_.primitive_type = PrimitiveType::kLineStrip;
+  lines->render_command_ = {};
+  lines->render_command_.mesh = &lines->strip_mesh;
+  lines->render_command_.shader = lines->shader;
+  lines->render_command_.primitive_type = PrimitiveType::kLineStrip;
 
-  line_manager->staged = true;
+  lines->staged = true;
   return true;
 }
 
-void Reset(LineManager* line_manager) {
-  Reset(&line_manager->strip_mesh);
+void Reset(LineManager* lines) {
+  Reset(&lines->strip_mesh);
+  lines->staged = false;
+  lines->shape_count = 0;
+  lines->render_command_.indices_count = 0;
 }
 
-bool Stage(LineManager* line_manager, Renderer* renderer) {
-  if (line_manager->staged)
+bool Stage(LineManager* lines, Renderer* renderer) {
+  if (lines->staged)
     return true;
-  line_manager->staged = RendererUploadMeshRange(renderer, &line_manager->strip_mesh);
-  return line_manager->staged;
+  lines->staged = RendererUploadMeshRange(renderer, &lines->strip_mesh);
+  return lines->staged;
 }
 
-RenderCommand GetRenderCommand(const LineManager& line_manager) {
-  if (!line_manager.staged || line_manager.shape_count == 0)
+RenderCommand GetRenderCommand(const LineManager& lines) {
+  if (!lines.staged || lines.shape_count == 0)
     return Nop{};
-  return line_manager.render_command_;
+  return lines.render_command_;
 }
 
 // Push Lines --------------------------------------------------------------------------------------
@@ -130,24 +133,24 @@ inline Vertex3dColor CreateVertex(Vec3 pos, Color color) {
 
 }  // namespace
 
-void PushLine(LineManager* line_manager, Vec3 from, Vec3 to, Color color) {
+void PushLine(LineManager* lines, Vec3 from, Vec3 to, Color color) {
   Vertex3dColor vertices[2] = {
     CreateVertex(from, color),
     CreateVertex(to, color),
   };
 
-  Mesh::IndexType base = line_manager->strip_mesh.vertex_count;
+  Mesh::IndexType base = lines->strip_mesh.vertex_count;
   Mesh::IndexType indices[3] = {base + 0, base + 1, line_strip::kPrimitiveReset};
 
-  PushVertices(&line_manager->strip_mesh, vertices, ARRAY_SIZE(vertices));
-  PushIndices(&line_manager->strip_mesh, indices, ARRAY_SIZE(indices));
+  PushVertices(&lines->strip_mesh, vertices, ARRAY_SIZE(vertices));
+  PushIndices(&lines->strip_mesh, indices, ARRAY_SIZE(indices));
 
-  line_manager->render_command_.indices_count += ARRAY_SIZE(indices);
-  line_manager->staged = false;
-  line_manager->shape_count++;
+  lines->render_command_.indices_count += ARRAY_SIZE(indices);
+  lines->staged = false;
+  lines->shape_count++;
 }
 
-void PushCubeCenter(LineManager* line_manager, Vec3 c, Vec3 e, Color color) {
+void PushCubeCenter(LineManager* lines, Vec3 c, Vec3 e, Color color) {
   Vertex3dColor vertices[8] = {
       CreateVertex(c + Vec3{-e.x, -e.y, -e.z}, color),
       CreateVertex(c + Vec3{-e.x, -e.y, e.z}, color),
@@ -159,7 +162,7 @@ void PushCubeCenter(LineManager* line_manager, Vec3 c, Vec3 e, Color color) {
       CreateVertex(c + Vec3{e.x, e.y, e.z}, color),
   };
 
-  Mesh::IndexType base = line_manager->strip_mesh.vertex_count;
+  Mesh::IndexType base = lines->strip_mesh.vertex_count;
   Mesh::IndexType indices[18] = {
     base + 0, base + 1, base + 3, base + 2, base + 0, base + 4, base + 5, base + 1,
     line_strip::kPrimitiveReset,
@@ -168,12 +171,12 @@ void PushCubeCenter(LineManager* line_manager, Vec3 c, Vec3 e, Color color) {
     line_strip::kPrimitiveReset,
   };
 
-  PushVertices(&line_manager->strip_mesh, vertices, ARRAY_SIZE(vertices));
-  PushIndices(&line_manager->strip_mesh, indices, ARRAY_SIZE(indices));
-  line_manager->render_command_.indices_count += ARRAY_SIZE(indices);
+  PushVertices(&lines->strip_mesh, vertices, ARRAY_SIZE(vertices));
+  PushIndices(&lines->strip_mesh, indices, ARRAY_SIZE(indices));
+  lines->render_command_.indices_count += ARRAY_SIZE(indices);
 
-  line_manager->staged = false;
-  line_manager->shape_count++;
+  lines->staged = false;
+  lines->shape_count++;
 }
 
 // Push Ring ---------------------------------------------------------------------------------------
@@ -185,18 +188,17 @@ constexpr float kRingAngle = kRadians360 / (float)kRingVertexCount;
 
 }  // namespace
 
-void PushRing(LineManager* line_manager, Vec3 center, Vec3 normal, float radius, Color color) {
+void PushRing(LineManager* lines, Vec3 center, Vec3 normal, float radius, Color color) {
   auto frame = GetAxisFrame(normal);
-  PushRing(line_manager, center, frame, radius, color);
+  PushRing(lines, center, frame, radius, color);
 }
 
-void PushRing(
-    LineManager* line_manager, Vec3 center, const AxisFrame& frame, float radius, Color color) {
+void PushRing(LineManager* lines, Vec3 center, const AxisFrame& frame, float radius, Color color) {
   Mat3 rotation = ToMat3(Rotate(frame.forward, kRingAngle));
 
   Vertex3dColor vertices[kRingVertexCount] = {};
   Mesh::IndexType indices[kRingVertexCount + 2] = {};
-  Mesh::IndexType base = line_manager->strip_mesh.vertex_count;
+  Mesh::IndexType base = lines->strip_mesh.vertex_count;
 
   Vec3 p = frame.up * radius;
   for (int i = 0; i < kRingVertexCount; i++) {
@@ -211,12 +213,12 @@ void PushRing(
   indices[kRingVertexCount] = base;  // Loop back to the beginning of the ring.
   indices[kRingVertexCount + 1] = line_strip::kPrimitiveReset;
 
-  PushVertices(&line_manager->strip_mesh, vertices, std::size(vertices));
-  PushIndices(&line_manager->strip_mesh, indices, std::size(indices));
-  line_manager->render_command_.indices_count += std::size(indices);
+  PushVertices(&lines->strip_mesh, vertices, std::size(vertices));
+  PushIndices(&lines->strip_mesh, indices, std::size(indices));
+  lines->render_command_.indices_count += std::size(indices);
 
-  line_manager->staged = false;
-  line_manager->shape_count++;
+  lines->staged = false;
+  lines->shape_count++;
 }
 
 }  // namespace rothko

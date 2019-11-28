@@ -5,6 +5,7 @@
 #include <rothko/graphics/default_shaders/default_shaders.h>
 #include <rothko/scene/camera.h>
 #include <rothko/widgets/grid.h>
+#include <rothko/widgets/widgets.h>
 #include <stdio.h>
 #include <third_party/tiny_gltf/tiny_gltf.h>
 
@@ -48,8 +49,8 @@ int main(int argc, const char* argv[]) {
   std::string err, warn;
 
   tinygltf::TinyGLTF gltf_loader;
-  tinygltf::Model model = {};
-  if (!gltf_loader.LoadASCIIFromFile(&model, &err, &warn, path)) {
+  tinygltf::Model gltf_model = {};
+  if (!gltf_loader.LoadASCIIFromFile(&gltf_model, &err, &warn, path)) {
     ERROR(App, "Could not load model: %s", err.c_str());
     return 1;
   }
@@ -60,28 +61,28 @@ int main(int argc, const char* argv[]) {
 
   LOG(App, "Loaded model!");
 
-  gltf::Scene scene;
+  gltf::Model model;
 
-  // Go over the scene.
-  auto& gltf_scene = model.scenes[model.defaultScene];
+  // Go over the model.
+  auto& gltf_scene = gltf_model.scenes[gltf_model.defaultScene];
   LOG(App, "Processing scene %s", gltf_scene.name.c_str());
 
-  gltf::ProcessScene(model, gltf_scene, &scene);
+  gltf::ProcessModel(gltf_model, gltf_scene, &model);
 
-  LOG(App, "Meshes: %zu", scene.meshes.size());
-  LOG(App, "Textures: %zu", scene.textures.size());
+  LOG(App, "Meshes: %zu", model.meshes.size());
+  LOG(App, "Textures: %zu", model.textures.size());
 
-  LOG(App, "Mesh 0 vertex count %u", scene.meshes[0]->vertex_count);
-  LOG(App, "Mesh 0 index count %zu", scene.meshes[0]->indices.size());
+  LOG(App, "Mesh 0 vertex count %u", model.meshes[0]->vertex_count);
+  LOG(App, "Mesh 0 index count %zu", model.meshes[0]->indices.size());
 
   // -----------------------------------------------------------------------------------------------
 
-  for (auto& mesh : scene.meshes) {
+  for (auto& [id, mesh] : model.meshes) {
     if (!RendererStageMesh(game.renderer.get(), mesh.get()))
       return 1;
   }
 
-  for (auto& texture : scene.textures) {
+  for (auto& [id, texture] : model.textures) {
     if (!RendererStageTexture(game.renderer.get(), texture.get()))
       return 1;
   }
@@ -96,6 +97,10 @@ int main(int argc, const char* argv[]) {
 
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;
   OrbitCamera camera = OrbitCamera::FromLookAt({5, 5, 5}, {}, ToRadians(60.0f), aspect_ratio);
+
+  LineManager lines = {};
+  if (!Init(&lines, game.renderer.get(), "lines"))
+    return 1;
 
   bool running = true;
   while (running) {
@@ -112,6 +117,8 @@ int main(int argc, const char* argv[]) {
       break;
     }
 
+    Reset(&lines);
+
     /* StartFrame(&imgui, &game.window, &game.time, &game.input); */
 
     /* ImGui::Begin("Cube Example"); */
@@ -125,25 +132,13 @@ int main(int argc, const char* argv[]) {
 
     DefaultUpdateOrbitCamera(game.input, &camera);
 
-    /* float angle = game.time.seconds * ToRadians(20.0f); */
-    /* root->transform.rotation.x = -angle; */
-    /* root->transform.rotation.y = angle; */
-
-    /* float child_angle = game.time.seconds * ToRadians(33.0f); */
-    /* child->transform.position = {2 * Cos(child_angle), 0, 2 * Sin(child_angle)}; */
-    /* child2->transform.position = {0, 2 * Cos(2 * child_angle), 2 * Sin(2 * child_angle)}; */
-    /* grand_child->transform.position = {0, 1, 0}; */
-
-    /* Update(scene_graph.get()); */
-
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Graycc()));
     commands.push_back(GetPushCamera(camera));
 
-    for (auto& node : scene.nodes) {
+    for (auto& node : model.nodes) {
       if (!node.mesh)
         continue;
-
 
       Update(&node.transform);
 
@@ -156,14 +151,20 @@ int main(int argc, const char* argv[]) {
       render_mesh.textures = {node.material->base_texture};
 
       commands.push_back(std::move(render_mesh));
+
+      Vec3 min = ToVec3(node.transform.world_matrix * node.min);
+      Vec3 max = ToVec3(node.transform.world_matrix * node.max);
+
+      PushCube(&lines, min, max, Color::Black());
     }
 
 
-    /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, root)); */
-    /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, child)); */
-    /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, child2)); */
-    /* commands.push_back(GetCubeRenderCommand(&cube, &default_shader, grand_child)); */
     commands.push_back(grid.render_command);
+    if (!Stage(&lines, game.renderer.get()))
+        return 2;
+
+    auto cmd = GetRenderCommand(lines);
+    commands.push_back(GetRenderCommand(lines));
 
     /* auto imgui_commands = EndFrame(&imgui); */
     /* commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end()); */
