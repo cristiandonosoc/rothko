@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "rothko/graphics/definitions.h"
 #include "rothko/graphics/vertices.h"
 #include "rothko/utils/clear_on_move.h"
 #include "rothko/utils/macros.h"
@@ -34,19 +35,21 @@ struct Renderer;
 struct ShaderConfig {
   std::string name;   // Used as key, must be unique.
 
+  VertexType vertex_type = VertexType::kLast;
+
   // A UniformBufferObject is a group of uniforms grouped in a struct-ish configuration within the
   // shader. The advantage of those is that they can be mapped directly from a buffer upload
   // (eg. memcpy) instead of individually through glUniform1v kind of calls.
   //
-  // NOTE: The name *must* match the uniform block name within the shader.
-  //       Otherwise staging the shader will fail.
-  std::string vert_ubo_name;
-  std::string frag_ubo_name;
+  // The name *must* match the uniform block name within the shader. Otherwise staging the shader
+  // will fail. After that, on the |RenderMesh| command, you can define the UBO pointers in the same
+  // order they were defined here.
+  struct UBO {
+    std::string name;
+    uint32_t size = 0;
+  };
+  UBO ubos[kMaxUBOs] = {};
 
-  VertexType vertex_type = VertexType::kLast;
-
-  uint32_t vert_ubo_size = 0;   // In bytes.
-  uint32_t frag_ubo_size = 0;   // In bytes.
   uint32_t texture_count = 0;
 
 };

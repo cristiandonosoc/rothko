@@ -49,10 +49,11 @@ std::unique_ptr<Shader> CreateShader(Renderer* renderer) {
   ShaderConfig config = {};
   config.name = "cube-shader";
   config.vertex_type = VertexType::k3dUVColor;
-  config.vert_ubo_name = "Uniforms";
-  config.vert_ubo_size = sizeof(UBO);
-  config.texture_count = 2;
 
+  config.ubos[0].name = "Uniforms";
+  config.ubos[0].size = sizeof(UBO);
+
+  config.texture_count = 2;
   auto vert_src = CreateVertexSource(kVertexShader);
   auto frag_src = CreateFragmentSource(kFragmentShader);
 

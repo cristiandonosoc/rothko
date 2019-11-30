@@ -52,8 +52,12 @@ struct SceneGraph {
 // Gives a cleared transform. Comes with the correct |index| set.
 SceneNode* AddNode(SceneGraph*, uint32_t parent_index = SceneNode::kInvalidIndex);
 
-inline SceneNode* AddNode(SceneGraph* scene_graph, SceneNode* parent) {
-  return AddNode(scene_graph, parent->index);
+// Set |parent| to nullptr if this is a root node.
+inline SceneNode* AddNode(SceneGraph* scene_graph, const SceneNode* parent) {
+  uint32_t index = SceneNode::kInvalidIndex;
+  if (parent)
+    index = parent->index;
+  return AddNode(scene_graph, index);
 }
 
 // Deletes all the child (recursive) transform. Updates the parent (if set).

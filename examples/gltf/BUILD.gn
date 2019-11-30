@@ -6,6 +6,8 @@ executable("gltf") {
     "loader.cc",
     "loader.h",
     "main.cc",
+    "shaders.cc",
+    "shaders.h",
   ]
 
   deps = [

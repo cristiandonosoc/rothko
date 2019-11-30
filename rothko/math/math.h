@@ -45,6 +45,13 @@ float Atan(float radian_angle);
 // Think of it as a unit vector in a unit circle.
 float Atan2(float x, float y);
 
+template <typename T>
+inline T Min(const T& lhs, const T& rhs) { return lhs < rhs ? lhs : rhs; }
+
+template <typename T>
+inline T Max(const T& lhs, const T& rhs) { return lhs > rhs ? lhs : rhs; }
+
+
 inline float ToRadians(float degrees) { return degrees * (kPI / 180.0f); }
 inline float ToDegrees(float radians) {
   float deg = 180.0f * radians / kPI;

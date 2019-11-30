@@ -99,11 +99,11 @@ std::string ToString(const RenderMesh& render_mesh) {
      << ", Count: " << render_mesh.indices_count << std::endl;
 
   ss << std::hex;
-  if (render_mesh.vert_ubo_data)
-    ss << "Vert UBO: 0x" << (void*)render_mesh.vert_ubo_data << ", ";
-  if (render_mesh.frag_ubo_data)
-    ss << "Frag UBO: 0x" << (void*)render_mesh.frag_ubo_data;
-  ss << std::endl;
+  for (uint32_t i = 0; i < std::size(render_mesh.ubo_data); i++) {
+    uint8_t* ubo_data = render_mesh.ubo_data[i];
+    if (ubo_data)
+      ss << "UBO " << i << ": 0x" << std::hex << (void*)ubo_data << std::endl;
+  }
   ss << std::dec;
 
   for (size_t i = 0; i < render_mesh.textures.size(); i++) {

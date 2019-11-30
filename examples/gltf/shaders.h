@@ -5,10 +5,22 @@
 
 #include <rothko/graphics/shader.h>
 
+#include <memory>
+
 namespace rothko {
 namespace gltf {
 
-Shader CreateNormalShader(Renderer*);
+struct ModelUBO {
+  struct Model {
+    Mat4 transform;
+  } model;
+
+  struct Node {
+    Mat4 transform;
+  } node;
+};
+
+std::unique_ptr<Shader> CreateModelShader(Renderer*);
 
 }  // namespace gltf
 }  // namespace

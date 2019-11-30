@@ -117,10 +117,10 @@ std::unique_ptr<Shader> CreateSpotLightShader(Renderer* renderer) {
   ShaderConfig config = {};
   config.name = "spot-lighting";
   config.vertex_type = VertexType::k3dNormalUV;
-  config.vert_ubo_name = "VertUniforms";
-  config.vert_ubo_size = sizeof(SpotLightShaderUBO::Vert);
-  config.frag_ubo_name = "FragUniforms";
-  config.frag_ubo_size = sizeof(SpotLightShaderUBO::Frag);
+  config.ubos[0].name = "VertUniforms";
+  config.ubos[0].size = sizeof(SpotLightShaderUBO::Vert);
+  config.ubos[1].name = "FragUniforms";
+  config.ubos[1].size = sizeof(SpotLightShaderUBO::Frag);
   config.texture_count = 2;
 
   auto vert_src = CreateVertexSource(kSpotLightVertShader);
@@ -280,10 +280,10 @@ std::unique_ptr<Shader> CreateFullLightShader(Renderer* renderer) {
   ShaderConfig config = {};
   config.name = "full-lighting";
   config.vertex_type = VertexType::k3dNormalUV;
-  config.vert_ubo_name = "VertUniforms";
-  config.vert_ubo_size = sizeof(FullLightUBO::Vert);
-  config.frag_ubo_name = "FragUniforms";
-  config.frag_ubo_size = sizeof(FullLightUBO::Frag);
+  config.ubos[0].name = "VertUniforms";
+  config.ubos[0].size = sizeof(FullLightUBO::Vert);
+  config.ubos[1].name = "FragUniforms";
+  config.ubos[1].size = sizeof(FullLightUBO::Frag);
   config.texture_count = 2;
 
   auto vert_src = CreateVertexSource(kFullLightVertShader);

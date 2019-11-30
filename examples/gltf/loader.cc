@@ -9,12 +9,27 @@
 #include <rothko/utils/strings.h>
 #include <third_party/tiny_gltf/tiny_gltf.h>
 
+#include <rothko/scene/scene_graph.h>
+
 #include <sstream>
 
 namespace rothko {
 namespace gltf {
 
 namespace {
+
+struct NodeContext {
+  const SceneNode* scene_node = nullptr;
+  uint32_t index = UINT32_MAX;
+  uint32_t parent_index = UINT32_MAX;
+};
+
+struct ProcessingContext {
+  Model* model = nullptr;
+
+  std::unique_ptr<SceneGraph> scene_graph;
+  std::vector<NodeContext> scene_nodes;
+};
 
 enum class BufferViewTarget : int {
   kArrayBuffer = 34962,
@@ -363,19 +378,19 @@ std::vector<uint32_t> ExtractIndices(const tinygltf::Model& model,
 
 Vec3 NodeToVec3(const double* d) { return {(float)d[0], (float)d[1], (float)d[2]}; }
 
-void ProcessNodeTransform(const tinygltf::Node& node, ModelNode* model_node) {
-  if (!node.matrix.empty()) {
-    model_node->transform = TransformMatrixToTransform(*(Mat4*)node.matrix.data());
-    return;
-  }
+NO_DISCARD Transform ProcessNodeTransform(const tinygltf::Node& node) {
+  Transform transform = {};
+  if (!node.matrix.empty())
+    return TransformMatrixToTransform(*(Mat4*)node.matrix.data());
 
   if (!node.translation.empty())
-    model_node->transform.position = NodeToVec3(node.translation.data());
+    transform.position = NodeToVec3(node.translation.data());
 
   // TODO(Cristian): Do rotation.
 
   if (!node.scale.empty())
-    model_node->transform.scale = NodeToVec3(node.scale.data());
+    transform.scale = NodeToVec3(node.scale.data());
+  return transform;
 }
 
 Material* HandleMaterial(const tinygltf::Model& model,
@@ -432,15 +447,23 @@ Material* HandleMaterial(const tinygltf::Model& model,
   return material_ptr;
 }
 
-void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Model* out_model) {
+NodeContext ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node,
+                        const NodeContext& parent, ProcessingContext* context) {
   LOG(App, "Processing Node %s", node.name.c_str());
 
-  auto& scene_node = out_model->nodes.emplace_back();
-  ProcessNodeTransform(node, &scene_node);
+  auto& scene_node = context->model->nodes.emplace_back();
+  SceneNode* current_node = AddNode(context->scene_graph.get(), parent.scene_node);
+  current_node->transform = ProcessNodeTransform(node);
+
+  NodeContext node_context = {};
+  node_context.scene_node = current_node;
+  node_context.index = context->model->nodes.size() - 1;
+  node_context.parent_index = parent.index;
+  context->scene_nodes.push_back(node_context);
 
   // This is just a transform containing node.
   if (node.mesh == -1)
-    return;
+    return node_context;
 
   const tinygltf::Mesh& mesh = model.meshes[node.mesh];
   LOG(App, "Processing mesh %s", mesh.name.c_str());
@@ -463,20 +486,23 @@ void ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, Model
     rothko_mesh->vertex_count = vertex_count;
     rothko_mesh->indices = std::move(indices);
     scene_node.mesh = rothko_mesh.get();
-    out_model->meshes[node.mesh] = std::move(rothko_mesh);
+    context->model->meshes[node.mesh] = std::move(rothko_mesh);
 
     // Material.
-    scene_node.material = HandleMaterial(model, primitive, out_model);
+    scene_node.material = HandleMaterial(model, primitive, context->model);
     scene_node.min = min;
     scene_node.max = max;
   }
+
+  return node_context;
 }
 
-void ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node, Model* out_model) {
-  ProcessNode(model, node, out_model);
+void ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node,
+                  const NodeContext& parent_node, ProcessingContext* context) {
+  NodeContext current_node = ProcessNode(model, node, parent_node, context);
   for (int node_index : node.children) {
     LOG(App, "Processing node %d", node_index);
-    ProcessNodes(model, model.nodes[node_index], out_model);
+    ProcessNodes(model, model.nodes[node_index], current_node, context);
   }
 }
 
@@ -484,18 +510,31 @@ void ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node, Mode
 
 
 void ProcessModel(const tinygltf::Model& model, const tinygltf::Scene& scene, Model* out_model) {
+  ProcessingContext context = {};
+  context.scene_graph = std::make_unique<SceneGraph>();
+  context.model = out_model;
+
   for (int node_index : scene.nodes) {
-    ProcessNodes(model, model.nodes[node_index], out_model);
+    ProcessNodes(model, model.nodes[node_index], {}, &context);
   }
 
+  // Once we have processed all the nodes, we need to correctly set the internal scene_graph.
+  Update(context.scene_graph.get());
 
-  LOG(App, "Nodes: %zu", out_model->nodes.size());
-  for (uint32_t i = 0; i < out_model->nodes.size(); i++) {
-    auto& node = out_model->nodes[i];
-    LOG(App, "Node %u", i);
-    LOG(App, "\n%s", ToString(node.transform).c_str());
-    LOG(App, "--------------------------------------");
+  for (uint32_t i = 0; i < context.scene_nodes.size(); i++) {
+    const NodeContext& scene_node = context.scene_nodes[i];
+
+    ModelNode* node = &out_model->nodes[i];
+    node->transform = scene_node.scene_node->transform;
   }
+
+  /* LOG(App, "Nodes: %zu", out_model->nodes.size()); */
+  /* for (uint32_t i = 0; i < out_model->nodes.size(); i++) { */
+  /*   auto& node = out_model->nodes[i]; */
+  /*   LOG(App, "Node %u", i); */
+  /*   LOG(App, "\n%s", ToString(node.transform).c_str()); */
+  /*   LOG(App, "--------------------------------------"); */
+  /* } */
 }
 
 }  // namespace gltf

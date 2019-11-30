@@ -176,7 +176,7 @@ GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   render_mesh.primitive_type = PrimitiveType::kTriangles;
   ClearCullFaces(&render_mesh);
   render_mesh.indices_count = mesh->indices.size();
-  render_mesh.vert_ubo_data = (uint8_t*)&ubos[0];
+  render_mesh.ubo_data[0] = (uint8_t*)&ubos[0];
   render_mesh.textures.push_back(tex1);
   render_mesh.textures.push_back(tex0);
   commands.push_back(render_mesh);

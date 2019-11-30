@@ -112,9 +112,8 @@ uint32_t LinkProgram(uint32_t vert_handle, uint32_t frag_handle) {
   return prog_handle;
 }
 
-bool BindUBOs(const std::string& ubo_name, uint32_t ubo_size,
-              uint32_t prog_handle,
-              ShaderHandles::UBO* binding, int* current_binding) {
+bool BindUBO(const std::string& ubo_name, uint32_t ubo_size, uint32_t prog_handle,
+             ShaderHandles::UBO* binding, int* current_binding) {
   if (ubo_size == 0)
     return true;
 
@@ -187,20 +186,10 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
 
   // Get the uniform buffer object information.
   int current_binding = 0;
-  if (!BindUBOs(shader->config.vert_ubo_name,
-                shader->config.vert_ubo_size,
-                prog_handle,
-                &handles->vert_ubo,
-                &current_binding)) {
-    return false;
-  }
-
-  if (!BindUBOs(shader->config.frag_ubo_name,
-                shader->config.frag_ubo_size,
-                prog_handle,
-                &handles->frag_ubo,
-                &current_binding)) {
-    return false;
+  for (uint32_t i = 0; i < std::size(shader->config.ubos); i++) {
+    auto& ubo = shader->config.ubos[i];
+    if (!BindUBO(ubo.name, ubo.size, prog_handle, &handles->ubos[i], &current_binding))
+      return false;
   }
 
   // Get the texture positions.
@@ -216,8 +205,10 @@ bool UploadShader(Shader* shader, ShaderHandles* handles) {
 
 void FreeHandles(ShaderHandles* handles) {
   glDeleteProgram(handles->program);
-  glDeleteBuffers(1, &handles->vert_ubo.buffer_handle);
-  glDeleteBuffers(1, &handles->frag_ubo.buffer_handle);
+
+  for (auto& ubo : handles->ubos) {
+    glDeleteBuffers(1, &ubo.buffer_handle);
+  }
 }
 
 }  // namespace

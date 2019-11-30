@@ -10,53 +10,65 @@ namespace gltf {
 
 namespace {
 
-constexpr char kVertex[] = R"(
-layout(location = 0) in vec3 in_pos;
-layout(location = 1) in vec3 in_normal;
-layout(location = 2) in vec2 in_uv;
+constexpr char kModelVertShader[] = R"(
+layout (location = 0) in vec3 in_pos;
+layout (location = 1) in vec3 in_normal;
+layout (location = 2) in vec4 in_tangent;
+layout (location = 3) in vec2 in_uv;
 
-out vec3 f_normal;
 out vec2 f_uv;
+out vec4 f_color;
 
-void main(){
-  mat4 mvp = camera_proj * camera_view;
-	gl_Position = mvp * vec4(in_pos, 1);
-	f_normal = normalize(mat3(mvp) * in_normal);
-	f_uv = in_uv;
+layout (std140) uniform Model {
+  mat4 transform;
+} model;
+
+layout (std140) uniform Node {
+  mat4 transform;
+} node;
+
+void main() {
+  gl_Position = camera_proj * camera_view * model.transform * node.transform * vec4(in_pos, 1.0);
+
+  f_uv = in_uv;
+  f_color = vec4(in_normal, 1);
 }
-
 )";
 
-constexpr char kFragment[] = R"(
-in vec3 f_normal;
+constexpr char kModelFragShader[] = R"(
 in vec2 f_uv;
+in vec4 f_color;
 
 layout (location = 0) out vec4 out_color;
 
 uniform sampler2D tex0;
+/* uniform sampler2D tex1; */
 
 void main() {
-	/* float lum = max(dot(f_normal, normalize(sun_position)), 0.0); */
-	/* color = texture(tex, f_uv) * vec4((0.3 + 0.7 * lum) * sun_color, 1.0); */
   out_color = texture(tex0, f_uv);
+  /* out_color = mix(texture(tex0, f_uv), texture(tex1, f_uv), 0.5f) * f_color; */
+  /* out_color = f_color; */
 }
 )";
 
 }  // namespace
 
+std::unique_ptr<Shader> CreateModelShader(Renderer* renderer) {
+  ShaderConfig config = {};
+  config.name = "model";
+  config.vertex_type = VertexType::k3dNormalTangentUV;
+  config.ubos[0].name = "Model";
+  config.ubos[0].size = sizeof(ModelUBO::Model);
+  config.ubos[1].name = "Node";
+  config.ubos[1].size = sizeof(ModelUBO::Node);
+  /* config.frag_ubo_name = "FragUniforms"; */
+  /* config.frag_ubo_size = sizeof(FullLightUBO::Frag); */
+  config.texture_count = 2;
 
-Shader CreateNormalShader(Renderer* renderer) {
-  Shader shader = {};
-  shader.name = "gltf-shader";
-  shader.vertex_type = VertexType::k3dNormalUV;
-  shader.texture_count = 1;
+  auto vert_src = CreateVertexSource(kModelVertShader);
+  auto frag_src = CreateFragmentSource(kModelFragShader);
 
-  shader.vert_src = CreateVertexSource(kVertex);
-  shader.frag_src = CreateFragmentSource(kFragment);
-
-  if (!RendererStageShader(renderer, &shader))
-    return {};
-  return shader;
+  return RendererStageShader(renderer, config, vert_src, frag_src);
 }
 
 }  // namespace gltf

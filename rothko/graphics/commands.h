@@ -7,6 +7,7 @@
 
 #include "rothko/containers/vector.h"
 #include "rothko/graphics/color.h"
+#include "rothko/graphics/definitions.h"
 #include "rothko/graphics/mesh.h"
 #include "rothko/math/math.h"
 #include "rothko/utils/macros.h"
@@ -183,8 +184,7 @@ struct RenderMesh {
 
   // The size of the UBO is given by the description of the corresponding shader.
   // It is the responsability of the caller that these buffers match.
-  uint8_t* vert_ubo_data = nullptr;
-  uint8_t* frag_ubo_data = nullptr;
+  uint8_t* ubo_data[kMaxUBOs] = {};
 
   PerFrameVector<Texture*> textures;
 };

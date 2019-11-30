@@ -164,31 +164,19 @@ void SetUniforms(const OpenGLRendererBackend& opengl, const RenderMesh& render_m
                        (GLfloat*)&camera.view);
   }
 
-  // Vertex UBOs.
-  if (shader->config.vert_ubo_size > 0) {
-    auto& ubo_binding = shader_handles.vert_ubo;
+  // UBOs.
+  for (uint32_t i = 0; i < std::size(shader->config.ubos); i++) {
+    auto& binding = shader_handles.ubos[i];
+    if (binding.binding_index < 0)
+      continue;
 
-    ASSERT(ubo_binding.binding_index >= 0);
-    ASSERT(ubo_binding.buffer_handle > 0);
+    auto& ubo = shader->config.ubos[i];
+    ASSERT(binding.buffer_handle > 0);
+    ASSERT(render_mesh.ubo_data[i]);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, shader->config.vert_ubo_size, render_mesh.vert_ubo_data,
-                 GL_STREAM_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
-    glBindBuffer(GL_UNIFORM_BUFFER, NULL);
-  }
-
-  // Fragment UBOs.
-  if (shader->config.frag_ubo_size > 0) {
-    auto& ubo_binding = shader_handles.frag_ubo;
-
-    ASSERT(ubo_binding.binding_index >= 0);
-    ASSERT(ubo_binding.buffer_handle > 0);
-
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo_binding.buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, shader->config.frag_ubo_size, render_mesh.frag_ubo_data,
-                 GL_STREAM_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, ubo_binding.binding_index, ubo_binding.buffer_handle);
+    glBindBuffer(GL_UNIFORM_BUFFER, binding.buffer_handle);
+    glBufferData(GL_UNIFORM_BUFFER, ubo.size, render_mesh.ubo_data[i], GL_STREAM_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, binding.binding_index, binding.buffer_handle);
     glBindBuffer(GL_UNIFORM_BUFFER, NULL);
   }
 }

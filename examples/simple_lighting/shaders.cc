@@ -89,10 +89,10 @@ std::unique_ptr<Shader> CreateObjectShader(Renderer* renderer) {
   ShaderConfig config = {};
   config.name = "lighting";
   config.vertex_type = VertexType::k3dNormal;
-  config.vert_ubo_name = "VertUniforms";
-  config.vert_ubo_size = sizeof(ObjectShaderUBO::Vert);
-  config.frag_ubo_name = "FragUniforms";
-  config.frag_ubo_size = sizeof(ObjectShaderUBO::Frag);
+  config.ubos[0].name = "VertUniforms";
+  config.ubos[0].size = sizeof(ObjectShaderUBO::Vert);
+  config.ubos[1].name = "FragUniforms";
+  config.ubos[1].size = sizeof(ObjectShaderUBO::Frag);
 
   auto vert_src = CreateVertexSource(kObjectVertShader);
   auto frag_src = CreateFragmentSource(kObjectFragShader);

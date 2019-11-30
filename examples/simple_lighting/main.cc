@@ -27,8 +27,8 @@ RenderMesh CreateRenderCommand(Mesh* mesh,
 
   render_mesh.indices_count = mesh->indices.size();
 
-  render_mesh.vert_ubo_data = (uint8_t*)&ubo.vert;
-  render_mesh.frag_ubo_data = (uint8_t*)&ubo.frag;
+  render_mesh.ubo_data[0] = (uint8_t*)&ubo.vert;
+  render_mesh.ubo_data[1] = (uint8_t*)&ubo.frag;
 
   return render_mesh;
 }

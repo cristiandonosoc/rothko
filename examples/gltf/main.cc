@@ -3,6 +3,7 @@
 
 #include <rothko/game.h>
 #include <rothko/graphics/default_shaders/default_shaders.h>
+#include <rothko/math/math.h>
 #include <rothko/scene/camera.h>
 #include <rothko/widgets/grid.h>
 #include <rothko/widgets/widgets.h>
@@ -10,12 +11,26 @@
 #include <third_party/tiny_gltf/tiny_gltf.h>
 
 #include "loader.h"
+#include "shaders.h"
 
 using namespace rothko;
 
 namespace {
 
-// Parsing Code ------------------------------------------------------------------------------------
+std::pair<Vec3, Vec3> GetBounds(const Vec3& m1, const Vec3& m2) {
+  Vec3 min = {};
+  Vec3 max = {};
+
+  min.x = Min(m1.x, m2.x);
+  min.y = Min(m1.y, m2.y);
+  min.z = Min(m1.z, m2.z);
+
+  max.x = Max(m1.x, m2.x);
+  max.y = Max(m1.y, m2.y);
+  max.z = Max(m1.z, m2.z);
+
+  return {min, max};
+}
 
 }  // namespace
 
@@ -28,8 +43,6 @@ int main(int argc, const char* argv[]) {
   window_config.screen_size = {1920, 1440};
   if (!InitGame(&game, &window_config, true))
     return 1;
-
-
 
   std::string path;
   if (argc == 2)
@@ -91,8 +104,8 @@ int main(int argc, const char* argv[]) {
   if (!Init(&grid, game.renderer.get()))
     return 1;
 
-  auto default_shader = CreateDefaultShader(game.renderer.get(), VertexType::k3dNormalTangentUV);
-  if (!default_shader)
+  auto model_shader = gltf::CreateModelShader(game.renderer.get());
+  if (!model_shader)
     return 1;
 
   float aspect_ratio = (float)game.window.screen_size.width / (float)game.window.screen_size.height;
@@ -102,7 +115,13 @@ int main(int argc, const char* argv[]) {
   if (!Init(&lines, game.renderer.get(), "lines"))
     return 1;
 
+  Mat4 model_transform = Mat4::Identity();
+
   bool running = true;
+  bool rotate = false;
+  float time = 0;
+  float angle = 0;
+
   while (running) {
     auto events = Update(&game);
     for (auto event : events) {
@@ -118,19 +137,18 @@ int main(int argc, const char* argv[]) {
     }
 
     Reset(&lines);
-
-    /* StartFrame(&imgui, &game.window, &game.time, &game.input); */
-
-    /* ImGui::Begin("Cube Example"); */
-
-    /* ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", */
-    /*             1000.0f / ImGui::GetIO().Framerate, */
-    /*             ImGui::GetIO().Framerate); */
-
-    /* ImGui::End(); */
-
-
     DefaultUpdateOrbitCamera(game.input, &camera);
+
+    if (KeyUpThisFrame(game.input, Key::kSpace))
+      rotate = !rotate;
+
+    if (rotate) {
+      time += game.time.frame_delta;
+      angle = ToRadians(20.0f) * time;
+    }
+    model_transform = Rotate({0, 1, 0}, angle);
+
+    // Create Commands.
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Graycc()));
@@ -140,24 +158,34 @@ int main(int argc, const char* argv[]) {
       if (!node.mesh)
         continue;
 
-      Update(&node.transform);
-
       RenderMesh render_mesh = {};
       render_mesh.mesh = node.mesh;
-      render_mesh.shader = default_shader.get();
+      render_mesh.shader = model_shader.get();
       render_mesh.primitive_type = PrimitiveType::kTriangles;
       render_mesh.indices_count = node.mesh->indices.size();
-      render_mesh.vert_ubo_data = (uint8_t*)&node.transform.world_matrix;
+
+      render_mesh.ubo_data[0] = (uint8_t*)&model_transform;
+      render_mesh.ubo_data[1] = (uint8_t*)&node.transform.world_matrix;
       render_mesh.textures = {node.material->base_texture};
 
       commands.push_back(std::move(render_mesh));
 
-      Vec3 min = ToVec3(node.transform.world_matrix * node.min);
-      Vec3 max = ToVec3(node.transform.world_matrix * node.max);
+      /* Vec3 m1 = ToVec3(model_transform * node.transform.world_matrix * node.min); */
+      /* Vec3 m2 = ToVec3(model_transform * node.transform.world_matrix * node.max); */
 
+      auto t = model_transform * node.transform.world_matrix;
+      Vec3 m1 = ToVec3(t * node.min);
+      Vec3 m2 = ToVec3(t * node.max);
+
+      auto [min, max] = GetBounds(m1, m2);
       PushCube(&lines, min, max, Color::Black());
-    }
 
+      PushCubeCenter(&lines, m1, {0.1f, 0.1f, 0.1f}, Color::White());
+      PushCubeCenter(&lines, m2, {0.1f, 0.1f, 0.1f}, Color::White());
+
+      PushCubeCenter(&lines, min, Vec3{0.1f, 0.1f, 0.1f} * 2, Color::Red());
+      PushCubeCenter(&lines, max, Vec3{0.1f, 0.1f, 0.1f} * 2, Color::Red());
+    }
 
     commands.push_back(grid.render_command);
     if (!Stage(&lines, game.renderer.get()))

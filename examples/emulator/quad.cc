@@ -55,8 +55,8 @@ Vertex3dUVColor CreateVertex(Vec3 pos, Vec2 uv, Color color) {
 bool AreEqual(const RenderMesh& render_mesh, const QuadEntry& entry) {
   return render_mesh.shader == entry.shader &&
          render_mesh.textures[0] == entry.texture &&
-         render_mesh.vert_ubo_data == entry.vert_ubo &&
-         render_mesh.frag_ubo_data == entry.frag_ubo;
+         render_mesh.ubo_data[0] == entry.vert_ubo &&
+         render_mesh.ubo_data[1] == entry.frag_ubo;
 }
 
 }  // namespace
@@ -70,17 +70,13 @@ void Push(QuadManager* quads, const QuadEntry& entry) {
 
   // Push in the vertex/index data.
   Vertex3dUVColor vertices[] = {
-      /* CreateVertex({base.x, base.y, 0}, uv_base, colors::kWhite), */
       CreateVertex(entry.from_pos, entry.from_uv, entry.color),
-      /* CreateVertex({base.x, base.y + size.y, 0}, uv_base + Vec2{kUVOffset.x, 0.0f}, colors::kWhite), */
       CreateVertex({entry.from_pos.x, entry.from_pos.y, entry.to_pos.z},
                    {entry.to_uv.u, entry.from_uv.v},
                    entry.color),
-      /* CreateVertex({base.x + size.x, base.y, 0}, uv_base + Vec2{0, kUVOffset.y}, colors::kWhite), */
       CreateVertex({entry.to_pos.x, entry.to_pos.y, entry.from_pos.z},
                    {entry.from_uv.u, entry.to_uv.v},
                    entry.color),
-      /* CreateVertex({base.x + size.x, base.y + size.y, 0}, uv_base + kUVOffset, colors::kWhite), */
       CreateVertex(entry.to_pos, entry.to_uv, entry.color),
   };
 
@@ -102,8 +98,8 @@ void Push(QuadManager* quads, const QuadEntry& entry) {
     render_mesh.textures.push_back(entry.texture);
     render_mesh.indices_offset = quads->index_offset;
     render_mesh.indices_count = 6;
-    render_mesh.vert_ubo_data = entry.vert_ubo;
-    render_mesh.frag_ubo_data = entry.frag_ubo;
+    render_mesh.ubo_data[0] = entry.vert_ubo;
+    render_mesh.ubo_data[1] = entry.frag_ubo;
 
     quads->index_offset += 6;
 

@@ -55,10 +55,10 @@ const Shader* GetLightWidgetShader(Renderer* renderer) {
   ShaderConfig config = {};
   config.name = "directional-light-shader";
   config.vertex_type = VertexType::k3d;
-  config.vert_ubo_name = "VertUniforms";
-  config.vert_ubo_size = sizeof(Mat4);
-  config.frag_ubo_name = "FragUniforms";
-  config.frag_ubo_size = sizeof(Vec3);
+  config.ubos[0].name = "VertUniforms";
+  config.ubos[0].size = sizeof(Mat4);
+  config.ubos[1].name = "FragUniforms";
+  config.ubos[1].size = sizeof(Vec3);
 
   auto vert_src = CreateVertexSource(kLightWidgetVertShader);
   auto frag_src = CreateFragmentSource(kLightWidgetFragShader);
@@ -216,8 +216,8 @@ std::vector<RenderCommand> GetRenderCommands(const LightWidgetManager& lights) {
     render_mesh.shader = lights.point_light_shader;
     render_mesh.primitive_type = PrimitiveType::kTriangles;
     render_mesh.indices_count = lights.point_light_mesh.indices.size();
-    render_mesh.vert_ubo_data = (uint8_t*)&light.transform->world_matrix;
-    render_mesh.frag_ubo_data = (uint8_t*)&light.color;
+    render_mesh.ubo_data[0] = (uint8_t*)&light.transform->world_matrix;
+    render_mesh.ubo_data[1] = (uint8_t*)&light.color;
 
     render_commands.push_back(std::move(render_mesh));
   }
@@ -229,8 +229,8 @@ std::vector<RenderCommand> GetRenderCommands(const LightWidgetManager& lights) {
     render_mesh.shader = lights.directional_light_shader;
     render_mesh.primitive_type = PrimitiveType::kLineStrip;
     render_mesh.indices_count = lights.directional_light_mesh.indices.size();
-    render_mesh.vert_ubo_data = (uint8_t*)&light.transform->world_matrix;
-    render_mesh.frag_ubo_data = (uint8_t*)&light.color;
+    render_mesh.ubo_data[0] = (uint8_t*)&light.transform->world_matrix;
+    render_mesh.ubo_data[1] = (uint8_t*)&light.color;
 
     render_commands.push_back(std::move(render_mesh));
   }

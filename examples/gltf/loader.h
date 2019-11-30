@@ -29,6 +29,8 @@ struct ModelNode {
   Material* material = nullptr;
 
   Transform transform;
+
+  // The bounds that considers this node and any children nodes.
   Vec3 min;
   Vec3 max;
 };

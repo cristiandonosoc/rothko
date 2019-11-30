@@ -13,5 +13,4 @@ executable("obj") {
     "//rothko/window:sdl_opengl",
     "//third_party/tiny_obj_loader",
   ]
-
 }

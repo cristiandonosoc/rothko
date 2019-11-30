@@ -50,8 +50,8 @@ std::unique_ptr<Shader> Vertex3dUVColorShader(Renderer* renderer) {
   ShaderConfig config;
   config.name = "3dNormalUV-default";
   config.vertex_type = VertexType::k3dUVColor;
-  config.vert_ubo_name = "Uniforms";
-  config.vert_ubo_size = sizeof(Mat4);
+  config.ubos[0].name = "Uniforms";
+  config.ubos[0].size = sizeof(Mat4);
   config.texture_count = 2;
 
   auto vert_src = CreateVertexSource(kVertex3dUVColorVertexShader);
@@ -107,8 +107,8 @@ std::unique_ptr<Shader> Vertex3dNormalTangentUVShader(Renderer* renderer) {
   ShaderConfig config;
   config.name = "3dNormalUV-default";
   config.vertex_type = VertexType::k3dNormalTangentUV;
-  config.vert_ubo_name = "Uniforms";
-  config.vert_ubo_size = sizeof(Mat4);
+  config.ubos[0].name = "Uniforms";
+  config.ubos[0].size = sizeof(Mat4);
   config.texture_count = 2;
 
   auto vert_src = CreateVertexSource(kVertex3dNormalTangentUVVertexShader);
