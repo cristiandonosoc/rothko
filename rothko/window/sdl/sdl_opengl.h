@@ -19,10 +19,6 @@ struct SDLOpenGLWindow : public WindowBackend {
 
   Window* window = nullptr;   // Not owning. Must outlive.
 
-  // Array of events that can happen within a frame.
-  int event_index = 0;
-  WindowEvent events[4];
-
   SDL_Cursor* cursors[(int)MouseCursor::kLast] = {};
 
   // Virtual Interface ---------------------------------------------------------
@@ -30,7 +26,7 @@ struct SDLOpenGLWindow : public WindowBackend {
 
   bool Init(Window*, InitWindowConfig*) override;
   void Shutdown() override;
-  std::vector<WindowEvent> NewFrame(Window*, Input*) override;
+  WindowEvent StartFrame(Window*, Input*) override;
   void SwapBuffers() override;
 
   void ShowCursor(bool) override;

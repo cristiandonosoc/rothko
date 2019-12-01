@@ -22,7 +22,7 @@ RenderMesh GetCubeRenderCommand(Mesh* mesh, Shader* shader, SceneNode* node) {
   render_mesh.mesh = mesh;
   render_mesh.shader = shader;
   render_mesh.primitive_type = PrimitiveType::kTriangles;
-  ClearCullFaces(&render_mesh);
+  ClearCullFaces(&render_mesh.flags);
   render_mesh.indices_count = mesh->indices.size();
   render_mesh.ubo_data[0] = (uint8_t*)&node->transform.world_matrix;
   /* render_mesh.textures.push_back(tex1); */
@@ -132,12 +132,10 @@ int main() {
   SceneNode* current_node = nodes[0];
   bool running = true;
   while (running) {
-    auto events = Update(&game);
-    for (auto event : events) {
-      if (event == WindowEvent::kQuit) {
-        running = false;
-        break;
-      }
+    WindowEvent event = StartFrame(&game);
+    if (event == WindowEvent::kQuit) {
+      running = false;
+      break;
     }
 
     DefaultUpdateOrbitCamera(game.input, &camera);

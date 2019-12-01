@@ -232,16 +232,14 @@ int main() {
   ExamplePointLight* editing_point_light = point_lights;
 
   while (running) {
-    auto events = Update(&game);
+    WindowEvent event = StartFrame(&game);
+    if (event == WindowEvent::kQuit) {
+      running = false;
+      break;
+    }
+
     BeginFrame(&imgui, &game.window, &game.time, &game.input);
     Reset(&light_widgets);
-
-    for (auto event : events) {
-      if (event == WindowEvent::kQuit) {
-        running = false;
-        break;
-      }
-    }
 
     // Controls
 

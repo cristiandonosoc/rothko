@@ -169,12 +169,10 @@ int main(int argc, char* argv[]) {
 
   bool running = true;
   while (running) {
-    auto events = Update(&game);
-    for (auto event : events) {
-      if (event == WindowEvent::kQuit) {
-        running = false;
-        break;
-      }
+    WindowEvent event = StartFrame(&game);
+    if (event == WindowEvent::kQuit) {
+      running = false;
+      break;
     }
 
     if (KeyUpThisFrame(game.input, Key::kEscape)) {

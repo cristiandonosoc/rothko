@@ -46,14 +46,13 @@ float Atan(float radian_angle);
 float Atan2(float x, float y);
 
 template <typename T>
-inline T Min(const T& lhs, const T& rhs) { return lhs < rhs ? lhs : rhs; }
+inline constexpr T Min(const T& lhs, const T& rhs) { return lhs < rhs ? lhs : rhs; }
 
 template <typename T>
-inline T Max(const T& lhs, const T& rhs) { return lhs > rhs ? lhs : rhs; }
+inline constexpr T Max(const T& lhs, const T& rhs) { return lhs > rhs ? lhs : rhs; }
 
-
-inline float ToRadians(float degrees) { return degrees * (kPI / 180.0f); }
-inline float ToDegrees(float radians) {
+inline constexpr float ToRadians(float degrees) { return degrees * (kPI / 180.0f); }
+inline float constexpr ToDegrees(float radians) {
   float deg = 180.0f * radians / kPI;
   if (deg < 0.0f)
     deg += 360.0f;
@@ -63,7 +62,7 @@ inline float ToDegrees(float radians) {
 #define IS_EVEN(x) ((x) % 2 == 0)
 #define IS_ODD(x) ((x) % 2 == 1)
 
-// Returns [min, max].
+// Returns [min, max] (INCLUSIVE).
 // TODO(Cristian): Implement a better random.
 inline int Random(int min, int max) {
   int diff = max - min + 1;     // rand() will return [0, diff)
@@ -71,7 +70,7 @@ inline int Random(int min, int max) {
 }
 
 // |t| is interpolation value. t is in the [0, 1] range.
-inline float Lerp(float a, float b, float t) { return (1.0f - t) * a - t * b; }
+inline constexpr float Lerp(float a, float b, float t) { return (1.0f - t) * a - t * b; }
 
 // =================================================================================================
 // Bits
@@ -85,6 +84,41 @@ inline void SetBit(T* reg, int bit) { *reg = *reg | (0b1 << bit); }
 
 template <typename T>
 inline void ClearBit(T* reg, int bit) { *reg = *reg & ~(0b1 << bit); }
+
+template <typename T>
+inline T GetMask(const T& t, const T& shift, const T& mask) { return (t >> shift) & mask; }
+
+template <typename T>
+inline void SetMask(T* t, const T& shift, const T& mask, const T& val) {
+  *t &= ~(mask << shift);
+  *t |= (val & mask) << shift;
+}
+
+#define BIT_FLAG(flag, shift)                                                        \
+  constexpr uint32_t k##flag##Shift = shift;                                         \
+  constexpr uint32_t k##flag = 1u << k##flag##Shift;                                 \
+                                                                                     \
+  inline bool Get##flag(uint32_t t) { return ::rothko::GetBit(t, k##flag##Shift); }  \
+                                                                                     \
+  inline void Set##flag(uint32_t* t, bool v) {                                       \
+    v ? ::rothko::SetBit(t, k##flag##Shift) : ::rothko::ClearBit(t, k##flag##Shift); \
+  }                                                                                  \
+                                                                                     \
+  inline void Set##flag(uint32_t* t) { ::rothko::SetBit(t, k##flag##Shift); }        \
+                                                                                     \
+  inline void Clear##flag(uint32_t* t) { ::rothko::ClearBit(t, k##flag##Shift); }
+
+#define BIT_MASK(flag, shift, mask)                             \
+  constexpr uint32_t k##flag##Shift = shift;                    \
+  constexpr uint32_t k##flag##Mask = mask;                      \
+                                                                \
+  inline uint32_t Get##flag(uint32_t t) {                       \
+    return ::rothko::GetMask(t, k##flag##Shift, k##flag##Mask); \
+  }                                                             \
+                                                                \
+  inline void Set##flag(uint32_t* t, uint32_t value) {          \
+    ::rothko::SetMask(t, k##flag##Shift, k##flag##Mask, value); \
+  }
 
 // =================================================================================================
 // Vectors

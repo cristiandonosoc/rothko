@@ -13,6 +13,7 @@ group("examples") {
       "ozz",
       "scene_graph",
       "simple_lighting",
+      "tetris",
       "textured_lighting",
     ]
   }

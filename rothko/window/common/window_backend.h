@@ -51,7 +51,7 @@ struct WindowBackend {
 
   virtual bool Init(Window*, InitWindowConfig*) = 0;
   virtual void Shutdown() = 0;
-  virtual std::vector<WindowEvent> NewFrame(Window*, Input*) = 0;
+  virtual WindowEvent StartFrame(Window*, Input*) = 0;
 
   // No-op if the window manager doesn't require it.
   virtual void SwapBuffers() {};

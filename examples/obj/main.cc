@@ -72,12 +72,10 @@ int main(int argc, const char* argv[]) {
 
   bool running = true;
   while (running) {
-    auto events = Update(game.get());
-    for (auto event : events) {
-      if (event == WindowEvent::kQuit) {
-        running = false;
-        break;
-      }
+    WindowEvent event = StartFrame(game.get());
+    if (event == WindowEvent::kQuit) {
+      running = false;
+      break;
     }
 
     if (KeyUpThisFrame(game->input, Key::kEscape)) {

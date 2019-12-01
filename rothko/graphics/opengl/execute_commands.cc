@@ -52,7 +52,7 @@ void ValidateRenderCommands(const PerFrameVector<RenderCommand>& commands) {
   }
 
 void SetRenderCommandConfig(const RenderMesh& render_mesh) {
-  if (GetBlendEnabled(render_mesh)) {
+  if (GetBlendEnabled(render_mesh.flags)) {
     glEnable(GL_BLEND);
 
     // TODO(Cristian): Have a way of setting the blend function!!!!!
@@ -62,15 +62,15 @@ void SetRenderCommandConfig(const RenderMesh& render_mesh) {
     glDisable(GL_BLEND);
   }
 
-  SET_GL_CONFIG(GetCullFaces(render_mesh), GL_CULL_FACE);
+  SET_GL_CONFIG(GetCullFaces(render_mesh.flags), GL_CULL_FACE);
   /* glDepthFunc(GL_LESS); */
-  SET_GL_CONFIG(GetDepthTest(render_mesh), GL_DEPTH_TEST);
-  if (GetDepthMask(render_mesh)) {
+  SET_GL_CONFIG(GetDepthTest(render_mesh.flags), GL_DEPTH_TEST);
+  if (GetDepthMask(render_mesh.flags)) {
     glDepthMask(GL_TRUE);
   } else {
     glDepthMask(GL_FALSE);
   }
-  SET_GL_CONFIG(GetScissorTest(render_mesh), GL_SCISSOR_TEST);
+  SET_GL_CONFIG(GetScissorTest(render_mesh.flags), GL_SCISSOR_TEST);
 }
 
 #define RED(c) ((float)((c >> 24) & 0xff) / 255.0f)
@@ -80,8 +80,8 @@ void SetRenderCommandConfig(const RenderMesh& render_mesh) {
 // Clear Frame -------------------------------------------------------------------------------------
 
 void ExecuteClearRenderAction(const ClearFrame& clear) {
-  bool clear_color = GetClearColor(clear);
-  bool clear_depth = GetClearDepth(clear);
+  bool clear_color = GetClearColor(clear.flags);
+  bool clear_depth = GetClearDepth(clear.flags);
   if (!clear_color && !clear_depth)
     return;
 
@@ -235,7 +235,7 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   SetTextures(opengl, shader_handles, render_mesh);
 
   // Scissoring.
-  if (GetScissorTest(render_mesh) &&
+  if (GetScissorTest(render_mesh.flags) &&
       render_mesh.scissor_size.width != 0 && render_mesh.scissor_size.height != 0) {
     glScissor(render_mesh.scissor_pos.x, render_mesh.scissor_pos.y,
               render_mesh.scissor_size.width, render_mesh.scissor_size.height);

@@ -26,6 +26,9 @@ struct Game {
 // WindowType and RendererType must be compatible (ie. both OpenGL, Vulkan, etc.).
 bool InitGame(Game*, InitWindowConfig*, bool log_to_stdout);
 
-PerFrameVector<WindowEvent> Update(Game*);
+WindowEvent StartFrame(Game*);
+
+// Returns false if the game loop should exit.
+bool DefaultGameFrame(Game*, WindowEvent* out_event);
 
 }  // namespace

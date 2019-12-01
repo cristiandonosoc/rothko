@@ -43,12 +43,12 @@ std::string ToString(const ClearFrame& clear_frame) {
   std::stringstream ss;
   ss << std::boolalpha;
 
-  bool clear_color = GetClearColor(clear_frame);
+  bool clear_color = GetClearColor(clear_frame.flags);
   ss << "Clear Color :" << clear_color;
   if (clear_color)
     ss << " (color: " << std::hex << clear_frame.color << ")";
 
-  ss << ", Clear depth: " << GetClearDepth(clear_frame);
+  ss << ", Clear depth: " << GetClearDepth(clear_frame.flags);
 
   return ss.str();
 }
@@ -112,16 +112,16 @@ std::string ToString(const RenderMesh& render_mesh) {
   if (!render_mesh.textures.empty())
     ss << std::endl;
 
-  if (GetScissorTest(render_mesh)) {
+  if (GetScissorTest(render_mesh.flags)) {
     ss << "Scissor= Pos: " << ToString(render_mesh.scissor_pos)
        << ", Size: " << ToString(render_mesh.scissor_size) << std::endl;
   }
 
-  ss << "Blend: " << GetBlendEnabled(render_mesh) << ", "
-     << "Cull Faces: " << GetCullFaces(render_mesh) << ", "
-     << "Depth mask: " << GetDepthMask(render_mesh) << ", "
-     << "Depth test: " << GetDepthTest(render_mesh) << ", "
-     << "Wireframe: " << GetWireframeMode(render_mesh);
+  ss << "Blend: " << GetBlendEnabled(render_mesh.flags) << ", "
+     << "Cull Faces: " << GetCullFaces(render_mesh.flags) << ", "
+     << "Depth mask: " << GetDepthMask(render_mesh.flags) << ", "
+     << "Depth test: " << GetDepthTest(render_mesh.flags) << ", "
+     << "Wireframe: " << GetWireframeMode(render_mesh.flags);
 
   return ss.str();
 };

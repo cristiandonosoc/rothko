@@ -275,12 +275,10 @@ int main() {
   /* float time_delta = 0; */
   while (running) {
     // Frame start.
-    auto events = Update(&game);
-    for (auto event : events) {
-      if (event == WindowEvent::kQuit) {
-        running = false;
-        break;
-      }
+    WindowEvent event = StartFrame(&game);
+    if (event == WindowEvent::kQuit) {
+      running = false;
+      break;
     }
 
     BeginFrame(&imgui, &game.window, &game.time, &game.input);

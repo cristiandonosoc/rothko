@@ -27,30 +27,6 @@ struct Mesh;
 struct Shader;
 struct Texture;
 
-#define BIT_FLAG(flag, shift)                                                    \
-  constexpr uint32_t k##flag##Shift = shift;                                     \
-  constexpr uint32_t k##flag = 1u << k##flag##Shift;                             \
-                                                                                 \
-  template <typename T>                                                          \
-  inline bool Get##flag(const T& t) {                                            \
-    return GetBit(t.flags, k##flag##Shift);                                      \
-  }                                                                              \
-                                                                                 \
-  template <typename T>                                                          \
-  inline void Set##flag(T* t, bool v) {                                          \
-    v ? SetBit(&t->flags, k##flag##Shift) : ClearBit(&t->flags, k##flag##Shift); \
-  }                                                                              \
-                                                                                 \
-  template <typename T>                                                          \
-  inline void Set##flag(T* t) {                                                  \
-    SetBit(&t->flags, k##flag##Shift);                                           \
-  }                                                                              \
-                                                                                 \
-  template <typename T>                                                          \
-  inline void Clear##flag(T* t) {                                                \
-    ClearBit(&t->flags, k##flag##Shift);                                         \
-  }
-
 // Render Actions ----------------------------------------------------------------------------------
 
 enum class RenderCommandType {

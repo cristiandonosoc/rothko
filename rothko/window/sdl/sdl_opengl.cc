@@ -174,11 +174,6 @@ bool SDLOpenGLWindow::Init(Window* w, InitWindowConfig* config) {
 
 namespace {
 
-void PushEvent(SDLOpenGLWindow* sdl, WindowEvent event) {
-  ASSERT(sdl->event_index < ARRAY_SIZE(sdl->events));
-  sdl->events[sdl->event_index++] = event;
-}
-
 void PushUtf8Char(SDLOpenGLWindow* sdl, char c) {
   Window* window = sdl->window;
   ASSERT(window->utf8_index < ARRAY_SIZE(window->utf8_chars_inputted));
@@ -192,34 +187,32 @@ void ResetUtf8(Window* window) {
   window->utf8_index = 0;
 }
 
-void HandleWindowEvent(const SDL_WindowEvent& window_event,
-                       SDLOpenGLWindow* sdl) {
+NO_DISCARD WindowEvent HandleWindowEvent(const SDL_WindowEvent& window_event) {
   // Fow now we're interested in window changed.
-  if (window_event.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-    PushEvent(sdl, WindowEvent::kWindowResize);
-  }
+  if (window_event.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+    return WindowEvent::kWindowResize;
+  return WindowEvent::kNone;
 }
 
-std::vector<WindowEvent>
-SDLOpenGLNewFrame(SDLOpenGLWindow *sdl, Window *window, Input *input) {
+WindowEvent SDLOpenGLStartFrame(SDLOpenGLWindow* sdl, Window* window, Input* input) {
   (void)window;
   ASSERT(Valid(sdl));
 
   // Restart the state.
-  sdl->event_index = 0;
   ResetUtf8(sdl->window);
 
   NewFrame(input);  // We do the frame flip.
 
   // Handle events.
   SDL_Event event;
+  WindowEvent window_event = WindowEvent::kNone;
   while (SDL_PollEvent(&event)) {
     input->event_count++;
     switch (event.type) {
-      case SDL_QUIT: PushEvent(sdl, WindowEvent::kQuit); break;
+      case SDL_QUIT: return WindowEvent::kQuit;
       case SDL_KEYUP: HandleKeyUpEvent(event.key, input); break;
       case SDL_MOUSEWHEEL: HandleMouseWheelEvent(event.wheel, input); break;
-      case SDL_WINDOWEVENT: HandleWindowEvent(event.window, sdl); break;
+      case SDL_WINDOWEVENT: window_event = HandleWindowEvent(event.window); break;
       case SDL_TEXTINPUT: {
         // event.text.text is a char[32].
         for (char c : event.text.text) {
@@ -237,23 +230,13 @@ SDLOpenGLNewFrame(SDLOpenGLWindow *sdl, Window *window, Input *input) {
   HandleKeysDown(input);
   HandleMouse(input);
 
-  // Chain the events into a linked list.
-  if (sdl->event_index == 0)
-    return {};
-
-  std::vector<WindowEvent> event_list;
-  event_list.reserve(sdl->event_index);
-  for (int i = 0; i < sdl->event_index; i++) {
-    event_list.push_back(sdl->events[i]);
-  }
-  return event_list;
+  return window_event;
 }
 
 }  // namespace
 
-std::vector<WindowEvent>
-SDLOpenGLWindow::NewFrame(Window* w, Input* input) {
-  return SDLOpenGLNewFrame(this, w, input);
+WindowEvent SDLOpenGLWindow::StartFrame(Window* w, Input* input) {
+  return SDLOpenGLStartFrame(this, w, input);
 }
 
 // SwapBuffers -------------------------------------------------------------------------------------

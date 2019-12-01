@@ -89,6 +89,34 @@ TEST_CASE("Bits") {
   }
 }
 
+TEST_CASE("Mask") {
+  SECTION("Get") {
+    uint32_t bits = 0x12348a0f;
+
+    CHECK(GetMask(bits,  0u, 0xfu) == 0xf);
+    CHECK(GetMask(bits,  0u, 0b11u) == 0b11);
+    CHECK(GetMask(bits,  4u, 0xfu) == 0x0);
+    CHECK(GetMask(bits,  8u, 0xfu) == 0xa);
+    CHECK(GetMask(bits, 12u, 0xfu) == 0x8);
+    CHECK(GetMask(bits, 16u, 0xfu) == 0x4);
+    CHECK(GetMask(bits, 20u, 0xfu) == 0x3);
+    CHECK(GetMask(bits, 24u, 0xfu) == 0x2);
+    CHECK(GetMask(bits, 28u, 0xfu) == 0x1);
+  }
+
+  SECTION("Set") {
+    uint32_t test = 0;
+    test = 0; SetMask(&test,  0u, 0xfu, 0xfu); CHECK(test == 0x0000000f);
+    test = 0; SetMask(&test,  4u, 0xfu, 0xfu); CHECK(test == 0x000000f0);
+    test = 0; SetMask(&test,  8u, 0xfu, 0xfu); CHECK(test == 0x00000f00);
+    test = 0; SetMask(&test, 12u, 0xfu, 0xfu); CHECK(test == 0x0000f000);
+    test = 0; SetMask(&test, 16u, 0xfu, 0xfu); CHECK(test == 0x000f0000);
+    test = 0; SetMask(&test, 20u, 0xfu, 0xfu); CHECK(test == 0x00f00000);
+    test = 0; SetMask(&test, 24u, 0xfu, 0xfu); CHECK(test == 0x0f000000);
+    test = 0; SetMask(&test, 28u, 0xfu, 0xfu); CHECK(test == 0xf0000000);
+  }
+}
+
 TEST_CASE("Vec2")
 {
   SECTION("ADDITION") {

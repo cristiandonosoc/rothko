@@ -75,9 +75,9 @@ void ShutdownWindow(Window* window) {
 
 // UpdateWindow ------------------------------------------------------------------------------------
 
-std::vector<WindowEvent> NewFrame(Window* window, Input* input) {
+WindowEvent StartFrame(Window* window, Input* input) {
   ASSERT(Valid(window));
-  return window->backend->NewFrame(window, input);
+  return window->backend->StartFrame(window, input);
 }
 
 // WindowSwapBuffers -------------------------------------------------------------------------------

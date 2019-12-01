@@ -3,7 +3,8 @@
 
 #pragma once
 
-// Define OS
+// Platform/Compiler definitions -------------------------------------------------------------------
+
 #ifdef _WIN32
 #define WINDOWS 1
 #endif
@@ -34,6 +35,8 @@
 #define CLANG 1
 #endif
 
+// No discard --------------------------------------------------------------------------------------
+
 // [[nodiscard]]
 #if defined(MSVC) && _MSC_VER >= 1911
 #define NO_DISCARD [[nodiscard]]
@@ -42,6 +45,8 @@
 #else
 #define NO_DISCARD
 #endif
+
+// Bit flags accessors -----------------------------------------------------------------------------
 
 // Hack to have variadic macros work with 0 arguments.
 #define VA_ARGS(...) , ##__VA_ARGS__

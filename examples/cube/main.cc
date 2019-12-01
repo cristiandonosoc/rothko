@@ -174,7 +174,7 @@ GetRenderCommands(Mesh* mesh, Shader* shader, Texture* tex0, Texture* tex1) {
   render_mesh.mesh = mesh;
   render_mesh.shader = shader;
   render_mesh.primitive_type = PrimitiveType::kTriangles;
-  ClearCullFaces(&render_mesh);
+  ClearCullFaces(&render_mesh.flags);
   render_mesh.indices_count = mesh->indices.size();
   render_mesh.ubo_data[0] = (uint8_t*)&ubos[0];
   render_mesh.textures.push_back(tex1);
@@ -304,12 +304,10 @@ int main() {
 
     // Update --------------------------------------------------------------------------------------
 
-    auto events = NewFrame(&window, &input);
-    for (auto event : events) {
-      if (event == WindowEvent::kQuit) {
-        running = false;
-        break;
-      }
+    WindowEvent event = StartFrame(&window, &input);
+    if (event == WindowEvent::kQuit) {
+      running = false;
+      break;
     }
 
     if (KeyUpThisFrame(input, Key::kEscape)) {
@@ -321,40 +319,40 @@ int main() {
     RendererStartFrame(renderer.get());
     BeginFrame(&imgui, &window, &time, &input);
 
-    constexpr float kMouseSensibility = 0.007f;
-    static float kMaxPitch = ToRadians(89.0f);
-    if (!imgui.mouse_captured) {
-      if (input.mouse.right) {
-        if (!IsZero(input.mouse_offset)) {
-          camera.angles.x -= input.mouse_offset.y * kMouseSensibility;
-          if (camera.angles.x > kMaxPitch) {
-            camera.angles.x = kMaxPitch;
-          } else if (camera.angles.x < -kMaxPitch) {
-            camera.angles.x = -kMaxPitch;
-          }
+    /* constexpr float kMouseSensibility = 0.007f; */
+    /* static float kMaxPitch = ToRadians(89.0f); */
+    /* if (!imgui.mouse_captured) { */
+    /*   if (input.mouse.right) { */
+    /*     if (!IsZero(input.mouse_offset)) { */
+    /*       camera.angles.x -= input.mouse_offset.y * kMouseSensibility; */
+    /*       if (camera.angles.x > kMaxPitch) { */
+    /*         camera.angles.x = kMaxPitch; */
+    /*       } else if (camera.angles.x < -kMaxPitch) { */
+    /*         camera.angles.x = -kMaxPitch; */
+    /*       } */
 
-          camera.angles.y += input.mouse_offset.x * kMouseSensibility;
-          if (camera.angles.y > kRadians360) {
-            camera.angles.y -= kRadians360;
-          } else if (camera.angles.y < 0) {
-            camera.angles.y += kRadians360;
-          }
-        }
-      }
+    /*       camera.angles.y += input.mouse_offset.x * kMouseSensibility; */
+    /*       if (camera.angles.y > kRadians360) { */
+    /*         camera.angles.y -= kRadians360; */
+    /*       } else if (camera.angles.y < 0) { */
+    /*         camera.angles.y += kRadians360; */
+    /*       } */
+    /*     } */
+    /*   } */
 
-      // Zoom.
-      if (input.mouse.wheel.y != 0) {
-        // We actually want to advance a percentage of the distance.
-        camera.distance -= input.mouse.wheel.y * camera.distance * camera.zoom_speed;
-        if (camera.distance < 0.5f)
-          camera.distance = 0.5f;
-      }
-    }
+    /*   // Zoom. */
+    /*   if (input.mouse.wheel.y != 0) { */
+    /*     // We actually want to advance a percentage of the distance. */
+    /*     camera.distance -= input.mouse.wheel.y * camera.distance * camera.zoom_speed; */
+    /*     if (camera.distance < 0.5f) */
+    /*       camera.distance = 0.5f; */
+    /*   } */
+    /* } */
 
-    Update(&camera);
-    push_camera.camera_pos = camera.pos_;
-    push_camera.view = GetView(camera);
-    push_camera.projection = GetProjection(camera);
+    /* Update(&camera); */
+    /* push_camera.camera_pos = camera.pos_; */
+    /* push_camera.view = GetView(camera); */
+    /* push_camera.projection = GetProjection(camera); */
 
     // Create GUI ----------------------------------------------------------------------------------
 
@@ -391,6 +389,10 @@ int main() {
         ToDegrees(camera.angles.y),
       };
       ImGui::InputFloat2("Camera angles", deg_angles);
+
+      camera.angles.x = ToRadians(deg_angles[0]);
+      camera.angles.y = ToRadians(deg_angles[1]);
+
       ImGui::InputFloat3("Camera pos (fixed)", (float*)&camera_pos);
 
       ImGui::Separator();
@@ -425,6 +427,10 @@ int main() {
       ImGui::End();
     }
 
+    DefaultUpdateOrbitCamera(input, &camera);
+    push_camera = GetPushCamera(camera);
+
+
     // Generate render commands --------------------------------------------------------------------
 
     PerFrameVector<RenderCommand> commands;
@@ -438,7 +444,7 @@ int main() {
     // Set the camera.
     commands.push_back(push_camera);
 
-    commands.push_back(GetRenderCommand(line_manager));
+    /* commands.push_back(GetRenderCommand(line_manager)); */
     commands.push_back(grid.render_command);
 
     // Config the renderer for the axis.
@@ -458,13 +464,13 @@ int main() {
     commands.push_back(GetPushCamera(axis_camera, ProjectionType::kOrthographic));
     commands.push_back(GetRenderCommand(axis_widget));
 
-    /* Mat4 identity = Mat4::Identity(); */
-    ImGuizmo::Manipulate((float*)&push_camera.view,
-                         (float*)&push_camera.projection,
-                         imguizmo_operation,
-                         imguizmo_mode,
-                         (float*)&ubos[0]);
-                         /* (float*)&identity); */
+    /* /1* Mat4 identity = Mat4::Identity(); *1/ */
+    /* ImGuizmo::Manipulate((float*)&push_camera.view, */
+    /*                      (float*)&push_camera.projection, */
+    /*                      imguizmo_operation, */
+    /*                      imguizmo_mode, */
+    /*                      (float*)&ubos[0]); */
+    /*                      /1* (float*)&identity); *1/ */
 
     commands.push_back(PopConfig());
     commands.push_back(PopCamera());

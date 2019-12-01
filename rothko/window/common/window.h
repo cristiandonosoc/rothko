@@ -92,11 +92,12 @@ void ShutdownWindow(Window*);
 // TODO(Cristian): Once the container situation has been figured out, return
 //                 these as a container instead of an out array.
 enum class WindowEvent : uint32_t {
+  kNone,
   kQuit,
   kWindowResize,
   kLast,
 };
-std::vector<WindowEvent> NewFrame(Window*, Input*);
+WindowEvent StartFrame(Window*, Input*);
 
 // Some window managers have an explicit call for swapping buffers, notably
 // OpenGL. Since each window manager is different, we let the backend take

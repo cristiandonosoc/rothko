@@ -30,11 +30,24 @@ bool InitGame(Game* game, InitWindowConfig* window_config, bool log_to_stdout) {
   return true;
 }
 
-PerFrameVector<WindowEvent> Update(Game* game) {
-  auto events = NewFrame(&game->window, &game->input);
+WindowEvent StartFrame(Game* game) {
+  WindowEvent event = StartFrame(&game->window, &game->input);
   Update(&game->time);
   RendererStartFrame(game->renderer.get());
-  return events;
+  return event;
+}
+
+bool DefaultGameFrame(Game* game, WindowEvent* out_event) {
+  *out_event = StartFrame(game);
+  if (*out_event == WindowEvent::kQuit)
+    return false;
+
+  if (KeyUpThisFrame(game->input, Key::kEscape)) {
+    *out_event = WindowEvent::kQuit;
+    return false;
+  }
+
+  return true;
 }
 
 }  // namespace rothko
