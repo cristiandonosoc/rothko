@@ -13,6 +13,7 @@
 namespace rothko {
 
 struct Shader;
+struct Texture;
 struct Window;
 
 namespace opengl {
@@ -48,6 +49,8 @@ struct OpenGLRendererBackend {
   std::map<uint32_t, MeshHandles> loaded_meshes;
   std::map<uint32_t, ShaderHandles> loaded_shaders;
   std::map<uint32_t, TextureHandles> loaded_textures;
+
+  std::unique_ptr<Texture> white_texture;
 
   CameraData cameras[8] = {};
   int camera_index = -1;

@@ -97,6 +97,22 @@ Gl3wInitResultToString(int res) {
 
 std::unique_ptr<OpenGLRendererBackend> gBackend;
 
+std::unique_ptr<Texture> CreateWhiteTexture(OpenGLRendererBackend* opengl) {
+  auto texture = std::make_unique<Texture>();
+  texture->name = "opengl-default-white";
+  texture->type = TextureType::kRGBA;
+  texture->size = {1, 1};
+  texture->mipmaps = 0;
+  texture->min_filter = TextureFilterMode::kNearest;
+  texture->mag_filter = TextureFilterMode::kNearest;
+  texture->data = std::make_unique<uint8_t[]>(sizeof(uint32_t));
+  *(uint32_t*)texture->data.get() = ToUint32(Color::White());
+
+  if (!OpenGLStageTexture(opengl, texture.get()))
+    return nullptr;
+  return texture;
+}
+
 }  // namespace
 
 OpenGLRendererBackend* GetOpenGL() {
@@ -131,7 +147,7 @@ std::unique_ptr<Renderer> InitRenderer() {
   }
 #endif
 
-  glLineWidth(3);
+  glLineWidth(2);
   glEnable(GL_PRIMITIVE_RESTART);
   glPrimitiveRestartIndex(line_strip::kPrimitiveReset);
 
@@ -139,6 +155,11 @@ std::unique_ptr<Renderer> InitRenderer() {
 
   auto renderer = std::make_unique<Renderer>();
   renderer->renderer_type = "OpenGL";
+
+  // Load the white texture.
+  gBackend->white_texture = CreateWhiteTexture(gBackend.get());
+  ASSERT(gBackend->white_texture);
+
   return renderer;
 }
 

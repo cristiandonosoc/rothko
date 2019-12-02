@@ -10,8 +10,6 @@
 namespace rothko {
 namespace textured_lighting {
 
-#define FLOAT_PAD() float STRINGIFY(__pad_, __LINE__)
-
 // Spot Light Shader -------------------------------------------------------------------------------
 
 struct SpotLightShaderUBO {

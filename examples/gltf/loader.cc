@@ -343,37 +343,23 @@ std::vector<uint32_t> ObtainIndices(const uint8_t* data, uint32_t count) {
   return indices;
 }
 
-
 std::vector<uint32_t> ExtractIndices(const tinygltf::Model& model,
-                                    const tinygltf::Primitive& primitive) {
+                                     const tinygltf::Primitive& primitive) {
   const tinygltf::Accessor& accessor = model.accessors[primitive.indices];
   uint32_t index_count = accessor.count;
-
-  /* printf("Indices. Index: %d, Count: %zu, bufferView: %d\n", */
-  /*        primitive.indices, */
-  /*        accessor.count, */
-  /*        accessor.bufferView); */
 
   ComponentType component_type = (ComponentType)accessor.componentType;
   ASSERT(component_type == ComponentType::kUint16 || component_type == ComponentType::kUInt32);
   LOG(App, "Index component type: %s", ToString(component_type));
 
   const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
-
-  /* printf("BufferView. byteOffset: %zu, byteLength: %zu\n", */
-  /*        buffer_view.byteOffset, */
-  /*        buffer_view.byteLength); */
-
   const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
-
 
   const uint8_t* data = (const uint8_t*)buffer.data.data();
   data += buffer_view.byteOffset;
 
-  /* printf("Original: 0x%p. Data: 0x%p\n", buffer.data.data(), data); */
-
-  return component_type == ComponentType::kUint16 ? ObtainIndices<uint16_t>(data, index_count) :
-                                                    ObtainIndices<uint32_t>(data, index_count);
+  return component_type == ComponentType::kUint16 ? ObtainIndices<uint16_t>(data, index_count)
+                                                  : ObtainIndices<uint32_t>(data, index_count);
 }
 
 Vec3 NodeToVec3(const double* d) { return {(float)d[0], (float)d[1], (float)d[2]}; }
@@ -393,18 +379,16 @@ NO_DISCARD Transform ProcessNodeTransform(const tinygltf::Node& node) {
   return transform;
 }
 
-Material* HandleMaterial(const tinygltf::Model& model,
-                    const tinygltf::Primitive& primitive,
+Texture* LoadTexture(const tinygltf::Model& model,
+                    const tinygltf::Material& material,
                     Model* out_model) {
-  auto material_it = out_model->materials.find(primitive.material);
-  if (material_it != out_model->materials.end())
-    return material_it->second.get();
-
-  const tinygltf::Material& material = model.materials[primitive.material];
+  int texture_index = material.pbrMetallicRoughness.baseColorTexture.index;
+  if (texture_index == -1)
+    return nullptr;
 
   // Load the related texture.
   Texture* texture_ptr = nullptr;
-  auto texture_it = out_model->textures.find(material.pbrMetallicRoughness.baseColorTexture.index);
+  auto texture_it = out_model->textures.find(texture_index);
   if (texture_it != out_model->textures.end()) {
     texture_ptr = texture_it->second.get();
   } else {
@@ -433,9 +417,21 @@ Material* HandleMaterial(const tinygltf::Model& model,
     out_model->textures[base_texture.source] = std::move(rothko_texture);
   }
 
+  return texture_ptr;
+}
+
+Material* HandleMaterial(const tinygltf::Model& model,
+                    const tinygltf::Primitive& primitive,
+                    Model* out_model) {
+  auto material_it = out_model->materials.find(primitive.material);
+  if (material_it != out_model->materials.end())
+    return material_it->second.get();
+
+  const tinygltf::Material& material = model.materials[primitive.material];
+
   auto rothko_material = std::make_unique<Material>();
 
-  rothko_material->base_texture = texture_ptr;
+  rothko_material->base_texture = LoadTexture(model, material, out_model);
   ASSERT(material.pbrMetallicRoughness.baseColorFactor.size() == 4u);
   rothko_material->base_color.r = material.pbrMetallicRoughness.baseColorFactor[0];
   rothko_material->base_color.g = material.pbrMetallicRoughness.baseColorFactor[1];
@@ -475,6 +471,34 @@ NodeContext ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node
 
     auto [vertices, min, max] = ExtractVertices(model, primitive);
     uint32_t vertex_count = vertices.size() / ToSize(vertex_type);
+
+    // TODO(Cristian): Right now we handle only k3dNormalUV;
+    if (vertex_type == VertexType::k3dNormalTangentUV) {
+      // We transform the vertices into the supported vertex format.
+      std::vector<uint8_t> new_vertices;
+      new_vertices.reserve(sizeof(Vertex3dNormalUV) * vertex_count);
+
+      const auto* vertex_ptr = (const Vertex3dNormalTangentUV*)vertices.data();
+      for (uint32_t i = 0; i < vertex_count; i++) {
+        Vertex3dNormalUV vertex = {};
+        vertex.pos = vertex_ptr->pos;
+        vertex.normal = vertex_ptr->normal;
+        vertex.uv = vertex_ptr->uv;
+
+        uint8_t* ptr = (uint8_t*)&vertex;
+        for (uint32_t j = 0; j < sizeof(vertex); j++) {
+          new_vertices.emplace_back(*ptr++);
+        }
+
+        /* new_vertices.emplace_back(std::move(vertex)); */
+        vertex_ptr++;
+      }
+      vertices = std::move(new_vertices);
+      vertex_type = VertexType::k3dNormalUV;
+    } else if (vertex_type != VertexType::k3dNormalUV) {
+      NOT_REACHED_MSG("Unsupported vertex type: %s", ToString(vertex_type));
+      return {};
+    }
 
     std::vector<uint32_t> indices = ExtractIndices(model, primitive);
 

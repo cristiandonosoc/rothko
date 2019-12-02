@@ -18,6 +18,10 @@ struct ModelUBO {
   struct Node {
     Mat4 transform;
   } node;
+
+  struct Frag {
+    Vec4 base_color;
+  };
 };
 
 std::unique_ptr<Shader> CreateModelShader(Renderer*);

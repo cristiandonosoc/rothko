@@ -164,6 +164,7 @@ int main(int argc, const char* argv[]) {
 
       render_mesh.ubo_data[0] = (uint8_t*)&model_transform;
       render_mesh.ubo_data[1] = (uint8_t*)&node.transform.world_matrix;
+      render_mesh.ubo_data[2] = (uint8_t*)&node.material->base_color;
       render_mesh.textures = {node.material->base_texture};
 
       commands.push_back(std::move(render_mesh));

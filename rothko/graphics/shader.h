@@ -13,6 +13,9 @@
 
 namespace rothko {
 
+// Useful macros for padding UBO structs to conform to layout std140.
+#define FLOAT_PAD() float STRINGIFY(__pad_, __LINE__)
+
 struct Renderer;
 
 // Shader
