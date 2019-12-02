@@ -204,6 +204,16 @@ struct RenderCommand {
   }
 };
 
+template <typename Commands, typename T>
+void PushCommand(Commands* commands, T command) {
+  commands->push_back(std::move(command));
+}
+
+template <typename Commands, typename T>
+void PushCommands(Commands* commands, const T& container) {
+  commands->insert(commands->end(), container.begin(), container.end());
+}
+
 std::string ToString(const RenderCommand&);
 
 }  // namespace rothko

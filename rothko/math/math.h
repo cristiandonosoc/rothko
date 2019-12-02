@@ -108,9 +108,9 @@ inline void SetMask(T* t, const T& shift, const T& mask, const T& val) {
                                                                                      \
   inline void Clear##flag(uint32_t* t) { ::rothko::ClearBit(t, k##flag##Shift); }
 
-#define BIT_MASK(flag, shift, mask)                             \
+#define BIT_MASK(flag, shift, size)                             \
   constexpr uint32_t k##flag##Shift = shift;                    \
-  constexpr uint32_t k##flag##Mask = mask;                      \
+  constexpr uint32_t k##flag##Mask = ((1 << size) - 1);         \
                                                                 \
   inline uint32_t Get##flag(uint32_t t) {                       \
     return ::rothko::GetMask(t, k##flag##Shift, k##flag##Mask); \
@@ -198,6 +198,16 @@ Vec2 Normalize(const Vec2& v);
 
 template <typename T>
 inline float Sum(const _v2<T>& v) { return v.x + v.y; }
+
+template <typename T>
+inline _v2<T> Min(const _v2<T>& lhs, const _v2<T>& rhs) {
+  return {Min(lhs.x, rhs.x), Min(lhs.y, rhs.y)};
+}
+
+template <typename T>
+inline _v2<T> Max(const _v2<T>& lhs, const _v2<T>& rhs) {
+  return {Max(lhs.x, rhs.x), Max(lhs.y, rhs.y)};
+}
 
 inline Int2 ToInt2(const Vec2& v) { return {(int)v.x, (int)v.y}; }
 

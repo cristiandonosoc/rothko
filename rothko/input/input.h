@@ -5,28 +5,78 @@
 
 #include <stdint.h>
 
-#include "rothko/math/math.h"
 #include "rothko/logging/logging.h"
+#include "rothko/math/math.h"
+#include "rothko/utils/macros.h"
 
 namespace rothko {
 
 #define GET_KEY(key) ((uint8_t)::rothko::Key::k##key)
 
 enum class Key : uint32_t {
-  kUp, kDown, kLeft, kRight,
-  kA, kB, kC, kD, kE, kF, kG, kH, kI, kJ, kK, kL, kM, kN, kEnhe /* Ñ */, kO, kP,
-  kQ, kR, kS, kT, kU, kV, kW, kX, kY, kZ,
-  k0, k1, k2, k3, k4, k5, k6, k7, k8, k9,
+  kUp,
+  kDown,
+  kLeft,
+  kRight,
+  kA,
+  kB,
+  kC,
+  kD,
+  kE,
+  kF,
+  kG,
+  kH,
+  kI,
+  kJ,
+  kK,
+  kL,
+  kM,
+  kN,
+  kEnhe /* Ñ */,
+  kO,
+  kP,
+  kQ,
+  kR,
+  kS,
+  kT,
+  kU,
+  kV,
+  kW,
+  kX,
+  kY,
+  kZ,
+  k0,
+  k1,
+  k2,
+  k3,
+  k4,
+  k5,
+  k6,
+  k7,
+  k8,
+  k9,
   kBackquote,
-  kPageUp, kPageDown, kHome, kEnd, kInsert, kDelete,
-  kBackspace, kSpace, kEnter, kEscape,
-  kTab, kCtrl, kAlt, kShift, kSuper /* windows key */,
+  kPageUp,
+  kPageDown,
+  kHome,
+  kEnd,
+  kInsert,
+  kDelete,
+  kBackspace,
+  kSpace,
+  kEnter,
+  kEscape,
+  kTab,
+  kCtrl,
+  kAlt,
+  kShift,
+  kSuper /* windows key */,
   kLast,  // Not a key, used to verify the input buffer size.
 };
 const char* ToString(Key);
 
 constexpr uint32_t kMaxKeys = 128;
-static_assert((uint32_t)Key::kLast < kMaxKeys);
+/* static_assert((uint32_t)Key::kLast < kMaxKeys); */
 
 // Represents the input state for a frame.
 // Currently there is only support for one set of input.
@@ -59,8 +109,8 @@ struct Input {
 
 void NewFrame(Input*);
 
-bool KeyDown(const Input&, Key key);
-bool KeyDownThisFrame(const Input&, Key key);
-bool KeyUpThisFrame(const Input&, Key key);
+NO_DISCARD bool KeyDown(const Input&, Key key);
+NO_DISCARD bool KeyDownThisFrame(const Input&, Key key);
+NO_DISCARD bool KeyUpThisFrame(const Input&, Key key);
 
 }  // rothko
