@@ -91,6 +91,7 @@ bool Init(LineManager* lines,
   lines->strip_mesh.name = StringPrintf("%s-mesh", lines->name.c_str());
 
   lines->render_command_ = {};
+  /* ClearDepthTest(&lines->render_command_.flags); */
   lines->render_command_.mesh = &lines->strip_mesh;
   lines->render_command_.shader = lines->shader;
   lines->render_command_.primitive_type = PrimitiveType::kLineStrip;

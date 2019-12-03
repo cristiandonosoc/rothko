@@ -298,6 +298,16 @@ float Length(const _v3<T>& v) { return Sqrt(LengthSq(v)); }
 template <typename T, typename Func>
 _v3<T> Map(const _v3<T>& v, Func f) { return _v3<T>(f(v.x), f(v.y), f(v.z)); }
 
+template <typename T>
+inline _v3<T> Min(const _v3<T>& lhs, const _v3<T>& rhs) {
+  return {Min(lhs.x, rhs.x), Min(lhs.y, rhs.y), Min(lhs.z, rhs.z)};
+}
+
+template <typename T>
+inline _v3<T> Max(const _v3<T>& lhs, const _v3<T>& rhs) {
+  return {Max(lhs.x, rhs.x), Max(lhs.y, rhs.y), Max(lhs.z, rhs.z)};
+}
+
 Vec3 Normalize(const Vec3& v);
 
 template <typename T>
@@ -370,6 +380,16 @@ T LengthSq(const _v4<T>& v) { return Dot(v, v); }
 
 template <typename T>
 float Length(const _v4<T>& v) { return Sqrt(LengthSq(v)); }
+
+template <typename T>
+inline _v4<T> Min(const _v4<T>& lhs, const _v4<T>& rhs) {
+  return {Min(lhs.x, rhs.x), Min(lhs.y, rhs.y), Min(lhs.z, rhs.z), Min(lhs.w, rhs.w)};
+}
+
+template <typename T>
+inline _v4<T> Max(const _v4<T>& lhs, const _v4<T>& rhs) {
+  return {Max(lhs.x, rhs.x), Max(lhs.y, rhs.y), Max(lhs.z, rhs.z), Max(lhs.w, rhs.w)};
+}
 
 Vec4 Normalize(const Vec4& v);
 

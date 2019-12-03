@@ -6,11 +6,11 @@
 #include <rothko/graphics/graphics.h>
 #include <rothko/graphics/vertices.h>
 #include <rothko/logging/logging.h>
+#include <rothko/scene/scene_graph.h>
 #include <rothko/utils/strings.h>
 #include <third_party/tiny_gltf/tiny_gltf.h>
 
-#include <rothko/scene/scene_graph.h>
-
+#include <set>
 #include <sstream>
 
 namespace rothko {
@@ -29,6 +29,10 @@ struct ProcessingContext {
 
   std::unique_ptr<SceneGraph> scene_graph;
   std::vector<NodeContext> scene_nodes;
+
+  // Set of meshes we have already seen. These are NOT the rothko meshes that are outputted (those
+  // are the set of primitives contained by the meshes processes here).
+  std::set<int> processes_meshes;
 };
 
 enum class BufferViewTarget : int {
@@ -254,8 +258,9 @@ VerticesExtraction ExtractVertices(const tinygltf::Model& model,
   std::vector<uint8_t> vertices;
   vertices.resize(vertices_size);   // We're going to overwrite the contents.
 
-  Vec3 min_pos = {};
-  Vec3 max_pos = {};
+  constexpr float kMaxBound = 10000;
+  Vec3 min_pos = {kMaxBound, kMaxBound, kMaxBound};
+  Vec3 max_pos = {-kMaxBound, -kMaxBound, -kMaxBound};
 
   // Accessors are already sorted to where they are in the buffer.
   uint32_t component_offset = 0;
@@ -275,12 +280,12 @@ VerticesExtraction ExtractVertices(const tinygltf::Model& model,
         (const uint8_t*)buffer.data.data() + buffer_view.byteOffset + accessor->byteOffset;
     const uint8_t* buffer_end = (const uint8_t*)buffer.data.data() + buffer.data.size();
 
-    LOG(App,
-        "Component %s -> Buffer View: %u, Buffer: %u, Offset: %u",
-        ToString(vert_component),
-        accessor->bufferView,
-        buffer_view.buffer,
-        component_offset);
+    /* LOG(App, */
+    /*     "Component %s -> Buffer View: %u, Buffer: %u, Offset: %u", */
+    /*     ToString(vert_component), */
+    /*     accessor->bufferView, */
+    /*     buffer_view.buffer, */
+    /*     component_offset); */
 
     // Copy over the data to the buffer.
     /* LOG(App, "Writing accessor %s", ToString(accessor_it->first)); */
@@ -350,7 +355,7 @@ std::vector<uint32_t> ExtractIndices(const tinygltf::Model& model,
 
   ComponentType component_type = (ComponentType)accessor.componentType;
   ASSERT(component_type == ComponentType::kUint16 || component_type == ComponentType::kUInt32);
-  LOG(App, "Index component type: %s", ToString(component_type));
+  /* LOG(App, "Index component type: %s", ToString(component_type)); */
 
   const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
   const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
@@ -443,10 +448,10 @@ Material* HandleMaterial(const tinygltf::Model& model,
   return material_ptr;
 }
 
-NodeContext ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node,
-                        const NodeContext& parent, ProcessingContext* context) {
-  LOG(App, "Processing Node %s", node.name.c_str());
-
+NodeContext ProcessNode(const tinygltf::Model& model,
+                        const tinygltf::Node& node,
+                        const NodeContext& parent,
+                        ProcessingContext* context) {
   auto& scene_node = context->model->nodes.emplace_back();
   SceneNode* current_node = AddNode(context->scene_graph.get(), parent.scene_node);
   current_node->transform = ProcessNodeTransform(node);
@@ -460,6 +465,11 @@ NodeContext ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node
   // This is just a transform containing node.
   if (node.mesh == -1)
     return node_context;
+
+  // Check if we loaded the mesh.
+  if (context->processes_meshes.count(node.mesh))
+    return node_context;
+
 
   const tinygltf::Mesh& mesh = model.meshes[node.mesh];
   LOG(App, "Processing mesh %s", mesh.name.c_str());
@@ -509,13 +519,21 @@ NodeContext ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node
     rothko_mesh->vertices = std::move(vertices);
     rothko_mesh->vertex_count = vertex_count;
     rothko_mesh->indices = std::move(indices);
-    scene_node.mesh = rothko_mesh.get();
-    context->model->meshes[node.mesh] = std::move(rothko_mesh);
+    const Mesh* mesh_ptr = rothko_mesh.get();
+    context->model->meshes.push_back(std::move(rothko_mesh));
+
+    LOG(App, "Mesh for %s: %s -> Vertices: %u (Min: %s, Max: %s), Indices: %zu", node.name.c_str(),
+                                                              mesh_ptr->name.c_str(),
+                                                              mesh_ptr->vertex_count,
+                                                              ToString(min).c_str(),
+                                                              ToString(max).c_str(),
+                                                              mesh_ptr->indices.size());
 
     // Material.
     scene_node.material = HandleMaterial(model, primitive, context->model);
-    scene_node.min = min;
-    scene_node.max = max;
+    scene_node.meshes[primitive_i].min = min;
+    scene_node.meshes[primitive_i].max = max;
+    scene_node.meshes[primitive_i].mesh = mesh_ptr;
   }
 
   return node_context;
@@ -523,9 +541,9 @@ NodeContext ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node
 
 void ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node,
                   const NodeContext& parent_node, ProcessingContext* context) {
+  LOG(App, "Processing node %s", node.name.c_str());
   NodeContext current_node = ProcessNode(model, node, parent_node, context);
   for (int node_index : node.children) {
-    LOG(App, "Processing node %d", node_index);
     ProcessNodes(model, model.nodes[node_index], current_node, context);
   }
 }

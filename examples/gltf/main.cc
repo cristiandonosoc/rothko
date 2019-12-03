@@ -90,8 +90,8 @@ int main(int argc, const char* argv[]) {
 
   // -----------------------------------------------------------------------------------------------
 
-  for (auto& [id, mesh] : model.meshes) {
-    if (!RendererStageMesh(game.renderer.get(), mesh.get()))
+  for (auto& mesh_ptr : model.meshes) {
+    if (!RendererStageMesh(game.renderer.get(), mesh_ptr.get()))
       return 1;
   }
 
@@ -153,37 +153,37 @@ int main(int argc, const char* argv[]) {
     commands.push_back(GetPushCamera(camera));
 
     for (auto& node : model.nodes) {
-      if (!node.mesh)
-        continue;
+      for (const gltf::ModelNodeMesh& node_mesh : node.meshes) {
+        if (!Valid(node_mesh))
+          continue;
 
-      RenderMesh render_mesh = {};
-      render_mesh.mesh = node.mesh;
-      render_mesh.shader = model_shader.get();
-      render_mesh.primitive_type = PrimitiveType::kTriangles;
-      render_mesh.indices_count = node.mesh->indices.size();
+        RenderMesh render_mesh = {};
+        render_mesh.mesh = node_mesh.mesh;
+        render_mesh.shader = model_shader.get();
+        render_mesh.primitive_type = PrimitiveType::kTriangles;
+        render_mesh.indices_count = node_mesh.mesh->indices.size();
 
-      render_mesh.ubo_data[0] = (uint8_t*)&model_transform;
-      render_mesh.ubo_data[1] = (uint8_t*)&node.transform.world_matrix;
-      render_mesh.ubo_data[2] = (uint8_t*)&node.material->base_color;
-      render_mesh.textures = {node.material->base_texture};
+        render_mesh.ubo_data[0] = (uint8_t*)&model_transform;
+        render_mesh.ubo_data[1] = (uint8_t*)&node.transform.world_matrix;
+        render_mesh.ubo_data[2] = (uint8_t*)&node.material->base_color;
+        render_mesh.textures = {node.material->base_texture};
 
-      commands.push_back(std::move(render_mesh));
+        commands.push_back(std::move(render_mesh));
 
-      /* Vec3 m1 = ToVec3(model_transform * node.transform.world_matrix * node.min); */
-      /* Vec3 m2 = ToVec3(model_transform * node.transform.world_matrix * node.max); */
+        /* Vec3 m1 = ToVec3(model_transform * node.transform.world_matrix * node.min); */
+        /* Vec3 m2 = ToVec3(model_transform * node.transform.world_matrix * node.max); */
 
-      auto t = model_transform * node.transform.world_matrix;
-      Vec3 m1 = ToVec3(t * node.min);
-      Vec3 m2 = ToVec3(t * node.max);
+        auto t = model_transform * node.transform.world_matrix;
+        Vec3 m1 = ToVec3(t * node_mesh.min);
+        Vec3 m2 = ToVec3(t * node_mesh.max);
 
-      auto [min, max] = GetBounds(m1, m2);
-      PushCube(&lines, min, max, Color::Black());
+        auto [min, max] = GetBounds(m1, m2);
 
-      PushCubeCenter(&lines, m1, {0.1f, 0.1f, 0.1f}, Color::White());
-      PushCubeCenter(&lines, m2, {0.1f, 0.1f, 0.1f}, Color::White());
+        PushCube(&lines, min, max, Color::Black());
+      /* PushCubeCenter(&lines, m1, {0.1f, 0.1f, 0.1f}, Color::White()); */
+      /* PushCubeCenter(&lines, m2, {0.1f, 0.1f, 0.1f}, Color::White()); */
+      }
 
-      PushCubeCenter(&lines, min, Vec3{0.1f, 0.1f, 0.1f} * 2, Color::Red());
-      PushCubeCenter(&lines, max, Vec3{0.1f, 0.1f, 0.1f} * 2, Color::Red());
     }
 
     commands.push_back(grid.render_command);

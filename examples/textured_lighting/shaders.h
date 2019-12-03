@@ -41,7 +41,7 @@ struct SpotLightShaderUBO {
     FLOAT_PAD();
 
     struct Material {
-      // Associated sampelr.
+      // Associated sampler.
       Vec3 specular;
       float shininess;
     } material;

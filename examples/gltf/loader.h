@@ -24,19 +24,25 @@ struct Texture;
 
 namespace gltf {
 
+constexpr uint32_t kMaxMeshesPerNode = 4;
+
+struct ModelNodeMesh {
+  // Bounds on the mesh.
+  Vec3 min = {};
+  Vec3 max = {};
+  const Mesh* mesh = nullptr;
+};
+inline bool Valid(const ModelNodeMesh& m) { return !!m.mesh; }
+
 struct ModelNode {
-  Mesh* mesh = nullptr;
-  Material* material = nullptr;
+  const Material* material = nullptr;
+  ModelNodeMesh meshes[kMaxMeshesPerNode] = {};
 
   Transform transform;
-
-  // The bounds that considers this node and any children nodes.
-  Vec3 min;
-  Vec3 max;
 };
 
 struct Model {
-  std::map<int, std::unique_ptr<Mesh>> meshes;
+  std::vector<std::unique_ptr<Mesh>> meshes;
   std::map<int, std::unique_ptr<Texture>> textures;
   std::map<int, std::unique_ptr<Material>> materials;
 

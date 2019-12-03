@@ -17,6 +17,7 @@ layout (location = 1) in vec3 in_normal;
 /* layout (location = 3) in vec2 in_uv; */
 layout (location = 2) in vec2 in_uv;
 
+out vec3 f_normal;
 out vec2 f_uv;
 
 layout (std140) uniform Model {
@@ -28,13 +29,19 @@ layout (std140) uniform Node {
 } node;
 
 void main() {
-  gl_Position = camera_proj * camera_view * model.transform * node.transform * vec4(in_pos, 1.0);
+  mat4 model_transform = model.transform * node.transform;
+  gl_Position = camera_proj * camera_view * model_transform * vec4(in_pos, 1.0);
 
+  // Normals have to take into account the model transformation.
+  // We use a normal matrix because non-uniform scale will distort the normal direction.
+  // TODO(Cristian): This should be done on the CPU side!
+  f_normal = mat3(transpose(inverse(model_transform))) * in_normal;
   f_uv = in_uv;
 }
 )";
 
 constexpr char kModelFragShader[] = R"(
+in vec3 f_normal;
 in vec2 f_uv;
 
 layout (location = 0) out vec4 out_color;
@@ -43,11 +50,23 @@ layout (std140) uniform Frag {
   vec4 base_color;
 };
 
+float ambient = 0.4f;
+vec3 light_direction = vec3(1, 1, 1);
+
 uniform sampler2D tex0;
 /* uniform sampler2D tex1; */
 
 void main() {
-  out_color = texture(tex0, f_uv) * base_color;
+
+  vec4 mat_color = texture(tex0, f_uv) * base_color;
+
+
+  vec3 normal = normalize(f_normal);
+  float diffuse = max(dot(normal, light_direction), 0);
+
+
+  out_color = (ambient + diffuse) * mat_color;
+
   /* out_color = mix(texture(tex0, f_uv), texture(tex1, f_uv), 0.5f) * f_color; */
   /* out_color = f_color; */
 }
