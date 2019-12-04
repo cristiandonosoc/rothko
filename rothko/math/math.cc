@@ -377,6 +377,25 @@ std::string ToString(const Vec3& v) { return StringPrintf("(%f, %f, %f)", v.x, v
 std::string ToString(const Int4& v) { return StringPrintf("(%d, %d, %d, %d)", v.x, v.y, v.z, v.w); }
 std::string ToString(const Vec4& v) { return StringPrintf("(%f, %f, %f, %f)", v.x, v.y, v.z, v.w); }
 
+std::string ToString(const Mat2& m) {
+  auto& e = m.elements;
+  // clang-format off
+  return StringPrintf("(%f, %f), (%f, %f)",
+                      e[0][0], e[0][1],
+                      e[1][0], e[1][1]);
+  // clang-format on
+}
+
+std::string ToString(const Mat3& m) {
+  auto& e = m.elements;
+  // clang-format off
+  return StringPrintf("(%f, %f, %f), (%f, %f, %f), (%f, %f, %f)",
+                      e[0][0], e[0][1], e[0][2],
+                      e[1][0], e[1][1], e[1][2],
+                      e[2][0], e[2][1], e[2][2]);
+  // clang-format on
+}
+
 std::string ToString(const Mat4& m) {
   auto& e = m.elements;
   // clang-format off
@@ -387,6 +406,8 @@ std::string ToString(const Mat4& m) {
                       e[3][0], e[3][1], e[3][2], e[3][3]);
   // clang-format on
 }
+
+std::string ToString(const Quaternion& q) { return ToString(q.elements); }
 
 // Euler Angles ====================================================================================
 
@@ -427,25 +448,52 @@ Quaternion Slerp(const Quaternion& q1, const Quaternion& q2, float t) {
   return res;
 }
 
-/* Mat4 ToMat4(const Quaternion& q) { */
-/*   Quaternion n = Normalize(q); */
+Mat3 ToTransformMatrix(const Quaternion& q) {
+  Quaternion n = Normalize(q);
 
-/*   float xx = n.x * n.x; */
-/*   float yy = n.y * n.y; */
-/*   float zz = n.z * n.z; */
-/*   float xy = n.x * n.y; */
-/*   float xz = n.x * n.z; */
-/*   float yz = n.y * n.z; */
-/*   float xw = n.x * n.w; */
-/*   float yw = n.y * n.w; */
-/*   float zw = n.z * n.w; */
+  float xx = n.x * n.x;
+  float yy = n.y * n.y;
+  float zz = n.z * n.z;
+  float xy = n.x * n.y;
+  float xz = n.x * n.z;
+  float yz = n.y * n.z;
+  float xw = n.x * n.w;
+  float yw = n.y * n.w;
+  float zw = n.z * n.w;
 
-/*   // clang-format off */
-/*   return Mat4({1 - 2 * yy - 2 * zz,     2 * xy - 2 * zw,     2 * xz + 2 * yw,         0}, */
-/*               {    2 * xy + 2 * zw, 1 - 2 * xx - 2 * zz,     2 * yz - 2 * xw,         0}, */
-/*               {    2 * xz - 2 * yw,     2 * yz + 2 * xw, 1 - 2 * xx - 2 * yy,         0}, */
-/*               {                  0,                   0,                   0,         0}); */
-/*   // clang-format on */
+  // clang-format off
+  return Mat3({1 - 2 * yy - 2 * zz,     2 * xy - 2 * zw,     2 * xz + 2 * yw},
+              {    2 * xy + 2 * zw, 1 - 2 * xx - 2 * zz,     2 * yz - 2 * xw},
+              {    2 * xz - 2 * yw,     2 * yz + 2 * xw, 1 - 2 * xx - 2 * yy});
+  // clang-format on
+}
+
+// NOTE: THIS CODE IS WRONG!
+/* Vec3 ToEuler(const Quaternion& q) { */
+/*   float pitch = 0; */
+/*   float yaw = 0; */
+/*   float roll = 0; */
+
+/*   float test = q.x * q.y + q.z * q.w; */
+/*   if (test > 0.499) {  // singularity at north pole */
+/*     yaw = 2 * Atan2(q.x, q.w); */
+/*     pitch = kPI / 2; */
+/*     roll = 0; */
+/*   } */
+/*   if (test < -0.499) {  // singularity at south pole */
+/*     yaw = -2 * Atan2(q.x, q.w); */
+/*     pitch = -kPI / 2; */
+/*     roll = 0; */
+/*   } else { */
+/*     float sqx = q.x * q.x; */
+/*     float sqy = q.y * q.y; */
+/*     float sqz = q.z * q.z; */
+/*     yaw = Atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * sqy - 2 * sqz); */
+/*     pitch = Asin(2 * test); */
+/*     roll = Atan2(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * sqx - 2 * sqz); */
+/*   } */
+
+/*   return {pitch, yaw, roll}; */
 /* } */
 
 }  // namespace rothko

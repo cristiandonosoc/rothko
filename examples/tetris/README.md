@@ -1,6 +1,6 @@
 # Tetris Log
 
-- Total hours: ~9
+- Total hours: ~12.25
 
 ## Day 1 (~4 hours)
 
@@ -20,7 +20,7 @@
 - Shapes now move automatically down.
 - Better controls (keep pressed left/right).
 
-## Day 3 (1 hour)
+## Day 3 (~1 hour)
 
 - Started loading low poly environment pack for background graphics.
 - Required handling a model with different vertex type (3d/Normal/UV) vs the already "supported"
@@ -29,10 +29,18 @@
 - Initial load of a low poly tree. It doesn't have normal illumination and some parts of the model
   are missing.
 
-## Day 4 (~1 hour)
+## Day 4 (~1.25 hour)
 
 - Corrected case where a glTF mesh would have many primitives. Before it would assume a 1:1 ratio.
 - Correctly calculate bounds per primitive (not per mesh).
 - Extended some Min/Max functions for vec3 and vec4.
 - Added simple lighting shading.
 - Node transformations seem to be off compared to the reference model.
+
+## Day 4 (~2 hours)
+
+- Getting transformation matrix from a quaternion. This will be needed because glTF rotation is
+  stored as a quaternion instead of euler angles.
+  - Getting the euler angles will be obtained by going to the transform matrix and back, but a more
+    direct approach is warranted.
+- Some minor fix to the grid widget.

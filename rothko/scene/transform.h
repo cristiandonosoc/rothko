@@ -20,11 +20,6 @@ struct Transform {
   Vec3 rotation;
   Vec3 scale;
 
-  /* // Positions within the scene graph storage. */
-  /* uint32_t index = kInvalidIndex; */
-  /* uint32_t parent_index = kInvalidIndex; */
-  /* std::vector<uint32_t> children; */
-
   // Represents the overal transformation matrix. Recreated by |Update|.
   // Should not be touched directly.
   Mat4 world_matrix;

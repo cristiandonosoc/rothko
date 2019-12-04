@@ -8,9 +8,23 @@
 namespace Catch {
 
 template <>
+struct StringMaker<rothko::Vec3> {
+  static std::string convert(const rothko::Vec3& v) {
+    return ToString(v);
+  }
+};
+
+template <>
 struct StringMaker<rothko::Vec4> {
   static std::string convert(const rothko::Vec4& v) {
     return ToString(v);
+  }
+};
+
+template <>
+struct StringMaker<rothko::Mat3> {
+  static std::string convert(const rothko::Mat3& m) {
+    return ToString(m);
   }
 };
 
@@ -381,6 +395,34 @@ TEST_CASE("Mat4") {
     CHECK_ROW(transpose.row(1),  2,  6, 10, 14);
     CHECK_ROW(transpose.row(2),  3,  7, 11, 15);
     CHECK_ROW(transpose.row(3),  4,  8, 12, 16);
+  }
+}
+
+TEST_CASE("Quaternion") {
+  constexpr float kThreshold = 0.00001f;
+
+  SECTION("To Matrix") {
+    Quaternion q({1, 0, 0, 1});
+
+
+    Mat3 mat = ToTransformMatrix(q);
+    Mat3 rot = ToMat3(Rotate({1, 0, 0}, kRadians90));
+
+    CHECK(ABS((ABS(mat.cols[0][0]) - ABS(rot.cols[0][0]))) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[0][1]) - ABS(rot.cols[0][1]))) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[0][2]) - ABS(rot.cols[0][2]))) < kThreshold);
+
+    CHECK(ABS((ABS(mat.cols[1][0]) - ABS(rot.cols[1][0]))) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[1][1]) - ABS(rot.cols[1][1]))) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[1][2]) - ABS(rot.cols[1][2]))) < kThreshold);
+
+    CHECK(ABS((ABS(mat.cols[2][0]) - ABS(rot.cols[2][0]))) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[2][1]) - ABS(rot.cols[2][1]))) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[2][2]) - ABS(rot.cols[2][2]))) < kThreshold);
+
+    Vec3 v = RotationFromTransformMatrix(ToMat4(rot));
+    printf("%s\n", ToString(v).c_str());
+
   }
 }
 // clang-format on

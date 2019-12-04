@@ -19,7 +19,7 @@ namespace rothko {
 // =================================================================================================
 
 #ifndef ABS
-#define ABS(x) (((x) < 0) ? (x) : (-(x)))
+#define ABS(x) (((x) >= 0) ? (x) : (-(x)))
 #endif
 
 constexpr float kPI = 3.14159265359f;
@@ -439,6 +439,8 @@ union _mat2 {
 using IntMat2 = _mat2<int>;
 using Mat2 = _mat2<float>;
 
+std::string ToString(const Mat2&);
+
 // Mat3 --------------------------------------------------------------------------------------------
 
 template <typename T>
@@ -462,9 +464,6 @@ union _mat3 {
 
   static _mat3 Identity() { return {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}; }
 
-
-
-
   float& get(int x, int y) { return elements[y][x]; }
   float get(int x, int y) const { return elements[y][x]; }
 
@@ -477,12 +476,20 @@ union _mat3 {
     _v3<T> r0 = row(0); _v3<T> r1 = row(1); _v3<T> r2 = row(2);
     return _v3<T>{Dot(r0, vec), Dot(r1, vec), Dot(r2, vec)};
   }
+
+  bool operator==(const _mat3& o) const {
+    return cols[0] == o.cols[0] && cols[1] == o.cols[1] && cols[2] == o.cols[2];
+  }
+
+  bool operator!=(const _mat3& o) const { return !(*this == o); }
 };
 
 using IntMat3 = _mat3<int>;
 using Mat3 = _mat3<float>;
 
 float Determinant(const Mat3&);
+
+std::string ToString(const Mat3&);
 
 // Mat4 --------------------------------------------------------------------------------------------
 
@@ -588,6 +595,19 @@ inline Mat3 ToMat3(const Mat4& m) {
   result.cols[0] = ToVec3(m.cols[0]);
   result.cols[1] = ToVec3(m.cols[1]);
   result.cols[2] = ToVec3(m.cols[2]);
+
+  return result;
+}
+
+inline Mat4 ToMat4(const Mat3& m) {
+  Mat4 result = {};
+
+  // clang-format off
+  result.cols[0] = {m.cols[0][0], m.cols[0][1], m.cols[0][2],       0};
+  result.cols[1] = {m.cols[1][0], m.cols[1][1], m.cols[1][2],       0};
+  result.cols[2] = {m.cols[2][0], m.cols[2][1], m.cols[2][2],       0};
+  result.cols[3] = {           0,            0,            0,       1};
+  // clang-format on
 
   return result;
 }
@@ -757,7 +777,13 @@ inline float Dot(const Quaternion& q1, const Quaternion& q2) {
   return Dot(q1.elements, q2.elements);
 }
 
-Quaternion Inverse(const Quaternion&);
+inline float Length(const Quaternion& q) {
+  return Length(q.elements);
+}
+
+inline Quaternion Normalize(const Quaternion& q) { return Quaternion{Normalize(q.elements)}; }
+
+/* Quaternion Inverse(const Quaternion&); */
 
 Quaternion Normalize(const Quaternion& q);
 
@@ -775,6 +801,9 @@ inline Quaternion NLerp(const Quaternion& q1, const Quaternion& q2, float t) {
 
 Quaternion Slerp(const Quaternion& q1, const Quaternion& q2, float t);
 
-Mat4 ToMat4(const Quaternion&);
+Mat3 ToTransformMatrix(const Quaternion&);
+Vec3 ToEuler(const Quaternion&);
+
+std::string ToString(const Quaternion&);
 
 }  // rothko

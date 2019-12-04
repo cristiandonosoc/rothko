@@ -40,7 +40,7 @@ bool InitMesh(Renderer* renderer, Grid* grid) {
 
   mesh->vertex_type = VertexType::k3dUV;
 
-  constexpr float size = 10000.0f;
+  constexpr float size = 100.0f;
   Vertex3dUV vertices[] = {
       {{-size, 0, -size}, {0, 0}},
       {{ size, 0, -size}, {0, 1}},

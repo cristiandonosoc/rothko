@@ -32,7 +32,7 @@ struct ProcessingContext {
 
   // Set of meshes we have already seen. These are NOT the rothko meshes that are outputted (those
   // are the set of primitives contained by the meshes processes here).
-  std::set<int> processes_meshes;
+  std::set<int> processed_meshes;
 };
 
 enum class BufferViewTarget : int {
@@ -378,6 +378,9 @@ NO_DISCARD Transform ProcessNodeTransform(const tinygltf::Node& node) {
     transform.position = NodeToVec3(node.translation.data());
 
   // TODO(Cristian): Do rotation.
+  if (!node.rotation.empty()) {
+
+  }
 
   if (!node.scale.empty())
     transform.scale = NodeToVec3(node.scale.data());
@@ -467,9 +470,10 @@ NodeContext ProcessNode(const tinygltf::Model& model,
     return node_context;
 
   // Check if we loaded the mesh.
-  if (context->processes_meshes.count(node.mesh))
+  if (context->processed_meshes.count(node.mesh)) {
+    NOT_REACHED_MSG("Mesh reuse not supported yet.");
     return node_context;
-
+  }
 
   const tinygltf::Mesh& mesh = model.meshes[node.mesh];
   LOG(App, "Processing mesh %s", mesh.name.c_str());
@@ -535,6 +539,8 @@ NodeContext ProcessNode(const tinygltf::Model& model,
     scene_node.meshes[primitive_i].max = max;
     scene_node.meshes[primitive_i].mesh = mesh_ptr;
   }
+
+  /* context->processed_meshes.insert(node.mesh); */
 
   return node_context;
 }
