@@ -30,10 +30,15 @@ struct StringMaker<rothko::Mat3> {
 
 #define DIFF(lhs, rhs) std::abs(rhs - lhs)
 
-#define CHECK_ROW(row, v0, v1, v2, v3) \
-  CHECK(DIFF((row)[0], v0) < 0.00001f);  \
-  CHECK(DIFF((row)[1], v1) < 0.00001f);  \
-  CHECK(DIFF((row)[2], v2) < 0.00001f);  \
+#define CHECK_ROW3(row, v0, v1, v2)     \
+  CHECK(DIFF((row)[0], v0) < 0.00001f); \
+  CHECK(DIFF((row)[1], v1) < 0.00001f); \
+  CHECK(DIFF((row)[2], v2) < 0.00001f);
+
+#define CHECK_ROW4(row, v0, v1, v2, v3) \
+  CHECK(DIFF((row)[0], v0) < 0.00001f); \
+  CHECK(DIFF((row)[1], v1) < 0.00001f); \
+  CHECK(DIFF((row)[2], v2) < 0.00001f); \
   CHECK(DIFF((row)[3], v3) < 0.00001f);
 
 }  // namespace Catch
@@ -206,15 +211,25 @@ TEST_CASE("Vec3") {
 }
 
 TEST_CASE("Mat3") {
-  //clang-format off
-  Mat3 mat = {{  6,  1,  1},
-              {  4, -2,  5},
-              {  2,  8,  7}};
-  // clang-format on
-
   SECTION("Determinant") {
+    Mat3 mat = {{  6,  1,  1},
+                {  4, -2,  5},
+                {  2,  8,  7}};
+
     float d = Determinant(mat);
     REQUIRE(d == -306);
+  }
+
+  SECTION("Transpose") {
+    Mat3 mat = {{ 1,  2,  3},
+                { 5,  6,  7},
+                { 9, 10, 11}};
+
+    Mat3 transpose = Transpose(mat);
+
+    CHECK_ROW3(transpose.row(0),  1,  5,  9);
+    CHECK_ROW3(transpose.row(1),  2,  6, 10);
+    CHECK_ROW3(transpose.row(2),  3,  7, 11);
   }
 }
 
@@ -371,16 +386,16 @@ TEST_CASE("Mat4") {
            { 0, 0, 0, 1}};
 
     Mat4 inverse = Inverse(m);
-    CHECK_ROW(inverse.row(0), 0.5f,     0,         0, -3.0f/2.0f);
-    CHECK_ROW(inverse.row(1),    0, 0.25f,         0, -5.0f/4.0f);
-    CHECK_ROW(inverse.row(2),    0,     0, 1.0f/6.0f, -7.0f/6.0f);
-    CHECK_ROW(inverse.row(3),    0,     0,         0,          1);
+    CHECK_ROW4(inverse.row(0), 0.5f,     0,         0, -3.0f/2.0f);
+    CHECK_ROW4(inverse.row(1),    0, 0.25f,         0, -5.0f/4.0f);
+    CHECK_ROW4(inverse.row(2),    0,     0, 1.0f/6.0f, -7.0f/6.0f);
+    CHECK_ROW4(inverse.row(3),    0,     0,         0,          1);
 
     Mat4 identity = m * inverse;
-    CHECK_ROW(identity.row(0), 1, 0, 0, 0);
-    CHECK_ROW(identity.row(1), 0, 1, 0, 0);
-    CHECK_ROW(identity.row(2), 0, 0, 1, 0);
-    CHECK_ROW(identity.row(3), 0, 0, 0, 1);
+    CHECK_ROW4(identity.row(0), 1, 0, 0, 0);
+    CHECK_ROW4(identity.row(1), 0, 1, 0, 0);
+    CHECK_ROW4(identity.row(2), 0, 0, 1, 0);
+    CHECK_ROW4(identity.row(3), 0, 0, 0, 1);
   }
 
   SECTION("Transpose") {
@@ -391,10 +406,10 @@ TEST_CASE("Mat4") {
 
     Mat4 transpose = Transpose(mat);
 
-    CHECK_ROW(transpose.row(0),  1,  5,  9, 13);
-    CHECK_ROW(transpose.row(1),  2,  6, 10, 14);
-    CHECK_ROW(transpose.row(2),  3,  7, 11, 15);
-    CHECK_ROW(transpose.row(3),  4,  8, 12, 16);
+    CHECK_ROW4(transpose.row(0),  1,  5,  9, 13);
+    CHECK_ROW4(transpose.row(1),  2,  6, 10, 14);
+    CHECK_ROW4(transpose.row(2),  3,  7, 11, 15);
+    CHECK_ROW4(transpose.row(3),  4,  8, 12, 16);
   }
 }
 
@@ -402,27 +417,20 @@ TEST_CASE("Quaternion") {
   constexpr float kThreshold = 0.00001f;
 
   SECTION("To Matrix") {
-    Quaternion q({1, 0, 0, 1});
-
-
+    Quaternion q({1, 1, 1, 1});
     Mat3 mat = ToTransformMatrix(q);
-    Mat3 rot = ToMat3(Rotate({1, 0, 0}, kRadians90));
 
-    CHECK(ABS((ABS(mat.cols[0][0]) - ABS(rot.cols[0][0]))) < kThreshold);
-    CHECK(ABS((ABS(mat.cols[0][1]) - ABS(rot.cols[0][1]))) < kThreshold);
-    CHECK(ABS((ABS(mat.cols[0][2]) - ABS(rot.cols[0][2]))) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[0][0]) - 0)) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[0][1]) - 1)) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[0][2]) - 0)) < kThreshold);
 
-    CHECK(ABS((ABS(mat.cols[1][0]) - ABS(rot.cols[1][0]))) < kThreshold);
-    CHECK(ABS((ABS(mat.cols[1][1]) - ABS(rot.cols[1][1]))) < kThreshold);
-    CHECK(ABS((ABS(mat.cols[1][2]) - ABS(rot.cols[1][2]))) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[1][0]) - 0)) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[1][1]) - 0)) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[1][2]) - 1)) < kThreshold);
 
-    CHECK(ABS((ABS(mat.cols[2][0]) - ABS(rot.cols[2][0]))) < kThreshold);
-    CHECK(ABS((ABS(mat.cols[2][1]) - ABS(rot.cols[2][1]))) < kThreshold);
-    CHECK(ABS((ABS(mat.cols[2][2]) - ABS(rot.cols[2][2]))) < kThreshold);
-
-    Vec3 v = RotationFromTransformMatrix(ToMat4(rot));
-    printf("%s\n", ToString(v).c_str());
-
+    CHECK(ABS((ABS(mat.cols[2][0]) - 1)) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[2][1]) - 0)) < kThreshold);
+    CHECK(ABS((ABS(mat.cols[2][2]) - 0)) < kThreshold);
   }
 }
 // clang-format on

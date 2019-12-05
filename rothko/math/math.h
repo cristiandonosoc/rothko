@@ -489,6 +489,8 @@ using Mat3 = _mat3<float>;
 
 float Determinant(const Mat3&);
 
+Mat3 Transpose(const Mat3&);
+
 std::string ToString(const Mat3&);
 
 // Mat4 --------------------------------------------------------------------------------------------
@@ -680,7 +682,10 @@ Mat4 Ortho(float left, float right, float bottom, float top, float near, float f
 Mat4 Perspective(float fov, float aspect_ratio, float near, float far);
 
 Vec3 PositionFromTransformMatrix(const Mat4&);
+
+Vec3 RotationFromTransformMatrix(const Mat3&);
 Vec3 RotationFromTransformMatrix(const Mat4&);
+
 Vec3 ScaleFromTransformMatrix(const Mat4&);
 
 // Calls the three extractions calls.
@@ -732,6 +737,7 @@ union Quaternion {
 
   // clang-format off
   Quaternion() = default;
+  Quaternion(const Vec3& dir, float angle) : dir(dir), angle(angle) {}
   Quaternion(const Vec4& v) { elements = v; }
   Quaternion(const Quaternion& q) : elements(q.elements) {}
   Quaternion& operator=(const Quaternion& q) { elements = q.elements; return *this; }

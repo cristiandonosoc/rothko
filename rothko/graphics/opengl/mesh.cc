@@ -186,7 +186,7 @@ bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
       "Staging mesh %s (uuid: %u, VAO: %u) [%u vertices (%zu bytes)] [%lu indices (%zu bytes)]",
       mesh->name.c_str(), uuid, handles.vao,
       mesh->vertex_count, mesh->vertices.size(),
-      mesh->indices.size(), mesh->indices.size());
+      mesh->indices.size(), mesh->indices.size() * sizeof(Mesh::IndexType));
 
   opengl->loaded_meshes[uuid] = std::move(handles);
   mesh->uuid = uuid;

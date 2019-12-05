@@ -379,7 +379,12 @@ NO_DISCARD Transform ProcessNodeTransform(const tinygltf::Node& node) {
 
   // TODO(Cristian): Do rotation.
   if (!node.rotation.empty()) {
-
+    Quaternion q = {};
+    q.x = node.rotation[0];
+    q.y = node.rotation[1];
+    q.z = node.rotation[2];
+    q.w = node.rotation[3];
+    transform.rotation = ToEuler(q);
   }
 
   if (!node.scale.empty())

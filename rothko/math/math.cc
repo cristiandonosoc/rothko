@@ -90,6 +90,15 @@ float Determinant(const Mat3& m) {
   // clang-format on
 }
 
+Mat3 Transpose(const Mat3& m) {
+  Mat3 result;
+  result.cols[0] = m.row(0);
+  result.cols[1] = m.row(1);
+  result.cols[2] = m.row(2);
+
+  return result;
+}
+
 // Mat4 --------------------------------------------------------------------------------------------
 
 namespace {
@@ -177,7 +186,8 @@ Vec3 PositionFromTransformMatrix(const Mat4& m) {
   return position;
 }
 
-Vec3 RotationFromTransformMatrix(const Mat4& m) {
+
+Vec3 RotationFromTransformMatrix(const Mat3& m) {
   Vec3 rotation;
   rotation.x = -Atan2(m.get(2, 1), m.get(2, 2));
   rotation.y = -Atan2(-m.get(2, 0), Sqrt(m.get(2, 1) * m.get(2, 1) + m.get(2, 2) * m.get(2, 2)));
@@ -185,6 +195,8 @@ Vec3 RotationFromTransformMatrix(const Mat4& m) {
 
   return rotation;
 }
+
+Vec3 RotationFromTransformMatrix(const Mat4& m) { return RotationFromTransformMatrix(ToMat3(m)); }
 
 Vec3 ScaleFromTransformMatrix(const Mat4& m) {
   Vec3 scale;
@@ -454,9 +466,11 @@ Mat3 ToTransformMatrix(const Quaternion& q) {
   float xx = n.x * n.x;
   float yy = n.y * n.y;
   float zz = n.z * n.z;
+
   float xy = n.x * n.y;
   float xz = n.x * n.z;
   float yz = n.y * n.z;
+
   float xw = n.x * n.w;
   float yw = n.y * n.w;
   float zw = n.z * n.w;
@@ -495,5 +509,11 @@ Mat3 ToTransformMatrix(const Quaternion& q) {
 
 /*   return {pitch, yaw, roll}; */
 /* } */
+
+Vec3 ToEuler(const Quaternion& q) {
+  // TODO(Cristian): This is very unefficient! We should obtain the angles directly!
+  Mat3 rot = ToTransformMatrix(q);
+  return RotationFromTransformMatrix(rot);
+}
 
 }  // namespace rothko

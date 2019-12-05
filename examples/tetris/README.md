@@ -1,6 +1,6 @@
 # Tetris Log
 
-- Total hours: ~12.25
+- Total hours: ~13.75
 
 ## Day 1 (~4 hours)
 
@@ -37,10 +37,16 @@
 - Added simple lighting shading.
 - Node transformations seem to be off compared to the reference model.
 
-## Day 4 (~2 hours)
+## Day 5 (~2 hours)
 
 - Getting transformation matrix from a quaternion. This will be needed because glTF rotation is
   stored as a quaternion instead of euler angles.
   - Getting the euler angles will be obtained by going to the transform matrix and back, but a more
     direct approach is warranted.
 - Some minor fix to the grid widget.
+
+## Day 6 (~1.5 hours)
+
+- Finished quaternion to euler transformation. This makes a roundtrip from a transformation matrix,
+  which is very unefficient, but will work for now.
+- Modified the glTF loader to account for node translation. Now it works correctly!
