@@ -12,6 +12,7 @@ struct ImGuiIO;
 namespace rothko {
 
 struct Input;
+struct Game;
 struct RenderCommand;
 struct Renderer;
 struct Time;
@@ -38,7 +39,9 @@ inline bool Valid(ImguiContext* imgui) { return !!imgui->io && Valid(&imgui->img
 // Both the renderer and window must outlive the imgui context.
 bool Init(Renderer* renderer, ImguiContext*);
 
+// TODO(Cristian): Change to const ref.
 void BeginFrame(ImguiContext*, Window*, Time*, Input*);
+void Update(ImguiContext*, Game*);
 
 // Gets the command to be passed down to the renderer.
 // IMPORTANT: StartFrame *has* to be called each frame before this.

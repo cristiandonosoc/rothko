@@ -41,6 +41,19 @@ std::string GetBasePath(const std::string&);
 // Strip everything up to and including the last filepath separator.
 std::string GetBasename(const std::string& path);
 
+struct DirectoryEntry {
+  bool is_dir = false;
+  std::string path;
+};
+bool ListDirectory(const std::string& path, std::vector<DirectoryEntry>* out,
+                   const std::string& extension = {});
+inline bool ListDirectory(const DirectoryEntry& entry, std::vector<DirectoryEntry>* out,
+                          const std::string& extension = {}) {
+  if (!entry.is_dir)
+    return false;
+  return ListDirectory(entry.path, out, extension);
+}
+
 // Timing ------------------------------------------------------------------------------------------
 
 // Amount of nanoseconds since the program started.

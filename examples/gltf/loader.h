@@ -42,6 +42,8 @@ struct ModelNode {
 };
 
 struct Model {
+  std::string name;
+
   std::vector<std::unique_ptr<Mesh>> meshes;
   std::map<int, std::unique_ptr<Texture>> textures;
   std::map<int, std::unique_ptr<Material>> materials;
@@ -49,7 +51,7 @@ struct Model {
   std::vector<ModelNode> nodes;
 };
 
-void ProcessModel(const tinygltf::Model&, const tinygltf::Scene&, Model* out_model);
+bool ProcessModel(const tinygltf::Model&, const tinygltf::Scene&, Model* out_model);
 
 }  // namespace gltf
 }  // namespace rothko

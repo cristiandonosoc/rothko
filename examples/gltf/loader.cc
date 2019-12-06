@@ -456,23 +456,21 @@ Material* HandleMaterial(const tinygltf::Model& model,
   return material_ptr;
 }
 
-NodeContext ProcessNode(const tinygltf::Model& model,
-                        const tinygltf::Node& node,
-                        const NodeContext& parent,
-                        ProcessingContext* context) {
+bool
+ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, const NodeContext& parent,
+            ProcessingContext* context, NodeContext* node_context) {
   auto& scene_node = context->model->nodes.emplace_back();
   SceneNode* current_node = AddNode(context->scene_graph.get(), parent.scene_node);
   current_node->transform = ProcessNodeTransform(node);
 
-  NodeContext node_context = {};
-  node_context.scene_node = current_node;
-  node_context.index = context->model->nodes.size() - 1;
-  node_context.parent_index = parent.index;
-  context->scene_nodes.push_back(node_context);
+  node_context->scene_node = current_node;
+  node_context->index = context->model->nodes.size() - 1;
+  node_context->parent_index = parent.index;
+  context->scene_nodes.push_back(*node_context);
 
   // This is just a transform containing node.
   if (node.mesh == -1)
-    return node_context;
+    return true;
 
   // Check if we loaded the mesh.
   if (context->processed_meshes.count(node.mesh)) {
@@ -515,8 +513,8 @@ NodeContext ProcessNode(const tinygltf::Model& model,
       vertices = std::move(new_vertices);
       vertex_type = VertexType::k3dNormalUV;
     } else if (vertex_type != VertexType::k3dNormalUV) {
-      NOT_REACHED_MSG("Unsupported vertex type: %s", ToString(vertex_type));
-      return {};
+      ERROR(App, "Unsupported vertex type: %s", ToString(vertex_type));
+      return false;
     }
 
     std::vector<uint32_t> indices = ExtractIndices(model, primitive);
@@ -545,30 +543,33 @@ NodeContext ProcessNode(const tinygltf::Model& model,
     scene_node.meshes[primitive_i].mesh = mesh_ptr;
   }
 
-  /* context->processed_meshes.insert(node.mesh); */
-
-  return node_context;
+  return true;
 }
 
-void ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node,
+bool ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node,
                   const NodeContext& parent_node, ProcessingContext* context) {
-  LOG(App, "Processing node %s", node.name.c_str());
-  NodeContext current_node = ProcessNode(model, node, parent_node, context);
+  NodeContext current_node = {};
+  if (!ProcessNode(model, node, parent_node, context, &current_node))
+    return false;
+
   for (int node_index : node.children) {
-    ProcessNodes(model, model.nodes[node_index], current_node, context);
+    if (!ProcessNodes(model, model.nodes[node_index], current_node, context))
+      return false;
   }
+
+  return true;
 }
 
 }  // namespace
 
-
-void ProcessModel(const tinygltf::Model& model, const tinygltf::Scene& scene, Model* out_model) {
+bool ProcessModel(const tinygltf::Model& model, const tinygltf::Scene& scene, Model* out_model) {
   ProcessingContext context = {};
   context.scene_graph = std::make_unique<SceneGraph>();
   context.model = out_model;
 
   for (int node_index : scene.nodes) {
-    ProcessNodes(model, model.nodes[node_index], {}, &context);
+    if (!ProcessNodes(model, model.nodes[node_index], {}, &context))
+      return false;
   }
 
   // Once we have processed all the nodes, we need to correctly set the internal scene_graph.
@@ -576,18 +577,11 @@ void ProcessModel(const tinygltf::Model& model, const tinygltf::Scene& scene, Mo
 
   for (uint32_t i = 0; i < context.scene_nodes.size(); i++) {
     const NodeContext& scene_node = context.scene_nodes[i];
-
     ModelNode* node = &out_model->nodes[i];
     node->transform = scene_node.scene_node->transform;
   }
 
-  /* LOG(App, "Nodes: %zu", out_model->nodes.size()); */
-  /* for (uint32_t i = 0; i < out_model->nodes.size(); i++) { */
-  /*   auto& node = out_model->nodes[i]; */
-  /*   LOG(App, "Node %u", i); */
-  /*   LOG(App, "\n%s", ToString(node.transform).c_str()); */
-  /*   LOG(App, "--------------------------------------"); */
-  /* } */
+  return true;
 }
 
 }  // namespace gltf

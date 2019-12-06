@@ -9,6 +9,8 @@
 #include "rothko/ui/imgui/imgui_renderer.h"
 #include "rothko/window/window.h"
 
+#include "rothko/game.h"
+
 // Imgui config verification check.
 // This is to verify that our imgui config wasn't overwritten by a imgui update.
 // Our imgui config is in rothko/ui/imgui/warhol_imgui_config.h
@@ -157,8 +159,11 @@ void BeginFrame(ImguiContext* imgui, Window* window, Time* time, Input* input) {
   ImGuizmo::SetRect(0, 0, imgui->io->DisplaySize.x, imgui->io->DisplaySize.y);
 }
 
-// End Frame -------------------------------------------------------------------
+void Update(ImguiContext* imgui, Game* game) {
+  BeginFrame(imgui, &game->window, &game->time, &game->input);
+}
 
+// End Frame -------------------------------------------------------------------
 
 PerFrameVector<RenderCommand> EndFrame(ImguiContext* imgui) {
   ASSERT(Valid(imgui));

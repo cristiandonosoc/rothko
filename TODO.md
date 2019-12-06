@@ -15,3 +15,9 @@
 ## glTF
 
 - Detect repeated mesh and not reload them, correctly setting the new node.
+
+## Imgui
+
+- Unify new frame names to Update
+- Change API to const ref.
+- Simplify starting/usage.

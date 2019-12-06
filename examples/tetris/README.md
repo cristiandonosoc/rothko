@@ -1,8 +1,10 @@
 # Tetris Log
 
-- Total hours: ~13.75
+- Total hours: ~14.5
 
 ## Day 1 (~4 hours)
+
+![Day1](log_images/tetris_day1.png)
 
 - Beginnings of a tetris examples.
   - Created a grid and is able to draw a cube in any coordinate with several colors.
@@ -13,7 +15,10 @@
 - Added BIT_MASK macros to the math library. This permits to easily define several bit values in a
   bit field value. This is used in tetris to indicate which shape is active.
 
+
 ## Day 2 (~4 hours)
+
+![Day2](log_images/tetris_day2.png)
 
 - Added all tetris shapes (L, reverse L, etc.).
 - Shapes can now rotate. Rotation detects shape and border collision properly.
@@ -21,6 +26,8 @@
 - Better controls (keep pressed left/right).
 
 ## Day 3 (~1 hour)
+
+![Day3](log_images/tetris_day3.png)
 
 - Started loading low poly environment pack for background graphics.
 - Required handling a model with different vertex type (3d/Normal/UV) vs the already "supported"
@@ -30,6 +37,8 @@
   are missing.
 
 ## Day 4 (~1.25 hour)
+
+![Day4](log_images/tetris_day4.png)
 
 - Corrected case where a glTF mesh would have many primitives. Before it would assume a 1:1 ratio.
 - Correctly calculate bounds per primitive (not per mesh).
@@ -47,6 +56,17 @@
 
 ## Day 6 (~1.5 hours)
 
+![Day6](log_images/tetris_day6.png)
+
 - Finished quaternion to euler transformation. This makes a roundtrip from a transformation matrix,
   which is very unefficient, but will work for now.
 - Modified the glTF loader to account for node translation. Now it works correctly!
+
+## Day 7 (~1.5 hours)
+
+![Day7](log_images/tetris_day7.png)
+
+- Added directory iteration to the platform API. Also permits filtering by file extension.
+  - Only implemented for Windows.
+- Loaded all the low poly environment models at once using that API.
+- Simplified the Imgui update API a bit and added some TODOs.

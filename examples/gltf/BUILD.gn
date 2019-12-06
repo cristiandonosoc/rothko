@@ -13,6 +13,7 @@ executable("gltf") {
   deps = [
     "//rothko:game",
     "//rothko/graphics/default_shaders",
+    "//rothko/ui:imgui",
     "//rothko/widgets",
     "//rothko/window:sdl_opengl",
     "//third_party/tiny_gltf",

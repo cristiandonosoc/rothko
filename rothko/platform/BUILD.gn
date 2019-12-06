@@ -25,4 +25,8 @@ source_set("platform") {
   } else {
     assert(false, "Unhandled OS: $target_os")
   }
+
+  deps = [
+    "//rothko/utils",
+  ]
 }
