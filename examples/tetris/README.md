@@ -67,6 +67,6 @@
 ![Day7](log_images/tetris_day7.png)
 
 - Added directory iteration to the platform API. Also permits filtering by file extension.
-  - Only implemented for Windows.
+  - Only implemented for Windows and linux.
 - Loaded all the low poly environment models at once using that API.
 - Simplified the Imgui update API a bit and added some TODOs.

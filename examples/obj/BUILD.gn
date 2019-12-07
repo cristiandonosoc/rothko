@@ -2,6 +2,8 @@
 # This code has a BSD license. See LICENSE.
 
 executable("obj") {
+  output_name = "obj_loader"
+
   sources = [
     "main.cc",
   ]
