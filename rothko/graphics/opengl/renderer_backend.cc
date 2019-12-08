@@ -97,8 +97,9 @@ Gl3wInitResultToString(int res) {
 
 std::unique_ptr<OpenGLRendererBackend> gBackend;
 
-std::unique_ptr<Texture> CreateWhiteTexture(OpenGLRendererBackend* opengl) {
-  auto texture = std::make_unique<Texture>();
+Texture* CreateWhiteTexture(OpenGLRendererBackend* opengl) {
+  // The lifetime is managed explicitly by the rendering backend.
+  auto* texture = (Texture*)malloc(sizeof(Texture));
   texture->name = "opengl-default-white";
   texture->type = TextureType::kRGBA;
   texture->size = {1, 1};
@@ -108,7 +109,7 @@ std::unique_ptr<Texture> CreateWhiteTexture(OpenGLRendererBackend* opengl) {
   texture->data = std::make_unique<uint8_t[]>(sizeof(uint32_t));
   *(uint32_t*)texture->data.get() = ToUint32(Color::White());
 
-  if (!OpenGLStageTexture(opengl, texture.get()))
+  if (!OpenGLStageTexture(opengl, texture))
     return nullptr;
   return texture;
 }
@@ -118,6 +119,11 @@ std::unique_ptr<Texture> CreateWhiteTexture(OpenGLRendererBackend* opengl) {
 OpenGLRendererBackend* GetOpenGL() {
   ASSERT(gBackend);
   return gBackend.get();
+}
+
+OpenGLRendererBackend::~OpenGLRendererBackend() {
+  if (Staged(white_texture))
+    OpenGLUnstageTexture(this, white_texture);
 }
 
 }  // opengl
@@ -156,7 +162,7 @@ std::unique_ptr<Renderer> InitRenderer() {
   auto renderer = std::make_unique<Renderer>();
   renderer->renderer_type = "OpenGL";
 
-  // Load the white texture.
+  // Load the white texture. The lifetime is managed explicitly by the backend.
   gBackend->white_texture = CreateWhiteTexture(gBackend.get());
   ASSERT(gBackend->white_texture);
 

@@ -9,6 +9,8 @@ source_set("memory") {
 
   sources = [
     "memory_block.cc",
+    "stack_allocator.cc",
+    "stack_allocator.h",
   ]
 
   deps = [

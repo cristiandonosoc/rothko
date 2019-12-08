@@ -443,7 +443,6 @@ Material* HandleMaterial(const tinygltf::Model& model,
   const tinygltf::Material& material = model.materials[primitive.material];
 
   auto rothko_material = std::make_unique<Material>();
-
   rothko_material->base_texture = LoadTexture(model, material, out_model);
   ASSERT(material.pbrMetallicRoughness.baseColorFactor.size() == 4u);
   rothko_material->base_color.r = material.pbrMetallicRoughness.baseColorFactor[0];
@@ -459,7 +458,7 @@ Material* HandleMaterial(const tinygltf::Model& model,
 bool
 ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, const NodeContext& parent,
             ProcessingContext* context, NodeContext* node_context) {
-  auto& scene_node = context->model->nodes.emplace_back();
+  ModelNode& model_node = context->model->nodes.emplace_back();
   SceneNode* current_node = AddNode(context->scene_graph.get(), parent.scene_node);
   current_node->transform = ProcessNodeTransform(node);
 
@@ -537,10 +536,10 @@ ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, const Node
                                                               mesh_ptr->indices.size());
 
     // Material.
-    scene_node.material = HandleMaterial(model, primitive, context->model);
-    scene_node.meshes[primitive_i].min = min;
-    scene_node.meshes[primitive_i].max = max;
-    scene_node.meshes[primitive_i].mesh = mesh_ptr;
+    model_node.meshes[primitive_i].min = min;
+    model_node.meshes[primitive_i].max = max;
+    model_node.meshes[primitive_i].mesh = mesh_ptr;
+    model_node.meshes[primitive_i].material = HandleMaterial(model, primitive, context->model);
   }
 
   return true;

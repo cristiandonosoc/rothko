@@ -31,13 +31,12 @@ struct ModelNodeMesh {
   Vec3 min = {};
   Vec3 max = {};
   const Mesh* mesh = nullptr;
+  const Material* material = nullptr;
 };
-inline bool Valid(const ModelNodeMesh& m) { return !!m.mesh; }
+inline bool Valid(const ModelNodeMesh& m) { return !!m.mesh || !!m.material; }
 
 struct ModelNode {
-  const Material* material = nullptr;
   ModelNodeMesh meshes[kMaxMeshesPerNode] = {};
-
   Transform transform;
 };
 
@@ -49,6 +48,18 @@ struct Model {
   std::map<int, std::unique_ptr<Material>> materials;
 
   std::vector<ModelNode> nodes;
+};
+
+struct ModelTransformData {
+  Mat4 transform;
+  Mat4 inverse_transform;
+};
+
+struct ModelInstance {
+  Model* model = nullptr;
+  Transform transform = {};
+
+  ModelTransformData* transform_data = nullptr;
 };
 
 bool ProcessModel(const tinygltf::Model&, const tinygltf::Scene&, Model* out_model);

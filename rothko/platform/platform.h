@@ -41,6 +41,8 @@ std::string GetBasePath(const std::string&);
 // Strip everything up to and including the last filepath separator.
 std::string GetBasename(const std::string& path);
 
+bool IsDirectory(const std::string& path);
+
 struct DirectoryEntry {
   bool is_dir = false;
   std::string path;

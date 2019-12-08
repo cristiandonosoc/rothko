@@ -110,6 +110,8 @@ bool ShouldFilterExtension(const std::filesystem::path& path, const std::string&
 
 }  // namespace
 
+bool IsDirectory(const std::string& path) { return IsDir(path); }
+
 bool ListDirectory(const std::string& p, std::vector<DirectoryEntry>* out,
                    const std::string& extension) {
   std::filesystem::path path(p);

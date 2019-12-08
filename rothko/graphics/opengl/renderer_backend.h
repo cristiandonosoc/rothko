@@ -40,6 +40,8 @@ struct Config {
 };
 
 struct OpenGLRendererBackend {
+  ~OpenGLRendererBackend();
+
   // NOTE: This are NON-OWNING pointers. While the backend will keep correct track of these (won't
   //       dangling), it can give these references outside of the renderer system and it's the
   //       client's responsability to correctly handle those.
@@ -50,13 +52,15 @@ struct OpenGLRendererBackend {
   std::map<uint32_t, ShaderHandles> loaded_shaders;
   std::map<uint32_t, TextureHandles> loaded_textures;
 
-  std::unique_ptr<Texture> white_texture;
 
   CameraData cameras[8] = {};
   int camera_index = -1;
 
   Config configs[8] = {};
   int config_index = -1;
+
+  // Special textures.
+  Texture* white_texture;
 };
 
 inline const CameraData& GetCamera(const OpenGLRendererBackend& opengl) {

@@ -20,22 +20,32 @@ layout (location = 2) in vec2 in_uv;
 out vec3 f_normal;
 out vec2 f_uv;
 
+/* layout (std140) uniform Model { */
+/*   mat4 transform; */
+/* } model; */
+
+/* layout (std140) uniform Node { */
+/*   mat4 transform; */
+/* } node; */
+
 layout (std140) uniform Model {
   mat4 transform;
+  mat4 inverse_transform;
+
 } model;
 
-layout (std140) uniform Node {
-  mat4 transform;
-} node;
-
 void main() {
-  mat4 model_transform = model.transform * node.transform;
-  gl_Position = camera_proj * camera_view * model_transform * vec4(in_pos, 1.0);
+  /* mat4 model_transform = model.transform * node.transform; */
+  /* gl_Position = camera_proj * camera_view * model_transform * vec4(in_pos, 1.0); */
 
-  // Normals have to take into account the model transformation.
-  // We use a normal matrix because non-uniform scale will distort the normal direction.
-  // TODO(Cristian): This should be done on the CPU side!
-  f_normal = mat3(transpose(inverse(model_transform))) * in_normal;
+  /* // Normals have to take into account the model transformation. */
+  /* // We use a normal matrix because non-uniform scale will distort the normal direction. */
+  /* // TODO(Cristian): This should be done on the CPU side! */
+  /* f_normal = mat3(transpose(inverse(model_transform))) * in_normal; */
+  /* f_uv = in_uv; */
+
+  gl_Position = camera_proj * camera_view * model.transform * vec4(in_pos, 1.0);
+  f_normal = mat3(model.inverse_transform) * in_normal;
   f_uv = in_uv;
 }
 )";
@@ -79,12 +89,16 @@ std::unique_ptr<Shader> CreateModelShader(Renderer* renderer) {
   config.name = "model";
   /* config.vertex_type = VertexType::k3dNormalTangentUV; */
   config.vertex_type = VertexType::k3dNormalUV;
+  /* config.ubos[0].name = "Model"; */
+  /* config.ubos[0].size = sizeof(ModelUBO::Model); */
+  /* config.ubos[1].name = "Node"; */
+  /* config.ubos[1].size = sizeof(ModelUBO::Node); */
+  /* config.ubos[2].name = "Frag"; */
+  /* config.ubos[2].size = sizeof(ModelUBO::Frag); */
   config.ubos[0].name = "Model";
   config.ubos[0].size = sizeof(ModelUBO::Model);
-  config.ubos[1].name = "Node";
-  config.ubos[1].size = sizeof(ModelUBO::Node);
-  config.ubos[2].name = "Frag";
-  config.ubos[2].size = sizeof(ModelUBO::Frag);
+  config.ubos[1].name = "Frag";
+  config.ubos[1].size = sizeof(ModelUBO::Frag);
   config.texture_count = 2;
 
   auto vert_src = CreateVertexSource(kModelVertShader);

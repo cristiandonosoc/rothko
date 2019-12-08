@@ -11,13 +11,19 @@ namespace rothko {
 namespace gltf {
 
 struct ModelUBO {
+  /* struct Model { */
+  /*   Mat4 transform; */
+  /* } model; */
+
+  /* struct Node { */
+  /*   Mat4 transform; */
+  /* } node; */
+
+
   struct Model {
     Mat4 transform;
-  } model;
-
-  struct Node {
-    Mat4 transform;
-  } node;
+    Mat4 inverse_transform;
+  } model_transform;
 
   struct Frag {
     Vec4 base_color;

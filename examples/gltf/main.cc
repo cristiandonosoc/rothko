@@ -4,6 +4,7 @@
 #include <rothko/game.h>
 #include <rothko/graphics/default_shaders/default_shaders.h>
 #include <rothko/math/math.h>
+#include <rothko/memory/stack_allocator.h>
 #include <rothko/scene/camera.h>
 #include <rothko/ui/imgui.h>
 #include <rothko/utils/strings.h>
@@ -60,12 +61,10 @@ int main(int argc, const char* argv[]) {
   }
 
   LOG(App, "Path: %s", path.c_str());
-  std::string base_path = GetBasePath(path);
-  LOG(App, "Basepath: %s", base_path.c_str());
-
   std::vector<DirectoryEntry> dir_entries;
-  if (!ListDirectory(base_path, &dir_entries, "gltf"))
-    return 1;
+  if (!ListDirectory(GetBasePath(path), &dir_entries, "gltf")) {
+    dir_entries.push_back({false, path});
+  }
 
   // List the directory.
 
@@ -101,7 +100,10 @@ int main(int argc, const char* argv[]) {
 
   // -----------------------------------------------------------------------------------------------
 
-  for (auto& model : models) {
+  std::vector<gltf::ModelInstance> instances;
+  instances.reserve(models.size());
+  for (uint32_t i = 0; i < models.size(); i++) {
+    auto& model = models[i];
     for (auto& mesh : model->meshes) {
       if (!RendererStageMesh(game.renderer.get(), mesh.get()))
         return 1;
@@ -111,7 +113,32 @@ int main(int argc, const char* argv[]) {
       if (!RendererStageTexture(game.renderer.get(), texture.get()))
         return 1;
     }
+
+    auto& instance = instances.emplace_back();
+    instance.model = model.get();
+    uint32_t x = (i % 5) * 10;
+    uint32_t z = (i / 5) * 10;
+
+    instance.transform.position = {(float)x, 0, (float)z};
+    Update(&instance.transform);
   }
+
+  // Model instances -------------------------------------------------------------------------------
+
+  auto stack_allocator = CreateStackAllocatorFor<gltf::ModelTransformData>(1024);
+
+
+
+/*   gltf::ModelInstance instances[3] = {}; */
+/*   instances[0].model = models[0].get(); */
+
+/*   instances[1].model = models[4].get(); */
+/*   instances[1].transform.position = {1, 0, 1}; */
+/*   Update(&instances[1].transform); */
+
+/*   instances[2].model = models[8].get(); */
+/*   instances[2].transform.position = {-1, 0, -2}; */
+/*   Update(&instances[2].transform); */
 
   Grid grid;
   if (!Init(&grid, game.renderer.get()))
@@ -128,24 +155,25 @@ int main(int argc, const char* argv[]) {
   if (!Init(&lines, game.renderer.get(), "lines"))
     return 1;
 
-  Mat4 model_transform = Mat4::Identity();
-
-  bool running = true;
-  bool rotate = false;
-  float time = 0;
-  float angle = 0;
+  /* Mat4 model_transform = Mat4::Identity(); */
 
   imgui::ImguiContext imgui;
   if (!Init(game.renderer.get(), &imgui))
     return 1;
 
-
+  bool running = true;
+  bool rotate = false;
+  float time = 0;
+  float angle = 0;
   while (running) {
     WindowEvent event = StartFrame(&game);
     if (event == WindowEvent::kQuit) {
       running = false;
       break;
     }
+
+    Reset(&stack_allocator);
+
 
     if (KeyUpThisFrame(game.input, Key::kEscape)) {
       running = false;
@@ -164,23 +192,22 @@ int main(int argc, const char* argv[]) {
       time += game.time.frame_delta;
       angle = ToRadians(20.0f) * time;
     }
-    model_transform = Rotate({0, 1, 0}, angle);
+    /* model_transform = Rotate({0, 1, 0}, angle); */
 
     // Imgui.
 
     Update(&imgui, &game);
-
-    ImGui::ShowDemoWindow();
 
     ImGui::Begin("Models");
 
     for (auto& model : models) {
       int mesh_count = 0;
       mesh_count++;
+      ImGui::PushID(mesh_count);
       if (ImGui::CollapsingHeader(model->name.c_str())) {
-        auto mesh_header = StringPrintf("Meshes##%d", mesh_count);
-        if (ImGui::CollapsingHeader(mesh_header.c_str())) {
+        if (ImGui::CollapsingHeader("Meshes")) {
           for (uint32_t i = 0; i < model->meshes.size(); i++) {
+            ImGui::PushID(i);
             if (i > 0)
               ImGui::Separator();
 
@@ -190,21 +217,25 @@ int main(int argc, const char* argv[]) {
             ImGui::Text("Indices: %zu (%zu bytes)",
                         mesh->indices.size(),
                         mesh->indices.size() / sizeof(Mesh::IndexType));
+
+            ImGui::PopID();
           }
         }
 
-        auto mat_header = StringPrintf("Materials##%d", mesh_count);
-        if (ImGui::CollapsingHeader(mat_header.c_str())) {
+        if (ImGui::CollapsingHeader("Materials")) {
           int count = 0;
           for (auto& [_, material] : model->materials) {
+            ImGui::PushID(count);
             if (count++ > 0)
               ImGui::Separator();
             if (material->base_texture)
               ImGui::Text("Base Texture: %s", material->base_texture->name.c_str());
             ImGui::ColorEdit4("Base Color", (float*)&material->base_color);
+            ImGui::PopID();
           }
         }
       }
+      ImGui::PopID();
     }
 
     ImGui::End();
@@ -214,6 +245,45 @@ int main(int argc, const char* argv[]) {
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Graycc()));
     commands.push_back(GetPushCamera(camera));
+
+    // Put in a model instance.
+    for (auto& instance : instances) {
+      for (auto& node : instance.model->nodes) {
+        // Calculate the transform.
+        auto* transform_data = Allocate<gltf::ModelTransformData>(&stack_allocator);
+        transform_data->transform = instance.transform.world_matrix * node.transform.world_matrix;
+        transform_data->inverse_transform = Transpose(Inverse(transform_data->transform));
+
+        for (const gltf::ModelNodeMesh node_mesh : node.meshes) {
+          if (!Valid(node_mesh))
+            continue;
+
+          // Render the mesh!
+          RenderMesh render_mesh = {};
+          render_mesh.mesh = node_mesh.mesh;
+          render_mesh.shader = model_shader.get();
+          render_mesh.primitive_type = PrimitiveType::kTriangles;
+          render_mesh.indices_count = node_mesh.mesh->indices.size();
+
+          render_mesh.ubo_data[0] = (uint8_t*)transform_data;
+          render_mesh.ubo_data[1] = (uint8_t*)&node_mesh.material->base_color;
+
+          commands.push_back(std::move(render_mesh));
+
+          /* Vec3 m1 = ToVec3(model_transform * node.transform.world_matrix * node.min); */
+          /* Vec3 m2 = ToVec3(model_transform * node.transform.world_matrix * node.max); */
+
+          Vec3 m1 = ToVec3(transform_data->transform * node_mesh.min);
+          Vec3 m2 = ToVec3(transform_data->transform * node_mesh.max);
+
+          auto [min, max] = GetBounds(m1, m2);
+
+          PushCube(&lines, min, max, Color::Black());
+          /* PushCubeCenter(&lines, m1, {0.1f, 0.1f, 0.1f}, Color::White()); */
+          /* PushCubeCenter(&lines, m2, {0.1f, 0.1f, 0.1f}, Color::White()); */
+        }
+      }
+    }
 
     /* for (auto& node : model.nodes) { */
     /*   for (const gltf::ModelNodeMesh& node_mesh : node.meshes) { */

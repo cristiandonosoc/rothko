@@ -70,3 +70,14 @@
   - Only implemented for Windows and linux.
 - Loaded all the low poly environment models at once using that API.
 - Simplified the Imgui update API a bit and added some TODOs.
+
+## Day 8 (~1.5 hours)
+
+![Day8](log_images/tetris_day8.png)
+
+- Added a model instance, which permits to render a model with a transform.
+- Added a StackAllocator (which simply increases the pointer from a base buffer).
+  - This is used in order to store the transform and inverse transform of a model/mesh combo.
+- Fixed a bug where materials would be wrongly tracked between nodes, incorrectly rendering
+  materials.
+- Loaded multiple models and rendered them in a scene.
