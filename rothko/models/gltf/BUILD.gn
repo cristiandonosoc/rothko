@@ -1,0 +1,19 @@
+# Copyright 2019, Cristián Donoso.
+# This code has a BSD license. See LICENSE.
+
+source_set("gltf") {
+  sources = [
+    "loader.cc",
+    "loader.h",
+  ]
+
+  public_deps = [
+    "//rothko/models",
+  ]
+
+  deps = [
+    "//rothko/graphics",
+    "//rothko/utils",
+    "//third_party/tiny_gltf",
+  ]
+}

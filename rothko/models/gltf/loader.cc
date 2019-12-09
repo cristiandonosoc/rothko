@@ -1,17 +1,18 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include "loader.h"
+#include "rothko/models/gltf/loader.h"
 
-#include <rothko/graphics/graphics.h>
-#include <rothko/graphics/vertices.h>
-#include <rothko/logging/logging.h>
-#include <rothko/scene/scene_graph.h>
-#include <rothko/utils/strings.h>
 #include <third_party/tiny_gltf/tiny_gltf.h>
 
+#include <map>
 #include <set>
-#include <sstream>
+
+#include "rothko/graphics/graphics.h"
+#include "rothko/logging/logging.h"
+#include "rothko/models/model.h"
+#include "rothko/scene/scene_graph.h"
+#include "rothko/utils/strings.h"
 
 namespace rothko {
 namespace gltf {
@@ -25,14 +26,22 @@ struct NodeContext {
 };
 
 struct ProcessingContext {
-  Model* model = nullptr;
+  Model model;
 
   std::unique_ptr<SceneGraph> scene_graph;
   std::vector<NodeContext> scene_nodes;
 
-  // Set of meshes we have already seen. These are NOT the rothko meshes that are outputted (those
-  // are the set of primitives contained by the meshes processes here).
-  std::set<int> processed_meshes;
+  // Set of resources we have already seen. These are NOT the rothko resources that are outputted.
+  // Those are moved into the model at the end of processing. We use memory stability to make sure
+  // that the binding is correct.
+  std::set<int> processed_node_meshes;
+
+  // The uniqueness of the mesh (which corresponds to the glTF primitive) is ensured by the
+  // |processed_node_meshes| set.
+  std::vector<std::unique_ptr<Mesh>> meshes;
+
+  std::map<int, std::unique_ptr<Texture>> textures;
+  std::map<int, std::unique_ptr<Material>> materials;
 };
 
 enum class BufferViewTarget : int {
@@ -79,14 +88,14 @@ const char* ToString(ComponentType type) {
 
 uint32_t ToSize(ComponentType component_type) {
   switch (component_type) {
-    case ComponentType::kInt8:    return 1;
-    case ComponentType::kUint8:   return 1;
-    case ComponentType::kInt16:   return 2;
-    case ComponentType::kUint16:  return 2;
-    case ComponentType::kInt32:   return 4;
-    case ComponentType::kUInt32:  return 4;
-    case ComponentType::kFloat:   return 4;
-    case ComponentType::kDouble:  return 8;
+    case ComponentType::kInt8: return 1;
+    case ComponentType::kUint8: return 1;
+    case ComponentType::kInt16: return 2;
+    case ComponentType::kUint16: return 2;
+    case ComponentType::kInt32: return 4;
+    case ComponentType::kUInt32: return 4;
+    case ComponentType::kFloat: return 4;
+    case ComponentType::kDouble: return 8;
   }
 
   NOT_REACHED();
@@ -149,10 +158,10 @@ const char* ToString(AccessorType type) {
   return "<unknown>";
 }
 
-VertexType
-DetectVertexType(const tinygltf::Model& model,
-                 const tinygltf::Primitive& primitive,
-                 std::map<VertComponent, const tinygltf::Accessor*>* accessors = nullptr) {
+VertexType DetectVertexType(
+    const tinygltf::Model& model,
+    const tinygltf::Primitive& primitive,
+    std::map<VertComponent, const tinygltf::Accessor*>* accessors = nullptr) {
   uint32_t types = 0;
   for (auto& [attr_name, attr_accessor_index] : primitive.attributes) {
     const tinygltf::Accessor& accessor = model.accessors[attr_accessor_index];
@@ -165,22 +174,22 @@ DetectVertexType(const tinygltf::Model& model,
 
     switch (accessor_kind) {
       case AccessorKind::kPosition: component = VertComponent::kPos3d; break;
-      case AccessorKind::kNormal:   component = VertComponent::kNormal; break;
-      case AccessorKind::kTangent:  component = VertComponent::kTangent; break;
+      case AccessorKind::kNormal: component = VertComponent::kNormal; break;
+      case AccessorKind::kTangent: component = VertComponent::kTangent; break;
       case AccessorKind::kTexcoord0: {
         switch (comp_type) {
-          case ComponentType::kUint8:   component = VertComponent::kUV0_byte; break;
-          case ComponentType::kUint16:  component = VertComponent::kUV0_short; break;
-          case ComponentType::kFloat:   component = VertComponent::kUV0_float; break;
+          case ComponentType::kUint8: component = VertComponent::kUV0_byte; break;
+          case ComponentType::kUint16: component = VertComponent::kUV0_short; break;
+          case ComponentType::kFloat: component = VertComponent::kUV0_float; break;
           default: NOT_REACHED();
         }
         break;
       }
       case AccessorKind::kTexcoord1: {
         switch (comp_type) {
-          case ComponentType::kUint8:   component = VertComponent::kUV1_byte; break;
-          case ComponentType::kUint16:  component = VertComponent::kUV1_short; break;
-          case ComponentType::kFloat:   component = VertComponent::kUV1_float; break;
+          case ComponentType::kUint8: component = VertComponent::kUV1_byte; break;
+          case ComponentType::kUint16: component = VertComponent::kUV1_short; break;
+          case ComponentType::kFloat: component = VertComponent::kUV1_float; break;
           default: NOT_REACHED();
         }
         break;
@@ -188,16 +197,16 @@ DetectVertexType(const tinygltf::Model& model,
       case AccessorKind::kColor: {
         if (accessor_type == AccessorType::kVec3) {
           switch (comp_type) {
-            case ComponentType::kUint8:   component = VertComponent::kColorRGB_byte; break;
-            case ComponentType::kUint16:  component = VertComponent::kColorRGB_short; break;
-            case ComponentType::kFloat:   component = VertComponent::kColorRGB_float; break;
+            case ComponentType::kUint8: component = VertComponent::kColorRGB_byte; break;
+            case ComponentType::kUint16: component = VertComponent::kColorRGB_short; break;
+            case ComponentType::kFloat: component = VertComponent::kColorRGB_float; break;
             default: NOT_REACHED();
           }
         } else if (accessor_type == AccessorType::kVec4) {
           switch (comp_type) {
-            case ComponentType::kUint8:   component = VertComponent::kColorRGBA_byte; break;
-            case ComponentType::kUint16:  component = VertComponent::kColorRGBA_short; break;
-            case ComponentType::kFloat:   component = VertComponent::kColorRGBA_float; break;
+            case ComponentType::kUint8: component = VertComponent::kColorRGBA_byte; break;
+            case ComponentType::kUint16: component = VertComponent::kColorRGBA_short; break;
+            case ComponentType::kFloat: component = VertComponent::kColorRGBA_float; break;
             default: NOT_REACHED();
           }
         }
@@ -205,8 +214,8 @@ DetectVertexType(const tinygltf::Model& model,
       }
       case AccessorKind::kJoints: {
         switch (comp_type) {
-          case ComponentType::kUint8:   component = VertComponent::kJoints_byte; break;
-          case ComponentType::kUint16:  component = VertComponent::kJoints_short; break;
+          case ComponentType::kUint8: component = VertComponent::kJoints_byte; break;
+          case ComponentType::kUint16: component = VertComponent::kJoints_short; break;
           default: NOT_REACHED();
         }
         break;
@@ -239,8 +248,8 @@ struct VerticesExtraction {
   Vec3 max;
 };
 VerticesExtraction ExtractVertices(const tinygltf::Model& model,
-                                     const tinygltf::Primitive& primitive,
-                                     VertexType vertex_type = VertexType::kLast) {
+                                   const tinygltf::Primitive& primitive,
+                                   VertexType vertex_type = VertexType::kLast) {
   std::map<VertComponent, const tinygltf::Accessor*> accessors;
   vertex_type = DetectVertexType(model, primitive, &accessors);
   uint32_t vertex_size = ToSize(vertex_type);
@@ -251,12 +260,9 @@ VerticesExtraction ExtractVertices(const tinygltf::Model& model,
   // Go over each vertex component and add it to a buffer.
   auto accessor_it = accessors.begin();
   uint32_t vertices_size = accessor_it->second->count * vertex_size;
-  /* printf("Vertices size: %u, Vertex Size: %u, Count: %lu\n", vertices_size, vertex_size, */
-  /*                                                            accessor_it->second->count); */
-  /* fflush(stdout); */
 
   std::vector<uint8_t> vertices;
-  vertices.resize(vertices_size);   // We're going to overwrite the contents.
+  vertices.resize(vertices_size);  // We're going to overwrite the contents.
 
   constexpr float kMaxBound = 10000;
   Vec3 min_pos = {kMaxBound, kMaxBound, kMaxBound};
@@ -264,7 +270,7 @@ VerticesExtraction ExtractVertices(const tinygltf::Model& model,
 
   // Accessors are already sorted to where they are in the buffer.
   uint32_t component_offset = 0;
-  for(; accessor_it != accessors.end(); accessor_it++) {
+  for (; accessor_it != accessors.end(); accessor_it++) {
     const VertComponent& vert_component = accessor_it->first;
     uint32_t component_size = ToSize(vert_component);
 
@@ -273,22 +279,13 @@ VerticesExtraction ExtractVertices(const tinygltf::Model& model,
     const tinygltf::BufferView& buffer_view = model.bufferViews[accessor->bufferView];
     const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
 
-
     uint8_t* vertices_ptr = vertices.data() + component_offset;
     uint8_t* vertices_end = vertices.data() + vertices_size;
     const uint8_t* buffer_ptr =
         (const uint8_t*)buffer.data.data() + buffer_view.byteOffset + accessor->byteOffset;
     const uint8_t* buffer_end = (const uint8_t*)buffer.data.data() + buffer.data.size();
 
-    /* LOG(App, */
-    /*     "Component %s -> Buffer View: %u, Buffer: %u, Offset: %u", */
-    /*     ToString(vert_component), */
-    /*     accessor->bufferView, */
-    /*     buffer_view.buffer, */
-    /*     component_offset); */
-
     // Copy over the data to the buffer.
-    /* LOG(App, "Writing accessor %s", ToString(accessor_it->first)); */
     for (size_t i = 0; i < accessor->count; i++) {
       ASSERT(vertices_ptr < vertices_end);
       ASSERT(buffer_ptr < buffer_end);
@@ -320,7 +317,6 @@ VerticesExtraction ExtractVertices(const tinygltf::Model& model,
     component_offset += component_size;
   }
 
-
   VerticesExtraction extraction = {};
   extraction.data = std::move(vertices);
   extraction.min = min_pos;
@@ -335,14 +331,7 @@ std::vector<uint32_t> ObtainIndices(const uint8_t* data, uint32_t count) {
 
   const T* ptr = (const T*)data;
   for (uint32_t i = 0; i < count; i++) {
-    /* const uint8_t* char_ptr = (const uint8_t*)ptr; */
-    /* printf("Index %u (0x%x) [0x%x, 0x%x]\n", *ptr, *ptr, char_ptr[0], char_ptr[1]); */
-    /* fflush(stdout); */
-
     indices.push_back(*ptr++);
-
-    /* if (i > 5) */
-    /*   SEGFAULT(); */
   }
 
   return indices;
@@ -355,7 +344,6 @@ std::vector<uint32_t> ExtractIndices(const tinygltf::Model& model,
 
   ComponentType component_type = (ComponentType)accessor.componentType;
   ASSERT(component_type == ComponentType::kUint16 || component_type == ComponentType::kUInt32);
-  /* LOG(App, "Index component type: %s", ToString(component_type)); */
 
   const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
   const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
@@ -377,7 +365,6 @@ NO_DISCARD Transform ProcessNodeTransform(const tinygltf::Node& node) {
   if (!node.translation.empty())
     transform.position = NodeToVec3(node.translation.data());
 
-  // TODO(Cristian): Do rotation.
   if (!node.rotation.empty()) {
     Quaternion q = {};
     q.x = node.rotation[0];
@@ -393,16 +380,16 @@ NO_DISCARD Transform ProcessNodeTransform(const tinygltf::Node& node) {
 }
 
 Texture* LoadTexture(const tinygltf::Model& model,
-                    const tinygltf::Material& material,
-                    Model* out_model) {
+                     const tinygltf::Material& material,
+                     ProcessingContext* context) {
   int texture_index = material.pbrMetallicRoughness.baseColorTexture.index;
   if (texture_index == -1)
     return nullptr;
 
   // Load the related texture.
   Texture* texture_ptr = nullptr;
-  auto texture_it = out_model->textures.find(texture_index);
-  if (texture_it != out_model->textures.end()) {
+  auto texture_it = context->textures.find(texture_index);
+  if (texture_it != context->textures.end()) {
     texture_ptr = texture_it->second.get();
   } else {
     const tinygltf::Texture& base_texture =
@@ -427,23 +414,23 @@ Texture* LoadTexture(const tinygltf::Model& model,
     memcpy(rothko_texture->data.get(), base_image.image.data(), base_image.image.size());
 
     texture_ptr = rothko_texture.get();
-    out_model->textures[base_texture.source] = std::move(rothko_texture);
+    context->textures[base_texture.source] = std::move(rothko_texture);
   }
 
   return texture_ptr;
 }
 
 Material* HandleMaterial(const tinygltf::Model& model,
-                    const tinygltf::Primitive& primitive,
-                    Model* out_model) {
-  auto material_it = out_model->materials.find(primitive.material);
-  if (material_it != out_model->materials.end())
+                         const tinygltf::Primitive& primitive,
+                         ProcessingContext* context) {
+  auto material_it = context->materials.find(primitive.material);
+  if (material_it != context->materials.end())
     return material_it->second.get();
 
   const tinygltf::Material& material = model.materials[primitive.material];
 
   auto rothko_material = std::make_unique<Material>();
-  rothko_material->base_texture = LoadTexture(model, material, out_model);
+  rothko_material->base_texture = LoadTexture(model, material, context);
   ASSERT(material.pbrMetallicRoughness.baseColorFactor.size() == 4u);
   rothko_material->base_color.r = material.pbrMetallicRoughness.baseColorFactor[0];
   rothko_material->base_color.g = material.pbrMetallicRoughness.baseColorFactor[1];
@@ -451,19 +438,21 @@ Material* HandleMaterial(const tinygltf::Model& model,
   rothko_material->base_color.a = material.pbrMetallicRoughness.baseColorFactor[3];
 
   Material* material_ptr = rothko_material.get();
-  out_model->materials[primitive.material] = std::move(rothko_material);
+  context->materials[primitive.material] = std::move(rothko_material);
   return material_ptr;
 }
 
-bool
-ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, const NodeContext& parent,
-            ProcessingContext* context, NodeContext* node_context) {
-  ModelNode& model_node = context->model->nodes.emplace_back();
+bool ProcessNode(const tinygltf::Model& model,
+                 const tinygltf::Node& node,
+                 const NodeContext& parent,
+                 ProcessingContext* context,
+                 NodeContext* node_context) {
+  ModelNode& model_node = context->model.nodes.emplace_back();
   SceneNode* current_node = AddNode(context->scene_graph.get(), parent.scene_node);
   current_node->transform = ProcessNodeTransform(node);
 
   node_context->scene_node = current_node;
-  node_context->index = context->model->nodes.size() - 1;
+  node_context->index = context->model.nodes.size() - 1;
   node_context->parent_index = parent.index;
   context->scene_nodes.push_back(*node_context);
 
@@ -472,13 +461,12 @@ ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, const Node
     return true;
 
   // Check if we loaded the mesh.
-  if (context->processed_meshes.count(node.mesh)) {
+  if (context->processed_node_meshes.count(node.mesh)) {
     NOT_REACHED_MSG("Mesh reuse not supported yet.");
     return node_context;
   }
 
   const tinygltf::Mesh& mesh = model.meshes[node.mesh];
-  LOG(App, "Processing mesh %s", mesh.name.c_str());
 
   // Process the primitives.
   for (uint32_t primitive_i = 0; primitive_i < mesh.primitives.size(); primitive_i++) {
@@ -526,21 +514,25 @@ ProcessNode(const tinygltf::Model& model, const tinygltf::Node& node, const Node
     rothko_mesh->vertex_count = vertex_count;
     rothko_mesh->indices = std::move(indices);
     const Mesh* mesh_ptr = rothko_mesh.get();
-    context->model->meshes.push_back(std::move(rothko_mesh));
+    context->meshes.push_back(std::move(rothko_mesh));
 
-    LOG(App, "Mesh for %s: %s -> Vertices: %u (Min: %s, Max: %s), Indices: %zu", node.name.c_str(),
-                                                              mesh_ptr->name.c_str(),
-                                                              mesh_ptr->vertex_count,
-                                                              ToString(min).c_str(),
-                                                              ToString(max).c_str(),
-                                                              mesh_ptr->indices.size());
+    /* LOG(App, */
+    /*     "Mesh for %s: %s -> Vertices: %u (Min: %s, Max: %s), Indices: %zu", */
+    /*     node.name.c_str(), */
+    /*     mesh_ptr->name.c_str(), */
+    /*     mesh_ptr->vertex_count, */
+    /*     ToString(min).c_str(), */
+    /*     ToString(max).c_str(), */
+    /*     mesh_ptr->indices.size()); */
 
     // Material.
-    model_node.meshes[primitive_i].min = min;
-    model_node.meshes[primitive_i].max = max;
-    model_node.meshes[primitive_i].mesh = mesh_ptr;
-    model_node.meshes[primitive_i].material = HandleMaterial(model, primitive, context->model);
+    model_node.primitives[primitive_i].bounds.min = min;
+    model_node.primitives[primitive_i].bounds.max = max;
+    model_node.primitives[primitive_i].mesh = mesh_ptr;
+    model_node.primitives[primitive_i].material = HandleMaterial(model, primitive, context);
   }
+
+  context->processed_node_meshes.insert(node.mesh);
 
   return true;
 }
@@ -559,28 +551,66 @@ bool ProcessNodes(const tinygltf::Model& model, const tinygltf::Node& node,
   return true;
 }
 
-}  // namespace
-
-bool ProcessModel(const tinygltf::Model& model, const tinygltf::Scene& scene, Model* out_model) {
+bool ProcessModel(const tinygltf::Model& model, const tinygltf::Scene& scene, Model* model_out) {
   ProcessingContext context = {};
   context.scene_graph = std::make_unique<SceneGraph>();
-  context.model = out_model;
 
   for (int node_index : scene.nodes) {
     if (!ProcessNodes(model, model.nodes[node_index], {}, &context))
       return false;
   }
 
-  // Once we have processed all the nodes, we need to correctly set the internal scene_graph.
-  Update(context.scene_graph.get());
+  // Fill in the context into the model.
+  *model_out = std::move(context.model);
 
+  model_out->meshes = std::move(context.meshes);
+
+  model_out->textures.reserve(context.textures.size());
+  for (auto& [id, texture] : context.textures) {
+    model_out->textures.push_back(std::move(texture));
+  }
+
+  model_out->materials.reserve(context.materials.size());
+  for (auto& [id, material] : context.materials) {
+    model_out->materials.push_back(std::move(material));
+  }
+
+  // Once we have processed all the nodes, we need to correctly set the internal scene graph.
+  Update(context.scene_graph.get());
   for (uint32_t i = 0; i < context.scene_nodes.size(); i++) {
     const NodeContext& scene_node = context.scene_nodes[i];
-    ModelNode* node = &out_model->nodes[i];
-    node->transform = scene_node.scene_node->transform;
+    model_out->nodes[i].transform = scene_node.scene_node->transform;
   }
 
   return true;
+}
+
+}  // namespace
+
+bool LoadModel(const std::string& path, Model* model_out) {
+    std::string err, warn;
+    tinygltf::TinyGLTF gltf_loader;
+    tinygltf::Model gltf_model = {};
+    if (!gltf_loader.LoadASCIIFromFile(&gltf_model, &err, &warn, path)) {
+      ERROR(Model, "Could not load model %s: %s.", path.c_str(), err.c_str());
+      return false;
+    }
+
+    if (!warn.empty())
+      WARNING(Model, "Loading model %s: %s.", path.c_str(), warn.c_str());
+
+    // TODO(donosoc): Load mode than the default scene.
+    if (gltf_model.scenes.size() > 1u) {
+      WARNING(Model, "Model %s: More than one scene defined. Only default scene is supported.",
+              path.c_str());
+    }
+
+    auto& gltf_scene = gltf_model.scenes[gltf_model.defaultScene];
+    if (!ProcessModel(gltf_model, gltf_scene, model_out))
+      return false;
+
+    model_out->name = path;
+    return true;
 }
 
 }  // namespace gltf

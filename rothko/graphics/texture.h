@@ -63,8 +63,8 @@ struct Texture {
   std::unique_ptr<uint8_t[]> data;
 };
 
-inline bool Loaded(Texture* t) { return !!t->data; }
-inline bool Staged(Texture* t) { return t->uuid.has_value(); }
+inline bool Loaded(const Texture& t) { return !!t.data; }
+inline bool Staged(const Texture& t) { return t.uuid.has_value(); }
 
 inline uint32_t DataSize(const Texture& t) { return t.size.x * t.size.y * ToSize(t.type); }
 

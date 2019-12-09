@@ -97,9 +97,8 @@ Gl3wInitResultToString(int res) {
 
 std::unique_ptr<OpenGLRendererBackend> gBackend;
 
-Texture* CreateWhiteTexture(OpenGLRendererBackend* opengl) {
-  // The lifetime is managed explicitly by the rendering backend.
-  auto* texture = (Texture*)malloc(sizeof(Texture));
+std::unique_ptr<Texture> CreateWhiteTexture(OpenGLRendererBackend* opengl) {
+  auto texture = std::make_unique<Texture>();
   texture->name = "opengl-default-white";
   texture->type = TextureType::kRGBA;
   texture->size = {1, 1};
@@ -109,9 +108,14 @@ Texture* CreateWhiteTexture(OpenGLRendererBackend* opengl) {
   texture->data = std::make_unique<uint8_t[]>(sizeof(uint32_t));
   *(uint32_t*)texture->data.get() = ToUint32(Color::White());
 
-  if (!OpenGLStageTexture(opengl, texture))
+  if (!OpenGLStageTexture(opengl, texture.get()))
     return nullptr;
   return texture;
+
+  /* // The lifetime is managed explicitly by the rendering backend. */
+  /* auto* texture_ptr = (Texture*)malloc(sizeof(Texture)); */
+  /* *texture_ptr = std::move(texture); */
+  /* return texture_ptr; */
 }
 
 }  // namespace
@@ -122,8 +126,10 @@ OpenGLRendererBackend* GetOpenGL() {
 }
 
 OpenGLRendererBackend::~OpenGLRendererBackend() {
-  if (Staged(white_texture))
-    OpenGLUnstageTexture(this, white_texture);
+  if (white_texture && Staged(*white_texture)) {
+    OpenGLUnstageTexture(this, white_texture.get());
+    white_texture.reset();
+  }
 }
 
 }  // opengl

@@ -23,6 +23,7 @@ enum class LogCategory : uint32_t {
   kFatal,
   kImgui,
   kGraphics,    // Common graphics functionality.
+  kModel,
   kOpenGL,      // OpenGL renderer sub-system.
   kLast,
 };

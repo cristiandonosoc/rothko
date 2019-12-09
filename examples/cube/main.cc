@@ -225,11 +225,11 @@ int main() {
     return 1;
 
   Texture wall = LoadTexture(renderer.get(), "examples/cube/wall.jpg");
-  if (!Loaded(&wall))
+  if (!Loaded(wall))
     return 1;
 
   Texture face = LoadTexture(renderer.get(), "examples/cube/awesomeface.png");
-  if (!Loaded(&face))
+  if (!Loaded(face))
     return 1;
 
   LineManager line_manager, axis_widget = {};

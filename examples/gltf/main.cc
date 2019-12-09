@@ -5,6 +5,8 @@
 #include <rothko/graphics/default_shaders/default_shaders.h>
 #include <rothko/math/math.h>
 #include <rothko/memory/stack_allocator.h>
+#include <rothko/models/gltf/loader.h>
+#include <rothko/models/model.h>
 #include <rothko/scene/camera.h>
 #include <rothko/ui/imgui.h>
 #include <rothko/utils/strings.h>
@@ -13,12 +15,14 @@
 #include <stdio.h>
 #include <third_party/tiny_gltf/tiny_gltf.h>
 
-#include "loader.h"
 #include "shaders.h"
 
 using namespace rothko;
 
 namespace {
+
+static WidgetOperation gWidgetOperation = WidgetOperation::kTranslate;
+static TransformKind gTransformKind = TransformKind::kGlobal;
 
 std::pair<Vec3, Vec3> GetBounds(const Vec3& m1, const Vec3& m2) {
   Vec3 min = {};
@@ -33,6 +37,61 @@ std::pair<Vec3, Vec3> GetBounds(const Vec3& m1, const Vec3& m2) {
   max.z = Max(m1.z, m2.z);
 
   return {min, max};
+}
+
+std::vector<RenderCommand> CreateRenderCommands(const PushCamera& camera,
+                                                std::vector<ModelInstance>* instances,
+                                                LineManager* lines,
+                                                const Shader* model_shader,
+                                                int index) {
+  (void)lines;
+  static auto stack_allocator = CreateStackAllocatorFor<ModelTransform>(1024);
+  Reset(&stack_allocator);
+  std::vector<RenderCommand> commands;
+
+  // Put in a model instance.
+  for (int i = 0; i < (int)instances->size(); i++) {
+    if (i != index)
+      continue;
+
+    auto& instance = (*instances)[i];
+
+    // Add a transformation widget.
+    TransformWidget(gWidgetOperation, gTransformKind, camera, &instance.transform);
+    Update(&instance.transform);
+
+    for (auto& node : instance.model->nodes) {
+      // Calculate the transform.
+      auto* transform_data = Allocate<ModelTransform>(&stack_allocator);
+      transform_data->transform = instance.transform.world_matrix * node.transform.world_matrix;
+      transform_data->inverse_transform = Transpose(Inverse(transform_data->transform));
+
+      for (const ModelPrimitive& primitive : node.primitives) {
+        if (!Valid(primitive))
+          continue;
+
+        // Render the mesh!
+        RenderMesh render_mesh = {};
+        render_mesh.mesh = primitive.mesh;
+        render_mesh.shader = model_shader;
+        render_mesh.primitive_type = PrimitiveType::kTriangles;
+        render_mesh.indices_count = primitive.mesh->indices.size();
+
+        render_mesh.ubo_data[0] = (uint8_t*)transform_data;
+        render_mesh.ubo_data[1] = (uint8_t*)&primitive.material->base_color;
+
+        commands.push_back(std::move(render_mesh));
+
+        /* Vec3 m1 = ToVec3(transform_data->transform * primitive.bounds.min); */
+        /* Vec3 m2 = ToVec3(transform_data->transform * primitive.bounds.max); */
+
+        /* auto [min, max] = GetBounds(m1, m2); */
+        /* PushCube(lines, min, max, Color::Black()); */
+      }
+    }
+  }
+
+  return commands;
 }
 
 }  // namespace
@@ -66,41 +125,21 @@ int main(int argc, const char* argv[]) {
     dir_entries.push_back({false, path});
   }
 
-  // List the directory.
 
-  std::vector<std::unique_ptr<gltf::Model>> models;
+  std::vector<std::unique_ptr<Model>> models;
   for (auto& dir_entry : dir_entries) {
-    std::string err, warn;
-    tinygltf::TinyGLTF gltf_loader;
-    tinygltf::Model gltf_model = {};
-    if (!gltf_loader.LoadASCIIFromFile(&gltf_model, &err, &warn, dir_entry.path)) {
-      ERROR(App, "Could not load model: %s", err.c_str());
-      continue;
-    }
-
-    if (!warn.empty()) {
-      WARNING(App, "At loading model %s: %s", path.c_str(), warn.c_str());
-    }
-
-    // Go over the model.
-    auto model = std::make_unique<gltf::Model>();
-    auto& gltf_scene = gltf_model.scenes[gltf_model.defaultScene];
-    LOG(App, "Processing scene %s", gltf_scene.name.c_str());
-
-    if (!gltf::ProcessModel(gltf_model, gltf_scene, model.get()))
+    if (dir_entry.is_dir)
       continue;
 
-    model->name = dir_entry.path;
-    /* LOG(App, "Loaded model %s.", model->name.c_str()); */
-    /* LOG(App, "Meshes: %zu", model->meshes.size()); */
-    /* LOG(App, "Textures: %zu", model->textures.size()); */
-
+    auto model = std::make_unique<Model>();
+    if (!gltf::LoadModel(dir_entry.path, model.get()))
+      return 1;
     models.push_back(std::move(model));
   }
 
   // -----------------------------------------------------------------------------------------------
 
-  std::vector<gltf::ModelInstance> instances;
+  std::vector<ModelInstance> instances;
   instances.reserve(models.size());
   for (uint32_t i = 0; i < models.size(); i++) {
     auto& model = models[i];
@@ -109,36 +148,22 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
-    for (auto& [id, texture] : model->textures) {
+    for (auto& texture : model->textures) {
       if (!RendererStageTexture(game.renderer.get(), texture.get()))
         return 1;
     }
 
     auto& instance = instances.emplace_back();
     instance.model = model.get();
-    uint32_t x = (i % 5) * 10;
-    uint32_t z = (i / 5) * 10;
+    /* uint32_t x = (i % 5) * 10; */
+    /* uint32_t z = (i / 5) * 10; */
 
-    instance.transform.position = {(float)x, 0, (float)z};
+    /* instance.transform.position = {(float)x, 0, (float)z}; */
     Update(&instance.transform);
   }
 
   // Model instances -------------------------------------------------------------------------------
 
-  auto stack_allocator = CreateStackAllocatorFor<gltf::ModelTransformData>(1024);
-
-
-
-/*   gltf::ModelInstance instances[3] = {}; */
-/*   instances[0].model = models[0].get(); */
-
-/*   instances[1].model = models[4].get(); */
-/*   instances[1].transform.position = {1, 0, 1}; */
-/*   Update(&instances[1].transform); */
-
-/*   instances[2].model = models[8].get(); */
-/*   instances[2].transform.position = {-1, 0, -2}; */
-/*   Update(&instances[2].transform); */
 
   Grid grid;
   if (!Init(&grid, game.renderer.get()))
@@ -172,9 +197,6 @@ int main(int argc, const char* argv[]) {
       break;
     }
 
-    Reset(&stack_allocator);
-
-
     if (KeyUpThisFrame(game.input, Key::kEscape)) {
       running = false;
       break;
@@ -200,11 +222,46 @@ int main(int argc, const char* argv[]) {
 
     ImGui::Begin("Models");
 
-    for (auto& model : models) {
+    ImGui::Text("Manipulation");
+
+    ImGui::RadioButton("Translate", (int*)&gWidgetOperation, (int)WidgetOperation::kTranslate);
+    ImGui::SameLine();
+    ImGui::RadioButton("Rotate", (int*)&gWidgetOperation, (int)WidgetOperation::kRotate);
+    ImGui::SameLine();
+    ImGui::RadioButton("Scale", (int*)&gWidgetOperation, (int)WidgetOperation::kScale);
+
+    ImGui::RadioButton("World", (int*)&gTransformKind, (int)TransformKind::kGlobal);
+    ImGui::SameLine();
+    ImGui::RadioButton("Local", (int*)&gTransformKind, (int)TransformKind::kLocal);
+
+    // Scale only works in local mode. Otherwise it resets the rotation.
+    if (gWidgetOperation == WidgetOperation::kScale)
+      gTransformKind = TransformKind::kLocal;
+
+    ImGui::Separator();
+
+    static int selected = -1;
+    for (int model_index = 0; model_index < (int)models.size(); model_index++) {
+      auto& model = models[model_index];
       int mesh_count = 0;
       mesh_count++;
       ImGui::PushID(mesh_count);
+
+      ImGui::SetNextTreeNodeOpen(selected == model_index);
       if (ImGui::CollapsingHeader(model->name.c_str())) {
+        selected = model_index;
+
+        if (ImGui::CollapsingHeader("Nodes")) {
+          for (uint32_t i = 0; i < model->nodes.size(); i++) {
+            ImGui::PushID(i);
+            if (i > 0)
+              ImGui::Separator();
+
+            TransformImguiWidget(model->nodes[i].transform);
+            ImGui::PopID();
+          }
+        }
+
         if (ImGui::CollapsingHeader("Meshes")) {
           for (uint32_t i = 0; i < model->meshes.size(); i++) {
             ImGui::PushID(i);
@@ -224,7 +281,7 @@ int main(int argc, const char* argv[]) {
 
         if (ImGui::CollapsingHeader("Materials")) {
           int count = 0;
-          for (auto& [_, material] : model->materials) {
+          for (auto& material : model->materials) {
             ImGui::PushID(count);
             if (count++ > 0)
               ImGui::Separator();
@@ -244,80 +301,12 @@ int main(int argc, const char* argv[]) {
 
     PerFrameVector<RenderCommand> commands;
     commands.push_back(ClearFrame::FromColor(Color::Graycc()));
-    commands.push_back(GetPushCamera(camera));
+    auto push_camera = GetPushCamera(camera);
+    commands.push_back(push_camera);
 
-    // Put in a model instance.
-    for (auto& instance : instances) {
-      for (auto& node : instance.model->nodes) {
-        // Calculate the transform.
-        auto* transform_data = Allocate<gltf::ModelTransformData>(&stack_allocator);
-        transform_data->transform = instance.transform.world_matrix * node.transform.world_matrix;
-        transform_data->inverse_transform = Transpose(Inverse(transform_data->transform));
-
-        for (const gltf::ModelNodeMesh node_mesh : node.meshes) {
-          if (!Valid(node_mesh))
-            continue;
-
-          // Render the mesh!
-          RenderMesh render_mesh = {};
-          render_mesh.mesh = node_mesh.mesh;
-          render_mesh.shader = model_shader.get();
-          render_mesh.primitive_type = PrimitiveType::kTriangles;
-          render_mesh.indices_count = node_mesh.mesh->indices.size();
-
-          render_mesh.ubo_data[0] = (uint8_t*)transform_data;
-          render_mesh.ubo_data[1] = (uint8_t*)&node_mesh.material->base_color;
-
-          commands.push_back(std::move(render_mesh));
-
-          /* Vec3 m1 = ToVec3(model_transform * node.transform.world_matrix * node.min); */
-          /* Vec3 m2 = ToVec3(model_transform * node.transform.world_matrix * node.max); */
-
-          Vec3 m1 = ToVec3(transform_data->transform * node_mesh.min);
-          Vec3 m2 = ToVec3(transform_data->transform * node_mesh.max);
-
-          auto [min, max] = GetBounds(m1, m2);
-
-          PushCube(&lines, min, max, Color::Black());
-          /* PushCubeCenter(&lines, m1, {0.1f, 0.1f, 0.1f}, Color::White()); */
-          /* PushCubeCenter(&lines, m2, {0.1f, 0.1f, 0.1f}, Color::White()); */
-        }
-      }
-    }
-
-    /* for (auto& node : model.nodes) { */
-    /*   for (const gltf::ModelNodeMesh& node_mesh : node.meshes) { */
-    /*     if (!Valid(node_mesh)) */
-    /*       continue; */
-
-    /*     RenderMesh render_mesh = {}; */
-    /*     render_mesh.mesh = node_mesh.mesh; */
-    /*     render_mesh.shader = model_shader.get(); */
-    /*     render_mesh.primitive_type = PrimitiveType::kTriangles; */
-    /*     render_mesh.indices_count = node_mesh.mesh->indices.size(); */
-
-    /*     render_mesh.ubo_data[0] = (uint8_t*)&model_transform; */
-    /*     render_mesh.ubo_data[1] = (uint8_t*)&node.transform.world_matrix; */
-    /*     render_mesh.ubo_data[2] = (uint8_t*)&node.material->base_color; */
-    /*     render_mesh.textures = {node.material->base_texture}; */
-
-    /*     commands.push_back(std::move(render_mesh)); */
-
-    /*     /1* Vec3 m1 = ToVec3(model_transform * node.transform.world_matrix * node.min); *1/ */
-    /*     /1* Vec3 m2 = ToVec3(model_transform * node.transform.world_matrix * node.max); *1/ */
-
-    /*     auto t = model_transform * node.transform.world_matrix; */
-    /*     Vec3 m1 = ToVec3(t * node_mesh.min); */
-    /*     Vec3 m2 = ToVec3(t * node_mesh.max); */
-
-    /*     auto [min, max] = GetBounds(m1, m2); */
-
-    /*     PushCube(&lines, min, max, Color::Black()); */
-    /*   /1* PushCubeCenter(&lines, m1, {0.1f, 0.1f, 0.1f}, Color::White()); *1/ */
-    /*   /1* PushCubeCenter(&lines, m2, {0.1f, 0.1f, 0.1f}, Color::White()); *1/ */
-    /*   } */
-
-    /* } */
+    PushCommands(
+        &commands,
+        CreateRenderCommands(push_camera, &instances, &lines, model_shader.get(), selected));
 
     commands.push_back(grid.render_command);
     if (!Stage(&lines, game.renderer.get()))
@@ -325,9 +314,6 @@ int main(int argc, const char* argv[]) {
 
     auto cmd = GetRenderCommand(lines);
     commands.push_back(GetRenderCommand(lines));
-
-    /* auto imgui_commands = EndFrame(&imgui); */
-    /* commands.insert(commands.end(), imgui_commands.begin(), imgui_commands.end()); */
 
     PushCommands(&commands, EndFrame(&imgui));
 

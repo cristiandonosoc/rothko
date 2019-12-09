@@ -14,7 +14,7 @@ namespace rothko {
 // Texture -----------------------------------------------------------------------------------------
 
 Texture::~Texture() {
-  if (Staged(this))
+  if (Staged(*this))
     RendererUnstageTexture(this->renderer, this);
   data.reset();
 }

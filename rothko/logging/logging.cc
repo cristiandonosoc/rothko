@@ -19,6 +19,7 @@ const char* ToString(LogCategory category) {
     case LogCategory::kApp: return "App";
     case LogCategory::kFatal: return "Fatal";
     case LogCategory::kImgui: return "Imgui";
+    case LogCategory::kModel: return "Model";
     case LogCategory::kGraphics: return "Graphics";
     case LogCategory::kOpenGL: return "OpenGL";
     case LogCategory::kLast: return "Last";

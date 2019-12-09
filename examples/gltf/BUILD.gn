@@ -3,8 +3,6 @@
 
 executable("gltf") {
   sources = [
-    "loader.cc",
-    "loader.h",
     "main.cc",
     "shaders.cc",
     "shaders.h",
@@ -17,6 +15,6 @@ executable("gltf") {
     "//rothko/ui:imgui",
     "//rothko/widgets",
     "//rothko/window:sdl_opengl",
-    "//third_party/tiny_gltf",
+    "//rothko/models/gltf",
   ]
 }

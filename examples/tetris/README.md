@@ -1,6 +1,6 @@
 # Tetris Log
 
-- Total hours: ~14.5
+- Total hours: ~19.5
 
 ## Day 1 (~4 hours)
 
@@ -71,7 +71,7 @@
 - Loaded all the low poly environment models at once using that API.
 - Simplified the Imgui update API a bit and added some TODOs.
 
-## Day 8 (~1.5 hours)
+## Day 8 (~2 hours)
 
 ![Day8](log_images/tetris_day8.png)
 
@@ -81,3 +81,9 @@
 - Fixed a bug where materials would be wrongly tracked between nodes, incorrectly rendering
   materials.
 - Loaded multiple models and rendered them in a scene.
+
+## Day 9 (~3 hours)
+
+- Moved the glTF loader from the glTF example to rothko.
+- Added a bounds struct to the math library.
+- [glTF example] Added a way to select and transform different model instances.

@@ -47,11 +47,9 @@ struct OpenGLRendererBackend {
   //       client's responsability to correctly handle those.
   std::map<std::string, const Shader*> shader_map;
 
-
   std::map<uint32_t, MeshHandles> loaded_meshes;
   std::map<uint32_t, ShaderHandles> loaded_shaders;
   std::map<uint32_t, TextureHandles> loaded_textures;
-
 
   CameraData cameras[8] = {};
   int camera_index = -1;
@@ -60,7 +58,7 @@ struct OpenGLRendererBackend {
   int config_index = -1;
 
   // Special textures.
-  Texture* white_texture;
+  std::unique_ptr<Texture> white_texture;
 };
 
 inline const CameraData& GetCamera(const OpenGLRendererBackend& opengl) {

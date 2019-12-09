@@ -28,11 +28,8 @@ enum class TransformKind {
 // Returns the diff transform. If |parent| is set, it will be used to reverse the parent's
 // transformation in order to give out the correct delta (otherwise the parent's transformation will
 // be added to the delta and the widget will be wrong. Normally moves the object to infinity).
-NO_DISCARD Transform TransformWidget(WidgetOperation,
-                                     TransformKind,
-                                     const PushCamera&,
-                                     const Transform& source,
-                                     const Transform* parent = nullptr);
+NO_DISCARD Transform TransformWidget(WidgetOperation, TransformKind, const PushCamera&,
+                                     const Transform& source, const Transform* parent = nullptr);
 
 // Aliases.
 
@@ -60,25 +57,29 @@ NO_DISCARD inline Transform ScaleWidget(const PushCamera& push_camera,
 
 // Convenience overloads ---------------------------------------------------------------------------
 
-inline void TranslateWidget(TransformKind transform_kind,
-                            const PushCamera& push_camera,
-                            Transform* source,
-                            const Transform* parent = nullptr) {
+inline void TransformWidget(WidgetOperation op, TransformKind kind, const PushCamera& camera,
+                            Transform* source, const Transform* parent = nullptr) {
+  *source = TransformWidget(op, kind, camera, *source, parent);
+}
+
+inline void TranslateWidget(TransformKind transform_kind, const PushCamera& push_camera,
+                            Transform* source, const Transform* parent = nullptr) {
   *source = TranslateWidget(transform_kind, push_camera, *source, parent);
 }
 
-inline void RotateWidget(TransformKind transform_kind,
-                         const PushCamera& push_camera,
-                         Transform* source,
-                         const Transform* parent = nullptr) {
+inline void RotateWidget(TransformKind transform_kind, const PushCamera& push_camera,
+                         Transform* source, const Transform* parent = nullptr) {
   *source = RotateWidget(transform_kind, push_camera, *source, parent);
 }
 
 // Scale is only local otherwise it resets the rotation.
 inline void ScaleWidget(const PushCamera& push_camera,
-                        Transform* source,
-                        const Transform* parent = nullptr) {
+                        Transform* source, const Transform* parent = nullptr) {
   *source = ScaleWidget(push_camera, *source, parent);
 }
+
+// Imgui -------------------------------------------------------------------------------------------
+
+void TransformImguiWidget(const Transform&);
 
 }  // namespace rothko

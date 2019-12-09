@@ -2,14 +2,15 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
-#include "rothko/widgets/widgets.h"
+#include "rothko/scene/transform.h"
 
 #include <stddef.h>
 #include <third_party/imguizmo/ImGuizmo.h>
 
 #include "rothko/graphics/commands.h"
 #include "rothko/math/math.h"
-#include "rothko/scene/transform.h"
+#include "rothko/ui/imgui.h"
+#include "rothko/widgets/widgets.h"
 
 namespace rothko {
 
@@ -72,6 +73,14 @@ Transform TransformWidget(WidgetOperation op,
   if (IsZero(diff))
     return source;
   return source - diff;
+}
+
+// Imgui -------------------------------------------------------------------------------------------
+
+void TransformImguiWidget(const Transform& transform) {
+  ImGui::InputFloat3("Position", (float*)&transform.position, "%.3f", ImGuiInputTextFlags_ReadOnly);
+  ImGui::InputFloat3("Rotation", (float*)&transform.rotation, "%.3f", ImGuiInputTextFlags_ReadOnly);
+  ImGui::InputFloat3("Scale", (float*)&transform.scale, "%.3f", ImGuiInputTextFlags_ReadOnly);
 }
 
 }  // namespace rothko

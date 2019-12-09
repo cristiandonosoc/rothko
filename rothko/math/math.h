@@ -403,6 +403,19 @@ std::string ToString(const Int4&);
 std::string ToString(const Vec4&);
 
 // =================================================================================================
+// Bounds
+// =================================================================================================
+
+template <typename T>
+struct _bounds3 {
+  _v3<T> min;
+  _v3<T> max;
+};
+
+using Bounds = _bounds3<float>;
+using IntBounds = _bounds3<int>;
+
+// =================================================================================================
 // Matrices
 //
 // Matrices are implemented as column mayor. This means that a direct iteration over the members
