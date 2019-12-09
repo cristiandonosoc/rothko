@@ -62,6 +62,12 @@ void SetRenderCommandConfig(const RenderMesh& render_mesh) {
     glDisable(GL_BLEND);
   }
 
+  if (GetWireframeMode(render_mesh.flags)) {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  } else {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  }
+
   SET_GL_CONFIG(GetCullFaces(render_mesh.flags), GL_CULL_FACE);
   /* glDepthFunc(GL_LESS); */
   SET_GL_CONFIG(GetDepthTest(render_mesh.flags), GL_DEPTH_TEST);

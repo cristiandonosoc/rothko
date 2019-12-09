@@ -48,7 +48,7 @@ struct ModelTransform {
 };
 
 struct ModelInstance {
-  Model* model = {};
+  const Model* model = {};
   Transform transform = {};
 };
 

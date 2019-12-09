@@ -39,32 +39,214 @@ std::pair<Vec3, Vec3> GetBounds(const Vec3& m1, const Vec3& m2) {
   return {min, max};
 }
 
-std::vector<RenderCommand> CreateRenderCommands(const PushCamera& camera,
-                                                std::vector<ModelInstance>* instances,
-                                                LineManager* lines,
-                                                const Shader* model_shader,
-                                                int index) {
-  (void)lines;
-  static auto stack_allocator = CreateStackAllocatorFor<ModelTransform>(1024);
-  Reset(&stack_allocator);
-  std::vector<RenderCommand> commands;
+struct ModelContext {
+  std::vector<std::unique_ptr<Model>> models;
+  int selected_model = -1;
 
-  // Put in a model instance.
-  for (int i = 0; i < (int)instances->size(); i++) {
-    if (i != index)
-      continue;
+  std::vector<ModelInstance> instances;
+  int selected_instance = -1;
+};
 
-    auto& instance = (*instances)[i];
+void InstanceModificationWindow(ModelContext* model_context) {
+  ImGui::Begin("Selected Model");
 
-    // Add a transformation widget.
-    TransformWidget(gWidgetOperation, gTransformKind, camera, &instance.transform);
+  ImGui::Text("Instance Count: %zu", model_context->instances.size());
+  ImGui::Text("Selected instance: %d", model_context->selected_instance);
+
+  if (model_context->selected_instance != -1) {
+    ImGui::RadioButton("Translate", (int*)&gWidgetOperation, (int)WidgetOperation::kTranslate);
+    ImGui::SameLine();
+    ImGui::RadioButton("Rotate", (int*)&gWidgetOperation, (int)WidgetOperation::kRotate);
+    ImGui::SameLine();
+    ImGui::RadioButton("Scale", (int*)&gWidgetOperation, (int)WidgetOperation::kScale);
+
+    ImGui::RadioButton("World", (int*)&gTransformKind, (int)TransformKind::kGlobal);
+    ImGui::SameLine();
+    ImGui::RadioButton("Local", (int*)&gTransformKind, (int)TransformKind::kLocal);
+
+    // Scale only works in local mode. Otherwise it resets the rotation.
+    if (gWidgetOperation == WidgetOperation::kScale)
+      gTransformKind = TransformKind::kLocal;
+
+    TransformImguiWidget(model_context->instances[model_context->selected_instance].transform);
+  }
+
+  if (ImGui::CollapsingHeader("Instances")) {
+    for (int i = 0; i < (int)model_context->instances.size(); i++) {
+      ImGui::PushID(i);
+
+      auto& instance = model_context->instances[i];
+
+      bool selected = model_context->selected_instance == i;
+      if (ImGui::Selectable(instance.model->name.c_str(), selected))
+        model_context->selected_instance = i;
+
+      ImGui::PopID();
+    }
+  }
+
+  ImGui::End();
+}
+
+bool StageModel(Renderer* renderer, Model* model) {
+  for (auto& mesh : model->meshes) {
+    if (!RendererStageMesh(renderer, mesh.get()))
+      return false;
+  }
+
+  for (auto& texture : model->textures) {
+    if (!RendererStageTexture(renderer, texture.get()))
+      return false;
+  }
+
+  return true;
+}
+
+void ModelSelectionWindow(ModelContext* model_context) {
+  ImGui::Begin("Models");
+
+  ImGui::Text("Selected model: %d", model_context->selected_model);
+  if (ImGui::Button("Instantiate")) {
+    ModelInstance instance = {};
     Update(&instance.transform);
 
+    instance.model = model_context->models[model_context->selected_model].get();
+    model_context->instances.push_back(std::move(instance));
+    model_context->selected_instance = (int)model_context->instances.size() - 1;
+
+    model_context->selected_model = -1;
+  }
+
+  // Selected model section.
+  if (ImGui::CollapsingHeader("Selected Model")) {
+    if (model_context->selected_model != -1) {
+      auto& model = model_context->models[model_context->selected_model];
+      if (ImGui::CollapsingHeader("Nodes")) {
+        for (uint32_t i = 0; i < model->nodes.size(); i++) {
+          ImGui::PushID(i);
+          if (i > 0)
+            ImGui::Separator();
+
+          TransformImguiWidget(model->nodes[i].transform);
+          ImGui::PopID();
+        }
+      }
+
+      if (ImGui::CollapsingHeader("Meshes")) {
+        for (uint32_t i = 0; i < model->meshes.size(); i++) {
+          ImGui::PushID(i);
+          if (i > 0)
+            ImGui::Separator();
+
+          auto& mesh = model->meshes[i];
+          ImGui::Text("%s", mesh->name.c_str());
+          ImGui::Text("Vertices: %u (%zu bytes)", mesh->vertex_count, mesh->vertices.size());
+          ImGui::Text("Indices: %zu (%zu bytes)",
+                      mesh->indices.size(),
+                      mesh->indices.size() / sizeof(Mesh::IndexType));
+
+          ImGui::PopID();
+        }
+      }
+
+      if (ImGui::CollapsingHeader("Materials")) {
+        int count = 0;
+        for (auto& material : model->materials) {
+          ImGui::PushID(count);
+          if (count++ > 0)
+            ImGui::Separator();
+          if (material->base_texture)
+            ImGui::Text("Base Texture: %s", material->base_texture->name.c_str());
+          ImGui::ColorEdit4("Base Color", (float*)&material->base_color);
+          ImGui::PopID();
+        }
+      }
+    }
+  }
+
+  // Model selection.
+
+  if (ImGui::CollapsingHeader("Models")) {
+    for (int model_index = 0; model_index < (int)model_context->models.size(); model_index++) {
+      ImGui::PushID(model_index);
+      auto& model = model_context->models[model_index];
+      /* if (ImGui::Selectable(model->name.c_str()), model_context->selected_model == model_index) { */
+      bool selected = model_context->selected_model == model_index;
+      if (ImGui::Selectable(model->name.c_str(), selected))
+        model_context->selected_model = model_index;
+      ImGui::PopID();
+    }
+  }
+
+  ImGui::End();
+}
+
+std::vector<RenderCommand> CreateSelectedModelCommands(const ModelContext& model_context,
+                                                       const Shader* model_shader) {
+  if (model_context.selected_model == -1)
+    return {};
+
+  static auto stack_allocator = CreateStackAllocatorFor<ModelTransform>(1024);
+  Reset(&stack_allocator);
+
+  static ModelInstance instance = {};
+  instance.model = model_context.models[model_context.selected_model].get();
+
+  std::vector<RenderCommand> commands;
+  for (auto& node : instance.model->nodes) {
+    // Calculate the transform.
+    auto* model_transform = Allocate<ModelTransform>(&stack_allocator);
+    model_transform->transform = instance.transform.world_matrix * node.transform.world_matrix;
+    model_transform->inverse_transform = Transpose(Inverse(model_transform->transform));
+
+    for (const ModelPrimitive& primitive : node.primitives) {
+      if (!Valid(primitive))
+        continue;
+
+      // Render the mesh!
+      RenderMesh render_mesh = {};
+      render_mesh.mesh = primitive.mesh;
+      render_mesh.shader = model_shader;
+      render_mesh.primitive_type = PrimitiveType::kTriangles;
+      render_mesh.indices_count = primitive.mesh->indices.size();
+      SetWireframeMode(&render_mesh.flags);
+
+      render_mesh.ubo_data[0] = (uint8_t*)model_transform;
+      render_mesh.ubo_data[1] = (uint8_t*)&primitive.material->base_color;
+
+      commands.push_back(std::move(render_mesh));
+
+      /* Vec3 m1 = ToVec3(transform_data->transform * primitive.bounds.min); */
+      /* Vec3 m2 = ToVec3(transform_data->transform * primitive.bounds.max); */
+
+      /* auto [min, max] = GetBounds(m1, m2); */
+      /* PushCube(lines, min, max, Color::Black()); */
+    }
+  }
+
+  return commands;
+}
+
+std::vector<RenderCommand> CreateInstancesCommands(const PushCamera& camera,
+                                                   ModelContext* model_context,
+                                                   const Shader* model_shader) {
+  static auto stack_allocator = CreateStackAllocatorFor<ModelTransform>(1024);
+  Reset(&stack_allocator);
+
+  std::vector<RenderCommand> commands;
+  for (int instance_index = 0; instance_index < (int)model_context->instances.size();
+       instance_index++) {
+    auto& instance = model_context->instances[instance_index];
+
+    if (model_context->selected_instance == instance_index) {
+      TransformWidget(gWidgetOperation, gTransformKind, camera, &instance.transform);
+      Update(&instance.transform);
+    }
+
     for (auto& node : instance.model->nodes) {
-      // Calculate the transform.
-      auto* transform_data = Allocate<ModelTransform>(&stack_allocator);
-      transform_data->transform = instance.transform.world_matrix * node.transform.world_matrix;
-      transform_data->inverse_transform = Transpose(Inverse(transform_data->transform));
+      auto* model_transform = Allocate<ModelTransform>(&stack_allocator);
+      model_transform->transform = instance.transform.world_matrix * node.transform.world_matrix;
+      model_transform->inverse_transform = Transpose(Inverse(model_transform->transform));
 
       for (const ModelPrimitive& primitive : node.primitives) {
         if (!Valid(primitive))
@@ -77,7 +259,7 @@ std::vector<RenderCommand> CreateRenderCommands(const PushCamera& camera,
         render_mesh.primitive_type = PrimitiveType::kTriangles;
         render_mesh.indices_count = primitive.mesh->indices.size();
 
-        render_mesh.ubo_data[0] = (uint8_t*)transform_data;
+        render_mesh.ubo_data[0] = (uint8_t*)model_transform;
         render_mesh.ubo_data[1] = (uint8_t*)&primitive.material->base_color;
 
         commands.push_back(std::move(render_mesh));
@@ -125,8 +307,8 @@ int main(int argc, const char* argv[]) {
     dir_entries.push_back({false, path});
   }
 
+  ModelContext model_context = {};
 
-  std::vector<std::unique_ptr<Model>> models;
   for (auto& dir_entry : dir_entries) {
     if (dir_entry.is_dir)
       continue;
@@ -134,36 +316,12 @@ int main(int argc, const char* argv[]) {
     auto model = std::make_unique<Model>();
     if (!gltf::LoadModel(dir_entry.path, model.get()))
       return 1;
-    models.push_back(std::move(model));
+
+    if (!StageModel(game.renderer.get(), model.get()))
+      return 1;
+
+    model_context.models.push_back(std::move(model));
   }
-
-  // -----------------------------------------------------------------------------------------------
-
-  std::vector<ModelInstance> instances;
-  instances.reserve(models.size());
-  for (uint32_t i = 0; i < models.size(); i++) {
-    auto& model = models[i];
-    for (auto& mesh : model->meshes) {
-      if (!RendererStageMesh(game.renderer.get(), mesh.get()))
-        return 1;
-    }
-
-    for (auto& texture : model->textures) {
-      if (!RendererStageTexture(game.renderer.get(), texture.get()))
-        return 1;
-    }
-
-    auto& instance = instances.emplace_back();
-    instance.model = model.get();
-    /* uint32_t x = (i % 5) * 10; */
-    /* uint32_t z = (i / 5) * 10; */
-
-    /* instance.transform.position = {(float)x, 0, (float)z}; */
-    Update(&instance.transform);
-  }
-
-  // Model instances -------------------------------------------------------------------------------
-
 
   Grid grid;
   if (!Init(&grid, game.renderer.get()))
@@ -186,6 +344,8 @@ int main(int argc, const char* argv[]) {
   if (!Init(game.renderer.get(), &imgui))
     return 1;
 
+  model_context.selected_model = 2;
+
   bool running = true;
   bool rotate = false;
   float time = 0;
@@ -205,8 +365,6 @@ int main(int argc, const char* argv[]) {
     Reset(&lines);
     DefaultUpdateOrbitCamera(game.input, &camera);
 
-
-
     if (KeyUpThisFrame(game.input, Key::kSpace))
       rotate = !rotate;
 
@@ -219,83 +377,8 @@ int main(int argc, const char* argv[]) {
     // Imgui.
 
     Update(&imgui, &game);
-
-    ImGui::Begin("Models");
-
-    ImGui::Text("Manipulation");
-
-    ImGui::RadioButton("Translate", (int*)&gWidgetOperation, (int)WidgetOperation::kTranslate);
-    ImGui::SameLine();
-    ImGui::RadioButton("Rotate", (int*)&gWidgetOperation, (int)WidgetOperation::kRotate);
-    ImGui::SameLine();
-    ImGui::RadioButton("Scale", (int*)&gWidgetOperation, (int)WidgetOperation::kScale);
-
-    ImGui::RadioButton("World", (int*)&gTransformKind, (int)TransformKind::kGlobal);
-    ImGui::SameLine();
-    ImGui::RadioButton("Local", (int*)&gTransformKind, (int)TransformKind::kLocal);
-
-    // Scale only works in local mode. Otherwise it resets the rotation.
-    if (gWidgetOperation == WidgetOperation::kScale)
-      gTransformKind = TransformKind::kLocal;
-
-    ImGui::Separator();
-
-    static int selected = -1;
-    for (int model_index = 0; model_index < (int)models.size(); model_index++) {
-      auto& model = models[model_index];
-      int mesh_count = 0;
-      mesh_count++;
-      ImGui::PushID(mesh_count);
-
-      ImGui::SetNextTreeNodeOpen(selected == model_index);
-      if (ImGui::CollapsingHeader(model->name.c_str())) {
-        selected = model_index;
-
-        if (ImGui::CollapsingHeader("Nodes")) {
-          for (uint32_t i = 0; i < model->nodes.size(); i++) {
-            ImGui::PushID(i);
-            if (i > 0)
-              ImGui::Separator();
-
-            TransformImguiWidget(model->nodes[i].transform);
-            ImGui::PopID();
-          }
-        }
-
-        if (ImGui::CollapsingHeader("Meshes")) {
-          for (uint32_t i = 0; i < model->meshes.size(); i++) {
-            ImGui::PushID(i);
-            if (i > 0)
-              ImGui::Separator();
-
-            auto& mesh = model->meshes[i];
-            ImGui::Text("%s", mesh->name.c_str());
-            ImGui::Text("Vertices: %u (%zu bytes)", mesh->vertex_count, mesh->vertices.size());
-            ImGui::Text("Indices: %zu (%zu bytes)",
-                        mesh->indices.size(),
-                        mesh->indices.size() / sizeof(Mesh::IndexType));
-
-            ImGui::PopID();
-          }
-        }
-
-        if (ImGui::CollapsingHeader("Materials")) {
-          int count = 0;
-          for (auto& material : model->materials) {
-            ImGui::PushID(count);
-            if (count++ > 0)
-              ImGui::Separator();
-            if (material->base_texture)
-              ImGui::Text("Base Texture: %s", material->base_texture->name.c_str());
-            ImGui::ColorEdit4("Base Color", (float*)&material->base_color);
-            ImGui::PopID();
-          }
-        }
-      }
-      ImGui::PopID();
-    }
-
-    ImGui::End();
+    ModelSelectionWindow(&model_context);
+    InstanceModificationWindow(&model_context);
 
     // Create Commands.
 
@@ -304,9 +387,9 @@ int main(int argc, const char* argv[]) {
     auto push_camera = GetPushCamera(camera);
     commands.push_back(push_camera);
 
-    PushCommands(
-        &commands,
-        CreateRenderCommands(push_camera, &instances, &lines, model_shader.get(), selected));
+    PushCommands(&commands, CreateSelectedModelCommands(model_context, model_shader.get()));
+    PushCommands(&commands, CreateInstancesCommands(push_camera, &model_context,
+                                                    model_shader.get()));
 
     commands.push_back(grid.render_command);
     if (!Stage(&lines, game.renderer.get()))
