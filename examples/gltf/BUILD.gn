@@ -4,6 +4,8 @@
 executable("gltf") {
   sources = [
     "main.cc",
+    "scene.cc",
+    "scene.h",
     "shaders.cc",
     "shaders.h",
   ]
@@ -12,9 +14,9 @@ executable("gltf") {
     "//rothko:game",
     "//rothko/graphics/default_shaders",
     "//rothko/memory",
+    "//rothko/models/gltf",
     "//rothko/ui:imgui",
     "//rothko/widgets",
     "//rothko/window:sdl_opengl",
-    "//rothko/models/gltf",
   ]
 }

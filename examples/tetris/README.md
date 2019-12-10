@@ -1,6 +1,6 @@
 # Tetris Log
 
-- Total hours: ~21
+- Total hours: ~22.5
 
 ## Day 1: Initial gameplay skeleton. (~4 hours)
 
@@ -91,7 +91,7 @@
 - Added a bounds struct to the math library.
 - [glTF example] Added a way to select and transform different model instances.
 
-## Day 10: Initial Scene Editor (~1.5 hours)_
+## Day 10: Initial Scene Editor (~1.5 hours)
 
 ![Day10](log_images/tetris_day10.png)
 
@@ -99,3 +99,9 @@
 - Created a simple sample scene (picture).
   - Scene serialization is still TODO, so the scene is lost :(
 - Fixed a bug where wireframe mode would not be forwarded.
+
+## Day 11: Initial Scene Serialization (~1.5 hours)
+
+- Created a simple scene representation (models and instances).
+- Wrote a simple serialization of models to a file.
+- Started reading the file back.

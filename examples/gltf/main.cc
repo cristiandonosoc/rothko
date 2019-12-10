@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <third_party/tiny_gltf/tiny_gltf.h>
 
+#include "scene.h"
 #include "shaders.h"
 
 using namespace rothko;
@@ -78,7 +79,7 @@ void InstanceModificationWindow(ModelContext* model_context) {
       auto& instance = model_context->instances[i];
 
       bool selected = model_context->selected_instance == i;
-      if (ImGui::Selectable(instance.model->name.c_str(), selected))
+      if (ImGui::Selectable(instance.model->path.c_str(), selected))
         model_context->selected_instance = i;
 
       ImGui::PopID();
@@ -170,9 +171,9 @@ void ModelSelectionWindow(ModelContext* model_context) {
     for (int model_index = 0; model_index < (int)model_context->models.size(); model_index++) {
       ImGui::PushID(model_index);
       auto& model = model_context->models[model_index];
-      /* if (ImGui::Selectable(model->name.c_str()), model_context->selected_model == model_index) { */
+      /* if (ImGui::Selectable(model->path.c_str()), model_context->selected_model == model_index) { */
       bool selected = model_context->selected_model == model_index;
-      if (ImGui::Selectable(model->name.c_str(), selected))
+      if (ImGui::Selectable(model->path.c_str(), selected))
         model_context->selected_model = model_index;
       ImGui::PopID();
     }
@@ -308,7 +309,6 @@ int main(int argc, const char* argv[]) {
   }
 
   ModelContext model_context = {};
-
   for (auto& dir_entry : dir_entries) {
     if (dir_entry.is_dir)
       continue;
@@ -317,11 +317,25 @@ int main(int argc, const char* argv[]) {
     if (!gltf::LoadModel(dir_entry.path, model.get()))
       return 1;
 
-    if (!StageModel(game.renderer.get(), model.get()))
-      return 1;
+    /* if (!StageModel(game.renderer.get(), model.get())) */
+    /*   return 1; */
 
     model_context.models.push_back(std::move(model));
+    break;
   }
+
+  printf("Loaded %u models.\n", (uint32_t)model_context.models.size());
+  printf("Loaded %u meshes.\n", (uint32_t)model_context.models[0]->meshes.size());
+
+  gltf::Scene scene = {};
+  scene.models = std::move(model_context.models);
+  if (!gltf::SerializeScene(scene, "scene.rtk"))
+    return 1024;
+
+  gltf::Scene read_scene = gltf::ReadScene("scene.rtk");
+
+
+  return 0;
 
   Grid grid;
   if (!Init(&grid, game.renderer.get()))

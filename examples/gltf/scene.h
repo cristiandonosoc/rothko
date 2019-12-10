@@ -1,0 +1,66 @@
+// Copyright 2019, Cristián Donoso.
+// This code has a BSD license. See LICENSE.
+
+#pragma once
+
+#include <vector>
+
+#include "rothko/graphics/mesh.h"
+
+namespace rothko {
+
+struct Model;
+struct ModelInstance;
+
+namespace gltf {
+
+struct Scene {
+  std::vector<std::unique_ptr<Model>> models;
+  std::vector<ModelInstance> instances;
+  bool valid = false;
+};
+
+#pragma pack(push, 1)
+
+struct Header {
+  char magic[4] = {};  // Should have 'R', 'T', 'H', 'K'.
+  uint32_t version = 0;
+  uint32_t meshes_header_offset = 0;
+};
+
+// Meshes ------------------------------------------------------------------------------------------
+//
+// Format is:
+//
+// |--------------|
+// | MeshesHeader |
+// |--------------|
+// <foreach Mesh>:
+//   |------------|
+//   | MeshHeader |
+//   |------------|
+//   | Vertices   |
+//   |------------|
+//   | Indices    |
+//   |------------|
+
+struct MeshesHeader {
+  uint32_t mesh_count = 0;
+};
+
+struct MeshHeader {
+  uint32_t vertex_type = 0;
+  uint32_t vertex_count = 0;
+  uint32_t index_count = 0;
+
+  static constexpr uint32_t kNameLength = 64;
+  char name[kNameLength] = {};
+};
+
+#pragma pack(pop)
+
+bool SerializeScene(const Scene&, const std::string& path);
+Scene ReadScene(const std::string& path);
+
+}  // namespace gltf
+}  // namespace rothko

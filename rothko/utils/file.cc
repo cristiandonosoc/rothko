@@ -113,7 +113,7 @@ FileHandle OpenFile(const std::string& path, bool append) {
 }
 
 void WriteToFile(FileHandle* handle, void* data, size_t size) {
-  assert(Valid(handle));
+  assert(Valid(*handle));
 
   size_t res = fwrite(data, sizeof(char), size, (FILE*)handle->hndl.value);
   assert(res == size);
@@ -124,7 +124,7 @@ void Flush(FileHandle* handle) {
 }
 
 void CloseFile(FileHandle* handle) {
-  assert(Valid(handle));
+  assert(Valid(*  handle));
   int res = fclose((FILE*)handle->hndl.value);
   assert(res == 0);
   handle->hndl.clear();

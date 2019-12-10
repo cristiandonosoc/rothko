@@ -31,7 +31,7 @@ struct ModelNode {
 };
 
 struct Model {
-  std::string name;
+  std::string path;
 
   std::vector<std::unique_ptr<Material>> materials;
   std::vector<std::unique_ptr<Mesh>> meshes;

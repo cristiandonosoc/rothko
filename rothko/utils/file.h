@@ -23,8 +23,7 @@ struct FileHandle {
   RAII_CONSTRUCTORS(FileHandle);
   ClearOnMove<void*> hndl;
 };
-
-inline bool Valid(FileHandle* file) { return file->hndl.has_value(); }
+inline bool Valid(const FileHandle& file) { return file.hndl.has_value(); }
 
 FileHandle OpenFile(const std::string& path, bool append = false);
 void WriteToFile(FileHandle*, void* data, size_t size);

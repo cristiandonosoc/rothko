@@ -609,7 +609,7 @@ bool LoadModel(const std::string& path, Model* model_out) {
     if (!ProcessModel(gltf_model, gltf_scene, model_out))
       return false;
 
-    model_out->name = path;
+    model_out->path= path;
     return true;
 }
 
