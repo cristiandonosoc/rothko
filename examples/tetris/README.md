@@ -1,8 +1,9 @@
 # Tetris Log
 
-- Total hours: ~22.5
+- Total hours: ~23.5
 
-## Day 1: Initial gameplay skeleton. (~4 hours)
+## Day 1: Initial gameplay skeleton.
+### (~4 hours)
 
 ![Day1](log_images/tetris_day1.png)
 
@@ -16,7 +17,8 @@
   bit field value. This is used in tetris to indicate which shape is active.
 
 
-## Day 2: Overall playable prototype. (~4 hours)
+## Day 2: Overall playable prototype.
+### (~4 hours)
 
 ![Day2](log_images/tetris_day2.png)
 
@@ -25,7 +27,8 @@
 - Shapes now move automatically down.
 - Better controls (keep pressed left/right).
 
-## Day 3: Initial glTF loading. (~1 hour)
+## Day 3: Initial glTF loading.
+### (~1 hour)
 
 ![Day3](log_images/tetris_day3.png)
 
@@ -37,7 +40,8 @@
 - Initial load of a low poly tree. It doesn't have normal illumination and some parts of the model
   are missing.
 
-## Day 4: Load glTF models.  (~1.25 hour)
+## Day 4: Load glTF models.
+### (~1.25 hour)
 
 ![Day4](log_images/tetris_day4.png)
 
@@ -47,7 +51,8 @@
 - Added simple lighting shading.
 - Node transformations seem to be off compared to the reference model.
 
-## Day 5: Quaternion support. (~2 hours)
+## Day 5: Quaternion support.
+### (~2 hours)
 
 - Getting transformation matrix from a quaternion. This will be needed because glTF rotation is
   stored as a quaternion instead of euler angles.
@@ -55,7 +60,8 @@
     direct approach is warranted.
 - Some minor fix to the grid widget.
 
-## Day 6: Correct glTF loading. (~1.5 hours)
+## Day 6: Correct glTF loading.
+### (~1.5 hours)
 
 ![Day6](log_images/tetris_day6.png)
 
@@ -63,7 +69,8 @@
   which is very unefficient, but will work for now.
 - Modified the glTF loader to account for node translation. Now it works correctly!
 
-## Day 7: Loading multiple models. (~1.5 hours)
+## Day 7: Loading multiple models.
+### (~1.5 hours)
 
 ![Day7](log_images/tetris_day7.png)
 
@@ -72,7 +79,8 @@
 - Loaded all the low poly environment models at once using that API.
 - Simplified the Imgui update API a bit and added some TODOs.
 
-## Day 8: Multiple model instances. (~2 hours)
+## Day 8: Multiple model instances.
+### (~2 hours)
 
 ![Day8](log_images/tetris_day8.png)
 
@@ -83,7 +91,8 @@
   materials.
 - Loaded multiple models and rendered them in a scene.
 
-## Day 9: Transformable mdoel instances. (~3 hours)
+## Day 9: Transformable mdoel instances.
+### (~3 hours)
 
 ![Day9](log_images/tetris_day9.png)
 
@@ -91,7 +100,8 @@
 - Added a bounds struct to the math library.
 - [glTF example] Added a way to select and transform different model instances.
 
-## Day 10: Initial Scene Editor (~1.5 hours)
+## Day 10: Initial Scene Editor.
+### (~1.5 hours)
 
 ![Day10](log_images/tetris_day10.png)
 
@@ -100,8 +110,15 @@
   - Scene serialization is still TODO, so the scene is lost :(
 - Fixed a bug where wireframe mode would not be forwarded.
 
-## Day 11: Initial Scene Serialization (~1.5 hours)
+## Day 11: Initial Scene Serialization.
+### (~1.5 hours)
 
 - Created a simple scene representation (models and instances).
 - Wrote a simple serialization of models to a file.
 - Started reading the file back.
+
+## Day 12: Mesh serialization.
+### (~1 hour)
+
+- Formated the file to permit a "linked-list" of headers.
+- Correctly exported a set of meshes and read it back.

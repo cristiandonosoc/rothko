@@ -25,7 +25,7 @@ struct Scene {
 struct Header {
   char magic[4] = {};  // Should have 'R', 'T', 'H', 'K'.
   uint32_t version = 0;
-  uint32_t meshes_header_offset = 0;
+  uint32_t next_mesh = 0;
 };
 
 // Meshes ------------------------------------------------------------------------------------------
@@ -33,19 +33,30 @@ struct Header {
 // Format is:
 //
 // |--------------|
-// | MeshesHeader |
-// |--------------|
-// <foreach Mesh>:
-//   |------------|
-//   | MeshHeader |
-//   |------------|
-//   | Vertices   |
-//   |------------|
-//   | Indices    |
-//   |------------|
+// | MeshesHeader |---- next_mesh ---|
+// |--------------|                  |
+//                                   |
+//       ----------------------------|
+//       |
+//       |    |-------- next_mesh ------------------------|
+//       |    |                                           |
+//       v    |                                           v
+//   |------------|                                 |------------|
+//   | MeshHeader |---- data_offset ---|            | MeshHeader |
+//   |------------|                    |            |------------|
+//                                     |
+//         ----------------------------|
+//         |
+//         v
+//   |----------|
+//   | Vertices |     // Vertices are always followed by indices, in one big chunk.
+//   |----------|
+//   | Indices  |
+//   |----------|
 
 struct MeshesHeader {
   uint32_t mesh_count = 0;
+  uint32_t next_mesh = 0;     // Offset in bytes of the next header.
 };
 
 struct MeshHeader {
@@ -53,8 +64,12 @@ struct MeshHeader {
   uint32_t vertex_count = 0;
   uint32_t index_count = 0;
 
+  uint32_t data = 0;            // Offset to where the data is.
+  uint32_t next_mesh = 0;       // Offset in bytes to the next mesh.
+
   static constexpr uint32_t kNameLength = 64;
   char name[kNameLength] = {};
+
 };
 
 #pragma pack(pop)
