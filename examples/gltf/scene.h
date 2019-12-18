@@ -23,10 +23,14 @@ struct Scene {
 #pragma pack(push, 1)
 
 struct Header {
-  char magic[4] = {};  // Should have 'R', 'T', 'H', 'K'.
+  static const char* kTitle;
+
+  char title[8] = {};
   uint32_t version = 0;
   uint32_t next_mesh = 0;
+  uint32_t next_texture = 0;
 };
+static_assert(sizeof(Header) == 20);
 
 // Meshes ------------------------------------------------------------------------------------------
 //
@@ -55,17 +59,79 @@ struct Header {
 //   |----------|
 
 struct MeshesHeader {
-  uint32_t mesh_count = 0;
+  static const char* kTitle;
+
+  char title[8] = {};
+  uint32_t count = 0;
   uint32_t next_mesh = 0;     // Offset in bytes of the next header.
 };
+static_assert(sizeof(MeshesHeader) == 16);
 
 struct MeshHeader {
+  static const char* kTitle;
+
+  char title[8] = {};
+  uint32_t next_mesh = 0;       // Offset in bytes to the next mesh.
+  uint32_t data = 0;            // Offset to where the data is.
+
   uint32_t vertex_type = 0;
   uint32_t vertex_count = 0;
   uint32_t index_count = 0;
 
-  uint32_t data = 0;            // Offset to where the data is.
-  uint32_t next_mesh = 0;       // Offset in bytes to the next mesh.
+  static constexpr uint32_t kNameLength = 64;
+  char name[kNameLength] = {};
+};
+static_assert(sizeof(MeshHeader) == 92);
+
+// Textures ----------------------------------------------------------------------------------------
+//
+// Format is:
+//
+// |----------------|
+// | TexturesHeader |---- next_texture ---|
+// |----------------|                     |
+//                                        |
+//       ---------------------------------|
+//       |
+//       |    |-------- next_texture ---------------------|
+//       |    |                                           |
+//       v    |                                           v
+//   |---------------|                           |---------------|
+//   | TextureHeader |---- data ----|            | TextureHeader |
+//   |---------------|              |            |---------------|
+//                                  |
+//         -------------------------|
+//         |
+//         v
+//   |----------|
+//   | Contents |
+//   |----------|
+
+struct TexturesHeader {
+  static const char* kTitle;
+
+  char title[8] = {};
+  uint32_t count = 0;
+  uint32_t next_texture = 0;  // Offset in bytes to a |TextureHeader|.
+};
+
+struct TextureHeader {
+  static const char* kTitle;
+
+  char title[8] = {};
+  uint32_t next_texture = 0;            // Offset in bytes towards next |TextureHeader|.
+  uint32_t data = 0;                    // Offset in bytes.
+
+  uint8_t type = UINT8_MAX;             // ::rothko::TextureType.
+
+  uint32_t size_x = UINT32_MAX;
+  uint32_t size_y = UINT32_MAX;
+
+  uint8_t wrap_mode_u = UINT8_MAX;      // ::rothko::TextureWrapMode.
+  uint8_t wrap_mode_v = UINT8_MAX;      // ::rothko::TextureWrapMode.
+
+  uint8_t min_filter_mode = UINT8_MAX;  // ::rothko::TextureFilterMode.
+  uint8_t mag_filter_mode = UINT8_MAX;  // ::rothko::TextureFilterMode.
 
   static constexpr uint32_t kNameLength = 64;
   char name[kNameLength] = {};

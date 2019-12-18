@@ -1,6 +1,6 @@
 # Tetris Log
 
-- Total hours: ~23.5
+- Total hours: ~25
 
 ## Day 1: Initial gameplay skeleton.
 ### (~4 hours)
@@ -122,3 +122,10 @@
 
 - Formated the file to permit a "linked-list" of headers.
 - Correctly exported a set of meshes and read it back.
+
+## Day 13: Better scene serialization format.
+### (~1.5 hours)
+
+- Modified the format to make it more easily auditable with a hex editor, make it more easy to
+  debug.
+- Added initial texture serialization support (still not working).

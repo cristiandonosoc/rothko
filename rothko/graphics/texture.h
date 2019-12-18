@@ -28,6 +28,7 @@ enum class TextureWrapMode : uint8_t {
   kClampToEdge,
   kMirroredRepeat,
   kRepeat,
+  kLast,
 };
 const char* ToString(TextureWrapMode);
 
@@ -38,6 +39,7 @@ enum class TextureFilterMode : uint8_t {
   kNearest,
   kNearestMipmapNearest,
   kNearestMipmapLinear,
+  kLast,
 };
 const char* ToString(TextureFilterMode);
 

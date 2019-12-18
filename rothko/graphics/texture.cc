@@ -83,6 +83,7 @@ const char* ToString(TextureWrapMode mode) {
     case TextureWrapMode::kClampToEdge: return "ClampToEdge";
     case TextureWrapMode::kMirroredRepeat: return "MirroredRepeat";
     case TextureWrapMode::kRepeat: return "Repeat";
+    case TextureWrapMode::kLast: return "<last>";
   }
 
   NOT_REACHED_MSG("Invalid TextureWrapMode: %u", (uint32_t)mode);
@@ -97,6 +98,7 @@ const char* ToString(TextureFilterMode mode) {
     case TextureFilterMode::kNearest: return "Nearest";
     case TextureFilterMode::kNearestMipmapNearest: return "NearestMipmapNearest";
     case TextureFilterMode::kNearestMipmapLinear: return "NearestMipmapLinear";
+    case TextureFilterMode::kLast: return "<last>";
   }
 
   NOT_REACHED_MSG("Invalid TextureFilterMode: %u", (uint32_t)mode);

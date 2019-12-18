@@ -42,6 +42,7 @@ GLenum WrapToGL(TextureWrapMode wrap) {
     case TextureWrapMode::kClampToEdge: return GL_CLAMP_TO_EDGE;
     case TextureWrapMode::kMirroredRepeat: return GL_MIRRORED_REPEAT;
     case TextureWrapMode::kRepeat: return GL_REPEAT;
+    case TextureWrapMode::kLast: return GL_NONE;
   }
 
   NOT_REACHED();
@@ -56,6 +57,7 @@ GLenum FilterToGL(TextureFilterMode filter) {
     case TextureFilterMode::kNearestMipmapLinear: return GL_NEAREST_MIPMAP_LINEAR;
     case TextureFilterMode::kLinearMipmapNearest: return GL_LINEAR_MIPMAP_NEAREST;
     case TextureFilterMode::kLinearMipampLinear: return GL_LINEAR_MIPMAP_LINEAR;
+    case TextureFilterMode::kLast: return GL_NONE;
   }
 
   NOT_REACHED();

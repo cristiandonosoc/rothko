@@ -76,7 +76,7 @@ enum class VertexType : uint32_t {
                        (uint32_t)VertComponent::kNormal |
                        (uint32_t)VertComponent::kTangent |
                        (uint32_t)VertComponent::kUV0_float,
-  kLast = (uint32_t)-1,
+  kLast = UINT32_MAX,
 };
 // clang-format on
 
