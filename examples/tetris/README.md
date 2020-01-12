@@ -1,6 +1,6 @@
 # Tetris Log
 
-- Total hours: ~25
+- Total hours: ~27
 
 ## Day 1: Initial gameplay skeleton.
 ### (~4 hours)
@@ -129,3 +129,9 @@
 - Modified the format to make it more easily auditable with a hex editor, make it more easy to
   debug.
 - Added initial texture serialization support (still not working).
+
+## Day 14: Added texture to serialization format.
+### (~2 hours)
+
+- Modified the header so that it can support textures.
+- Separeted scene serialization/deserialization into separate source files.

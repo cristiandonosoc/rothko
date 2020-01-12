@@ -8,6 +8,9 @@ executable("gltf") {
     "scene.h",
     "shaders.cc",
     "shaders.h",
+
+    "serialize_scene.cc",
+    "deserialize_scene.cc",
   ]
 
   deps = [

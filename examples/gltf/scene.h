@@ -27,8 +27,9 @@ struct Header {
 
   char title[8] = {};
   uint32_t version = 0;
-  uint32_t next_mesh = 0;
-  uint32_t next_texture = 0;
+
+  uint32_t meshes = 0;    // Offset to a |MeshesHeader|.
+  uint32_t textures = 0;  // Offset to a |TexturesHeader|.
 };
 static_assert(sizeof(Header) == 20);
 

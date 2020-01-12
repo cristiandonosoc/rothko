@@ -112,11 +112,11 @@ FileHandle OpenFile(const std::string& path, bool append) {
   return handle;
 }
 
-void WriteToFile(FileHandle* handle, void* data, size_t size) {
+uint32_t WriteToFile(FileHandle* handle, void* data, size_t size) {
   assert(Valid(*handle));
-
-  size_t res = fwrite(data, sizeof(char), size, (FILE*)handle->hndl.value);
-  assert(res == size);
+  size_t res = fwrite(data, size, 1, (FILE*)handle->hndl.value);
+  assert(res == 1);
+  return size;
 }
 
 void Flush(FileHandle* handle) {

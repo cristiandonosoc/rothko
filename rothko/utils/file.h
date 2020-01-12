@@ -26,7 +26,10 @@ struct FileHandle {
 inline bool Valid(const FileHandle& file) { return file.hndl.has_value(); }
 
 FileHandle OpenFile(const std::string& path, bool append = false);
-void WriteToFile(FileHandle*, void* data, size_t size);
+
+// Returns how much bytes were written.
+uint32_t WriteToFile(FileHandle*, void* data, size_t size);
+
 void Flush(FileHandle*);
 void CloseFile(FileHandle*);
 
