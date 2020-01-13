@@ -1,6 +1,6 @@
 # Tetris Log
 
-- Total hours: ~27
+- Total hours: ~28
 
 ## Day 1: Initial gameplay skeleton.
 ### (~4 hours)
@@ -135,3 +135,10 @@
 
 - Modified the header so that it can support textures.
 - Separeted scene serialization/deserialization into separate source files.
+
+## Day 15: Added FNA-1a string hashing.
+### (~1 hour)
+
+- Permits to get a uint32_t hash from a string.
+- Available in run-time and compime-time versions.
+- Will permit to create a uint32_t identifier from the asset name.

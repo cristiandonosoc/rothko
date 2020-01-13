@@ -1,6 +1,7 @@
 // Copyright 2019, Cristián Donoso.
 // This code has a BSD license. See LICENSE.
 
+#include <rothko/math/hash.h>
 #include <rothko/math/math.h>
 
 #include <third_party/catch2/catch.hpp>
@@ -434,6 +435,14 @@ TEST_CASE("Quaternion") {
   }
 }
 // clang-format on
+
+TEST_CASE("Hash") {
+  SECTION("FNV-1a 32") {
+    uint32_t hash = HASH_STRING32("Hello");
+    REQUIRE(hash == 0xf55c314b);
+  }
+}
+
 
 }  // namespace
 }  // namespace test

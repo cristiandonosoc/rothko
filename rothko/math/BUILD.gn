@@ -3,6 +3,7 @@
 
 source_set("math") {
   public = [
+    "hash.h",
     "math.h",
   ]
 

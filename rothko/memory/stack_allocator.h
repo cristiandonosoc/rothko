@@ -33,11 +33,8 @@ T* Allocate(StackAllocator* sa, uint32_t count = 1) {
     return nullptr;
 
   uint32_t size_to_alloc = sizeof(T) * count;
-  if (sa->current + size_to_alloc > sa->size) {
-    assert(false);
+  if (sa->current + size_to_alloc > sa->size)
     return nullptr;
-  }
-
 
   // Get the current pointer and cast it to the correct type.
   T* ptr = (T*)(sa->data_.get() + sa->current);
