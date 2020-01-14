@@ -51,6 +51,11 @@ struct OpenGLRendererBackend {
   std::map<uint32_t, ShaderHandles> loaded_shaders;
   std::map<uint32_t, TextureHandles> loaded_textures;
 
+  // ID tracking.
+#if DEBUG_MODE
+  std::map<uint32_t, std::string> loaded_meshes_ids;
+#endif
+
   CameraData cameras[8] = {};
   int camera_index = -1;
 

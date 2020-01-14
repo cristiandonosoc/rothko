@@ -240,7 +240,7 @@ void ExecuteMeshRenderActions(const OpenGLRendererBackend& opengl, const RenderM
   glUseProgram(shader_handles.program);
   SetRenderCommandConfig(render_mesh);
 
-  auto mesh_it = opengl.loaded_meshes.find(render_mesh.mesh->uuid.value);
+  auto mesh_it = opengl.loaded_meshes.find(render_mesh.mesh->id);
   ASSERT(mesh_it != opengl.loaded_meshes.end());
 
   const MeshHandles& mesh_handles = mesh_it->second;

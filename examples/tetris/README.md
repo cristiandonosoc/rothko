@@ -1,6 +1,6 @@
 # Tetris Log
 
-- Total hours: ~28
+- Total hours: ~29
 
 ## Day 1: Initial gameplay skeleton.
 ### (~4 hours)
@@ -142,3 +142,8 @@
 - Permits to get a uint32_t hash from a string.
 - Available in run-time and compime-time versions.
 - Will permit to create a uint32_t identifier from the asset name.
+
+## Day 16: Meshes now track the string-based asset id.
+### (~1 hour)
+
+- Will permit the scene to refer to assets by the unique id.

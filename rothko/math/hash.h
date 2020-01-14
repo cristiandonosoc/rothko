@@ -9,10 +9,11 @@
 
 namespace rothko {
 
-#define HASH_STRING32(str) ::rothko::FNA1a32Hash(str)
 
 // Call for running the hash on compile time.
-#define CT_HASH_STRING32(str) ::rothko::CompileTimeHash<FNA1a32Hash(str)>::kValue
+#define HASH_STRING32(str) ::rothko::CompileTimeHash<FNA1a32Hash(str)>::kValue
+
+#define HashString32(str) ::rothko::FNA1a32Hash(str)
 
 // Template specialization to ensure compile-time evaluation.
 template <uint32_t HASH>

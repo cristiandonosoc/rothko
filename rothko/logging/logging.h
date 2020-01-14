@@ -89,7 +89,11 @@ void DoLogging(LogCategory category, LogSeverity severity, Location, const char*
 
 #define LOG(category, ...) INTERNAL_LOG(category, Info, __VA_ARGS__)
 #define WARNING(category, ...) INTERNAL_LOG(category, Warning, __VA_ARGS__)
-#define ERROR(category, ...) INTERNAL_LOG(category, Error, __VA_ARGS__)
+#define ERROR(category, ...)                    \
+  do {                                          \
+    INTERNAL_LOG(category, Error, __VA_ARGS__); \
+    SEGFAULT();                                 \
+  } while (false)
 
 #define ASSERT(condition)                                              \
   do {                                                                 \

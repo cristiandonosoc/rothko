@@ -25,9 +25,10 @@ struct Mesh {
   RAII_CONSTRUCTORS(Mesh);
 
   std::string name;
+  uint32_t id = 0;
+  uint32_t staged = 0;
 
   Renderer* renderer = nullptr;
-  ClearOnMove<uint32_t> uuid = 0;
   VertexType vertex_type = VertexType::kLast;
 
   std::vector<uint8_t> vertices;
@@ -37,7 +38,7 @@ struct Mesh {
 };
 
 bool StageWithCapacity(Renderer*, Mesh*, VertexType, uint32_t vertex_count, uint32_t index_count);
-inline bool Staged(const Mesh& m) { return m.uuid.has_value(); }
+inline bool Staged(const Mesh& mesh) { return mesh.staged != 0; }
 
 inline void Reset(Mesh* mesh) {
   mesh->vertices.clear();

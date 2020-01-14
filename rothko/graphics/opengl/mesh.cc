@@ -163,12 +163,15 @@ void StageIndices(Mesh* mesh, MeshHandles* handles) {
 }  // namespace
 
 bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
-  ASSERT_MSG(!Staged(*mesh), "Mesh \"%s\" already staged.", mesh->name.c_str());
-  uint32_t uuid = GetNextMeshUUID();
-
-  auto it = opengl->loaded_meshes.find(uuid);
+  auto it = opengl->loaded_meshes.find(mesh->id);
   if (it != opengl->loaded_meshes.end()) {
-    ERROR(OpenGL, "Reloading mesh \"%s\"", mesh->name.c_str());
+#if DEBUG_MODE
+    auto& already_loaded = opengl->loaded_meshes_ids[mesh->id];
+    ERROR(OpenGL, "Mesh \"%s\" id (%u) collides with \"%s\". Easiest fix is to change the name.",
+                  mesh->name.c_str(), mesh->id, already_loaded.c_str());
+#else
+    ERROR(OpenGL, "ID Collision! \"%s\"", mesh->name.c_str());
+#endif
     return false;
   }
 
@@ -184,13 +187,16 @@ bool OpenGLStageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
 
   LOG(OpenGL,
       "Staging mesh %s (uuid: %u, VAO: %u) [%u vertices (%zu bytes)] [%lu indices (%zu bytes)]",
-      mesh->name.c_str(), uuid, handles.vao,
+      mesh->name.c_str(), mesh->id, handles.vao,
       mesh->vertex_count, mesh->vertices.size(),
       mesh->indices.size(), mesh->indices.size() * sizeof(Mesh::IndexType));
 
-  opengl->loaded_meshes[uuid] = std::move(handles);
-  mesh->uuid = uuid;
+  opengl->loaded_meshes[mesh->id] = std::move(handles);
+#if DEBUG_MODE
+  opengl->loaded_meshes_ids[mesh->id] = mesh->name;
+#endif
 
+  mesh->staged = 1;
   return true;
 }
 
@@ -206,13 +212,17 @@ void DeleteMeshHandles(MeshHandles* handles) {
 }  // namespace
 
 void OpenGLUnstageMesh(OpenGLRendererBackend* opengl, Mesh* mesh) {
-  uint32_t uuid = mesh->uuid.value;
-  auto it = opengl->loaded_meshes.find(uuid);
+  auto it = opengl->loaded_meshes.find(mesh->id);
   ASSERT(it != opengl->loaded_meshes.end());
 
   DeleteMeshHandles(&it->second);
   opengl->loaded_meshes.erase(it);
-  mesh->uuid = 0;
+
+#if DEBUG_MODE
+  opengl->loaded_meshes_ids.erase(mesh->id);
+#endif
+
+  mesh->staged = 0;
 }
 
 // Upload Range ------------------------------------------------------------------------------------
@@ -234,8 +244,7 @@ void VerifyBufferSize(Mesh* mesh, GLenum target, uint32_t size, uint32_t offset)
 
 bool OpenGLUploadMeshRange(OpenGLRendererBackend* opengl, Mesh* mesh,
                            Int2 vertex_range, Int2 index_range) {
-  uint64_t uuid = mesh->uuid.value;
-  auto it = opengl->loaded_meshes.find(uuid);
+  auto it = opengl->loaded_meshes.find(mesh->id);
   if (it == opengl->loaded_meshes.end()) {
     ERROR(OpenGL, "Uploading range on non-staged mesh %s", mesh->name.c_str());
     return false;

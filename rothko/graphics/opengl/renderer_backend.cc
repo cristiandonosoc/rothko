@@ -13,6 +13,7 @@
 #include "rothko/graphics/opengl/texture.h"
 #include "rothko/graphics/renderer.h"
 #include "rothko/logging/logging.h"
+#include "rothko/math/hash.h"
 #include "rothko/window/window.h"
 
 namespace rothko {
@@ -207,6 +208,10 @@ void RendererEndFrame(Renderer*, Window* window) {
 // Meshes ------------------------------------------------------------------------------------------
 
 bool RendererStageMesh(Renderer*, Mesh* mesh) {
+  ASSERT_MSG(!Staged(*mesh), "Mesh \"%s\" already staged.", mesh->name.c_str());
+
+  // Override the id.
+  mesh->id = HashString32(mesh->name.c_str());
   return OpenGLStageMesh(gBackend.get(), mesh);
 }
 

@@ -70,10 +70,7 @@ bool Init(LineManager* lines, Renderer* renderer, const std::string& name, uint3
   return Init(lines, renderer, shader, name, line_count);
 }
 
-bool Init(LineManager* lines,
-          Renderer* renderer,
-          const Shader* shader,
-          const std::string& name,
+bool Init(LineManager* lines, Renderer* renderer, const Shader* shader, const std::string& name,
           uint32_t line_count) {
   ASSERT(!Valid(lines));
   lines->name = std::move(name);
@@ -83,10 +80,12 @@ bool Init(LineManager* lines,
   // We asume one index per vertex. This might be less.
   uint32_t vertex_count = 2 * line_count * sizeof(Vertex3dColor);
   uint32_t index_count = 2 * line_count * sizeof(Mesh::IndexType);
-  bool staged = StageWithCapacity(
-      renderer, &lines->strip_mesh, VertexType::k3dColor, vertex_count, index_count);
-  if (!staged)
+
+  lines->strip_mesh.name = StringPrintf("Line-Manager-%s-strip-mesh", name.c_str());
+  if (!StageWithCapacity(renderer, &lines->strip_mesh, VertexType::k3dColor,
+                         vertex_count, index_count)) {
     return false;
+  }
 
   lines->strip_mesh.name = StringPrintf("%s-mesh", lines->name.c_str());
 
